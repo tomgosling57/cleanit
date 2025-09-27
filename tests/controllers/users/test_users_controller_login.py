@@ -3,35 +3,18 @@ Unit tests for the UsersController login function.
 """
 import pytest
 from unittest.mock import patch, MagicMock
-from flask import Flask, session, flash, url_for, request, redirect, render_template
+from flask import session, flash, url_for, request, redirect, render_template
 
-@pytest.fixture
-def app_context():
-    app = Flask(__name__)
-    with app.app_context():
-        yield
 
-@pytest.fixture
-def request_context():
-    app = Flask(__name__)
-    with app.test_request_context():
-        yield
 
 @patch('controllers.users_controller.get_db')
 @patch('controllers.users_controller.teardown_db')
 @patch('controllers.users_controller.UserService')
-@patch('controllers.users_controller.request', new_callable=MagicMock)
 @patch('controllers.users_controller.flash')
 @patch('controllers.users_controller.url_for')
-def test_login_post_success_sets_session_and_redirects_to_index(mock_url_for, mock_flash, mock_request, mock_user_service, mock_teardown_db, mock_get_db, app_context, request_context):
+def test_login_post_success_sets_session_and_redirects_to_index(mock_url_for, mock_flash, mock_user_service, mock_teardown_db, mock_get_db, client):
     # Arrange
     from controllers.users_controller import login
-    mock_request.method = 'POST'
-    mock_request.form = MagicMock()
-    mock_request.form.get.side_effect = lambda key, default=None: {
-        'username': 'testuser',
-        'password': 'password123'
-    }.get(key, default)
 
     mock_db = MagicMock()
     mock_get_db.return_value = mock_db
@@ -45,11 +28,12 @@ def test_login_post_success_sets_session_and_redirects_to_index(mock_url_for, mo
     mock_url_for.return_value = '/index' # Mock redirect URL
 
     # Act
-    response = login()
+    response = client.post('/users/login', data={
+        'username': 'testuser',
+        'password': 'password123'
+    })
 
     # Assert
-    mock_request.form.get.assert_any_call('username')
-    mock_request.form.get.assert_any_call('password')
     mock_get_db.assert_called_once()
     mock_user_service.assert_called_once_with(mock_db)
     mock_user_service_instance.authenticate_user.assert_called_once_with('testuser', 'password123')
@@ -64,17 +48,10 @@ def test_login_post_success_sets_session_and_redirects_to_index(mock_url_for, mo
 @patch('controllers.users_controller.get_db')
 @patch('controllers.users_controller.teardown_db')
 @patch('controllers.users_controller.UserService')
-@patch('controllers.users_controller.request', new_callable=MagicMock)
 @patch('controllers.users_controller.flash')
-def test_login_post_invalid_credentials_flashes_error(mock_flash, mock_request, mock_user_service, mock_teardown_db, mock_get_db, app_context, request_context):
+def test_login_post_invalid_credentials_flashes_error(mock_flash, mock_user_service, mock_teardown_db, mock_get_db, client):
     # Arrange
     from controllers.users_controller import login
-    mock_request.method = 'POST'
-    mock_request.form = MagicMock()
-    mock_request.form.get.side_effect = lambda key, default=None: {
-        'username': 'wronguser',
-        'password': 'wrongpassword'
-    }.get(key, default)
 
     mock_db = MagicMock()
     mock_get_db.return_value = mock_db
@@ -84,11 +61,12 @@ def test_login_post_invalid_credentials_flashes_error(mock_flash, mock_request, 
     mock_user_service_instance.authenticate_user.return_value = None
 
     # Act
-    response = login()
+    response = client.post('/users/login', data={
+        'username': 'wronguser',
+        'password': 'wrongpassword'
+    })
 
     # Assert
-    mock_request.form.get.assert_any_call('username')
-    mock_request.form.get.assert_any_call('password')
     mock_get_db.assert_called_once()
     mock_user_service.assert_called_once_with(mock_db)
     mock_user_service_instance.authenticate_user.assert_called_once_with('wronguser', 'wrongpassword')
@@ -97,44 +75,37 @@ def test_login_post_invalid_credentials_flashes_error(mock_flash, mock_request, 
     assert response.status_code == 200 # Renders template
     assert b"Login" in response.data # Assuming 'Login' is in the login.html template
 
-@patch('controllers.users_controller.request', new_callable=MagicMock)
-def test_login_get_renders_template(mock_request, app_context, request_context):
+def test_login_get_renders_template(client):
     # Arrange
     from controllers.users_controller import login
-    mock_request.method = 'GET'
 
     # Act
-    response = login()
+    response = client.get('/users/login')
 
     # Assert
     assert response.status_code == 200
     assert b"Login" in response.data # Assuming 'Login' is in the login.html template
-# Test stubs for login function
-def test_login_get_renders_template(app_context, request_context):
-    """
-    Test that a GET request to /login renders the login template.
-    """
-    pass
 
-def test_login_post_missing_username_renders_template(app_context, request_context):
+# Test stubs for login function  
+def test_login_post_missing_username_renders_template(client):
     """
     Test that a POST request with a missing username renders the login template.
     """
     pass
 
-def test_login_post_missing_password_renders_template(app_context, request_context):
+def test_login_post_missing_password_renders_template(client):
     """
     Test that a POST request with a missing password renders the login template.
     """
     pass
 
-def test_login_post_invalid_credentials_flashes_error(app_context, request_context):
+def test_login_post_invalid_credentials_flashes_error(client):
     """
     Test that a POST request with invalid credentials flashes an error and renders the login template.
     """
     pass
 
-def test_login_post_success_sets_session_and_redirects_to_index(app_context, request_context):
+def test_login_post_success_sets_session_and_redirects_to_index(client):
     """
     Test that a successful POST request to /login sets session variables and redirects to the index page.
     """
