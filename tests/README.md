@@ -42,3 +42,7 @@ To run the tests, follow these steps:
     ```
 
 This setup ensures that tests are run in an isolated environment and provides clear instructions for execution.
+
+## Shared Fixtures
+
+Common fixtures like `app_context` and `client` are defined in `tests/conftest.py` to be shared across multiple test files, promoting reusability and reducing code duplication.
