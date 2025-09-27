@@ -81,12 +81,19 @@ def login():
 def update_user(user_id):
     """Update user information"""
     data = request.get_json()
+    if not data:
+        return jsonify({'error': 'Invalid data provided'}), 400
+
+    allowed_fields = ['username', 'password', 'role']
+    if not any(field in data for field in allowed_fields):
+        return jsonify({'error': 'No valid fields provided for update'}), 400
+
     db = get_db()
     user_service = UserService(db)
     user = user_service.update_user(user_id, data)
     teardown_db()
     if user:
-        return jsonify(user)
+        return jsonify(user), 200
     else:
         return jsonify({'error': 'User not found'}), 404
 
