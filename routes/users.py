@@ -47,7 +47,14 @@ def get_user(user_id):
 @user_bp.route('/register', methods=['GET', 'POST'])
 def register():
     """Register a new user"""
-    if request.method == 'POST':
+
+    # Checked the permissions of the current user via role attribute
+    session_user_role = session.get('role')
+    
+    # Redirects to the login page after registering user or if session user role is not owner
+    _return = redirect(url_for('user.login'))
+    
+    if session_user_role == 'owner' and request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
         role = request.form.get('role', 'cleaner')
@@ -70,9 +77,12 @@ def register():
         db.commit()
         
         flash('User registered successfully!', 'success')
-        return redirect(url_for('user.login'))
+    # Redirects to the register page if request type is get and the session user role is owner
+    elif session_user_role == 'owner':
+        _return = render_template('register.html')
+
+    return _return
     
-    return render_template('register.html')
 
 @user_bp.route('/login', methods=['GET', 'POST'])
 def login():
@@ -91,6 +101,7 @@ def login():
             # Cache the cookie info
             session['user_id'] = user.id
             session['username'] = username
+            session['role'] = user.role
             return redirect(url_for('index'))
         else:
             flash('Invalid username or password', 'error')
