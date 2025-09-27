@@ -2,6 +2,7 @@ import os
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.orm import sessionmaker, declarative_base
 from werkzeug.security import generate_password_hash
+from flask import g, current_app
 
 # Define the base for declarative models
 Base = declarative_base()
@@ -28,6 +29,19 @@ def init_db(app):
     Base.metadata.create_all(engine)
     Session = sessionmaker(bind=engine)
     return Session
+
+# Helper functions for database session management
+def get_db():
+    """Helper function to get or create a database connection for the current request."""
+    if 'db' not in g:
+        Session = current_app.config['SQLALCHEMY_SESSION']
+        g.db = Session()
+    return g.db
+
+def teardown_db(exception=None):
+    db = g.pop('db', None)
+    if db is not None:
+        db.close()
 
 # Function to create an initial owner user
 def create_initial_owner(Session):
