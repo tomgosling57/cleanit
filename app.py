@@ -20,8 +20,12 @@ app.config['SQLALCHEMY_SESSION'] = Session
 app.register_blueprint(user_bp)
 
 @app.route('/')
-def hello_world():
-    return 'Hello, Flask!'
+def index():
+    welcome_message = "Welcome to CleanIt! Database initialized. <a href='/users/'>View Users</a>"
+    name = session.get("username")
+    if name:
+        welcome_message = f"Welcome to CleanIt, {name}! Database initialized. <a href='/users/'>View Users</a>"
+    return welcome_message
 
 if __name__ == '__main__':
     app.run(debug=True)
