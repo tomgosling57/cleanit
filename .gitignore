@@ -6,4 +6,6 @@ __pycache__/
 .Python
 env/
 venv/
-.venv/
+.venv/ 
+.roo/
+instance/
