@@ -46,3 +46,12 @@ This setup ensures that tests are run in an isolated environment and provides cl
 ## Shared Fixtures
 
 Common fixtures like `app_context` and `client` are defined in `tests/conftest.py` to be shared across multiple test files, promoting reusability and reducing code duplication.
+
+### `app_context` Fixture
+The `app_context` fixture ensures that tests run within the Flask application context, which is necessary for accessing application-specific features like the database.
+
+### `client` Fixture
+The `client` fixture provides a test client for making requests to the Flask application. It sets `app.config['TESTING'] = True` and mocks `app.config['SQLALCHEMY_SESSION']` to isolate database interactions during tests. This client is used to simulate HTTP requests (GET, POST, etc.) to the application's routes.
+
+**Important for Controller Tests:** When writing tests for controllers that require an active request context (e.g., accessing `flask.request` or `flask.session`), always use the `client` fixture to make requests. Do not manually create a request context using `app.test_request_context()`, as the `client` fixture handles this automatically and provides a more integrated testing experience.
+
