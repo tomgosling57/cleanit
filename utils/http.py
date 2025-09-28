@@ -1,6 +1,17 @@
 import unicodedata
-from urllib import ParseResult, SplitResult, _splitparams, uses_params, _coerce_args, _splitnetloc, scheme_chars 
+from urllib.parse import (ParseResult, SplitResult, _splitparams, uses_params, _coerce_args, _splitnetloc, scheme_chars, urlparse)
 
+def validate_request_host(url, host_url, development_mode: bool):
+    """
+    Return ``True`` if the url uses an allowed host and a safe scheme. In development mode returns true if the url uses a safe scheme
+    """
+    if development_mode:
+        _return = True
+    else:
+        _return = url_has_allowed_host_and_scheme(url, host_url)
+    return _return
+
+# Copied from Django.utils
 def url_has_allowed_host_and_scheme(url, allowed_hosts, require_https=False):
     """
     Return ``True`` if the url uses an allowed host and a safe scheme.
