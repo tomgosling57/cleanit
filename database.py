@@ -3,12 +3,13 @@ from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.orm import sessionmaker, declarative_base
 from werkzeug.security import generate_password_hash
 from flask import g, current_app
+from flask_login import UserMixin
 
 # Define the base for declarative models
 Base = declarative_base()
 
 # Define the User model
-class User(Base):
+class User(Base, UserMixin):
     __tablename__ = 'users'
 
     id = Column(Integer, primary_key=True)

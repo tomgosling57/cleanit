@@ -1,10 +1,15 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 import os
-from database import init_db, create_initial_owner
+from database import init_db, create_initial_owner, get_db, teardown_db
 from routes.users import user_bp
 import secrets
-
+from flask_login import LoginManager, current_user
+from services.user_service import UserService
 app = Flask(__name__)
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'user.login'
+# TODO: Remove random secret
 app.config['SECRET_KEY'] = secrets.token_bytes(32)
 
 # Create the 'instance' folder if it doesn't exist
@@ -18,6 +23,12 @@ app.config['SQLALCHEMY_SESSION'] = Session
 
 # Register blueprints
 app.register_blueprint(user_bp)
+
+@login_manager.user_loader
+def load_user(user_id):
+    _return = UserService(get_db()).get_user_by_id(user_id)
+    teardown_db()
+    return _return
 
 @app.route('/')
 def index():

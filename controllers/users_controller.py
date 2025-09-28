@@ -1,7 +1,8 @@
-from flask import request, jsonify, render_template, redirect, url_for, flash, session
+from flask import request, jsonify, render_template, redirect, url_for, flash, session, abort, current_app
+from utils.http import validate_request_host
 from database import get_db, teardown_db
 from services.user_service import UserService
-
+from flask_login import login_user, current_user
 def list_users():
     """List all users"""
     db = get_db()
@@ -30,11 +31,10 @@ def get_user(user_id):
         teardown_db()
 
 def register():
-    """Register a new user"""
-    session_user_role = session.get('role')
+    """Register a new user"""    
     _return = redirect(url_for('user.login'))
     
-    if session_user_role == 'owner' and request.method == 'POST':
+    if current_user.role == 'owner' and request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
         role = request.form.get('role', 'cleaner')
@@ -54,10 +54,10 @@ def register():
         
         flash('User registered successfully!', 'success')
     # If session role is owner and get request then rendered registered template
-    elif session_user_role == 'owner':
+    elif current_user.role == 'owner':
         _return = render_template('register.html')
     # If session user role is cleaner then redirect to index
-    elif session_user_role == 'cleaner':
+    elif current_user.role == 'cleaner':
         _return = redirect(url_for('index'))
 
     return _return
@@ -76,11 +76,12 @@ def login():
         teardown_db()
         
         if user:
-            flash(f'Welcome back, {user["username"]}!', 'success')
-            session['user_id'] = user['id']
-            session['username'] = user['username']
-            session['role'] = user['role']
-            _return = redirect(url_for('index'))
+            login_user(user)
+            flash(f'Welcome back, {user.username}!', 'success')
+            next = request.args.get('next')
+            if not validate_request_host(next, request.host, current_app.debug):
+                _return = abort(400)
+            _return = redirect(next or url_for('index'))
         else:
             flash('Invalid username or password', 'error')
     
