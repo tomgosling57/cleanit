@@ -11,9 +11,7 @@ class UserService:
 
     def get_user_by_id(self, user_id):
         user = self.db_session.query(User).filter_by(id=user_id).first()
-        if user:
-            return {'id': user.id, 'username': user.username, 'role': user.role}
-        return None
+        return user
 
     def get_user_by_username(self, username):
         user = self.db_session.query(User).filter_by(username=username).first()
@@ -33,7 +31,7 @@ class UserService:
     def authenticate_user(self, username, password):
         user = self.get_user_by_username(username)
         if user and check_password_hash(user.password_hash, password):
-            return {'id': user.id, 'username': user.username, 'role': user.role}
+            return user
         return None
 
     def update_user(self, user_id, data):
