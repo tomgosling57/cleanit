@@ -33,9 +33,8 @@ def load_user(user_id):
 @app.route('/')
 def index():
     welcome_message = "Welcome to CleanIt! Database initialized. <a href='/users/'>View Users</a>"
-    name = session.get("username")
-    if name:
-        welcome_message = f"Welcome to CleanIt, {name}! Database initialized. <a href='/users/'>View Users</a>"
+    if current_user.is_authenticated:
+        welcome_message = f"Welcome to CleanIt, {current_user.username}! Database initialized. <a href='/users/'>View Users</a>"
     return welcome_message
 
 if __name__ == '__main__':
