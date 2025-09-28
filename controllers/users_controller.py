@@ -6,20 +6,28 @@ def list_users():
     """List all users"""
     db = get_db()
     user_service = UserService(db)
-    users = user_service.list_users()
-    teardown_db()
-    return jsonify(users)
+    try:
+        users = user_service.list_users()
+        return jsonify(users)
+    except Exception as e:
+        return jsonify({'error': 'Internal Server Error'}), 500
+    finally:
+        teardown_db()
 
 def get_user(user_id):
     """Get a specific user by ID"""
     db = get_db()
     user_service = UserService(db)
-    user = user_service.get_user_by_id(user_id)
-    teardown_db()
-    if user:
-        return jsonify(user)
-    else:
-        return jsonify({'error': 'User not found'}), 404
+    try:
+        user = user_service.get_user_by_id(user_id)
+        if user:
+            return jsonify(user)
+        else:
+            return jsonify({'error': 'User not found'}), 404
+    except Exception as e:
+        return jsonify({'error': 'Internal Server Error'}), 500
+    finally:
+        teardown_db()
 
 def register():
     """Register a new user"""
