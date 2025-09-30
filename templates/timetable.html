@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}My Jobs{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="header-with-button">
+            <h1>My Assigned Jobs for Today</h1>
+            {% if current_user.role == 'owner' %}
+                <button class="button"
+                        hx-get="{{ url_for('job.create_job') }}"
+                        hx-target="#job-creation-modal-content"
+                        hx-trigger="click"
+                        hx-on--after-request="document.getElementById('job-creation-modal').style.display='block'">
+                    Create Job
+                </button>
+            {% endif %}
+        </div>
+
+            <div class="job-list" id="job-list">
+                {% if jobs %}
+                    {% for job in jobs %}
+                        {% include 'job_card.html' %}
+                    {% endfor %}
+                {% else %}
+                    <p>No jobs assigned for today. Enjoy your day!</p>
+                {% endif %}
+            </div>
+    </div>
+
+    <!-- Job Details Modal -->
+    <div id="job-details-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <span class="close-button" onclick="document.getElementById('job-details-modal').style.display='none'">&times;</span>
+            <div id="job-details-modal-content">
+                <!-- Job details will be loaded here via HTMX -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Job Creation Modal -->
+    <div id="job-creation-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <span class="close-button" onclick="document.getElementById('job-creation-modal').style.display='none'">&times;</span>
+            <div id="job-creation-modal-content">
+                <!-- Job creation form will be loaded here via HTMX -->
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .header-with-button {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .job-actions button {
+            margin-right: 10px;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+        }
+        .job-actions button:hover {
+            background-color: #0056b3;
+        }
+        .job-actions button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        /* Modal Styles */
+        .modal {
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background-color: #fff;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+            border-radius: 10px;
+            position: relative;
+        }
+        .close-button {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            position: absolute;
+            right: 15px;
+            top: 10px;
+        }
+        .close-button:hover,
+        .close-button:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
+
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script>
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                document.getElementById('job-details-modal').style.display = 'none';
+                document.getElementById('job-creation-modal').style.display = 'none';
+            }
+        });
+    </script>
+{% endblock %}

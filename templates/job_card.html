@@ -1,0 +1,24 @@
+<div class="job-card" id="job-{{ job.id }}">
+    <h2>{{ job.job_title }}</h2>
+    <p><strong>Time:</strong> {{ job.time.strftime('%H:%M') }}</p>
+    <p><strong>Duration:</strong> {{ job.duration }}</p>
+    <p><strong>Status:</strong> {% include 'job_status_fragment.html' %}</p>
+    <p><strong>Property Address:</strong> {{ job.property.address }}</p>
+
+    <div class="job-actions">
+        <button hx-get="{{ url_for('job.get_job_details', job_id=job.id) }}"
+                hx-target="#job-details-modal-content"
+                hx-trigger="click"
+                hx-on--after-request="document.getElementById('job-details-modal').style.display='block'"
+                class="button">
+            View Details
+        </button>
+        <button hx-post="{{ url_for('job.update_job_status', job_id=job.id) }}"
+            hx-vals='{"is_complete": "{{ not job.is_complete }}"}'
+            hx-target="#job-{{ job.id }}"
+            hx-swap="outerHTML"
+            class="status-toggle-button {{ 'button-completed' if job.is_complete else 'button-pending' }}">
+            {% if job.is_complete %}Mark Pending{% else %}Mark Completed{% endif %}
+        </button>
+    </div>
+</div>
