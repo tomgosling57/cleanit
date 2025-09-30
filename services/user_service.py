@@ -7,7 +7,11 @@ class UserService:
 
     def list_users(self):
         users = self.db_session.query(User).all()
-        return [{'id': user.id, 'username': user.username, 'role': user.role} for user in users]
+        return users
+
+    def get_users_by_role(self, role):
+        users = self.db_session.query(User).filter_by(role=role).all()
+        return users
 
     def get_user_by_id(self, user_id):
         user = self.db_session.query(User).filter_by(id=user_id).first()
@@ -47,7 +51,7 @@ class UserService:
             user.set_password(data['password'])
         
         self.db_session.commit()
-        return {'id': user.id, 'username': user.username, 'role': user.role}
+        return user
 
     def delete_user(self, user_id):
         user = self.db_session.query(User).filter_by(id=user_id).first()
