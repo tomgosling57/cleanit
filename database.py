@@ -1,5 +1,5 @@
 import os
-from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, Date, Time
+from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, Date, Time, Boolean
 from sqlalchemy.orm import sessionmaker, declarative_base, relationship
 from werkzeug.security import generate_password_hash
 from flask import g, current_app
@@ -45,7 +45,7 @@ class Job(Base):
     duration = Column(String, nullable=False)
     description = Column(String)
     assigned_cleaners = Column(String) # Comma-separated cleaner IDs
-    status = Column(String, default='pending') # 'pending', 'in progress', 'completed'
+    is_complete = Column(Boolean, default=False)
     job_type = Column(String)
     report = Column(String) # Sensitive, only for Team Leader/Owner
 
@@ -53,7 +53,7 @@ class Job(Base):
     property = relationship("Property", back_populates="jobs")
 
     def __repr__(self):
-        return f"<Job(id={self.id}, job_title='{self.job_title}', date='{self.date}', status='{self.status}')>"
+        return f"<Job(id={self.id}, job_title='{self.job_title}', date='{self.date}', is_complete='{self.is_complete}')>"
 
 # Database initialization function
 def init_db(app):
@@ -116,6 +116,7 @@ def create_initial_property_and_job(Session):
             duration='2 hours',
             description='Full house clean, focus on kitchen and bathrooms.',
             assigned_cleaners=str(cleaner.id),
+            is_complete=False,
             property=property1
         )
         session.add(job1)
