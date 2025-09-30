@@ -5,9 +5,8 @@ from services.user_service import UserService
 from database import get_db, teardown_db
 from datetime import date, time
 
-@login_required
 def cleaner_jobs():
-    if not current_user.is_authenticated or current_user.role != 'cleaner':
+    if current_user.role != 'cleaner':
         flash('Unauthorized access', 'error')
         return redirect(url_for('index'))
 
@@ -18,10 +17,9 @@ def cleaner_jobs():
 
     return render_template('job_cards.html', jobs=jobs, current_user=current_user)
 
-@login_required
 def update_job_status(job_id):
     if not current_user.is_authenticated or current_user.role not in ['cleaner', 'owner', 'team-leader']:
-        return jsonify({'error': 'Unauthorized'}), 403
+        return jsonify({'error': 'Unauthorized'}), 401
 
     status = request.form.get('status')
     if not status:
@@ -35,16 +33,15 @@ def update_job_status(job_id):
         # Accessing job.property to eagerly load it before the session is torn down
         # This prevents DetachedInstanceError when rendering the template
         _ = job.property.address
-        response = render_template('job_card_fragment.html', job=job)
+        response = render_template('job_status_fragment.html', job=job)
         teardown_db()
         return response
     
     teardown_db()
     return jsonify({'error': 'Job not found'}), 404
 
-@login_required
 def get_job_details(job_id):
-    if not current_user.is_authenticated or current_user.role not in ['cleaner', 'team_leader', 'owner']:
+    if current_user.role not in ['cleaner', 'team_leader', 'owner']:
         return jsonify({'error': 'Unauthorized'}), 403
 
     db = get_db()
@@ -56,9 +53,8 @@ def get_job_details(job_id):
         return render_template('job_details_modal_content.html', job=job)
     return jsonify({'error': 'Job not found'}), 404
 
-@login_required
 def get_job_creation_form():
-    if not current_user.is_authenticated or current_user.role != 'owner':
+    if current_user.role != 'owner':
         return jsonify({'error': 'Unauthorized'}), 403
 
     db = get_db()
@@ -67,9 +63,8 @@ def get_job_creation_form():
     teardown_db()
     return render_template('job_creation_modal_content.html', cleaners=cleaners)
 
-@login_required
 def manage_jobs():
-    if not current_user.is_authenticated or current_user.role != 'owner':
+    if current_user.role != 'owner':
         flash('Unauthorized access', 'error')
         return redirect(url_for('index'))
 
@@ -82,9 +77,8 @@ def manage_jobs():
     teardown_db()
     return render_template('job_cards.html', jobs=jobs, current_user=current_user, cleaners=cleaners)
 
-@login_required
 def create_job():
-    if not current_user.is_authenticated or current_user.role != 'owner':
+    if current_user.role != 'owner':
         flash('Unauthorized access', 'error')
         return redirect(url_for('index'))
 

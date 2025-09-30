@@ -30,7 +30,7 @@
                             <div class="job-actions">
                                 <button hx-post="{{ url_for('job.update_job_status', job_id=job.id) }}"
                                         hx-vals='{"status": "in progress"}'
-                                        hx-target="#job-{{ job.id }}"
+                                        hx-target="#job-status-{{ job.id }}"
                                         hx-swap="outerHTML"
                                         class="button"
                                         {% if job.status == 'in progress' or job.status == 'completed' %}disabled{% endif %}>
@@ -38,7 +38,7 @@
                                 </button>
                                 <button hx-post="{{ url_for('job.update_job_status', job_id=job.id) }}"
                                         hx-vals='{"status": "completed"}'
-                                        hx-target="#job-{{ job.id }}"
+                                        hx-target="#job-status-{{ job.id }}"
                                         hx-swap="outerHTML"
                                         class="button"
                                         {% if job.status == 'completed' %}disabled{% endif %}>
