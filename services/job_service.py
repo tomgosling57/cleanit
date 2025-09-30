@@ -36,3 +36,35 @@ class JobService:
     def get_job_details(self, job_id):
         job = self.db_session.query(Job).options(joinedload(Job.property)).filter(Job.id == job_id).first()
         return job
+    
+    def get_all_jobs(self):
+        jobs = self.db_session.query(Job).options(joinedload(Job.property))
+        return jobs
+
+    def get_property_by_address(self, address):
+        return self.db_session.query(Property).filter_by(address=address).first()
+
+    def create_property(self, address, access_notes=None):
+        new_property = Property(address=address, access_notes=access_notes)
+        self.db_session.add(new_property)
+        self.db_session.commit()
+        return new_property
+
+    def create_job(self, job_data):
+        new_job = Job(
+            job_title=job_data['job_title'],
+            date=job_data['date'],
+            time=job_data['time'],
+            duration=job_data['duration'],
+            description=job_data.get('description'),
+            assigned_cleaners=job_data.get('assigned_cleaners'),
+            status='pending',
+            job_type=job_data.get('job_type'),
+            property_id=job_data['property_id']
+        )
+        self.db_session.add(new_job)
+        self.db_session.commit()
+        # Reload job with property details for rendering
+        self.db_session.refresh(new_job)
+        new_job.property = self.db_session.query(Property).filter_by(id=new_job.property_id).first()
+        return new_job

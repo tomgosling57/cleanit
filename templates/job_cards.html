@@ -4,49 +4,60 @@
 
 {% block content %}
     <div class="container">
-        <h1>My Assigned Jobs for Today</h1>
+        <div class="header-with-button">
+            <h1>My Assigned Jobs for Today</h1>
+            {% if current_user.role == 'owner' %}
+                <button class="button"
+                        hx-get="{{ url_for('job.create_job') }}"
+                        hx-target="#job-creation-modal-content"
+                        hx-trigger="click"
+                        hx-on--after-request="document.getElementById('job-creation-modal').style.display='block'">
+                    Create Job
+                </button>
+            {% endif %}
+        </div>
 
-        {% if jobs %}
-            <div class="job-list">
-                {% for job in jobs %}
-                    <div class="job-card" id="job-{{ job.id }}">
-                        <h2>{{ job.job_title }}</h2>
-                        <p><strong>Time:</strong> {{ job.time.strftime('%H:%M') }}</p>
-                        <p><strong>Duration:</strong> {{ job.duration }}</p>
-                        <p><strong>Status:</strong> <span id="job-status-{{ job.id }}">{{ job.status }}</span></p>
-                        <p><strong>Property Address:</strong> {{ job.property.address }}</p>
+            <div class="job-list" id="job-list">
+                {% if jobs %}
+                    {% for job in jobs %}
+                        <div class="job-card" id="job-{{ job.id }}">
+                            <h2>{{ job.job_title }}</h2>
+                            <p><strong>Time:</strong> {{ job.time.strftime('%H:%M') }}</p>
+                            <p><strong>Duration:</strong> {{ job.duration }}</p>
+                            <p><strong>Status:</strong> <span id="job-status-{{ job.id }}">{{ job.status }}</span></p>
+                            <p><strong>Property Address:</strong> {{ job.property.address }}</p>
 
-                        <div class="job-actions">
-                            <button hx-post="{{ url_for('job.update_job_status', job_id=job.id) }}"
-                                    hx-vals='{"status": "in progress"}'
-                                    hx-target="#job-status-{{ job.id }}"
-                                    hx-swap="outerHTML"
-                                    class="button"
-                                    {% if job.status == 'in progress' or job.status == 'completed' %}disabled{% endif %}>
-                                Mark In Progress
-                            </button>
-                            <button hx-post="{{ url_for('job.update_job_status', job_id=job.id) }}"
-                                    hx-vals='{"status": "completed"}'
-                                    hx-target="#job-status-{{ job.id }}"
-                                    hx-swap="outerHTML"
-                                    class="button"
-                                    {% if job.status == 'completed' %}disabled{% endif %}>
-                                Mark Completed
-                            </button>
-                            <button hx-get="{{ url_for('job.get_job_details', job_id=job.id) }}"
-                                    hx-target="#job-details-modal-content"
-                                    hx-trigger="click"
-                                    hx-on--after-request="document.getElementById('job-details-modal').style.display='block'"
-                                    class="button">
-                                View Details
-                            </button>
+                            <div class="job-actions">
+                                <button hx-post="{{ url_for('job.update_job_status', job_id=job.id) }}"
+                                        hx-vals='{"status": "in progress"}'
+                                        hx-target="#job-{{ job.id }}"
+                                        hx-swap="outerHTML"
+                                        class="button"
+                                        {% if job.status == 'in progress' or job.status == 'completed' %}disabled{% endif %}>
+                                    Mark In Progress
+                                </button>
+                                <button hx-post="{{ url_for('job.update_job_status', job_id=job.id) }}"
+                                        hx-vals='{"status": "completed"}'
+                                        hx-target="#job-{{ job.id }}"
+                                        hx-swap="outerHTML"
+                                        class="button"
+                                        {% if job.status == 'completed' %}disabled{% endif %}>
+                                    Mark Completed
+                                </button>
+                                <button hx-get="{{ url_for('job.get_job_details', job_id=job.id) }}"
+                                        hx-target="#job-details-modal-content"
+                                        hx-trigger="click"
+                                        hx-on--after-request="document.getElementById('job-details-modal').style.display='block'"
+                                        class="button">
+                                    View Details
+                                </button>
+                            </div>
                         </div>
-                    </div>
-                {% endfor %}
+                    {% endfor %}
+                {% else %}
+                    <p>No jobs assigned for today. Enjoy your day!</p>
+                {% endif %}
             </div>
-        {% else %}
-            <p>No jobs assigned for today. Enjoy your day!</p>
-        {% endif %}
     </div>
 
     <!-- Job Details Modal -->
@@ -59,7 +70,23 @@
         </div>
     </div>
 
+    <!-- Job Creation Modal -->
+    <div id="job-creation-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <span class="close-button" onclick="document.getElementById('job-creation-modal').style.display='none'">&times;</span>
+            <div id="job-creation-modal-content">
+                <!-- Job creation form will be loaded here via HTMX -->
+            </div>
+        </div>
+    </div>
+
     <style>
+        .header-with-button {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
         .job-actions button {
             margin-right: 10px;
             padding: 8px 12px;
@@ -122,6 +149,7 @@
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
                 document.getElementById('job-details-modal').style.display = 'none';
+                document.getElementById('job-creation-modal').style.display = 'none';
             }
         });
     </script>

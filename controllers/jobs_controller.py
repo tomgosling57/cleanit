@@ -1,10 +1,13 @@
 from flask import render_template, redirect, url_for, flash, request, jsonify
 from flask_login import login_required, current_user
 from services.job_service import JobService
+from services.user_service import UserService
 from database import get_db, teardown_db
+from datetime import date, time
 
+@login_required
 def cleaner_jobs():
-    if current_user.role != 'cleaner':
+    if not current_user.is_authenticated or current_user.role != 'cleaner':
         flash('Unauthorized access', 'error')
         return redirect(url_for('index'))
 
@@ -15,8 +18,9 @@ def cleaner_jobs():
 
     return render_template('job_cards.html', jobs=jobs, current_user=current_user)
 
+@login_required
 def update_job_status(job_id):
-    if current_user.role != 'cleaner':
+    if not current_user.is_authenticated or current_user.role not in ['cleaner', 'owner', 'team-leader']:
         return jsonify({'error': 'Unauthorized'}), 403
 
     status = request.form.get('status')
@@ -26,14 +30,21 @@ def update_job_status(job_id):
     db = get_db()
     job_service = JobService(db)
     job = job_service.update_job_status(job_id, status)
-    teardown_db()
-
+    
     if job:
-        return jsonify({'message': 'Job status updated successfully', 'status': job.status})
+        # Accessing job.property to eagerly load it before the session is torn down
+        # This prevents DetachedInstanceError when rendering the template
+        _ = job.property.address
+        response = render_template('job_card_fragment.html', job=job)
+        teardown_db()
+        return response
+    
+    teardown_db()
     return jsonify({'error': 'Job not found'}), 404
 
+@login_required
 def get_job_details(job_id):
-    if current_user.role not in ['cleaner', 'team_leader', 'owner']:
+    if not current_user.is_authenticated or current_user.role not in ['cleaner', 'team_leader', 'owner']:
         return jsonify({'error': 'Unauthorized'}), 403
 
     db = get_db()
@@ -44,3 +55,77 @@ def get_job_details(job_id):
     if job:
         return render_template('job_details_modal_content.html', job=job)
     return jsonify({'error': 'Job not found'}), 404
+
+@login_required
+def get_job_creation_form():
+    if not current_user.is_authenticated or current_user.role != 'owner':
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    db = get_db()
+    user_service = UserService(db)
+    cleaners = user_service.get_users_by_role('cleaner')
+    teardown_db()
+    return render_template('job_creation_modal_content.html', cleaners=cleaners)
+
+@login_required
+def manage_jobs():
+    if not current_user.is_authenticated or current_user.role != 'owner':
+        flash('Unauthorized access', 'error')
+        return redirect(url_for('index'))
+
+    db = get_db()
+    job_service = JobService(db)
+    user_service = UserService(db)
+
+    jobs = job_service.get_all_jobs() # Assuming a method to get all jobs
+    cleaners = user_service.get_users_by_role('cleaner')
+    teardown_db()
+    return render_template('job_cards.html', jobs=jobs, current_user=current_user, cleaners=cleaners)
+
+@login_required
+def create_job():
+    if not current_user.is_authenticated or current_user.role != 'owner':
+        flash('Unauthorized access', 'error')
+        return redirect(url_for('index'))
+
+    db = get_db()
+    job_service = JobService(db)
+    
+    job_title = request.form.get('job_title')
+    property_address = request.form.get('property_address')
+    date_str = request.form.get('date')
+    time_str = request.form.get('time')
+    duration = request.form.get('duration')
+    assigned_cleaner_id = request.form.get('assigned_cleaner_id')
+    job_type = request.form.get('job_type')
+    notes = request.form.get('notes')
+
+    if not all([job_title, property_address, date_str, time_str, duration]):
+        return jsonify({'error': 'Missing required fields'}), 400
+
+    try:
+        job_date = date.fromisoformat(date_str)
+        job_time = time.fromisoformat(time_str)
+    except ValueError:
+        return jsonify({'error': 'Invalid date or time format'}), 400
+
+    property_obj = job_service.get_property_by_address(property_address)
+    if not property_obj:
+        property_obj = job_service.create_property(property_address)
+
+    new_job_data = {
+        'job_title': job_title,
+        'date': job_date,
+        'time': job_time,
+        'duration': duration,
+        'description': notes,
+        'assigned_cleaners': assigned_cleaner_id,
+        'job_type': job_type,
+        'property_id': property_obj.id
+    }
+    new_job = job_service.create_job(new_job_data)
+    teardown_db()
+
+    if new_job:
+        return render_template('job_card_fragment.html', job=new_job)
+    return jsonify({'error': 'Failed to create job'}), 500
