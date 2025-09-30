@@ -31,8 +31,8 @@ class TestUserService:
         users = user_service.list_users()
         
         assert len(users) == 2
-        assert users[0]['username'] == 'user1'
-        assert users[1]['role'] == 'manager'
+        assert users[0].username == 'user1'
+        assert users[1].role == 'manager'
         mock_db_session.query.assert_called_once_with(User)
 
     def test_get_user_by_id_found(self, user_service, mock_db_session, sample_user_data):
@@ -41,9 +41,9 @@ class TestUserService:
         
         user = user_service.get_user_by_id(1)
         
-        assert user['id'] == sample_user_data['id']
-        assert user['username'] == sample_user_data['username']
-        assert user['role'] == sample_user_data['role']
+        assert user.id == sample_user_data['id']
+        assert user.username == sample_user_data['username']
+        assert user.role == sample_user_data['role']
         mock_db_session.query.assert_called_once_with(User)
         mock_db_session.query.return_value.filter_by.assert_called_once_with(id=1)
 
@@ -58,11 +58,13 @@ class TestUserService:
 
     def test_get_user_by_username_found(self, user_service, mock_db_session, sample_user_data):
         mock_user = MagicMock(spec=User, **sample_user_data)
+        mock_user.password_hash = generate_password_hash(sample_user_data['password'])
         mock_db_session.query.return_value.filter_by.return_value.first.return_value = mock_user
         
         user = user_service.get_user_by_username('testuser')
         
         assert user.username == sample_user_data['username']
+        assert user.password_hash == mock_user.password_hash
         mock_db_session.query.assert_called_once_with(User)
         mock_db_session.query.return_value.filter_by.assert_called_once_with(username='testuser')
 
@@ -106,7 +108,8 @@ class TestUserService:
         
         user = user_service.authenticate_user(sample_user_data['username'], sample_user_data['password'])
         
-        assert user['username'] == sample_user_data['username']
+        assert user.username == sample_user_data['username']
+        assert user.role == sample_user_data['role']
         mock_check_password_hash.assert_called_once_with(mock_user.password_hash, sample_user_data['password'])
 
     @patch('services.user_service.check_password_hash')
@@ -135,8 +138,8 @@ class TestUserService:
         updated_data = {'username': 'updateduser', 'role': 'manager', 'password': 'newpassword'}
         user = user_service.update_user(1, updated_data)
         
-        assert user['username'] == 'updateduser'
-        assert user['role'] == 'manager'
+        assert user.username == 'updateduser'
+        assert user.role == 'manager'
         mock_user.set_password.assert_called_once_with('newpassword')
         mock_db_session.commit.assert_called_once()
 

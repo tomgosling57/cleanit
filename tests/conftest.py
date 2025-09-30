@@ -64,3 +64,62 @@ def login_cleaner(client, app_context):
         mock_authenticate_user.return_value = cleaner_user
         client.post('/users/login', data={'username': 'cleaner_user', 'password': 'password'}, follow_redirects=True)
     return cleaner_user
+
+@pytest.fixture
+def create_job_and_property(app_context):
+    from database import Job, Property
+    from datetime import date, time
+    from app import app as main_app
+    from unittest.mock import patch
+
+    # The app_context fixture already provides the application context, no need to re-enter it.
+    db_session = main_app.config['SQLALCHEMY_SESSION']
+
+    # Create a mock property
+    mock_property = MagicMock(spec=Property)
+    mock_property.id = 1
+    mock_property.address = '123 Test St'
+    mock_property.access_notes = 'Gate code 1234'
+    mock_property.client_name = 'Test Client'
+    mock_property.client_phone = '0400000000'
+
+    # Create a mock job
+    mock_job = MagicMock(spec=Job)
+    mock_job.id = 1
+    mock_job.job_title = 'Test Job'
+    mock_job.date = date.today()
+    
+    # Create a mock time object
+    mock_time = MagicMock(spec=time)
+    mock_time.strftime.return_value = '09:00'
+    mock_job.time = mock_time
+    
+    mock_job.duration = 120
+    mock_job.description = 'Clean the house'
+    mock_job.assigned_cleaners = '2' # cleaner_user id
+    mock_job.status = 'pending'
+    mock_job.job_type = 'standard'
+    mock_job.property_id = 1
+    mock_job.property = mock_property # Assign the mock property
+    mock_job.assigned_cleaners_list = [MagicMock(username='cleaner_user', id=2)] # For multiple cleaners test
+    
+    # Configure property attributes for direct access
+    mock_job.property.address = '123 Test St'
+    mock_job.property.client_name = 'Test Client'
+    mock_job.property.client_phone = '0400000000'
+    mock_job.property.access_notes = 'Gate code 1234'
+
+    # Mock the database session queries for job service
+    db_session.query.return_value.filter.return_value.first.return_value = mock_job
+    db_session.query.return_value.join.return_value.filter.return_value.all.return_value = [mock_job]
+    db_session.query.return_value.options.return_value.filter.return_value.first.return_value = mock_job
+    db_session.query.return_value.options.return_value.all.return_value = [mock_job]
+
+    # Mock the job service methods directly
+    with patch('services.job_service.JobService.get_cleaner_jobs_for_today') as mock_get_jobs:
+        mock_get_jobs.return_value = [mock_job]
+    
+    with patch('services.job_service.JobService.get_job_details') as mock_get_details:
+        mock_get_details.return_value = mock_job
+
+    yield mock_job, mock_property
