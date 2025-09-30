@@ -9,12 +9,8 @@
 <body>
     <header>
         <nav>
-            <a href="{{ url_for('timetable') }}">Timetable</a>
-            {% if CURRENT_USER %}
-                <a href="{{ url_for('logout') }}">Logout</a>
-            {% else %}
-                <a href="{{ url_for('login') }}">Login</a>
-            {% endif %}
+            <a href="{{ url_for('job.cleaner_jobs') }}">My Jobs</a>            
+            <a href="{{ url_for('user.login') }}">Login</a>
         </nav>
     </header>
     <main>
