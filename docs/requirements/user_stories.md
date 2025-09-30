@@ -239,3 +239,26 @@ As a team leader or owner, I want to view the post-clean report and pictures wit
 *   [ ] Update the Jinja2 template (`templates/job_editor_modal.html`) to display the report text and images.
 *   [ ] Ensure proper authorization checks for 'team leader' and 'owner' roles.
 *   [ ] Implement image display (e.g., `<img>` tags) and potentially a gallery/viewer if multiple images exist.
+
+### User Story: Create New Job (Owner)
+**Priority: P1 (High)**
+As the owner, I want to be able to create a new job directly from the timetable view by clicking a "Create Job" or a plus button, which brings up a blank, editable job modal pop-up, so I can efficiently add new jobs to the database and see them immediately reflected on the timetable.
+
+**Acceptance Criteria:**
+*   A "Create Job" button or a prominent plus icon is visible on the owner's timetable view.
+*   Clicking this button/icon displays a blank, editable job modal pop-up.
+*   The pop-up contains all necessary fields for creating a new job (e.g., property address, date, time, assigned team/cleaner, job type, notes).
+*   Upon submission, the new job is saved to the database.
+*   The newly created job is immediately visible on the timetable view without a full page reload.
+*   Only users with the 'owner' role can access this feature.
+
+**Checklist:**
+*   [ ] Add a "Create Job" button or plus icon to the owner's timetable template (`templates/index.html` or similar).
+*   [ ] Implement HTMX `hx-get` on the button to fetch a blank job creation form.
+*   [ ] Create a Flask route (`/job/create`) to return a blank Jinja2 template fragment for the job creation modal.
+*   [ ] Render an empty job form within a Jinja2 template (`templates/job_editor_modal.html` or a dedicated `templates/job_create_modal.html`).
+*   [ ] Implement HTMX `hx-post` on the form within the modal to handle submission.
+*   [ ] Create a Flask route (`/job/save`) to handle form submission and save the new job to the SQLite database.
+*   [ ] Ensure proper authorization checks for the 'owner' role on the Flask routes.
+*   [ ] Implement HTMX `hx-trigger` and `hx-swap` to refresh the timetable view after successful job creation.
+*   [ ] Provide clear feedback to the user on successful creation or errors.

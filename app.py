@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, url_for, session, Response
 import os
 from database import init_db, create_initial_owner, create_initial_cleaner, create_initial_property_and_job, get_db, teardown_db
 from routes.users import user_bp
@@ -33,6 +33,12 @@ def load_user(user_id):
     _return = UserService(get_db()).get_user_by_id(user_id)
     teardown_db()
     return _return
+
+@login_manager.unauthorized_handler
+def unauthorized():
+    response = Response("Unauthorized", 401)
+    response.headers['HX-Redirect'] = url_for('user.login')
+    return response
 
 @app.route('/')
 def index():

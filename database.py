@@ -46,6 +46,7 @@ class Job(Base):
     description = Column(String)
     assigned_cleaners = Column(String) # Comma-separated cleaner IDs
     status = Column(String, default='pending') # 'pending', 'in progress', 'completed'
+    job_type = Column(String)
     report = Column(String) # Sensitive, only for Team Leader/Owner
 
     property_id = Column(Integer, ForeignKey('properties.id'))
