@@ -25,10 +25,10 @@ class JobService:
 
         return jobs
 
-    def update_job_status(self, job_id, status):
+    def update_job_completion_status(self, job_id, is_complete):
         job = self.db_session.query(Job).filter_by(id=job_id).first()
         if job:
-            job.status = status
+            job.is_complete = is_complete
             self.db_session.commit()
             return job
         return None
@@ -58,7 +58,7 @@ class JobService:
             duration=job_data['duration'],
             description=job_data.get('description'),
             assigned_cleaners=job_data.get('assigned_cleaners'),
-            status='pending',
+            is_complete=False,
             job_type=job_data.get('job_type'),
             property_id=job_data['property_id']
         )
