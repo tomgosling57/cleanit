@@ -1,1 +1,5 @@
-<span id="job-status-{{ job.id }}">{{ job.status }}</span>
+<div id="job-status-{{ job.id }}" class="job-status-container">
+    <span class="status-text {% if job.is_complete %}status-completed{% else %}status-pending{% endif %}">
+        {% if job.is_complete %}Completed{% else %}Pending{% endif %}
+    </span>
+</div>
