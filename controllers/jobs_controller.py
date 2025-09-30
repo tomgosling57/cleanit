@@ -15,25 +15,25 @@ def cleaner_jobs():
     jobs = job_service.get_cleaner_jobs_for_today(current_user.id)
     teardown_db()
 
-    return render_template('job_cards.html', jobs=jobs, current_user=current_user)
+    return render_template('timetable.html', jobs=jobs, current_user=current_user)
 
 def update_job_status(job_id):
     if not current_user.is_authenticated or current_user.role not in ['cleaner', 'owner', 'team-leader']:
         return jsonify({'error': 'Unauthorized'}), 401
 
-    status = request.form.get('status')
-    if not status:
-        return jsonify({'error': 'Status is required'}), 400
+    is_complete = request.form.get('is_complete') == 'True'
 
     db = get_db()
     job_service = JobService(db)
-    job = job_service.update_job_status(job_id, status)
+    job = job_service.update_job_completion_status(job_id, is_complete)
     
     if job:
         # Accessing job.property to eagerly load it before the session is torn down
         # This prevents DetachedInstanceError when rendering the template
+        # Accessing job.property to eagerly load it before the session is torn down
+        # This prevents DetachedInstanceError when rendering the template
         _ = job.property.address
-        response = render_template('job_status_fragment.html', job=job)
+        response = render_template('job_card.html', job=job, current_user=current_user)
         teardown_db()
         return response
     
@@ -75,7 +75,7 @@ def manage_jobs():
     jobs = job_service.get_all_jobs() # Assuming a method to get all jobs
     cleaners = user_service.get_users_by_role('cleaner')
     teardown_db()
-    return render_template('job_cards.html', jobs=jobs, current_user=current_user, cleaners=cleaners)
+    return render_template('timetable.html', jobs=jobs, current_user=current_user, cleaners=cleaners)
 
 def create_job():
     if current_user.role != 'owner':
