@@ -8,6 +8,7 @@ def test_cleaner_can_view_assigned_jobs(client, login_cleaner, create_job_and_pr
     """
     cleaner_user = login_cleaner
     mock_job, mock_property = create_job_and_property
+    mock_job.is_complete = False  # Ensure job is pending
 
     # Patch the job service method directly in the controller
     with patch('controllers.jobs_controller.JobService') as MockJobService:
@@ -18,7 +19,7 @@ def test_cleaner_can_view_assigned_jobs(client, login_cleaner, create_job_and_pr
         assert response.status_code == 200
         assert b"Test Job" in response.data
         assert b"123 Test St" in response.data
-        assert b"pending" in response.data
+        assert b"Pending" in response.data
 
 def test_cleaner_cannot_view_other_cleaners_jobs(client, login_cleaner, create_job_and_property):
     """
@@ -64,6 +65,7 @@ def test_job_list_format_is_clear_and_readable(client, login_cleaner, create_job
     """
     cleaner_user = login_cleaner
     mock_job, mock_property = create_job_and_property
+    mock_job.is_complete = False  # Ensure job is pending
 
     # Patch the job service method
     with patch('controllers.jobs_controller.JobService') as MockJobService:
@@ -76,7 +78,7 @@ def test_job_list_format_is_clear_and_readable(client, login_cleaner, create_job
         assert b"job-card" in response.data
         assert b"Test Job" in response.data  # Job title content
         assert b"123 Test St" in response.data  # Property address content
-        assert b"pending" in response.data  # Job status content
+        assert b"Pending" in response.data  # Job status content
         assert b"View Details" in response.data
 
 def test_view_basic_property_details_modal(client, login_cleaner, create_job_and_property):
