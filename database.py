@@ -1,9 +1,10 @@
 import os
-from sqlalchemy import create_engine, Column, Integer, String
-from sqlalchemy.orm import sessionmaker, declarative_base
+from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, Date, Time
+from sqlalchemy.orm import sessionmaker, declarative_base, relationship
 from werkzeug.security import generate_password_hash
 from flask import g, current_app
 from flask_login import UserMixin
+from datetime import date, time
 
 # Define the base for declarative models
 Base = declarative_base()
@@ -22,6 +23,36 @@ class User(Base, UserMixin):
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
+
+class Property(Base):
+    __tablename__ = 'properties'
+    id = Column(Integer, primary_key=True)
+    address = Column(String, nullable=False)
+    access_notes = Column(String)
+
+    jobs = relationship("Job", back_populates="property")
+
+    def __repr__(self):
+        return f"<Property(id={self.id}, address='{self.address}')>"
+
+class Job(Base):
+    __tablename__ = 'jobs'
+
+    id = Column(Integer, primary_key=True)
+    job_title = Column(String, nullable=False)
+    date = Column(Date, nullable=False)
+    time = Column(Time, nullable=False)
+    duration = Column(String, nullable=False)
+    description = Column(String)
+    assigned_cleaners = Column(String) # Comma-separated cleaner IDs
+    status = Column(String, default='pending') # 'pending', 'in progress', 'completed'
+    report = Column(String) # Sensitive, only for Team Leader/Owner
+
+    property_id = Column(Integer, ForeignKey('properties.id'))
+    property = relationship("Property", back_populates="jobs")
+
+    def __repr__(self):
+        return f"<Job(id={self.id}, job_title='{self.job_title}', date='{self.date}', status='{self.status}')>"
 
 # Database initialization function
 def init_db(app):
@@ -53,4 +84,40 @@ def create_initial_owner(Session):
         session.add(owner)
         session.commit()
         print("Initial owner user created.")
+    session.close()
+
+def create_initial_cleaner(Session):
+    session = Session()
+    if not session.query(User).filter_by(username='cleaner').first():
+        cleaner = User(username='cleaner', role='cleaner')
+        cleaner.set_password('cleanerpassword')
+        session.add(cleaner)
+        session.commit()
+        print("Initial cleaner user created.")
+    session.close()
+
+def create_initial_property_and_job(Session):
+    session = Session()
+    cleaner = session.query(User).filter_by(username='cleaner').first()
+    if cleaner and not session.query(Property).first():
+        # Create a property
+        property1 = Property(address='123 Main St, Anytown', access_notes='Key under mat')
+        session.add(property1)
+        session.commit()
+        print("Initial property created.")
+
+        # Create a job for today
+        today = date.today()
+        job1 = Job(
+            job_title='Morning Clean',
+            date=today,
+            time=time(9, 0),
+            duration='2 hours',
+            description='Full house clean, focus on kitchen and bathrooms.',
+            assigned_cleaners=str(cleaner.id),
+            property=property1
+        )
+        session.add(job1)
+        session.commit()
+        print("Initial job created for cleaner.")
     session.close()
