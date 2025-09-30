@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, url_for, session, Response
+from flask import Flask, render_template, request, url_for, session, Response, redirect
 import os
 from database import init_db, create_initial_owner, create_initial_cleaner, create_initial_property_and_job, get_db, teardown_db
 from routes.users import user_bp
@@ -36,9 +36,22 @@ def load_user(user_id):
 
 @login_manager.unauthorized_handler
 def unauthorized():
-    response = Response("Unauthorized", 401)
-    response.headers['HX-Redirect'] = url_for('user.login')
-    return response
+    # Check if this is an HTMX request
+    if request.headers.get('HX-Request') == 'true':
+        response = Response("Unauthorized", 401)
+        response.headers['HX-Redirect'] = url_for('user.login')
+        return response
+    # Check if this is an AJAX request (X-Requested-With header)
+    elif request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        # For regular AJAX requests, return 401 with "Unauthorized" text
+        return Response("Unauthorized", 401)
+    # Check if this is a job status update endpoint (which should return 401 for AJAX)
+    elif request.endpoint == 'job.update_job_status':
+        # For job status updates, return 401 with "Unauthorized" text
+        return Response("Unauthorized", 401)
+    else:
+        # For regular browser requests (page refreshes), redirect to login
+        return redirect(url_for('user.login'))
 
 @app.route('/')
 def index():
