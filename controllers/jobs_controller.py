@@ -33,7 +33,7 @@ def update_job_status(job_id):
         # Accessing job.property to eagerly load it before the session is torn down
         # This prevents DetachedInstanceError when rendering the template
         _ = job.property.address
-        response = render_template_string('{% include "job_status_fragment.html" %} {% include "job_actions_fragment.html" %}', job=job, user =current_user)
+        response = render_template_string('{% include "job_status_fragment.html" %} {% include "job_actions_fragment.html" %}', job=job, user=current_user, is_oob_swap=True)
         teardown_db()
         return response
     
@@ -122,5 +122,5 @@ def create_job():
     teardown_db()
 
     if new_job:
-        return render_template('job_card.html', job=new_job)
+        return render_template('job_card.html', job=new_job, is_oob_swap=False)
     return jsonify({'error': 'Failed to create job'}), 500

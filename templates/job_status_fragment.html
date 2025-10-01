@@ -1,4 +1,4 @@
-<div id="job-status-{{ job.id }}" class="job-status-container" hx-swap-oob="true">
+<div id="job-status-{{ job.id }}" class="job-status-container" {% if is_oob_swap %}hx-swap-oob="true"{% endif %}>
     <span class="status-text {% if job.is_complete %}status-completed{% else %}status-pending{% endif %}">
         {% if job.is_complete %}Completed{% else %}Pending{% endif %}
     </span>
