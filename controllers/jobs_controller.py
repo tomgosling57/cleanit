@@ -1,4 +1,4 @@
-from flask import render_template, redirect, url_for, flash, request, jsonify
+from flask import render_template, render_template_string, redirect, url_for, flash, request, jsonify, Response
 from flask_login import login_required, current_user
 from services.job_service import JobService
 from services.user_service import UserService
@@ -15,7 +15,7 @@ def cleaner_jobs():
     jobs = job_service.get_cleaner_jobs_for_today(current_user.id)
     teardown_db()
 
-    return render_template('timetable.html', jobs=jobs, current_user=current_user)
+    return Response(render_template('timetable.html', jobs=jobs, current_user=current_user), content_type="text/html")
 
 def update_job_status(job_id):
     if not current_user.is_authenticated or current_user.role not in ['cleaner', 'owner', 'team-leader']:
@@ -33,7 +33,7 @@ def update_job_status(job_id):
         # Accessing job.property to eagerly load it before the session is torn down
         # This prevents DetachedInstanceError when rendering the template
         _ = job.property.address
-        response = render_template('job_card.html', job=job, current_user=current_user)
+        response = render_template_string('{% include "job_status_fragment.html" %} {% include "job_actions_fragment.html" %}', job=job, user =current_user)
         teardown_db()
         return response
     
@@ -109,6 +109,7 @@ def create_job():
 
     new_job_data = {
         'job_title': job_title,
+        'is_complete': False,
         'date': job_date,
         'time': job_time,
         'duration': duration,
@@ -121,5 +122,5 @@ def create_job():
     teardown_db()
 
     if new_job:
-        return render_template('job_card_fragment.html', job=new_job)
+        return render_template('job_card.html', job=new_job)
     return jsonify({'error': 'Failed to create job'}), 500
