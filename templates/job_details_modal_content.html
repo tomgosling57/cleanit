@@ -2,7 +2,7 @@
 <h3>{{ job.job_title }}</h3>
 <p><strong>Time:</strong> {{ job.time.strftime('%H:%M') }}</p>
 <p><strong>Duration:</strong> {{ job.duration }}</p>
-<p><strong>Status:</strong> {{ job.status }}</p>
+<p><strong>Status:</strong> {% if job.is_complete %}Complete{% else %}Pending{% endif %}</p>
 <p><strong>Property Address:</strong> {{ job.property.address }}</p>
 <p><strong>Client Name:</strong> {{ job.property.client_name }}</p>
 <p><strong>Client Phone:</strong> {{ job.property.client_phone }}</p>
