@@ -75,10 +75,10 @@ def test_unauthenticated_user_cannot_update_job_status(client, create_job_and_pr
     # Verify it's a JSON error response
     assert b'Unauthorized' in response.data
 
-def test_job_status_update_returns_only_status_fragment(client, login_cleaner, create_job_and_property):
+def test_job_status_update_returns_status_and_actions_fragments(client, login_cleaner, create_job_and_property):
     """
-    Test that updating job status returns only the status fragment (not the entire job card)
-    to prevent duplication bugs when updating newly created jobs.
+    Test that updating job status returns both status and actions fragments
+    to update both the status display and action buttons in the UI.
     """
     cleaner_user = login_cleaner
     mock_job, mock_property = create_job_and_property
@@ -107,25 +107,27 @@ def test_job_status_update_returns_only_status_fragment(client, login_cleaner, c
         
         assert response.status_code == 200
         
-        # Verify that the response contains only the status fragment, not the entire job card
+        # Verify that the response contains both status and actions fragments
         # The status fragment should contain the job status span with the correct ID
         assert b'job-status-' + str(mock_job.id).encode() in response.data
         assert b'Completed' in response.data
         
-        # Verify that the response does NOT contain the entire job card structure
-        # This ensures we're not returning the full job_card_fragment.html
-        assert b'job-card' not in response.data
-        assert b'job-actions' not in response.data
-        assert b'Mark In Progress' not in response.data
-        assert b'Mark Completed' not in response.data
-        assert b'View Details' not in response.data
+        # Verify that the response contains the actions fragment
+        assert b'job-actions-' + str(mock_job.id).encode() in response.data
+        assert b'Mark Pending' in response.data
+        assert b'View Details' in response.data
         
-        # Verify the response is specifically the job_status_fragment.html content
-        # which should be just a span element with the status
+        # Verify that the response does NOT contain the entire job card structure
+        # This ensures we're not returning the full job_card.html
+        assert b'job-card' not in response.data
+        assert b'job_title' not in response.data
+        assert b'Property Address' not in response.data
+        
+        # Verify the response contains both fragments with OOB swap attributes
         response_text = response.get_data(as_text=True)
-        assert response_text.strip().startswith('<span')
-        assert response_text.strip().endswith('</span>')
         assert f'id="job-status-{mock_job.id}"' in response_text
+        assert f'id="job-actions-{mock_job.id}"' in response_text
+        assert 'hx-swap-oob="true"' in response_text
 
 def test_unauthenticated_user_cannot_update_job_status(client, create_job_and_property):
     """
@@ -144,55 +146,3 @@ def test_unauthenticated_user_cannot_update_job_status(client, create_job_and_pr
     assert response.status_code == 401
     # Verify it's a JSON error response
     assert b'Unauthorized' in response.data
-
-def test_job_status_update_returns_only_status_fragment(client, login_cleaner, create_job_and_property):
-    """
-    Test that updating job status returns only the status fragment (not the entire job card)
-    to prevent duplication bugs when updating newly created jobs.
-    """
-    cleaner_user = login_cleaner
-    mock_job, mock_property = create_job_and_property
-
-    # Mock the job service update_job_completion_status method
-    with patch('controllers.jobs_controller.JobService') as MockJobService:
-        mock_service_instance = MockJobService.return_value
-        
-        # Create an updated mock job with completed status
-        updated_job = MagicMock()
-        updated_job.id = mock_job.id
-        updated_job.is_complete = True
-        updated_job.job_title = mock_job.job_title
-        updated_job.time = mock_job.time
-        updated_job.duration = mock_job.duration
-        updated_job.property = mock_property
-        
-        mock_service_instance.update_job_completion_status.return_value = updated_job
-        
-        # Make POST request to update job status
-        response = client.post(
-            url_for('job.update_job_status', job_id=mock_job.id),
-            data={'is_complete': 'True'},
-            follow_redirects=False
-        )
-        
-        assert response.status_code == 200
-        
-        # Verify that the response contains only the status fragment, not the entire job card
-        # The status fragment should contain the job status span with the correct ID
-        assert b'job-status-' + str(mock_job.id).encode() in response.data
-        assert b'Completed' in response.data
-        
-        # Verify that the response does NOT contain the entire job card structure
-        # This ensures we're not returning the full job_card_fragment.html
-        assert b'job-card' not in response.data
-        assert b'job-actions' not in response.data
-        assert b'Mark In Progress' not in response.data
-        assert b'Mark Completed' not in response.data
-        assert b'View Details' not in response.data
-        
-        # Verify the response is specifically the job_status_fragment.html content
-        # which should be just a span element with the status
-        response_text = response.get_data(as_text=True)
-        assert response_text.strip().startswith('<span')
-        assert response_text.strip().endswith('</span>')
-        assert f'id="job-status-{mock_job.id}"' in response_text
