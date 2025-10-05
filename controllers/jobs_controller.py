@@ -80,6 +80,58 @@ def timetable():
     teardown_db()
     return _return
 
+def update_job(job_id):
+    if current_user.role != 'owner':
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    db = get_db()
+    job_service = JobService(db)
+    job = job_service.get_job_details(job_id)
+    if not job:
+        teardown_db()
+        return jsonify({'error': 'Job not found'}), 404
+
+    job_title = request.form.get('job_title')
+    property_address = request.form.get('property_address')
+    date_str = request.form.get('date')
+    time_str = request.form.get('time')
+    duration = request.form.get('duration')
+    assigned_cleaner_id = request.form.get('assigned_cleaner_id')
+    job_type = request.form.get('job_type')
+    notes = request.form.get('notes')
+
+    if not all([job_title, property_address, date_str, time_str, duration]):
+        teardown_db()
+        return jsonify({'error': 'Missing required fields'}), 400
+
+    try:
+        job_date = date.fromisoformat(date_str)
+        job_time = time.fromisoformat(time_str)
+    except ValueError:
+        teardown_db()
+        return jsonify({'error': 'Invalid date or time format'}), 400
+
+    property_obj = job_service.get_property_by_address(property_address)
+    if not property_obj:
+        property_obj = job_service.create_property(property_address)
+
+    updated_job_data = {
+        'job_title': job_title,
+        'date': job_date,
+        'time': job_time,
+        'duration': duration,
+        'description': notes,
+        'assigned_cleaners': assigned_cleaner_id,
+        'job_type': job_type,
+        'property_id': property_obj.id
+    }
+    updated_job = job_service.update_job(job_id, updated_job_data)
+    teardown_db()
+
+    if updated_job:
+        return render_template('job_card.html', job=updated_job, is_oob_swap=True)
+    return jsonify({'error': 'Failed to update job'}), 500
+
 def create_job():
     if current_user.role != 'owner':
         flash('Unauthorized access', 'error')
