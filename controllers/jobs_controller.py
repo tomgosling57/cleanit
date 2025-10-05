@@ -6,6 +6,7 @@ from database import get_db, teardown_db
 from datetime import date, time
 
 def cleaner_jobs():
+     # TODO: remove duplicate view
     if current_user.role != 'cleaner':
         flash('Unauthorized access', 'error')
         return redirect(url_for('index'))
@@ -63,19 +64,22 @@ def get_job_creation_form():
     teardown_db()
     return render_template('job_creation_modal_content.html', cleaners=cleaners)
 
-def manage_jobs():
-    if current_user.role != 'owner':
-        flash('Unauthorized access', 'error')
-        return redirect(url_for('index'))
-
+def timetable():
+    
     db = get_db()
     job_service = JobService(db)
     user_service = UserService(db)
+    _return = redirect(url_for('user.login'))
+    if current_user.role == 'owner':
+        jobs = job_service.get_all_jobs() # Assuming a method to get all jobs
+        cleaners = user_service.get_users_by_role('cleaner')
+        _return = render_template('timetable.html', jobs=jobs, current_user=current_user, cleaners=cleaners)
+    if current_user.role == 'cleaner':
+        job_service = JobService(db)
+        jobs = job_service.get_cleaner_jobs_for_today(current_user.id)  
 
-    jobs = job_service.get_all_jobs() # Assuming a method to get all jobs
-    cleaners = user_service.get_users_by_role('cleaner')
     teardown_db()
-    return render_template('timetable.html', jobs=jobs, current_user=current_user, cleaners=cleaners)
+    return _return
 
 def create_job():
     if current_user.role != 'owner':

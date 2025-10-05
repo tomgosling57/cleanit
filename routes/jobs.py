@@ -9,10 +9,10 @@ job_bp = Blueprint('job', __name__, url_prefix='/jobs')
 def teardown_job_db(exception=None):
     teardown_db(exception)
 
-@job_bp.route('/assigned')
+@job_bp.route('/')
 @login_required
-def cleaner_jobs():
-    return jobs_controller.cleaner_jobs()
+def timetable():
+    return jobs_controller.timetable()
 
 @job_bp.route('/job/<int:job_id>/update_status', methods=['POST'])
 def update_job_status(job_id):
@@ -31,8 +31,3 @@ def create_job():
     else:
         _return = jobs_controller.get_job_creation_form()
     return _return
-
-@job_bp.route('/manage', methods=['GET'])
-@login_required
-def manage_jobs():
-    return jobs_controller.manage_jobs()
