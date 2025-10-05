@@ -116,7 +116,3 @@ def _urlsplit(url, scheme='', allow_fragments=True):
         url, query = url.split('?', 1)
     v = SplitResult(scheme, netloc, url, query, fragment)
     return _coerce_result(v)
-
-def get_user_jobs_view(user):
-    """Returns the appropriate jobs view and point for the user's role"""
-    return '/jobs/assigned' if user.role == 'cleaner' else '/jobs/manage'
