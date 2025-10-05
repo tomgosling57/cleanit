@@ -25,6 +25,24 @@ class JobService:
 
         return jobs
 
+    def update_job(self, job_id, job_data):
+        job = self.db_session.query(Job).filter_by(id=job_id).first()
+        if not job:
+            return None
+
+        job.job_title = job_data.get('job_title', job.job_title)
+        job.date = job_data.get('date', job.date)
+        job.time = job_data.get('time', job.time)
+        job.duration = job_data.get('duration', job.duration)
+        job.description = job_data.get('description', job.description)
+        job.assigned_cleaners = job_data.get('assigned_cleaners', job.assigned_cleaners)
+        property_address = job_data.get('property_address')
+        if property_address:
+            property_obj = self.get_property_by_address(property_address)
+            if not property_obj:
+                property_obj = self.create_property(property_address)
+            job.property_id = property
+
     def update_job_completion_status(self, job_id, is_complete):
         job = self.db_session.query(Job).filter_by(id=job_id).first()
         if job:
