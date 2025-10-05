@@ -55,10 +55,12 @@ def unauthorized():
 
 @app.route('/')
 def index():
-    welcome_message = "Welcome to CleanIt! Database initialized. <a href='/users/'>View Users</a>"
     if current_user.is_authenticated:
-        welcome_message = f"Welcome to CleanIt, {current_user.username}! Database initialized. <a href='/users/'>View Users</a>"
-    return welcome_message
+        if current_user.role == "cleaner":
+            return redirect(url_for('job.cleaner_jobs'))
+        else:
+            return redirect(url_for('job.manage_jobs'))
+    return redirect(url_for('user.login'))
 
 if __name__ == '__main__':
     app.run(debug=True)
