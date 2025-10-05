@@ -1,5 +1,5 @@
 from flask import request, jsonify, render_template, redirect, url_for, flash, session, abort, current_app
-from utils.http import validate_request_host
+from utils.http import validate_request_host, get_user_jobs_view
 from database import get_db, teardown_db
 from services.user_service import UserService
 from flask_login import login_user, current_user
@@ -79,6 +79,8 @@ def login():
             login_user(user)
             flash(f'Welcome back, {user.username}!', 'success')
             next = request.args.get('next')
+            if not next:
+                next = get_user_jobs_view(user)
             if not validate_request_host(next, request.host, current_app.debug):
                 _return = abort(400)
             _return = redirect(next or url_for('index'))
