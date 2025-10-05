@@ -64,8 +64,7 @@ def get_job_creation_form():
     teardown_db()
     return render_template('job_creation_modal_content.html', cleaners=cleaners)
 
-def timetable():
-    
+def timetable():    
     db = get_db()
     job_service = JobService(db)
     user_service = UserService(db)
@@ -74,7 +73,7 @@ def timetable():
         jobs = job_service.get_all_jobs() # Assuming a method to get all jobs
         cleaners = user_service.get_users_by_role('cleaner')
         _return = render_template('timetable.html', jobs=jobs, current_user=current_user, cleaners=cleaners)
-    if current_user.role == 'cleaner':
+    if current_user.role != 'cleaner':
         job_service = JobService(db)
         jobs = job_service.get_cleaner_jobs_for_today(current_user.id)  
 
