@@ -55,12 +55,7 @@ def unauthorized():
 
 @app.route('/')
 def index():
-    if current_user.is_authenticated:
-        if current_user.role == "cleaner":
-            return redirect(url_for('job.cleaner_jobs'))
-        else:
-            return redirect(url_for('job.manage_jobs'))
-    return redirect(url_for('user.login'))
+    return redirect(url_for('job.timetable'))
 
 if __name__ == '__main__':
     app.run(debug=True)
