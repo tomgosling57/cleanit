@@ -79,11 +79,9 @@ def login():
             login_user(user)
             flash(f'Welcome back, {user.username}!', 'success')
             next = request.args.get('next')
-            if not next:
-                next = get_user_jobs_view(user)
             if not validate_request_host(next, request.host, current_app.debug):
                 _return = abort(400)
-            _return = redirect(next or url_for('index'))
+            _return = redirect(next or url_for('job.timetable'))
         else:
             flash('Invalid username or password', 'error')
     
