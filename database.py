@@ -35,6 +35,19 @@ class Property(Base):
     def __repr__(self):
         return f"<Property(id={self.id}, address='{self.address}')>"
 
+class Team(Base):
+    __tablename__ = 'teams'
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    members = relationship("User", secondary="team_members")
+
+class TeamMembers(Base):
+    __tablename__ = 'team_members'
+    team_id = Column(Integer, ForeignKey('teams.id'), primary_key=True)
+    user_id = Column(Integer, ForeignKey('users.id'), primary_key=True)
+    def __repr__(self):
+        return f"<TeamMembers(team_id={self.team_id}, user_id='{self.user_id}')>"
+
 class Job(Base):
     __tablename__ = 'jobs'
 
