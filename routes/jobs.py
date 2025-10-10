@@ -18,10 +18,13 @@ def timetable():
 def update_job_status(job_id):
     return jobs_controller.update_job_status(job_id)
 
-@job_bp.route('/job/<int:job_id>/update', methods=['PUT'])
+@job_bp.route('/job/<int:job_id>/update', methods=['GET', 'PUT'])
 @login_required
 def update_job(job_id):
-    return jobs_controller.update_job(job_id)
+    if request.method == 'PUT':
+        return jobs_controller.update_job(job_id)
+    else:
+        return jobs_controller.get_job_update_form(job_id)
 
 @job_bp.route('/job/<int:job_id>/details', methods=['GET'])
 @login_required

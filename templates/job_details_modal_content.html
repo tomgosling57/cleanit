@@ -7,13 +7,19 @@
 <p><strong>Client Name:</strong> {{ job.property.client_name }}</p>
 <p><strong>Client Phone:</strong> {{ job.property.client_phone }}</p>
 <p><strong>Description:</strong> {{ job.description }}</p>
-{% if job.assigned_cleaners_list %}
-    <p><strong>Assigned Cleaners:</strong>
-        {% for cleaner in job.assigned_cleaners_list %}
-            {{ cleaner.username }}{% if not loop.last %}, {% endif %}
-        {% endfor %}
-    </p>
-{% elif job.assigned_cleaners %}
-    <p><strong>Assigned Cleaner IDs:</strong> {{ job.assigned_cleaners }}</p>
-{% endif %}
+<p><strong>Assigned Cleaners:</strong>
+    {% for cleaner in job.assigned_cleaners.split(',') %}
+        {{ cleaner.username }}{% if not loop.last %}, {% endif %}
+    {% endfor %}
+</p>
+
 <p><strong>Access Notes:</strong> {{ job.property.access_notes }}</p>
+{% if current_user.role == 'owner' %}
+    <button hx-get="{{ url_for('job.update_job', job_id=job.id) }}"
+        hx-target="#job-details-modal-content"
+        hx-swap="innerHTML"
+        hx-trigger="click"
+    class="button">
+        Edit Job
+    </button>
+{% endif %}

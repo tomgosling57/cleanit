@@ -1,5 +1,5 @@
 from flask import render_template, render_template_string, redirect, url_for, flash, request, jsonify, Response
-from flask_login import login_required, current_user
+from flask_login import current_user
 from services.job_service import JobService
 from services.user_service import UserService
 from database import get_db, teardown_db
@@ -51,6 +51,7 @@ def get_job_details(job_id):
     teardown_db()
 
     if job:
+        job.assigned_cleaners_list = job.assigned_cleaners.split(',') if job.assigned_cleaners else []
         return render_template('job_details_modal_content.html', job=job)
     return jsonify({'error': 'Job not found'}), 404
 
@@ -101,6 +102,7 @@ def update_job(job_id):
     notes = request.form.get('notes')
 
     if not all([job_title, property_address, date_str, time_str, duration]):
+        print(f"Missing fields: Job Title: {job_title}, Property Address: {property_address}, Date: {date_str}, Time: {time_str}, Duration:: {duration}")
         teardown_db()
         return jsonify({'error': 'Missing required fields'}), 400
 
@@ -121,7 +123,7 @@ def update_job(job_id):
         'time': job_time,
         'duration': duration,
         'description': notes,
-        'assigned_cleaners': assigned_cleaner_id,
+        'assigned_cleaners': "assigned_cleaner_id",
         'job_type': job_type,
         'property_id': property_obj.id
     }
@@ -129,8 +131,23 @@ def update_job(job_id):
     teardown_db()
 
     if updated_job:
-        return render_template('job_card.html', job=updated_job, is_oob_swap=True)
+        print("rendering template")
+        return render_template('partials/job_updated_response.html', job=updated_job, is_oob_swap=True)
     return jsonify({'error': 'Failed to update job'}), 500
+
+def get_job_update_form(job_id):
+    if current_user.role != 'owner':
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    db = get_db()
+    job_service = JobService(db)
+    user_service = UserService(db)
+    job = job_service.get_job_details(job_id)
+    cleaners = user_service.get_users_by_role('cleaner')
+    teardown_db()
+    if job:
+        return render_template('job_update_form.html', job=job, cleaners=cleaners)
+    return jsonify({'error': 'Job not found'}), 404
 
 def create_job():
     if current_user.role != 'owner':

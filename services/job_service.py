@@ -42,6 +42,7 @@ class JobService:
             if not property_obj:
                 property_obj = self.create_property(property_address)
             job.property_id = property
+        return job
 
     def update_job_completion_status(self, job_id, is_complete):
         job = self.db_session.query(Job).filter_by(id=job_id).first()
