@@ -128,11 +128,28 @@ def update_job(job_id):
         'property_id': property_obj.id
     }
     updated_job = job_service.update_job(job_id, updated_job_data)
+    # Get all jobs to re-render the entire job list
+    jobs = job_service.get_all_jobs()
     teardown_db()
 
     if updated_job:
-        print("rendering template")
-        return render_template('partials/job_updated_response.html', job=updated_job, is_oob_swap=True)
+        # Fetch the updated job details for the modal
+        job = job_service.get_job_details(job_id)
+        job.assigned_cleaners_list = job.assigned_cleaners.split(',') if job.assigned_cleaners else []
+        
+        # Render job details for the modal
+        job_details_html = render_template('job_details_modal_content.html', job=job)
+        
+        # Re-fetch all jobs to ensure the list is up-to-date
+        all_jobs = job_service.get_all_jobs() 
+        job_list_html = render_template('job_list_fragment.html', jobs=all_jobs)
+        
+        # Combine them with OOB swap attributes
+        response_html = f'<div hx-swap-oob="innerHTML:#job-details-modal-content">{job_details_html}</div>' \
+                        f'<div id="job-list" hx-swap-oob="outerHTML:#job-list">{job_list_html}</div>'
+        
+        return response_html
+
     return jsonify({'error': 'Failed to update job'}), 500
 
 def get_job_update_form(job_id):
@@ -191,8 +208,11 @@ def create_job():
         'property_id': property_obj.id
     }
     new_job = job_service.create_job(new_job_data)
+    
+    # Get all jobs to re-render the entire job list
+    jobs = job_service.get_all_jobs()
     teardown_db()
 
     if new_job:
-        return render_template('job_card.html', job=new_job, is_oob_swap=False)
+        return render_template('job_list_fragment.html', jobs=jobs)
     return jsonify({'error': 'Failed to create job'}), 500
