@@ -1,0 +1,7 @@
+{% if jobs %}
+    {% for job in jobs %}
+        {% include 'job_card.html' %}
+    {% endfor %}
+{% else %}
+    <p>No jobs assigned for today. Enjoy your day!</p>
+{% endif %}
