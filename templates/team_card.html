@@ -1,0 +1,30 @@
+<div class="team-card">
+    <div class="team-header">
+        <h3>{{ team.name }}</h3>
+        {% if team.team_leader %}
+            <div class="team-leader">
+                <span class="leader-label">Team Leader:</span>
+                <span class="leader-name">{{ team.team_leader.username }}</span>
+            </div>
+        {% endif %}
+    </div>
+    
+    <div class="team-members">
+        <h4>Team Members</h4>
+        {% if team.members %}
+            <ul class="members-list">
+                {% for member in team.members %}
+                    <li class="member-item {% if member.id == team.team_leader_id %}team-leader-member{% endif %}">
+                        <span class="member-name">{{ member.username }}</span>
+                        <span class="member-role">{{ member.role }}</span>
+                        {% if member.id == team.team_leader_id %}
+                            <span class="leader-badge">👑</span>
+                        {% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="no-members">No members in this team</p>
+        {% endif %}
+    </div>
+</div>

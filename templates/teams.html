@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Teams Management{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="header-with-button">
+            <h1>Teams Management</h1>
+        </div>
+
+        <div class="teams-container">
+            {% if teams %}
+                <div class="teams-grid">
+                    {% for team in teams %}
+                        {% include 'team_card.html' %}
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="no-teams-message">
+                    <p>No teams found. Create your first team to get started.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}
