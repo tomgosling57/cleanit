@@ -153,3 +153,25 @@ def create_initial_property_and_job(Session):
         session.commit()
         print("Initial job created for cleaner.")
     session.close()
+
+def create_initial_team(Session):
+    session = Session()
+    if not session.query(Team).first():
+        # Get the owner and cleaner users
+        owner = session.query(User).filter_by(role='owner').first()
+        cleaner = session.query(User).filter_by(username='cleaner').first()
+        
+        if owner and cleaner:
+            # Create the initial team
+            team = Team(name='Initial Team', team_leader_id=owner.id)
+            session.add(team)
+            session.commit()
+            
+            # Assign the team leader and team member
+            owner.team_id = team.id
+            cleaner.team_id = team.id
+            session.commit()
+            print("Initial team created with owner as team leader and cleaner as team member.")
+        else:
+            print("Owner or cleaner user not found. Team creation skipped.")
+    session.close()
