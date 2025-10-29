@@ -6,7 +6,8 @@ class TeamService:
     def __init__(self, db_session):
         self.db_session = db_session
 
-    def get_team_members(self, team_id):
+    
+    def get_team(self, team_id):
         team = self.db_session.query(Team).options(joinedload(Team.members)).filter(Team.id == team_id).first()
         return team.members if team else []
 
