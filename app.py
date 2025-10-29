@@ -1,8 +1,9 @@
 from flask import Flask, render_template, request, url_for, session, Response, redirect
 import os
-from database import init_db, create_initial_owner, create_initial_cleaner, create_initial_property_and_job, get_db, teardown_db
+from database import init_db, create_initial_owner, create_initial_cleaner, create_initial_property_and_job, create_initial_team, get_db, teardown_db
 from routes.users import user_bp
 from routes.jobs import job_bp
+from routes.teams import teams_bp
 import secrets
 from flask_login import LoginManager, current_user
 from services.user_service import UserService
@@ -21,12 +22,14 @@ os.makedirs(instance_path, exist_ok=True)
 Session = init_db(app)
 create_initial_owner(Session)
 create_initial_cleaner(Session)
+create_initial_team(Session)
 create_initial_property_and_job(Session)
 app.config['SQLALCHEMY_SESSION'] = Session
 
 # Register blueprints
 app.register_blueprint(user_bp)
 app.register_blueprint(job_bp)
+app.register_blueprint(teams_bp)
 
 @login_manager.user_loader
 def load_user(user_id):
