@@ -1,6 +1,6 @@
 
 from flask import Blueprint, request, jsonify, render_template
-from database import db_session, teardown_db
+from database import teardown_db
 from flask_login import login_required, current_user
 from controllers import teams_controller
 
