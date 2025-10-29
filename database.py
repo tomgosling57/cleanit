@@ -26,6 +26,14 @@ class User(Base, UserMixin):
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
 
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'username': self.username,
+            'role': self.role,
+            'team_id': self.team_id
+        }
+
 class Property(Base):
     __tablename__ = 'properties'
     id = Column(Integer, primary_key=True)
@@ -44,6 +52,18 @@ class Team(Base):
     team_leader_id = Column(Integer, ForeignKey('users.id'))
     team_leader = relationship("User", foreign_keys=[team_leader_id])
     members = relationship("User", back_populates="team", foreign_keys=[User.team_id])
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'team_leader_id': self.team_leader_id,
+            'team_leader': self.team_leader.to_dict() if self.team_leader else None,
+            'members': [member.to_dict() for member in self.members]
+        }
+
+    def __repr__(self):
+        return f"<Team(id={self.id}, name='{self.name}', team_leader_id={self.team_leader_id}), memberse={self.members}>"
 
 class Job(Base):
     __tablename__ = 'jobs'
