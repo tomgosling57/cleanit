@@ -7,7 +7,7 @@ class TeamService:
         self.db_session = db_session
 
     def get_all_teams(self):
-        teams = self.db_session.query(Team).options(joinedload(Team.members)).all()
+        teams = self.db_session.query(Team).options(joinedload(Team.members), joinedload(Team.team_leader)).all()
         return teams
         
     def get_team(self, team_id):
