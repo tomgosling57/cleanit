@@ -5,15 +5,15 @@ from services.user_service import UserService
 from database import get_db, teardown_db
 
 def get_teams():
-    if current_user.role not in ['team_leader', 'owner']:
+    if current_user.role not in ['owner']:
         return jsonify({'error': 'Unauthorized'}), 403
 
     db = get_db()
     team_service = TeamService(db)
-    user_service = UserService(db)
     teams = team_service.get_all_teams()
-    for team in teams:
-        team.members_list = team_service.get_team_members(team.id)
+    
+    # Convert teams to serializable dictionaries
+    teams_data = [team.to_dict() for team in teams]
 
     teardown_db()
-    return render_template('teams.html', teams=teams, current_user=current_user)
+    return jsonify(teams_data)
