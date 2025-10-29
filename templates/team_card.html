@@ -1,4 +1,5 @@
-<div class="team-card">
+<div class="team-card" id="team-card-{{ team.id }}">
+    <span class="close-button" onclick="document.getElementById('team-card-{{ team.id }}').style.display='none'">&times;</span>
     <div class="team-header">
         <h3>{{ team.name }}</h3>
         {% if team.team_leader %}
