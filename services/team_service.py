@@ -1,4 +1,4 @@
-from database import Team, TeamMembers
+from database import Team, User
 from sqlalchemy import and_
 from sqlalchemy.orm import joinedload
 
@@ -22,3 +22,16 @@ class TeamService:
             self.db_session.delete(team_member)
             self.db_session.commit()
             return team_member
+
+    def create_team(self, team_data):
+        new_team = Team(
+            name=team_data['name'],
+            team_leader_id=team_data.get('team_leader_id'),
+            members=team_data.get('members', [])
+        )
+        self.db_session.add(new_team)
+        self.db_session.commit()
+        # Reload job with property details for rendering
+        self.db_session.refresh(new_team)
+        new_team.members = self.db_session.query(User).filter(User.id.in_([member.id for member in new_team.members])).all()
+        return new_team
