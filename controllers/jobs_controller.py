@@ -128,8 +128,6 @@ def update_job(job_id):
         'property_id': property_obj.id
     }
     updated_job = job_service.update_job(job_id, updated_job_data)
-    # Get all jobs to re-render the entire job list
-    jobs = job_service.get_all_jobs()
     teardown_db()
 
     if updated_job:
