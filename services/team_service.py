@@ -33,5 +33,8 @@ class TeamService:
         self.db_session.commit()
         # Reload job with property details for rendering
         self.db_session.refresh(new_team)
-        new_team.members = self.db_session.query(User).filter(User.id.in_([member.id for member in new_team.members])).all()
         return new_team
+
+    def delete_team(self, team):
+        self.db_session.delete(team)
+        self.db_session.commit()
