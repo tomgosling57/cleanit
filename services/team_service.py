@@ -12,7 +12,7 @@ class TeamService:
         
     def get_team(self, team_id):
         team = self.db_session.query(Team).options(joinedload(Team.members)).filter(Team.id == team_id).first()
-        return team.members if team else []
+        return team
 
     def add_member_to_team(self, team, user):
         user.team_id = team.id
