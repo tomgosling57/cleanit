@@ -17,7 +17,9 @@ class User(Base, UserMixin):
     username = Column(String, unique=True, nullable=False)
     password_hash = Column(String, nullable=False)
     role = Column(String, nullable=False, default='cleaner') # 'cleaner', 'team_leader', 'owner'
-
+    team_id = Column(Integer, ForeignKey('teams.id'), nullable=True)
+    team = relationship("Team", back_populates="members", foreign_keys=[team_id])
+    
     def __repr__(self):
         return f"<User(id={self.id}, username='{self.username}', role='{self.role}')>"
 
@@ -39,14 +41,9 @@ class Team(Base):
     __tablename__ = 'teams'
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
-    members = relationship("User", secondary="team_members")
-
-class TeamMembers(Base):
-    __tablename__ = 'team_members'
-    team_id = Column(Integer, ForeignKey('teams.id'), primary_key=True)
-    user_id = Column(Integer, ForeignKey('users.id'), primary_key=True)
-    def __repr__(self):
-        return f"<TeamMembers(team_id={self.team_id}, user_id='{self.user_id}')>"
+    team_leader_id = Column(Integer, ForeignKey('users.id'))
+    team_leader = relationship("User", foreign_keys=[team_leader_id])
+    members = relationship("User", back_populates="team", foreign_keys=[User.team_id])
 
 class Job(Base):
     __tablename__ = 'jobs'
