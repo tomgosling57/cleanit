@@ -42,6 +42,7 @@ class JobService:
             if not property_obj:
                 property_obj = self.create_property(property_address)
             job.property_id = property
+        self.db_session.commit()
         return job
 
     def update_job_completion_status(self, job_id, is_complete):
