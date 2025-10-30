@@ -43,7 +43,7 @@ class TeamService:
         return new_team
 
     def delete_team(self, team):
-        self.job_service.removed_team_from_jobs(team.id)
+        self.job_service.remove_team_from_jobs(team.id)
         self.user_service.remove_team_from_users(team.id)
         self.db_session.delete(team)
         self.db_session.commit()
