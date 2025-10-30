@@ -42,7 +42,7 @@ def delete_team(team_id):
     if team:
         team_service.delete_team(team)
         teardown_db()
-        return redirect(url_for('teams.get_teams'))
+        return redirect(url_for('teams.get_teams'), code=303)
 
     teardown_db()
     return jsonify({'error': 'Team not found'}), 404
@@ -53,11 +53,11 @@ def create_team(team_data):
 
     db = get_db()
     team_service = TeamService(db)
-    new_team = team_service.create_team(team_data)
+    team_service.create_team(team_data)
 
     teardown_db()
-    return redirect(url_for('teams.get_teams'))
-    
+    return redirect(url_for('teams.get_teams'), code=303)
+
 def add_team_member(team_id, user_id):
     if current_user.role not in ['owner']:
         return jsonify({'error': 'Unauthorized'}), 403
@@ -68,7 +68,7 @@ def add_team_member(team_id, user_id):
 
     if user:
         teardown_db()
-        return redirect(url_for('teams.get_teams'))
+        return redirect(url_for('teams.get_teams'), code=303)
 
     teardown_db()
     return jsonify({'error': 'Team or User not found'}), 404
@@ -83,7 +83,7 @@ def remove_team_member(team_id, user_id):
 
     if user:
         teardown_db()
-        return redirect(url_for('teams.get_teams'))
+        return redirect(url_for('teams.get_teams'), code=303)
 
     teardown_db()
     return jsonify({'error': 'Team or User not found'}), 404
