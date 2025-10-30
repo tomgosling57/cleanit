@@ -1,5 +1,5 @@
 from database import Job, Property, User
-from sqlalchemy import and_
+from sqlalchemy import and_, or_
 from sqlalchemy.orm import joinedload
 from datetime import date
 
@@ -88,3 +88,15 @@ class JobService:
         self.db_session.refresh(new_job)
         new_job.property = self.db_session.query(Property).filter_by(id=new_job.property_id).first()
         return new_job
+    
+    def remove_team_from_jobs(self, team_id):
+
+        jobs = self.db_session.query(Job).filter(
+            or_(
+                Job.assigned_teams.like(f'%,{team_id},%'),
+                Job.assigned_teams == f'{team_id}'
+            )
+        ).all()
+        for job in jobs:
+            job.assigned_teams = job.assigned_teams.replace(f'%,{team_id},%', '')
+        self.db_session.commit()
