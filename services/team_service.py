@@ -1,11 +1,14 @@
-from database import Team, User
-from sqlalchemy import and_
+from database import Team, Job
+from services.job_service import JobService
+from services.user_service import UserService
+from sqlalchemy import or_
 from sqlalchemy.orm import joinedload
 
 class TeamService:
     def __init__(self, db_session):
         self.db_session = db_session
-
+        self.job_service = JobService(self.db_session)
+        self.user_service = UserService(self.db_session)
     def get_all_teams(self):
         teams = self.db_session.query(Team).options(joinedload(Team.members), joinedload(Team.team_leader)).all()
         return teams
@@ -40,5 +43,7 @@ class TeamService:
         return new_team
 
     def delete_team(self, team):
+        self.job_service.removed_team_from_jobs(team.id)
+        self.user_service.remove_team_from_users(team.id)
         self.db_session.delete(team)
         self.db_session.commit()
