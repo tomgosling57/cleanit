@@ -24,3 +24,9 @@ def get_team(team_id):
 @login_required
 def delete_team(team_id):
     return teams_controller.delete_team(team_id)
+
+@teams_bp.route('/', methods=['POST'])
+@login_required
+def create_team():
+    team_data = request.get_json()
+    return teams_controller.create_team(team_data)
