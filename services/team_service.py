@@ -32,6 +32,8 @@ class TeamService:
         if team and user and user in team.members:
             user.team_id = None
             team.members.remove(user)
+            if team.team_leader_id == user.id:
+                team.team_leader_id = None
             self.db_session.commit()
             return user
         return None
