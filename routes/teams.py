@@ -30,3 +30,9 @@ def delete_team(team_id):
 def create_team():
     team_data = request.get_json()
     return teams_controller.create_team(team_data)
+
+@teams_bp.route('/<int:team_id>/add_member', methods=['POST'])
+@login_required
+def add_team_member(team_id):
+    user_id = request.json.get('user_id')
+    return teams_controller.add_team_member(team_id, user_id)
