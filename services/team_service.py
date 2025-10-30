@@ -1,7 +1,6 @@
 from database import Team, User
 from services.job_service import JobService
 from services.user_service import UserService
-from sqlalchemy import or_
 from sqlalchemy.orm import joinedload
 
 class TeamService:
