@@ -1,4 +1,4 @@
-from database import Team, Job
+from database import Team, User
 from services.job_service import JobService
 from services.user_service import UserService
 from sqlalchemy import or_
@@ -31,10 +31,11 @@ class TeamService:
             self.db_session.commit()
 
     def create_team(self, team_data):
+        members = self.db_session.query(User).options(joinedload(Team.members)).filter(User.id.in_(team_data.get('members', []))).all()
         new_team = Team(
             name=team_data['name'],
             team_leader_id=team_data.get('team_leader_id'),
-            members=team_data.get('members', [])
+            members=members
         )
         self.db_session.add(new_team)
         self.db_session.commit()
