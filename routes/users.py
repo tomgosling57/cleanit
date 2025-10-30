@@ -1,6 +1,7 @@
 from flask import Blueprint
-from flask_login import login_required
+from flask_login import login_required, current_user
 from controllers import users_controller
+from flask import flash, redirect, url_for
 
 # Create the user blueprint
 user_bp = Blueprint('user', __name__, url_prefix='/users')
@@ -10,10 +11,16 @@ user_bp = Blueprint('user', __name__, url_prefix='/users')
 def teardown_db(exception=None):
     users_controller.teardown_db(exception)
 
+@user_bp.route('/view')
+@login_required
+def list_all_users_view():
+    """List all users with their teams and roles for the owner view."""
+    return users_controller.list_all_users_view()
+
 @user_bp.route('/')
 @login_required
-def list_users():
-    """List all users"""
+def list_users_api():
+    """List all users (API endpoint)"""
     return users_controller.list_users()
 
 @user_bp.route('/<int:user_id>')

@@ -12,6 +12,7 @@
             <a href="{{ url_for('job.timetable') }}">My Jobs</a>
             {% if current_user.is_authenticated and current_user.role == 'owner' %}
                 <a href="{{ url_for('teams.get_teams') }}">Teams</a>
+                <a href="{{ url_for('user.list_all_users_view') }}">Users</a>
             {% endif %}
             <a href="{{ url_for('user.login') }}">Login</a>
         </nav>

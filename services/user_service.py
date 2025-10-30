@@ -1,12 +1,13 @@
 from werkzeug.security import generate_password_hash, check_password_hash
-from database import User
+from database import User, Team
+from sqlalchemy.orm import joinedload
 
 class UserService:
     def __init__(self, db_session):
         self.db_session = db_session
 
     def list_users(self):
-        users = self.db_session.query(User).all()
+        users = self.db_session.query(User).options(joinedload(User.team)).all()
         return users
 
     def get_users_by_role(self, role):

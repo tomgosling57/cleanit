@@ -1,0 +1,13 @@
+<div class="user-card">
+    <h3>{{ user.username }}</h3>
+    <p><strong>Role:</strong> {{ user.role }}</p>
+    <p><strong>Teams:</strong>
+        {% if user.teams %}
+            {% for team_name in user.teams %}
+                {{ team_name }}{% if not loop.last %}, {% endif %}
+            {% endfor %}
+        {% else %}
+            No Teams
+        {% endif %}
+    </p>
+</div>

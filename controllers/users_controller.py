@@ -2,15 +2,50 @@ from flask import request, jsonify, render_template, redirect, url_for, flash, s
 from utils.http import validate_request_host
 from database import get_db, teardown_db
 from services.user_service import UserService
-from flask_login import login_user, current_user
-def list_users():
-    """List all users"""
+from flask_login import login_user, current_user, fresh_login_required
+
+def list_all_users_view():
+    """List all users with their teams and roles for the owner view."""
+    if not current_user.is_authenticated or current_user.role != 'owner':
+        flash('Unauthorized access.', 'error')
+        return redirect(url_for('job.timetable'))
+
     db = get_db()
     user_service = UserService(db)
     try:
         users = user_service.list_users()
-        return jsonify(users)
+        # Prepare data for rendering, including team names
+        users_data = []
+        for user in users:
+            user_teams = [user.team.name] if user.team else []
+            users_data.append({
+                'username': user.username,
+                'role': user.role,
+                'teams': user_teams
+            })
+        return render_template('users.html', users=users_data)
     except Exception as e:
+        current_app.logger.error(f"Error listing users: {e}")
+        flash('An error occurred while fetching users.', 'error')
+        return redirect(url_for('job.timetable'))
+    finally:
+        teardown_db()
+
+def list_users():
+    """List all users (API endpoint)"""
+    db = get_db()
+    user_service = UserService(db)
+    try:
+        users = user_service.list_users()
+        users_data = [{
+            'id': user.id,
+            'username': user.username,
+            'role': user.role,
+            'team_id': user.team_id
+        } for user in users]
+        return jsonify(users_data)
+    except Exception as e:
+        current_app.logger.error(f"Error listing users via API: {e}")
         return jsonify({'error': 'Internal Server Error'}), 500
     finally:
         teardown_db()
@@ -58,7 +93,7 @@ def register():
         _return = render_template('register.html')
     # If session user role is cleaner then redirect to index
     elif current_user.role == 'cleaner':
-        _return = redirect(url_for('index'))
+        _return = redirect(url_for('job.timetable'))
 
     return _return
 
@@ -81,7 +116,7 @@ def login():
             next = request.args.get('next')
             if not validate_request_host(next, request.host, current_app.debug):
                 _return = abort(400)
-            _return = redirect(next or url_for('job.timetable'))
+            _return = redirect(next or url_for('job.timetable')) # Redirect to job.timetable after successful login
         else:
             flash('Invalid username or password', 'error')
     
