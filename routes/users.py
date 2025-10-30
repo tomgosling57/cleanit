@@ -40,13 +40,13 @@ def login():
     """User login"""
     return users_controller.login()
 
-@user_bp.route('/<int:user_id>/update', methods=['PUT'])
+@user_bp.route('/<int:user_id>', methods=['PUT'])
 @login_required
 def update_user(user_id):
     """Update user information"""
     return users_controller.update_user(user_id)
 
-@user_bp.route('/<int:user_id>/delete', methods=['DELETE'])
+@user_bp.route('/<int:user_id>', methods=['DELETE'])
 @login_required
 def delete_user(user_id):
     """Delete a user"""
