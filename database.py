@@ -74,6 +74,7 @@ class Job(Base):
     time = Column(Time, nullable=False)
     duration = Column(String, nullable=False)
     description = Column(String)
+    assigned_teams = Column(String) # Comma-separated team IDs
     assigned_cleaners = Column(String) # Comma-separated cleaner IDs
     is_complete = Column(Boolean, default=False)
     job_type = Column(String)
