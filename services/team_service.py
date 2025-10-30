@@ -33,7 +33,7 @@ class TeamService:
             self.db_session.commit()
 
     def create_team(self, team_data):
-        members = self.db_session.query(User).options(joinedload(Team.members)).filter(User.id.in_(team_data.get('members', []))).all()
+        members = self.db_session.query(User).options(joinedload(User.team).joinedload(Team.members)).filter(User.id.in_(team_data.get('members', []))).all()
         new_team = Team(
             name=team_data['name'],
             team_leader_id=team_data.get('team_leader_id'),
@@ -43,6 +43,9 @@ class TeamService:
         self.db_session.commit()
         # Reload job with property details for rendering
         self.db_session.refresh(new_team)
+        for member in members:
+            member.team_id = new_team.id
+        self.db_session.commit()
         return new_team
 
     def delete_team(self, team):
