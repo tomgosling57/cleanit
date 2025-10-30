@@ -46,3 +46,14 @@ def delete_team(team_id):
 
     teardown_db()
     return jsonify({'error': 'Team not found'}), 404
+
+def create_team(team_data):
+    if current_user.role not in ['owner']:
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    db = get_db()
+    team_service = TeamService(db)
+    new_team = team_service.create_team(team_data)
+
+    teardown_db()
+    return jsonify(new_team.to_dict()), 201
