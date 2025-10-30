@@ -19,3 +19,8 @@ def get_teams():
 @login_required
 def get_team(team_id):
     return teams_controller.get_team(team_id)
+
+@teams_bp.route('/<int:team_id>', methods=['DELETE'])
+@login_required
+def delete_team(team_id):
+    return teams_controller.delete_team(team_id)
