@@ -26,11 +26,15 @@ class TeamService:
             return user
         return None
 
-    def remove_member_from_team(self, team, user):
-        if user in team.members:
-            team.members.remove(user)
+    def remove_team_member(self, team_id, user_id):
+        team = self.get_team(team_id)
+        user = self.user_service.get_user_by_id(user_id)
+        if team and user and user in team.members:
             user.team_id = None
+            team.members.remove(user)
             self.db_session.commit()
+            return user
+        return None
 
     def create_team(self, team_data):
         members = self.db_session.query(User).options(joinedload(User.team).joinedload(Team.members)).filter(User.id.in_(team_data.get('members', []))).all()
