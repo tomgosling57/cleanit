@@ -16,12 +16,15 @@ class TeamService:
         team = self.db_session.query(Team).options(joinedload(Team.members)).filter(Team.id == team_id).first()
         return team
 
-    def add_team_member(self, team, user):
-        user.team_id = team.id
-        team.members.append(user)
-        self.db_session.commit()
-
-        return user
+    def add_team_member(self, team_id, user_id):
+        team = self.get_team(team_id)
+        user = self.user_service.get_user_by_id(user_id)
+        if team and user:
+            user.team_id = team.id
+            team.members.append(user)
+            self.db_session.commit()
+            return user
+        return None
 
     def remove_member_from_team(self, team, user):
         if user in team.members:
