@@ -137,7 +137,7 @@ def update_user(user_id):
     user = user_service.update_user(user_id, data)
     teardown_db()
     if user:
-        return jsonify(user), 200
+        return redirect(url_for('user.list_all_users_view'), code=303)
     else:
         return jsonify({'error': 'User not found'}), 404
 
@@ -148,6 +148,6 @@ def delete_user(user_id):
     success = user_service.delete_user(user_id)
     teardown_db()
     if success:
-        return jsonify({'message': 'User deleted successfully'})
+        return redirect(url_for('user.list_all_users_view'), code=303)
     else:
         return jsonify({'error': 'User not found'}), 404
