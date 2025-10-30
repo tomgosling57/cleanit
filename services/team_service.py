@@ -17,7 +17,7 @@ class TeamService:
         team = self.db_session.query(Team).options(joinedload(Team.members)).filter(Team.id == team_id).first()
         return team
 
-    def add_member_to_team(self, team, user):
+    def add_team_member(self, team, user):
         user.team_id = team.id
         team.members.append(user)
         self.db_session.commit()
