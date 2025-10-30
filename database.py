@@ -63,7 +63,7 @@ class Team(Base):
         }
 
     def __repr__(self):
-        return f"<Team(id={self.id}, name='{self.name}', team_leader_id={self.team_leader_id}), memberse={self.members}>"
+        return f"<Team(id={self.id}, name='{self.name}', team_leader_id={self.team_leader_id}), members={self.members}>"
 
 class Job(Base):
     __tablename__ = 'jobs'
