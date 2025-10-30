@@ -61,3 +61,9 @@ class UserService:
         self.db_session.delete(user)
         self.db_session.commit()
         return True
+
+    def remove_team_from_users(self, team_id):
+        users = self.db_session.query(User).filter_by(team_id=team_id).all()
+        for user in users:
+            user.team_id = None
+        self.db_session.commit()
