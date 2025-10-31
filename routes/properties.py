@@ -14,7 +14,7 @@ def get_property(property_id):
     """
     Route to get a single property by ID.
     """
-    pass
+    return property_controller.get_property_by_id(property_id)
 
 @properties_bp.route('/', methods=['POST'])
 def add_property():
