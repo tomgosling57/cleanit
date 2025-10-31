@@ -16,7 +16,13 @@ def get_property_by_id(property_id):
     """
     Retrieve a single property by its ID.
     """
-    pass
+    db = get_db()
+    property_service = PropertyService(db)
+    property = property_service.get_property_by_id(property_id)
+    teardown_db()
+    if property:
+        return jsonify({'property': property.__repr__()}), 200
+    return jsonify({'error': 'Property not found'}), 404
 
 def create_property(property_data):
     """
