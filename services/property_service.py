@@ -37,7 +37,16 @@ class PropertyService:
         """
         Update an existing property in the database.
         """
-        pass
+        property = self.get_property_by_id(property_id)
+        if not property:
+            return None
+
+        property.address = property_data.get('address', property.address)
+        property.access_notes = property_data.get('access_notes', property.access_notes)
+
+        self.db_session.commit()
+        self.db_session.refresh(property)
+        return property
 
     def delete_property(self, property_id):
         """
