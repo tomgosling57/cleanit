@@ -21,7 +21,8 @@ def add_property():
     """
     Route to create a new property.
     """
-    pass
+    property_data = request.get_json()
+    return property_controller.create_property(property_data)
 
 @properties_bp.route('/<int:property_id>', methods=['PUT'])
 def update_property_route(property_id):
