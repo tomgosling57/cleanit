@@ -29,7 +29,8 @@ def update_property_route(property_id):
     """
     Route to update an existing property.
     """
-    pass
+    property_data = request.get_json()
+    return property_controller.update_property(property_id, property_data)
 
 @properties_bp.route('/<int:property_id>', methods=['DELETE'])
 def delete_property_route(property_id):
