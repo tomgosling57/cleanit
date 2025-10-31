@@ -28,7 +28,11 @@ def create_property(property_data):
     """
     Create a new property.
     """
-    pass
+    db = get_db()
+    property_service = PropertyService(db)
+    new_property = property_service.create_property(property_data)
+    teardown_db()
+    return jsonify({'property': new_property.__repr__()}), 201
 
 def update_property(property_id, property_data):
     """
