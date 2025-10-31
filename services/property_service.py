@@ -23,7 +23,15 @@ class PropertyService:
         """
         Create a new property in the database.
         """
-        pass
+        
+        new_property = Property(
+            address=property_data.get('address'),
+            access_notes=property_data.get('access_notes')
+        )
+        self.db_session.add(new_property)
+        self.db_session.commit()
+        self.db_session.refresh(new_property)
+        return new_property
 
     def update_property(self, property_id, property_data):
         """
