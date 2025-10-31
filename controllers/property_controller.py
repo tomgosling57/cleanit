@@ -38,7 +38,13 @@ def update_property(property_id, property_data):
     """
     Update an existing property.
     """
-    pass
+    db = get_db()
+    property_service = PropertyService(db)
+    updated_property = property_service.update_property(property_id, property_data)
+    teardown_db()
+    if updated_property:
+        return jsonify({'property': updated_property.__repr__()}), 200
+    return jsonify({'error': 'Property not found'}), 404
 
 def delete_property(property_id):
     """
