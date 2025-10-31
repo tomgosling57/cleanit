@@ -55,5 +55,13 @@ class PropertyService:
     def delete_property(self, property_id):
         """
         Delete a property from the database.
+        
+        returns: bool
         """
-        pass
+        property = self.get_property_by_id(property_id)
+        if not property:
+            return False
+
+        self.db_session.delete(property)
+        self.db_session.commit()
+        return True
