@@ -4,6 +4,7 @@ from database import init_db, create_initial_owner, create_initial_cleaner, crea
 from routes.users import user_bp
 from routes.jobs import job_bp
 from routes.teams import teams_bp
+from routes.properties import properties_bp
 import secrets
 from flask_login import LoginManager, current_user
 from services.user_service import UserService
@@ -30,6 +31,7 @@ app.config['SQLALCHEMY_SESSION'] = Session
 app.register_blueprint(user_bp)
 app.register_blueprint(job_bp)
 app.register_blueprint(teams_bp)
+app.register_blueprint(properties_bp)
 
 @login_manager.user_loader
 def load_user(user_id):
