@@ -25,7 +25,7 @@ def add_property():
     return property_controller.create_property(property_data)
 
 @properties_bp.route('/<int:property_id>', methods=['PUT'])
-def update_property_route(property_id):
+def update_property(property_id):
     """
     Route to update an existing property.
     """
@@ -33,7 +33,7 @@ def update_property_route(property_id):
     return property_controller.update_property(property_id, property_data)
 
 @properties_bp.route('/<int:property_id>', methods=['DELETE'])
-def delete_property_route(property_id):
+def delete_property(property_id):
     """
     Route to delete a property.
     """
