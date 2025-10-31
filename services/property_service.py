@@ -10,19 +10,22 @@ class PropertyService:
     def get_all_properties(self):
         """
         Retrieve all properties from the database.
-        """
+        
+        returns: List of Property"""
         return self.db_session.query(Property).all()
 
     def get_property_by_id(self, property_id):
         """
         Retrieve a single property by its ID from the database.
-        """
+        
+        returns: Property"""
         return self.db_session.query(Property).filter_by(id=property_id).first()
 
     def create_property(self, property_data):
         """
         Create a new property in the database.
-        """
+        
+        returns: New property"""
         
         new_property = Property(
             address=property_data.get('address'),
@@ -36,7 +39,8 @@ class PropertyService:
     def update_property(self, property_id, property_data):
         """
         Update an existing property in the database.
-        """
+        
+        returns: Property or None"""
         property = self.get_property_by_id(property_id)
         if not property:
             return None
