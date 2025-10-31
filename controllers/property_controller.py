@@ -50,4 +50,10 @@ def delete_property(property_id):
     """
     Delete a property.
     """
-    pass
+    db = get_db()
+    property_service = PropertyService(db)
+    success = property_service.delete_property(property_id)
+    teardown_db()
+    if success:
+        return jsonify({'message': 'Property deleted successfully'}), 200
+    return jsonify({'error': 'Property not found'}), 404
