@@ -17,7 +17,7 @@ class PropertyService:
         """
         Retrieve a single property by its ID from the database.
         """
-        pass
+        return self.db_session.query(Property).filter_by(id=property_id).first()
 
     def create_property(self, property_data):
         """
