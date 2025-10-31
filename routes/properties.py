@@ -37,4 +37,4 @@ def delete_property(property_id):
     """
     Route to delete a property.
     """
-    pass
+    return property_controller.delete_property(property_id)
