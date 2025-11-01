@@ -389,3 +389,5 @@ select, textarea {
     text-decoration: none;
     cursor: pointer;
 }
+/* Property Styles */
+@import url('property_styles.css');

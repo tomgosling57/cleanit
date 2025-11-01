@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}Properties{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <h1>All Properties</h1>
+        <div class="property-list">
+            {% if properties %}
+                <div class="property-cards-container">
+                    {% for property in properties %}
+                        {% include 'property_card.html' %}
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p>No properties found.</p>
+            {% endif %}
+        </div>
+    </div>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/property_styles.css') }}">
+{% endblock %}
