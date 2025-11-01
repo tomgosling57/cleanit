@@ -100,3 +100,11 @@ class JobService:
         for job in jobs:
             job.assigned_teams = job.assigned_teams.replace(f'%,{team_id},%', '')
         self.db_session.commit()
+
+    def delete_job(self, job_id):
+        job = self.db_session.query(Job).filter_by(id=job_id).first()
+        if job:
+            self.db_session.delete(job)
+            self.db_session.commit()
+            return True
+        return False

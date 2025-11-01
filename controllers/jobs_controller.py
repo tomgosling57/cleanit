@@ -214,3 +214,19 @@ def create_job():
     if new_job:
         return render_template('job_list_fragment.html', jobs=jobs)
     return jsonify({'error': 'Failed to create job'}), 500
+
+
+def delete_job(job_id):
+    if current_user.role != 'owner':
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    db = get_db()
+    job_service = JobService(db)
+    success = job_service.delete_job(job_id)
+    if success:
+        jobs = job_service.get_all_jobs()
+        teardown_db()
+        return render_template('job_list_fragment.html', jobs=jobs)
+    
+    teardown_db()
+    return jsonify({'error': 'Job not found'}), 404

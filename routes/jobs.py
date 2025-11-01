@@ -39,3 +39,8 @@ def create_job():
     else:
         _return = jobs_controller.get_job_creation_form()
     return _return
+
+@job_bp.route('/job/<int:job_id>/delete', methods=['DELETE'])
+@login_required
+def delete_job(job_id):
+    return jobs_controller.delete_job(job_id)
