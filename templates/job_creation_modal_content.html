@@ -4,19 +4,19 @@
       hx-on--after-request="if(event.detail.successful) { document.getElementById('job-creation-modal').style.display='none'; document.getElementById('job-creation-form').reset(); }">
     <h2>Create New Job</h2>
     <label for="job_title">Job Title:</label>
-    <input type="text" id="job_title" name="job_title" required><br><br>
+    <input type="text" id="job_title" name="job_title" required>
 
     <label for="property_address">Property Address:</label>
-    <input type="text" id="property_address" name="property_address" required><br><br>
+    <input type="text" id="property_address" name="property_address" required>
 
     <label for="date">Date:</label>
-    <input type="date" id="date" name="date" required><br><br>
+    <input type="date" id="date" name="date" required>
 
     <label for="time">Time:</label>
-    <input type="time" id="time" name="time" required><br><br>
+    <input type="time" id="time" name="time" required>
 
     <label for="duration">Duration (hours):</label>
-    <input type="number" id="duration" name="duration" step="0.5" required><br><br>
+    <input type="number" id="duration" name="duration" step="0.5" required>
 
     <label for="assigned_cleaner_id">Assigned Cleaner:</label>
     <select id="assigned_cleaner_id" name="assigned_cleaner_id">
@@ -25,13 +25,13 @@
         {% for cleaner in cleaners %}
             <option value="{{ cleaner.id }}">{{ cleaner.username }}</option>
         {% endfor %}
-    </select><br><br>
+    </select>
 
     <label for="job_type">Job Type:</label>
-    <input type="text" id="job_type" name="job_type"><br><br>
+    <input type="text" id="job_type" name="job_type">
 
     <label for="notes">Notes:</label>
-    <textarea id="notes" name="notes"></textarea><br><br>
+    <textarea id="notes" name="notes"></textarea>
 
     <button type="submit" class="button">Create Job</button>
     <button type="button" class="button" onclick="document.getElementById('job-creation-modal').style.display='none'">Cancel</button>
