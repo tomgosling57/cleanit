@@ -4,7 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Cleaning Timetable{% endblock %}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    
+    {% include 'styles.html' %}
+    
 </head>
 <body>
     <header>
@@ -21,6 +24,5 @@
     <main>
         {% block content %}{% endblock %}
     </main>
-    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
-</body>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script> </body>
 </html>
