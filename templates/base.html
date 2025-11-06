@@ -10,6 +10,15 @@
     
 </head>
 <body>
+    <!-- Script must remain in body -->
+    <script src="https://cdn.jsdelivr.net/npm/dragula@3.7.3/dist/dragula.min.js"></script>
+    <script>
+        document.body.addEventListener('htmx:afterSwap', (event) => {
+        // Re-init dragula on updated content
+        dragula([...document.querySelectorAll('.dragula-container')]);
+        });
+
+    </script>
     <header>
         <nav>
             <a href="{{ url_for('job.timetable') }}">My Jobs</a>
