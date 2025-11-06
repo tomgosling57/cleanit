@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, url_for, session, Response, redirect
 import os
-from database import init_db, create_initial_owner, create_initial_cleaner, create_initial_property_and_job, create_initial_team, get_db, teardown_db
+from database import init_db, create_initial_users, create_initial_property_and_job, create_initial_team, get_db, teardown_db
 from routes.users import user_bp
 from routes.jobs import job_bp
 from routes.teams import teams_bp
@@ -19,10 +19,9 @@ app.config['SECRET_KEY'] = secrets.token_bytes(32)
 instance_path = os.path.join(app.root_path, 'instance')
 os.makedirs(instance_path, exist_ok=True)
 
-# Initialize the database and create an initial owner
+# Initialize the database and create example objects
 Session = init_db(app)
-create_initial_owner(Session)
-create_initial_cleaner(Session)
+create_initial_users(Session)
 create_initial_team(Session)
 create_initial_property_and_job(Session)
 app.config['SQLALCHEMY_SESSION'] = Session

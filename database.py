@@ -108,25 +108,34 @@ def teardown_db(exception=None):
         db.close()
 
 # Function to create an initial owner user
-def create_initial_owner(Session):
+def create_initial_users(Session):
     session = Session()
+    # create user with owner role
     if not session.query(User).filter_by(role='owner').first():
         owner = User(username='owner', role='owner')
         owner.set_password('ownerpassword') # Default password for owner
         session.add(owner)
         session.commit()
         print("Initial owner user created.")
-    session.close()
 
-def create_initial_cleaner(Session):
-    session = Session()
+    # create user with team_leader role
+    if not session.query(User).filter_by(username='team_leader').first():
+        team_leader = User(username='team_leader', role='team_leader')
+        team_leader.set_password('team_leader_password')
+        session.add(team_leader)
+        session.commit()
+        print("Initial team leader user created.")
+
+    # create user with cleaner role
     if not session.query(User).filter_by(username='cleaner').first():
         cleaner = User(username='cleaner', role='cleaner')
         cleaner.set_password('cleanerpassword')
         session.add(cleaner)
         session.commit()
         print("Initial cleaner user created.")
+    
     session.close()
+
 
 def create_initial_property_and_job(Session):
     session = Session()

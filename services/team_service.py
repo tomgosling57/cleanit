@@ -22,6 +22,8 @@ class TeamService:
         if team and user:
             user.team_id = team.id
             team.members.append(user)
+            if not team.team_leader_id and user.role in ['team_leader', 'owner']:
+                team.team_leader_id = user.id
             self.db_session.commit()
             return user
         return None
