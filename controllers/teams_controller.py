@@ -58,17 +58,40 @@ def create_team(team_data):
     teardown_db()
     return redirect(url_for('teams.get_teams'), code=303)
 
-def add_team_member(team_id, user_id):
+def add_team_member(team_id, user_id, old_team_id):
     if current_user.role not in ['owner']:
         return jsonify({'error': 'Unauthorized'}), 403
 
     db = get_db()
     team_service = TeamService(db)
     user = team_service.add_team_member(team_id, user_id)
+    if user:
+        old_team = team_service.get_team(old_team_id)
+        new_team = team_service.get_team(team_id)
 
+        old_team_html = render_template_string(
+            """
+            {% include 'team_card.html' with context %}
+            """,
+            team=old_team
+        ) if old_team else None
+
+        new_team_html = render_template_string(
+            """
+            {% include 'team_card.html' with context %}
+            """,
+            team=new_team
+        ) if new_team else None
+
+        teardown_db()
+        return jsonify({
+            'success': True,
+            'oldTeam': old_team_html,
+            'newTeam': new_team_html
+        }), 200
     if user:
         teardown_db()
-        return redirect(url_for('teams.get_teams'), code=303)
+        return jsonify({'success': True}), 200
 
     teardown_db()
     return jsonify({'error': 'Team or User not found'}), 404

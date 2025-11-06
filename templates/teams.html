@@ -24,41 +24,60 @@
     </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dragula/3.7.2/dragula.min.js"></script> {# Make sure to use the correct version #}
     <script>
-        // Initialize Dragula for drag-and-drop functionality
-        // Select all 'ul' elements that contain 'member-item' as containers
-        var teamContainers = Array.from(document.querySelectorAll('.members-list'));
-        var drake = dragula(teamContainers);
-        console.log(teamContainers)
-        drake.on('drop', (el, target, source, sibling) => {
-            const memberId = el.dataset.memberId; // Get the ID of the dragged member
-            // The target and source are the 'ul.members-list' elements
-            const newTeamId = target.closest('.team-card').id; // Get the ID of the target team card (e.g., 'team-card-1')
-            const newTeamIdNumber = newTeamId.split('-').pop()
-            const oldTeamId = source.closest('.team-card').id; // Get the ID of the source team card
-            const apiUrl = "{{ url_for('teams.add_team_member', team_id=0) }}".replace("0", newTeamIdNumber)
-            console.log(`Member ${memberId} moved from ${oldTeamId} to ${newTeamId}`);
+        function initDragula() {
+            // If there's an existing instance, clean it up
+            if (window.drake) {
+                try {
+                    window.drake.destroy();
+                } catch (e) {
+                    // Dragula’s destroy() isn’t always defined on all builds, so be safe
+                    console.warn('Could not destroy existing Dragula instance:', e);
+                }
+            }
+
+            const teamContainers = Array.from(document.querySelectorAll('.members-list'));
+            if (teamContainers.length === 0) return;
+
+            const drake = dragula(teamContainers);
+
+            drake.on('drop', handleDrop);
+
+            window.drake = drake; // keep global ref
+            console.log('Dragula initialised for', teamContainers.length, 'containers');
+        }
+
+        function handleDrop(el, target, source) {
+            const memberId = el.dataset.memberId;
+            const newTeamId = target.closest('.team-card').id;
+            const newTeamIdNumber = newTeamId.split('-').pop();
+            const oldTeamId = source.closest('.team-card').id;
+            const oldTeamIdNumber = oldTeamId.split('-').pop();
+            const apiUrl = "{{ url_for('teams.add_team_member', team_id=0) }}".replace("0", newTeamIdNumber);
 
             fetch(apiUrl, {
-                method: 'POST', 
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    'user_id': memberId
+                    user_id: memberId,
+                    old_team_id: oldTeamIdNumber
                 })
             })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
+            .then(res => res.json())
             .then(data => {
-                console.log('Success:', data);
+                if (!data.success) {
+                    alert('Error: ' + (data.error || 'Unknown error'));
+                    return;
+                }
+                htmx.find('#' + oldTeamId).outerHTML = data.oldTeam;
+                htmx.find('#' + newTeamId).outerHTML = data.newTeam;
+
+                // reinit for the updated DOM
+                initDragula();
             })
-            .catch((error) => {
-                console.error('Error:', error);
-            });
-        });
+            .catch(console.error);
+        }
+
+        document.addEventListener('DOMContentLoaded', initDragula);
+
     </script>
 {% endblock %}

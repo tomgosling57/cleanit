@@ -34,7 +34,8 @@ def delete_team(team_id):
 @login_required
 def add_team_member(team_id):
     user_id = request.json.get('user_id')
-    return teams_controller.add_team_member(team_id, user_id)
+    old_team_id = request.json.get('old_team_id')
+    return teams_controller.add_team_member(team_id, user_id, old_team_id)
 
 @teams_bp.route('/team/<int:team_id>/member/remove', methods=['DELETE'])
 @login_required
