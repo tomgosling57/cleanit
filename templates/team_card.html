@@ -12,10 +12,10 @@
     
     <div class="team-members">
         <h4>Team Members</h4>
-        {% if team.members %}
-            <ul class="members-list">
+        <ul class="members-list">
+            {% if team.members %}
                 {% for member in team.members %}
-                    <li class="member-item {% if member.id == team.team_leader_id %}team-leader-member{% endif %}">
+                    <li class="member-item {% if member.id == team.team_leader_id %}team-leader-member{% endif %}" data-member-id="{{ member.id }}" >
                         <span class="member-name">{{ member.username }}</span>
                         <span class="member-role">{{ member.role }}</span>
                         {% if member.id == team.team_leader_id %}
@@ -23,9 +23,9 @@
                         {% endif %}
                     </li>
                 {% endfor %}
-            </ul>
-        {% else %}
-            <p class="no-members">No members in this team</p>
-        {% endif %}
+            {% else %}
+                <p class="no-members">No members in this team</p>
+            {% endif %}
+        </ul>
     </div>
 </div>

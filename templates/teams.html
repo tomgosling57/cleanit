@@ -22,4 +22,43 @@
             {% endif %}
         </div>
     </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dragula/3.7.2/dragula.min.js"></script> {# Make sure to use the correct version #}
+    <script>
+        // Initialize Dragula for drag-and-drop functionality
+        // Select all 'ul' elements that contain 'member-item' as containers
+        var teamContainers = Array.from(document.querySelectorAll('.members-list'));
+        var drake = dragula(teamContainers);
+        console.log(teamContainers)
+        drake.on('drop', (el, target, source, sibling) => {
+            const memberId = el.dataset.memberId; // Get the ID of the dragged member
+            // The target and source are the 'ul.members-list' elements
+            const newTeamId = target.closest('.team-card').id; // Get the ID of the target team card (e.g., 'team-card-1')
+            const newTeamIdNumber = newTeamId.split('-').pop()
+            const oldTeamId = source.closest('.team-card').id; // Get the ID of the source team card
+            const apiUrl = "{{ url_for('teams.add_team_member', team_id=0) }}".replace("0", newTeamIdNumber)
+            console.log(`Member ${memberId} moved from ${oldTeamId} to ${newTeamId}`);
+
+            fetch(apiUrl, {
+                method: 'POST', 
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    'user_id': memberId
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Success:', data);
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+        });
+    </script>
 {% endblock %}
