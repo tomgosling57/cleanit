@@ -58,6 +58,61 @@ def create_team(team_data):
     teardown_db()
     return redirect(url_for('teams.get_teams'), code=303)
 
+def get_edit_team_form(team_id):
+    if current_user.role not in ['owner']:
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    db = get_db()
+    team_service = TeamService(db)
+    team = team_service.get_team(team_id)
+
+    if not team:
+        teardown_db()
+        return jsonify({'error': 'Team not found'}), 404
+
+    user_service = UserService(db)
+    all_users = user_service.list_users()
+
+    teardown_db()
+    return render_template_string(
+        """
+        {% include 'team_edit_modal_content.html' with context %}
+        """,
+        team=team, users=all_users
+    )
+
+def edit_team(team_id):
+    if current_user.role not in ['owner']:
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    team_name = request.form.get('team_name')
+    member_ids = request.form.getlist('members')
+    team_leader_id = request.form.get('team_leader_id')
+
+    db = get_db()
+    team_service = TeamService(db)
+    user_service = UserService(db)
+
+    updated_team = team_service.update_team_details(team_id, team_name, member_ids, team_leader_id)
+
+    if not updated_team:
+        teardown_db()
+        return jsonify({'error': 'Team not found or update failed'}), 404
+
+    all_teams = team_service.get_all_teams()
+    all_users = user_service.get_all_users()
+
+    teardown_db()
+    return render_template_string(
+        """
+        {% for team in teams %}
+            {% include 'team_card.html' with context %}
+        {% endfor %}
+        """,
+        teams=all_teams, users=all_users
+    )
+
+
 def add_team_member(team_id, user_id, old_team_id):
     if current_user.role not in ['owner']:
         return jsonify({'error': 'Unauthorized'}), 403

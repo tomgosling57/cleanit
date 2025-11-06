@@ -1,7 +1,9 @@
-from flask import Blueprint, request
+from flask import Blueprint, request, render_template
 from flask_login import login_required
 from controllers import teams_controller
-from database import teardown_db
+from database import teardown_db, get_db
+from services.team_service import TeamService
+from services import user_service
 
 teams_bp = Blueprint('teams', __name__, url_prefix='/teams')
 
@@ -14,6 +16,11 @@ def teardown_team_db(exception=None):
 def teams():
     return teams_controller.get_teams()
 
+@teams_bp.route('/team/<int:team_id>/edit_form', methods=['GET'])
+@login_required
+def get_edit_team_form(team_id):
+    return teams_controller.get_edit_team_form(team_id)
+
 @teams_bp.route('/team/<int:team_id>/details', methods=['GET'])
 @login_required
 def get_team_details(team_id):
@@ -24,6 +31,11 @@ def get_team_details(team_id):
 def create_team():
     team_data = request.get_json()
     return teams_controller.create_team(team_data)
+
+@teams_bp.route('/team/<int:team_id>/edit', methods=['POST'])
+@login_required
+def edit_team(team_id):
+    return teams_controller.edit_team(team_id)
 
 @teams_bp.route('/team/<int:team_id>/delete', methods=['DELETE'])
 @login_required

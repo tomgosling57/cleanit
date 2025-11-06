@@ -22,7 +22,14 @@
             {% endif %}
         </div>
     </div>
-    
+    <div id="team-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <span class="close-button" onclick="document.getElementById('team-modal').style.display='none'">&times;</span>
+            <div id="team-modal-content">
+                <!-- Team edit form will be loaded here via JavaScript/HTMX -->
+            </div>
+        </div>
+    </div>
     <script>
         function initDragula() {
             // If there's an existing instance, clean it up
@@ -80,4 +87,5 @@
         document.addEventListener('DOMContentLoaded', initDragula);
 
     </script>
+    <script src="{{ url_for('static', filename='js/team_modal.js') }}"></script>
 {% endblock %}

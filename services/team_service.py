@@ -16,15 +16,59 @@ class TeamService:
         team = self.db_session.query(Team).options(joinedload(Team.members)).filter(Team.id == team_id).first()
         return team
 
+    def update_team(self, team):
+        self.db_session.add(team)
+        self.db_session.commit()
+        self.db_session.refresh(team)
+        return team
+
+    def set_team_leader(self, team_id, user_id):
+        team = self.get_team(team_id)
+        if team:
+            team.team_leader_id = user_id
+            self.db_session.commit()
+            self.db_session.refresh(team)
+        return team
+
+    def update_team_details(self, team_id, team_name, member_ids, team_leader_id):
+        team = self.get_team(team_id)
+        if not team:
+            return None
+
+        team.name = team_name
+        self.update_team(team)
+
+        # Update members
+        current_member_ids = {member.id for member in team.members} if team.members else set()
+        new_member_ids = {int(mid) for mid in member_ids if mid}
+
+        # Remove members no longer in the list
+        for member_id in current_member_ids - new_member_ids:
+            self.remove_team_member(team_id, member_id)
+
+        # Add new members
+        for member_id in new_member_ids - current_member_ids:
+            self.add_team_member(team_id, member_id)
+
+        # Update team leader
+        if team_leader_id:
+            self.set_team_leader(team_id, int(team_leader_id))
+        else:
+            self.set_team_leader(team_id, None)
+
+        self.db_session.refresh(team)
+        return team
+
     def add_team_member(self, team_id, user_id):
         team = self.get_team(team_id)
         user = self.user_service.get_user_by_id(user_id)
         if team and user:
             user.team_id = team.id
             team.members.append(user)
-            if not team.team_leader_id and user.role in ['team_leader', 'owner']:
+            if not team.team_leader_id and user.role in ['team_leader', 'owner']: # Only set if no leader exists
                 team.team_leader_id = user.id
             self.db_session.commit()
+            self.db_session.refresh(team) # Refresh team to reflect changes
             return user
         return None
 

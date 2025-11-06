@@ -1,7 +1,15 @@
 <div class="team-card" id="team-card-{{ team.id }}">
     <span class="close-button" onclick="document.getElementById('team-card-{{ team.id }}').style.display='none'">&times;</span>
     <div class="team-header">
-        <h3>{{ team.name }}</h3>
+        <h3 class="team-name-display">{{ team.name }}</h3>
+        <span class="edit-team-icon"
+            data-team-id="{{ team.id }}"
+            data-team-name="{{ team.name }}"
+            data-team-lead-id="{{ team.team_leader_id }}"
+            data-team-description="{{ team.description | default('') }}"
+            data-team-members="{{ team.members | map(attribute='username') | join(', ') }}">
+            ✏️
+        </span>
     </div>
     
     <div class="team-members">

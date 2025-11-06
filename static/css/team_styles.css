@@ -179,3 +179,16 @@
         flex-direction: column;
     }
 }
+
+/* Edit Icon */
+.edit-team-icon {
+    cursor: pointer;
+    margin-left: 10px;
+    color: #007bff; /* Blue color for the pencil icon */
+    font-size: 1.1em;
+    transition: color 0.2s ease;
+}
+
+.edit-team-icon:hover {
+    color: #0056b3; /* Darker blue on hover */
+}
