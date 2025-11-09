@@ -3,20 +3,29 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeButton = teamModal.querySelector('.close-button');
     const teamModalContent = document.getElementById('team-modal-content');
 
-    document.querySelectorAll('.edit-team-icon').forEach(icon => {
-        icon.addEventListener('click', async (event) => {
-            const teamId = event.target.dataset.teamId;
-            const teamName = event.target.dataset.teamName;
-            const teamLeadId = event.target.dataset.teamLeadId;
-            const teamMembers = event.target.dataset.teamMembers ? event.target.dataset.teamMembers.split(', ').map(name => name.trim()) : [];
+    // --- Event Delegation for .edit-team-icon ---
+    // Attach a single click listener to a static parent (e.g., document.body)
+    // This listener will catch clicks on .edit-team-icon elements,
+    // even if they are added to the DOM dynamically by HTMX later.
+    document.body.addEventListener('click', async (event) => {
+        // Check if the clicked element (or its closest ancestor) matches '.edit-team-icon'
+        const editIcon = event.target.closest('.edit-team-icon');
+        if (editIcon) {
+            // Prevent the default action if necessary, though for a span it's usually not needed
+            event.preventDefault();
 
-            // Fetch the edit form content dynamically
+            const teamId = editIcon.dataset.teamId;
+            const teamName = editIcon.dataset.teamName;
+            const teamLeadId = editIcon.dataset.teamLeadId;
+            const teamMembers = editIcon.dataset.teamMembers ? editIcon.dataset.teamMembers.split(', ').map(name => name.trim()) : [];
+
             try {
-                const response = await htmx.ajax('GET', `/teams/team/${teamId}/edit_form`, {
+                // HTMX request to fetch the edit form content
+                await htmx.ajax('GET', `/teams/team/${teamId}/edit_form`, {
                     target: '#team-modal-content',
                     swap: 'innerHTML'
                 });
-                
+
                 // After HTMX swaps the content, populate the fields
                 const editTeamForm = teamModalContent.querySelector('#editTeamForm');
                 if (editTeamForm) {
@@ -26,13 +35,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Populate members dropdown
                     const memberSelect = editTeamForm.querySelector('#editTeamMembers');
                     Array.from(memberSelect.options).forEach(option => {
-                        const userId = option.value;
-                        const isMember = teamMembers.includes(option.textContent.split(' ')[0]); // Check if username is in teamMembers
-                        if (isMember) {
-                            option.selected = true;
-                        } else {
-                            option.selected = false;
-                        }
+                        const isMember = teamMembers.includes(option.textContent.split(' ')[0]);
+                        option.selected = isMember;
                         // Grey out users already on other teams
                         if (option.dataset.teamId && option.dataset.teamId !== teamId) {
                             option.disabled = true;
@@ -45,14 +49,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     const leaderSelect = editTeamForm.querySelector('#editTeamLeader');
                     Array.from(leaderSelect.options).forEach(option => {
                         const userId = option.value;
-                        if (userId === teamLeadId) {
-                            option.selected = true;
-                        } else {
-                            option.selected = false;
-                        }
-                        // Grey out users with owner or team_leader roles if they are not the current leader
-                        // This logic needs to be refined based on actual user roles from backend
-                        // For now, we'll rely on the backend to provide the disabled state
+                        option.selected = (userId === teamLeadId);
+                        // Existing logic for greying out leaders (if applicable)
                         // if (option.dataset.userRole === 'owner' || option.dataset.userRole === 'team_leader') {
                         //     if (userId !== teamLeadId) {
                         //         option.disabled = true;
@@ -65,7 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             teamModal.style.display = 'flex'; // Show the modal
-        });
+        }
     });
 
     closeButton.addEventListener('click', () => {
