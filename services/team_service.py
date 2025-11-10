@@ -25,22 +25,53 @@ class TeamService:
     def set_team_leader(self, team_id, user_id):
         team = self.get_team(team_id)
         if team:
-            team.team_leader_id = user_id
+            team.team_leader_id = user_id 
+            member_ids = [member.id for member in team.members] if team.members else []
+            if user_id not in member_ids:
+                self.add_team_member(team_id, user_id)
             self.db_session.commit()
             self.db_session.refresh(team)
+            if not user_id:
+                self.auto_assign_team_leader(team)
         return team
 
+    def auto_assign_team_leader(self, team):
+        if not team:
+            return None
+
+        # Validate current team leader
+        if team.team_leader_id:
+            current_leader_is_member = False
+            for member in team.members:
+                if member.id == team.team_leader_id:
+                    current_leader_is_member = True
+                    break
+            if not current_leader_is_member:
+                team.team_leader_id = None # Clear stale leader ID
+
+        if not team.team_leader_id: # Now check if a leader needs to be assigned
+            for member in team.members:
+                if member.role in ['team_leader', 'owner']:
+                    team.team_leader_id = member.id
+                    self.db_session.commit()
+                    self.db_session.refresh(team)
+                    return team
+        self.db_session.commit() # Commit if leader was cleared but no new leader assigned
+        self.db_session.refresh(team)
+        return team
+    
     def update_team_details(self, team_id, team_name, member_ids, team_leader_id):
         team = self.get_team(team_id)
         if not team:
             return None
 
         team.name = team_name
-        self.update_team(team)
+        # self.update_team(team)
 
         # Update members
         current_member_ids = {member.id for member in team.members} if team.members else set()
         new_member_ids = {int(mid) for mid in member_ids if mid}
+        print(f"current_members: {current_member_ids}\nnew_members: {new_member_ids}")
         # Add new members
         for member_id in new_member_ids - current_member_ids:
             self.add_team_member(team_id, member_id)
@@ -50,7 +81,7 @@ class TeamService:
             self.set_team_leader(team_id, int(team_leader_id))
         else:
             self.set_team_leader(team_id, None)
-
+            self.auto_assign_team_leader(team)                               
         self.db_session.refresh(team)
         return team
 
@@ -60,8 +91,7 @@ class TeamService:
         if team and user:
             user.team_id = team.id
             team.members.append(user)
-            if not team.team_leader_id and user.role in ['team_leader', 'owner']: # Only set if no leader exists
-                team.team_leader_id = user.id
+            self.auto_assign_team_leader(team)
             self.db_session.commit()
             self.db_session.refresh(team) # Refresh team to reflect changes
             return user
@@ -75,6 +105,7 @@ class TeamService:
             team.members.remove(user)
             if team.team_leader_id == user.id:
                 team.team_leader_id = None
+                self.auto_assign_team_leader(team)
             self.db_session.commit()
             return user
         return None
@@ -93,6 +124,7 @@ class TeamService:
         for member in members:
             member.team_id = new_team.id
         self.db_session.commit()
+        self.auto_assign_team_leader(new_team)
         return new_team
 
     def delete_team(self, team):

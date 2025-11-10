@@ -34,6 +34,15 @@
         document.addEventListener('DOMContentLoaded', () => {
             // Initialise Dragula when the DOM is loaded
             initDragula();
+            
+            // Listen for HTMX content swaps on the teams grid and reinitialize Dragula
+            document.body.addEventListener('htmx:afterSwap', function(event) {
+                if (event.detail.target.classList.contains('teams-grid') ||
+                    event.detail.target.id === 'teams-list-container') {
+                    // Small delay to ensure DOM is fully updated
+                    setTimeout(initDragula, 50);
+                }
+            });
         });
     </script>
 {% endblock %}

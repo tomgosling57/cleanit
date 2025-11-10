@@ -26,7 +26,7 @@ function handleDrop(el, target, source) {
     const newTeamIdNumber = newTeamId.split('-').pop();
     const oldTeamId = source.closest('.team-card').id;
     const oldTeamIdNumber = oldTeamId.split('-').pop();
-    const apiUrl = `/teams/team/${newTeamIdNumber}/add_member`;
+    const apiUrl = `/teams/team/${newTeamIdNumber}/member/add`;
 
     fetch(apiUrl, {
         method: 'POST',
@@ -42,8 +42,17 @@ function handleDrop(el, target, source) {
             alert('Error: ' + (data.error || 'Unknown error'));
             return;
         }
-        htmx.find('#' + oldTeamId).outerHTML = data.oldTeam;
-        htmx.find('#' + newTeamId).outerHTML = data.newTeam;
+        const oldTeamElement = htmx.find('#' + oldTeamId);
+        const newTeamElement = htmx.find('#' + newTeamId);
+
+        if (oldTeamElement) {
+            oldTeamElement.outerHTML = data.oldTeam;
+            htmx.process(htmx.find('#' + oldTeamId)); // Re-process HTMX attributes
+        }
+        if (newTeamElement) {
+            newTeamElement.outerHTML = data.newTeam;
+            htmx.process(htmx.find('#' + newTeamId)); // Re-process HTMX attributes
+        }
 
         // reinit for the updated DOM
         initDragula();
@@ -111,7 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Populate memberSelect
                     const memberCategories = {
                         'on_this_team': 'On This Team',
-                        'on_a_different_team': 'On A Different Team',
+                        'on_a_different_team': 'On a Different Team',
                         'unassigned': 'Unassigned'
                     };
 
@@ -121,7 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             optgroup.label = memberCategories[categoryKey];
                             categorizedUsers[categoryKey].forEach(user => {
                                 const isSelected = teamMembers.includes(user.username);
-                                const isDisabled = categoryKey === 'on_a_different_team';
+                                const isDisabled = false;
                                 optgroup.appendChild(createOption(user, isSelected, isDisabled));
                             });
                             memberSelect.appendChild(optgroup);
@@ -132,7 +141,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const leaderCategories = {
                         'on_this_team': 'On This Team',
                         'unassigned': 'Unassigned',
-                        'on_a_different_team': 'On A Different Team'
+                        'on_a_different_team': 'On a Different Team'
                     };
 
                     for (const categoryKey in leaderCategories) {

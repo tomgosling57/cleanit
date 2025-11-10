@@ -41,8 +41,11 @@ def delete_team(team_id):
 
     if team:
         team_service.delete_team(team)
+        all_teams = team_service.get_all_teams()
         teardown_db()
-        return redirect(url_for('teams.get_teams'), code=303)
+        response = Response(render_template('team_list.html', teams=all_teams))
+        response.headers['HX-Trigger'] = 'teamListUpdated'
+        return response
 
     teardown_db()
     return jsonify({'error': 'Team not found'}), 404
@@ -55,8 +58,11 @@ def create_team(team_data):
     team_service = TeamService(db)
     team_service.create_team(team_data)
 
+    all_teams = team_service.get_all_teams()
     teardown_db()
-    return redirect(url_for('teams.get_teams'), code=303)
+    response = Response(render_template('team_list.html', teams=all_teams))
+    response.headers['HX-Trigger'] = 'teamListUpdated'
+    return response
 
 def get_edit_team_form(team_id):
     if current_user.role not in ['owner']:
@@ -166,8 +172,11 @@ def remove_team_member(team_id, user_id):
     user = team_service.remove_team_member(team_id, user_id)
 
     if user:
+        all_teams = team_service.get_all_teams()
         teardown_db()
-        return render_template('team_list.html', teams=team_service.get_all_teams())
+        response = Response(render_template('team_list.html', teams=all_teams))
+        response.headers['HX-Trigger'] = 'teamListUpdated'
+        return response
 
     teardown_db()
     return jsonify({'error': 'Team or User not found'}), 404

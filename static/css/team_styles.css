@@ -217,3 +217,10 @@ select#edit-team-members {
     text-decoration: none;
     cursor: pointer;
 }
+
+select#edit-team-members optgroup[label="On a Different Team"] option {
+    color: var(--placeholder-text-color);
+}
+select#edit-team-leader optgroup[label="On a Different Team"] option {
+    color: var(--placeholder-text-color);
+}
