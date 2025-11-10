@@ -33,5 +33,17 @@
     <main>
         {% block content %}{% endblock %}
     </main>
-    <script src="https://unpkg.com/htmx.org@1.9.10"></script> </body>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script> 
+    <script>
+        document.addEventListener('keydown', function(event) {
+            if (event.key === "Escape") {
+                event.preventDefault();
+                const modals = document.getElementsByClassName('modal')
+                for (let i = 0; i < modals.length; i++) {
+                    modals[i].style.display = 'none';
+                }
+            }
+        })
+    </script>
+</body>
 </html>
