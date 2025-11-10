@@ -156,19 +156,3 @@ class TeamService:
             'on_a_different_team': on_a_different_team,
             'unassigned': unassigned
         }
-
-    def get_user_jobs(self, user_id):
-        user = self.db_session.query(User).filter(User.id == user_id).first()
-        if not user:
-            return []
-        
-        # Get all JobCleaner entries for this team
-        job_cleaners = self.db_session.query(JobCleaner).filter(JobCleaner.team_id == team_id).all()
-        
-        # Extract job IDs from JobCleaner entries
-        job_ids = [jc.job_id for jc in job_cleaners]
-        
-        # Query for jobs using the extracted job IDs
-        jobs = self.db_session.query(Job).filter(Job.id.in_(job_ids)).all()
-        
-        return jobs

@@ -1,4 +1,4 @@
-from database import Job, Property, User
+from database import Job, Property, User, JobCleaner
 from sqlalchemy import and_, or_
 from sqlalchemy.orm import joinedload
 from datetime import date
@@ -108,3 +108,19 @@ class JobService:
             self.db_session.commit()
             return True
         return False
+    
+    def get_user_jobs(self, user_id, team_id):
+        user = self.db_session.query(User).filter(User.id == user_id).first()
+        if not user:
+           return []
+         
+        # Get all JobCleaner entries for this user
+        job_cleaners = self.db_session.query(JobCleaner).filter(JobCleaner.user_id == user_id or JobCleaner.team_id == team_id).all()
+
+        # Extract job IDs from JobCleaner entries
+        job_ids = list(set(jc.job_id for jc in job_cleaners))
+        
+        # Query for jobs using the extracted job IDs
+        jobs = self.db_session.query(Job).options(joinedload(Job.property)).filter(Job.id.in_(job_ids)).all()
+        
+        return jobs
