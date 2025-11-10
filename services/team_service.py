@@ -117,7 +117,7 @@ class TeamService:
             member_ids.append(team_leader_id)
         members = self.db_session.query(User).options(joinedload(User.team).joinedload(Team.members)).filter(User.id.in_(member_ids)).all()
         new_team = Team(
-            name=team_data['name'],
+            name=team_data.get('name'),
             team_leader_id=team_leader_id,
             members=members
         )

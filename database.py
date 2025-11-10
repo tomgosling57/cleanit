@@ -48,7 +48,7 @@ class Property(Base):
 class Team(Base):
     __tablename__ = 'teams'
     id = Column(Integer, primary_key=True)
-    name = Column(String, nullable=False)
+    name = Column(String)
     team_leader_id = Column(Integer, ForeignKey('users.id'))
     team_leader = relationship("User", foreign_keys=[team_leader_id])
     members = relationship("User", back_populates="team", foreign_keys=[User.team_id])
