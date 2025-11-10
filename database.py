@@ -182,7 +182,9 @@ def create_initial_property_and_job(Session):
 
         # Assign the cleaner to the job
         job_cleaner = JobCleaner(job_id=job1.id, user_id=cleaner.id)
+        job_team = JobCleaner(job_id=job1.id, team_id=1)
         session.add(job_cleaner)
+        session.add(job_team)   
         session.commit()
         print("Initial job created and assigned to cleaner.")
     session.close()

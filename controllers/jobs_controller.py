@@ -55,18 +55,9 @@ def get_job_creation_form():
 def timetable():    
     db = get_db()
     job_service = JobService(db)
-    user_service = UserService(db)
-    _return = redirect(url_for('user.login'))
-    if current_user.role == 'owner':
-        jobs = job_service.get_all_jobs() # Assuming a method to get all jobs
-        cleaners = user_service.get_users_by_role('cleaner')
-        _return = render_template('timetable.html', jobs=jobs, current_user=current_user, cleaners=cleaners)
-    if current_user.role != 'cleaner':
-        job_service = JobService(db)
-        jobs = job_service.get_cleaner_jobs_for_today(current_user.id)  
-
+    jobs = job_service.get_user_jobs(current_user.id, current_user.team_id)
     teardown_db()
-    return _return
+    return render_template('timetable.html', jobs=jobs)
 
 def update_job(job_id):
     if current_user.role != 'owner':
