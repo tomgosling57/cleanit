@@ -5,19 +5,6 @@ from services.user_service import UserService
 from database import get_db, teardown_db
 from datetime import date, time
 
-def cleaner_jobs():
-     # TODO: remove duplicate view
-    if current_user.role != 'cleaner':
-        flash('Unauthorized access', 'error')
-        return redirect(url_for('index'))
-
-    db = get_db()
-    job_service = JobService(db)
-    jobs = job_service.get_cleaner_jobs_for_today(current_user.id)
-    teardown_db()
-
-    return Response(render_template('timetable.html', jobs=jobs, current_user=current_user), content_type="text/html")
-
 def update_job_status(job_id):
     if not current_user.is_authenticated or current_user.role not in ['cleaner', 'owner', 'team-leader']:
         return jsonify({'error': 'Unauthorized'}), 401
