@@ -41,11 +41,6 @@ class TeamService:
         # Update members
         current_member_ids = {member.id for member in team.members} if team.members else set()
         new_member_ids = {int(mid) for mid in member_ids if mid}
-
-        # Remove members no longer in the list
-        for member_id in current_member_ids - new_member_ids:
-            self.remove_team_member(team_id, member_id)
-
         # Add new members
         for member_id in new_member_ids - current_member_ids:
             self.add_team_member(team_id, member_id)
