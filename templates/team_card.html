@@ -21,6 +21,9 @@
                         {% if member.id == team.team_leader_id %}
                             <span class="leader-badge">👑</span>
                         {% endif %}
+                        <span class="button" hx-delete="/teams/team/{{ team.id }}/member/remove/{{ member.id }}"
+                                  hx-target=".teams-grid"
+                                  hx-swap="innerHTML">&times;</span>
                     </li>
                 {% endfor %}
             {% else %}
