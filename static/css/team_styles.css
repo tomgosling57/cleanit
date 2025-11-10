@@ -79,6 +79,8 @@
     border-bottom: 1px solid #eee;
     padding-bottom: 15px;
     margin-bottom: 15px;
+    flex-direction: row;
+    display: flex;
 }
 
 .team-header h3 {
@@ -150,6 +152,10 @@
     font-size: 1.1em;
 }
 
+.badge {
+    margin-left: 5px;
+}
+
 .no-members {
     color: #666;
     font-style: italic;
@@ -183,16 +189,30 @@
 /* Edit Icon */
 .edit-team-icon {
     cursor: pointer;
+    font-size: 1.5em;
     margin-left: 10px;
-    color: #007bff; /* Blue color for the pencil icon */
-    font-size: 1.1em;
+    position: relative;
+    top: 2px;
     transition: color 0.2s ease;
 }
 
 .edit-team-icon:hover {
-    color: #0056b3; /* Darker blue on hover */
+    color: var(--accent-color);
 }
 
 select#edit-team-members {
     height:150px;
+}
+
+.delete-button {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+.delete-button:hover,
+.delete-button:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
 }

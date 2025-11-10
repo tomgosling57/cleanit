@@ -2,13 +2,13 @@
     <span class="close-button" onclick="document.getElementById('team-card-{{ team.id }}').style.display='none'">&times;</span>
     <div class="team-header">
         <h3 class="team-name-display">{{ team.name }}</h3>
-        <span class="edit-team-icon"
+        <span class="material-symbols-outlined edit-team-icon"
             data-team-id="{{ team.id }}"
             data-team-name="{{ team.name }}"
             data-team-lead-id="{{ team.team_leader_id }}"
             data-team-description="{{ team.description | default('') }}"
             data-team-members="{{ team.members | map(attribute='username') | join(', ') }}">
-            ✏️
+            edit
         </span>
     </div>
     
@@ -17,11 +17,12 @@
             {% if team.members %}
                 {% for member in team.members %}
                     <li class="member-item {% if member.id == team.team_leader_id %}team-leader-member{% endif %}" data-member-id="{{ member.id }}" >
-                        <span class="member-name">{{ member.username }}</span>
-                        {% if member.id == team.team_leader_id %}
-                            <span class="leader-badge">👑</span>
-                        {% endif %}
-                        <span class="button" hx-delete="/teams/team/{{ team.id }}/member/remove/{{ member.id }}"
+                        <span class="member-name">{{ member.username }}
+                            {% if member.id == team.team_leader_id %}
+                                <span class="badge leader-badge">👑</span>
+                            {% endif %}
+                        </span>
+                        <span class="delete-button" hx-delete="/teams/team/{{ team.id }}/member/remove/{{ member.id }}"
                                   hx-target=".teams-grid"
                                   hx-swap="innerHTML">&times;</span>
                     </li>

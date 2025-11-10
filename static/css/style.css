@@ -4,6 +4,7 @@
     --primary-color: #000000; /* Black */
     --secondary-color: #ffffff; /* White */
     --background-color: #f8f8f8; /* Off-white */
+    --icon-color: #666666; /* Medium Gray */
     --accent-color: #333333; /* Dark Gray */
     --button-hover-color: #333333; /* Darker Gray for hover */
     --placeholder-text-color: #a5a8b2; /* Light Gray for placeholders */
@@ -257,4 +258,12 @@ select, textarea {
     color: black;
     text-decoration: none;
     cursor: pointer;
+}
+.material-symbols-outlined {
+  font-variation-settings:
+  'FILL' 0,
+  'wght' 400,
+  'GRAD' 0,
+  'opsz' 24;
+  color: var(--icon-color);
 }
