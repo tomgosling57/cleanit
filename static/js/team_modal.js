@@ -27,39 +27,76 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
 
                 // After HTMX swaps the content, populate the fields
-                const editTeamForm = teamModalContent.querySelector('#editTeamForm');
+                const editTeamForm = teamModalContent.querySelector('#edit-team-form');
                 if (editTeamForm) {
-                    editTeamForm.querySelector('#editTeamId').value = teamId;
-                    editTeamForm.querySelector('#editTeamName').value = teamName;
+                    editTeamForm.querySelector('#edit-team-id').value = teamId;
+                    editTeamForm.querySelector('#edit-team-name').value = teamName;
 
-                    // Populate members dropdown
-                    const memberSelect = editTeamForm.querySelector('#editTeamMembers');
-                    Array.from(memberSelect.options).forEach(option => {
-                        const isMember = teamMembers.includes(option.textContent.split(' ')[0]);
-                        option.selected = isMember;
-                        // Grey out users already on other teams
-                        if (option.dataset.teamId && option.dataset.teamId !== teamId) {
-                            option.disabled = true;
-                        } else {
-                            option.disabled = false;
+                    // Populate members and leader dropdowns with optgroups
+                    const memberSelect = editTeamForm.querySelector('#edit-team-members');
+                    const leaderSelect = editTeamForm.querySelector('#edit-team-leader');
+
+                    // Clear existing options
+                    memberSelect.innerHTML = '';
+                    leaderSelect.innerHTML = '<option value="">No Leader</option>'; // Add default "No Leader" option
+
+                    const response = await fetch(`/teams/team/${teamId}/categorized_users`);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const categorizedUsers = await response.json();
+
+                    const createOption = (user, isSelected, isDisabled) => {
+                        const option = document.createElement('option');
+                        option.value = user.id;
+                        option.textContent = user.username;
+                        option.selected = isSelected;
+                        option.disabled = isDisabled;
+                        return option;
+                    };
+
+                    // Populate memberSelect
+                    const memberCategories = {
+                        'on_this_team': 'On This Team',
+                        'on_a_different_team': 'On A Different Team',
+                        'unassigned': 'Unassigned'
+                    };
+
+                    for (const categoryKey in memberCategories) {
+                        if (categorizedUsers[categoryKey] && categorizedUsers[categoryKey].length > 0) {
+                            const optgroup = document.createElement('optgroup');
+                            optgroup.label = memberCategories[categoryKey];
+                            categorizedUsers[categoryKey].forEach(user => {
+                                const isSelected = teamMembers.includes(user.username);
+                                const isDisabled = categoryKey === 'on_a_different_team';
+                                optgroup.appendChild(createOption(user, isSelected, isDisabled));
+                            });
+                            memberSelect.appendChild(optgroup);
                         }
-                    });
+                    }
 
-                    // Populate leader dropdown
-                    const leaderSelect = editTeamForm.querySelector('#editTeamLeader');
-                    Array.from(leaderSelect.options).forEach(option => {
-                        const userId = option.value;
-                        option.selected = (userId === teamLeadId);
-                        // Existing logic for greying out leaders (if applicable)
-                        // if (option.dataset.userRole === 'owner' || option.dataset.userRole === 'team_leader') {
-                        //     if (userId !== teamLeadId) {
-                        //         option.disabled = true;
-                        //     }
-                        // }
-                    });
+                    // Populate leaderSelect
+                    const leaderCategories = {
+                        'on_this_team': 'On This Team',
+                        'unassigned': 'Unassigned',
+                        'on_a_different_team': 'On A Different Team'
+                    };
+
+                    for (const categoryKey in leaderCategories) {
+                        if (categorizedUsers[categoryKey] && categorizedUsers[categoryKey].length > 0) {
+                            const optgroup = document.createElement('optgroup');
+                            optgroup.label = leaderCategories[categoryKey];
+                            categorizedUsers[categoryKey].forEach(user => {
+                                const isSelected = (String(user.id) === String(teamLeadId));
+                                const isDisabled = categoryKey === 'on_a_different_team';
+                                optgroup.appendChild(createOption(user, isSelected, isDisabled));
+                            });
+                            leaderSelect.appendChild(optgroup);
+                        }
+                    }
                 }
             } catch (error) {
-                console.error('Error loading edit team form:', error);
+                console.error('Error loading edit team form or categorized users:', error);
             }
 
             teamModal.style.display = 'flex'; // Show the modal

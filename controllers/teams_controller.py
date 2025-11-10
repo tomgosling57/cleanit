@@ -70,16 +70,30 @@ def get_edit_team_form(team_id):
         teardown_db()
         return jsonify({'error': 'Team not found'}), 404
 
-    user_service = UserService(db)
-    all_users = user_service.list_users()
-
     teardown_db()
     return render_template_string(
         """
         {% include 'team_edit_modal_content.html' with context %}
         """,
-        team=team, users=all_users
+        team=team
     )
+
+def get_categorized_team_users(team_id):
+    if current_user.role not in ['owner']:
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    db = get_db()
+    team_service = TeamService(db)
+    categorized_users = team_service.get_categorized_users_for_team(team_id)
+    teardown_db()
+
+    # Convert User objects to dictionaries for JSON serialization
+    serialized_users = {
+        category: [user.to_dict() for user in users]
+        for category, users in categorized_users.items()
+    }
+    return jsonify(serialized_users)
+
 
 def edit_team(team_id):
     if current_user.role not in ['owner']:
