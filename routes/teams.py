@@ -26,6 +26,11 @@ def get_edit_team_form(team_id):
 def get_team_details(team_id):
     return teams_controller.get_team(team_id)
 
+@teams_bp.route('/team/<int:team_id>/categorized_users', methods=['GET'])
+@login_required
+def get_categorized_users(team_id):
+    return teams_controller.get_categorized_team_users(team_id)
+
 @teams_bp.route('/team/create', methods=['POST'])
 @login_required
 def create_team():
