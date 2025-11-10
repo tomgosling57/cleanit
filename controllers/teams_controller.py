@@ -43,7 +43,7 @@ def delete_team(team_id):
         team_service.delete_team(team)
         all_teams = team_service.get_all_teams()
         teardown_db()
-        response = Response(render_template('team_list.html', teams=all_teams))
+        response = Response(render_template_string(''))
         response.headers['HX-Trigger'] = 'teamListUpdated'
         return response
 

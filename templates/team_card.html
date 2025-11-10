@@ -1,5 +1,5 @@
 <div class="team-card" id="team-card-{{ team.id }}">
-    <span class="close-button" onclick="document.getElementById('team-card-{{ team.id }}').style.display='none'">&times;</span>
+    <span class="close-button" data-team-id="{{ team.id }}" data-num-members="{{ team.members | length }}">&times;</span>
     <div class="team-header"
             data-team-id="{{ team.id }}"
             data-team-name="{{ team.name }}"

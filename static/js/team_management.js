@@ -202,4 +202,22 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('Team list updated, re-initializing Dragula.');
         initDragula();
     });
+    const closeButtons = document.querySelectorAll('.close-button');
+        closeButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const teamId = button.dataset.teamId;
+            const numMembers = parseInt(button.dataset.numMembers, 10);
+            if (numMembers > 0) {
+                alert('Cannot delete a team that has members. Please reassign or remove all members before deleting the team.');
+                return;
+            }
+            const confirmDelete = confirm('Are you sure you want to delete this team? This action cannot be undone.');
+            if (!confirmDelete) return;
+
+            htmx.ajax('DELETE', `/teams/team/${teamId}/delete`, {
+                target: `#team-card-${teamId}`,
+                swap: 'outerHTML'
+            });
+        });
+    });
 });
