@@ -192,3 +192,7 @@
 .edit-team-icon:hover {
     color: #0056b3; /* Darker blue on hover */
 }
+
+select#edit-team-members {
+    height:150px;
+}
