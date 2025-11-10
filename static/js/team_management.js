@@ -56,21 +56,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeButton = teamModal.querySelector('.close-button');
     const teamModalContent = document.getElementById('team-modal-content');
 
-    // --- Event Delegation for .edit-team-icon ---
+    // --- Event Delegation for edit team button ---
     // Attach a single click listener to a static parent (e.g., document.body)
-    // This listener will catch clicks on .edit-team-icon elements,
+    // This listener will catch clicks on .team-header elements,
     // even if they are added to the DOM dynamically by HTMX later.
     document.body.addEventListener('click', async (event) => {
-        // Check if the clicked element (or its closest ancestor) matches '.edit-team-icon'
-        const editIcon = event.target.closest('.edit-team-icon');
-        if (editIcon) {
+        // Check if the clicked element (or its closest ancestor) matches '.team-header'
+        const teamHeader = event.target.closest('.team-header');
+        if (teamHeader) {
             // Prevent the default action if necessary, though for a span it's usually not needed
             event.preventDefault();
 
-            const teamId = editIcon.dataset.teamId;
-            const teamName = editIcon.dataset.teamName;
-            const teamLeadId = editIcon.dataset.teamLeadId;
-            const teamMembers = editIcon.dataset.teamMembers ? editIcon.dataset.teamMembers.split(', ').map(name => name.trim()) : [];
+            const teamId = teamHeader.dataset.teamId;
+            const teamName = teamHeader.dataset.teamName;
+            const teamLeadId = teamHeader.dataset.teamLeadId;
+            const teamMembers = teamHeader.dataset.teamMembers ? teamHeader.dataset.teamMembers.split(', ').map(name => name.trim()) : [];
 
             try {
                 // HTMX request to fetch the edit form content

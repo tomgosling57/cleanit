@@ -1,15 +1,13 @@
 <div class="team-card" id="team-card-{{ team.id }}">
     <span class="close-button" onclick="document.getElementById('team-card-{{ team.id }}').style.display='none'">&times;</span>
-    <div class="team-header">
-        <h3 class="team-name-display">{{ team.name }}</h3>
-        <span class="material-symbols-outlined edit-team-icon"
+    <div class="team-header"
             data-team-id="{{ team.id }}"
             data-team-name="{{ team.name }}"
             data-team-lead-id="{{ team.team_leader_id }}"
             data-team-description="{{ team.description | default('') }}"
             data-team-members="{{ team.members | map(attribute='username') | join(', ') }}">
-            edit
-        </span>
+        <h3 class="team-name-display">{{ team.name }}</h3>
+        <span class="material-symbols-outlined edit-team-icon">edit</span>
     </div>
     
     <div class="team-members">
@@ -33,3 +31,14 @@
         </ul>
     </div>
 </div>
+<!-- <script>
+    document.addEventListener('keydown', function(event) {
+        if (event.key === "Escape") {
+            event.preventDefault();
+            const teamCard = document.getElementById('team-modal');
+            if (teamCard.style.display !== 'none') {
+                teamCard.style.display = 'none';
+            }
+        }
+    })
+</script> -->

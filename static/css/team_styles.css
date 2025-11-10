@@ -81,6 +81,7 @@
     margin-bottom: 15px;
     flex-direction: row;
     display: flex;
+    cursor: pointer;
 }
 
 .team-header h3 {
@@ -190,7 +191,7 @@
 .edit-team-icon {
     cursor: pointer;
     font-size: 1.5em;
-    margin-left: 10px;
+    margin-left: 15px;
     position: relative;
     top: 2px;
     transition: color 0.2s ease;
