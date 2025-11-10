@@ -10,10 +10,9 @@
 
         <div class="teams-container">
             {% if teams %}
-                <div class="teams-grid">
-                    {% for team in teams %}
-                        {% include 'team_card.html' %}
-                    {% endfor %}
+                <div class="teams-grid" id="teams-list-container">
+                    {% include 'team_list.html' %}
+                </div>
                 </div>
             {% else %}
                 <div class="no-teams-message">

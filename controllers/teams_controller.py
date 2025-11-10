@@ -114,18 +114,10 @@ def edit_team(team_id):
         return jsonify({'error': 'Team not found or update failed'}), 404
 
     all_teams = team_service.get_all_teams()
-    all_users = user_service.get_all_users()
-
     teardown_db()
-    return render_template_string(
-        """
-        {% for team in teams %}
-            {% include 'team_card.html' with context %}
-        {% endfor %}
-        """,
-        teams=all_teams, users=all_users
-    )
-
+    response = Response(render_template_string("{% include 'team_list.html' %}", teams=all_teams))
+    response.headers['HX-Trigger'] = 'teamListUpdated'
+    return response
 
 def add_team_member(team_id, user_id, old_team_id):
     if current_user.role not in ['owner']:
@@ -175,7 +167,7 @@ def remove_team_member(team_id, user_id):
 
     if user:
         teardown_db()
-        return redirect(url_for('teams.get_teams'), code=303)
+        return render_template('team_list.html', teams=team_service.get_all_teams())
 
     teardown_db()
     return jsonify({'error': 'Team or User not found'}), 404
