@@ -1,5 +1,5 @@
 import os
-from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, Date, Time, Boolean
+from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, Date, Time, Boolean, UniqueConstraint
 from sqlalchemy.orm import sessionmaker, declarative_base, relationship
 from werkzeug.security import generate_password_hash
 from flask import g, current_app
@@ -20,6 +20,8 @@ class User(Base, UserMixin):
     team_id = Column(Integer, ForeignKey('teams.id'), nullable=True)
     team = relationship("Team", back_populates="members", foreign_keys=[team_id])
     
+    job_cleaners = relationship("JobCleaner", back_populates="user")
+
     def __repr__(self):
         return f"<User(id={self.id}, username='{self.username}', role='{self.role}')>"
 
@@ -53,6 +55,8 @@ class Team(Base):
     team_leader = relationship("User", foreign_keys=[team_leader_id])
     members = relationship("User", back_populates="team", foreign_keys=[User.team_id])
 
+    job_cleaners = relationship("JobCleaner", back_populates="team")
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -74,8 +78,6 @@ class Job(Base):
     time = Column(Time, nullable=False)
     duration = Column(String, nullable=False)
     description = Column(String)
-    assigned_teams = Column(String) # Comma-separated team IDs
-    assigned_cleaners = Column(String) # Comma-separated cleaner IDs
     is_complete = Column(Boolean, default=False)
     job_type = Column(String)
     report = Column(String) # Sensitive, only for Team Leader/Owner
@@ -83,8 +85,25 @@ class Job(Base):
     property_id = Column(Integer, ForeignKey('properties.id'))
     property = relationship("Property", back_populates="jobs")
 
+    job_cleaners = relationship("JobCleaner", back_populates="job")
+ 
     def __repr__(self):
         return f"<Job(id={self.id}, job_title='{self.job_title}', date='{self.date}', is_complete='{self.is_complete}')>"
+
+class JobCleaner(Base):
+    __tablename__ = 'job_cleaners'
+    id = Column(Integer, primary_key=True)
+    job_id = Column(Integer, ForeignKey('jobs.id'), nullable=False)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=True) # For individual cleaners
+    team_id = Column(Integer, ForeignKey('teams.id'), nullable=True) # For assigned teams
+
+    job = relationship("Job", back_populates="job_cleaners")
+    user = relationship("User", foreign_keys=[user_id])
+    team = relationship("Team", foreign_keys=[team_id])
+
+    __table_args__ = (UniqueConstraint('job_id', 'user_id', name='_job_user_uc'),
+                      UniqueConstraint('job_id', 'team_id', name='_job_team_uc'),
+                      )
 
 # Database initialization function
 def init_db(app):
@@ -155,13 +174,17 @@ def create_initial_property_and_job(Session):
             time=time(9, 0),
             duration='2 hours',
             description='Full house clean, focus on kitchen and bathrooms.',
-            assigned_cleaners=str(cleaner.id),
             is_complete=False,
             property=property1
         )
         session.add(job1)
         session.commit()
-        print("Initial job created for cleaner.")
+
+        # Assign the cleaner to the job
+        job_cleaner = JobCleaner(job_id=job1.id, user_id=cleaner.id)
+        session.add(job_cleaner)
+        session.commit()
+        print("Initial job created and assigned to cleaner.")
     session.close()
 
 def create_initial_team(Session):
