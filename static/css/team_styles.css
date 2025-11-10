@@ -201,9 +201,12 @@
     color: var(--accent-color);
 }
 
-select#edit-team-members {
-    height:150px;
+select#edit-team-members, select#create-team-members {
+    resize: vertical; 
+    overflow: auto;
+    height: 150px;
 }
+
 
 .delete-button {
     color: #aaa;
@@ -218,9 +221,6 @@ select#edit-team-members {
     cursor: pointer;
 }
 
-select#edit-team-members optgroup[label="On a Different Team"] option {
-    color: var(--placeholder-text-color);
-}
-select#edit-team-leader optgroup[label="On a Different Team"] option {
+select optgroup[label="On a Different Team"] option {
     color: var(--placeholder-text-color);
 }

@@ -14,6 +14,11 @@ def teardown_user_db(exception=None):
 def users():
     return users_controller.list_users()
 
+@user_bp.route('/all_categorized', methods=['GET'])
+@login_required
+def get_all_categorized_users():
+    return users_controller.get_all_categorized_users()
+
 @user_bp.route('/view')
 @login_required
 def users_view():

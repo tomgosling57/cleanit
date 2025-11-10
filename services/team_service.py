@@ -111,10 +111,14 @@ class TeamService:
         return None
 
     def create_team(self, team_data):
-        members = self.db_session.query(User).options(joinedload(User.team).joinedload(Team.members)).filter(User.id.in_(team_data.get('members', []))).all()
+        member_ids = team_data.get('members', [])
+        team_leader_id = team_data.get('team_leader_id')
+        if team_leader_id and team_leader_id not in member_ids:
+            member_ids.append(team_leader_id)
+        members = self.db_session.query(User).options(joinedload(User.team).joinedload(Team.members)).filter(User.id.in_(member_ids)).all()
         new_team = Team(
             name=team_data['name'],
-            team_leader_id=team_data.get('team_leader_id'),
+            team_leader_id=team_leader_id,
             members=members
         )
         self.db_session.add(new_team)
@@ -124,7 +128,6 @@ class TeamService:
         for member in members:
             member.team_id = new_team.id
         self.db_session.commit()
-        self.auto_assign_team_leader(new_team)
         return new_team
 
     def delete_team(self, team):

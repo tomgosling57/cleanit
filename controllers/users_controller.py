@@ -13,7 +13,7 @@ def list_all_users_view():
     db = get_db()
     user_service = UserService(db)
     try:
-        users = user_service.list_users()
+        users = user_service.get_all_users()
         # Prepare data for rendering, including team names
         users_data = []
         for user in users:
@@ -36,7 +36,7 @@ def list_users():
     db = get_db()
     user_service = UserService(db)
     try:
-        users = user_service.list_users()
+        users = user_service.get_all_users()
         users_data = [{
             'id': user.id,
             'username': user.username,
@@ -49,6 +49,22 @@ def list_users():
         return jsonify({'error': 'Internal Server Error'}), 500
     finally:
         teardown_db()
+
+def get_all_categorized_users():
+    if current_user.role not in ['owner']:
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    db = get_db()
+    user_service = UserService(db)
+    all_users = user_service.get_all_users()
+    teardown_db()
+
+    categorized_users = {
+        'on_this_team': [], # For a new team, no users are "on this team"
+        'on_a_different_team': [user.to_dict() for user in all_users if user.team_id is not None],
+        'unassigned': [user.to_dict() for user in all_users if user.team_id is None]
+    }
+    return jsonify(categorized_users)
 
 def get_user(user_id):
     """Get a specific user by ID"""

@@ -6,7 +6,7 @@ class UserService:
     def __init__(self, db_session):
         self.db_session = db_session
 
-    def list_users(self):
+    def get_all_users(self):
         users = self.db_session.query(User).options(joinedload(User.team)).all()
         return users
 

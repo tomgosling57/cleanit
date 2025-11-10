@@ -50,9 +50,19 @@ def delete_team(team_id):
     teardown_db()
     return jsonify({'error': 'Team not found'}), 404
 
-def create_team(team_data):
+def create_team():
     if current_user.role not in ['owner']:
         return jsonify({'error': 'Unauthorized'}), 403
+
+    team_name = request.form.get('team_name')
+    member_ids = request.form.getlist('members')
+    team_leader_id = request.form.get('team_leader_id')
+
+    team_data = {
+        'name': team_name,
+        'members': [int(mid) for mid in member_ids if mid],
+        'team_leader_id': int(team_leader_id) if team_leader_id else None
+    }
 
     db = get_db()
     team_service = TeamService(db)
@@ -63,6 +73,29 @@ def create_team(team_data):
     response = Response(render_template('team_list.html', teams=all_teams))
     response.headers['HX-Trigger'] = 'teamListUpdated'
     return response
+
+def get_create_team_form():
+    if current_user.role not in ['owner']:
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    db = get_db()
+    user_service = UserService(db)
+    all_users = user_service.get_all_users()
+    teardown_db()
+
+    # Categorize all users for the create form (all will be unassigned or on different teams)
+    categorized_users = {
+        'on_this_team': [], # No users on "this team" for a new team
+        'on_a_different_team': [user for user in all_users if user.team_id is not None],
+        'unassigned': [user for user in all_users if user.team_id is None]
+    }
+
+    return render_template_string(
+        """
+        {% include 'team_create_modal_content.html' with context %}
+        """,
+        categorized_users=categorized_users
+    )
 
 def get_edit_team_form(team_id):
     if current_user.role not in ['owner']:
