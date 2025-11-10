@@ -100,3 +100,24 @@ class TeamService:
         self.user_service.remove_team_from_users(team.id)
         self.db_session.delete(team)
         self.db_session.commit()
+
+    def get_categorized_users_for_team(self, team_id):
+        all_users = self.db_session.query(User).all()
+        
+        on_this_team = []
+        on_a_different_team = []
+        unassigned = []
+
+        for user in all_users:
+            if user.team_id == team_id:
+                on_this_team.append(user)
+            elif user.team_id is not None:
+                on_a_different_team.append(user)
+            else:
+                unassigned.append(user)
+        
+        return {
+            'on_this_team': on_this_team,
+            'on_a_different_team': on_a_different_team,
+            'unassigned': unassigned
+        }
