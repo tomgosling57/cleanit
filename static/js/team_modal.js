@@ -1,3 +1,56 @@
+function initDragula() {
+    // If there's an existing instance, clean it up
+    if (window.drake) {
+        try {
+            window.drake.destroy();
+        } catch (e) {
+            // Dragula’s destroy() isn’t always defined on all builds, so be safe
+            console.warn('Could not destroy existing Dragula instance:', e);
+        }
+    }
+
+    const teamContainers = Array.from(document.querySelectorAll('.members-list'));
+    if (teamContainers.length === 0) return;
+
+    const drake = dragula(teamContainers);
+
+    drake.on('drop', handleDrop);
+
+    window.drake = drake; // keep global ref
+    console.log('Dragula initialised for', teamContainers.length, 'containers');
+}
+
+function handleDrop(el, target, source) {
+    const memberId = el.dataset.memberId;
+    const newTeamId = target.closest('.team-card').id;
+    const newTeamIdNumber = newTeamId.split('-').pop();
+    const oldTeamId = source.closest('.team-card').id;
+    const oldTeamIdNumber = oldTeamId.split('-').pop();
+    const apiUrl = `/teams/team/${newTeamIdNumber}/add_member`;
+
+    fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            user_id: memberId,
+            old_team_id: oldTeamIdNumber
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (!data.success) {
+            alert('Error: ' + (data.error || 'Unknown error'));
+            return;
+        }
+        htmx.find('#' + oldTeamId).outerHTML = data.oldTeam;
+        htmx.find('#' + newTeamId).outerHTML = data.newTeam;
+
+        // reinit for the updated DOM
+        initDragula();
+    })
+    .catch(console.error);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const teamModal = document.getElementById('team-modal');
     const closeButton = teamModal.querySelector('.close-button');
@@ -119,5 +172,11 @@ document.addEventListener('DOMContentLoaded', () => {
             // Re-initialize any select2 or other custom dropdowns here if you use them
             // For native selects, the population logic above should suffice on modal open
         }
+    });
+
+    // Listen for custom event to re-initialize Dragula after team list updates
+    document.body.addEventListener('teamListUpdated', () => {
+        console.log('Team list updated, re-initializing Dragula.');
+        initDragula();
     });
 });
