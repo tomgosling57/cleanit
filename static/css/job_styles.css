@@ -23,8 +23,12 @@ input#timetable-datepicker {
     text-align: center;
     outline: none;
     border: none;
+    color: var(--primary-color);
     box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
     padding: .5em;
+}
+input#timetable-datepicker:focus {
+    color: var(--primary-color);
 }
 .input-wrapper {
   position: relative;
