@@ -7,7 +7,7 @@
         <div class="header-with-button">
             <h1>Jobs</h1>
             <div class="input-wrapper">
-                <input type="text" id="timetable-datepicker" placeholder="Select Date" value="{{ selected_date }}"/>
+                <input type="text" id="timetable-datepicker" placeholder="Select Date"/>
             </div>
             {% if current_user.role == 'owner' %}
                 <button class="button"
@@ -52,14 +52,11 @@
     <script>
         <!-- This code is for the date picker -->
         flatpickr("#timetable-datepicker", {
-            dateFormat: "Y-m-d",
-            defaultDate: "today",
+            dateFormat: "{{ date_format }}",
+            defaultDate: "{{ selected_date }}",
             onChange: function(selectedDates, dateStr, instance) {
                 // Fetch jobs for the selected date via HTMX
-                htmx.ajax('GET', '/jobs?date=' + dateStr, {
-                    target: 'main',
-                    swap: 'innerHTML'
-                });
+                htmx.ajax('POST', '/jobs?date=' + dateStr);
             }
         });
     </script>
