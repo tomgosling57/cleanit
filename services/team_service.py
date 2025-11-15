@@ -1,4 +1,4 @@
-from database import Team, User, Job, JobCleaner
+from database import Team, User, Job, Assignment
 from services.job_service import JobService
 from services.user_service import UserService
 from sqlalchemy.orm import joinedload

@@ -20,7 +20,7 @@ class User(Base, UserMixin):
     team_id = Column(Integer, ForeignKey('teams.id'), nullable=True)
     team = relationship("Team", back_populates="members", foreign_keys=[team_id])
     
-    job_cleaners = relationship("JobCleaner", back_populates="user")
+    assignments = relationship("Assignment", back_populates="user")
 
     def __repr__(self):
         return f"<User(id={self.id}, username='{self.username}', role='{self.role}')>"
@@ -55,7 +55,7 @@ class Team(Base):
     team_leader = relationship("User", foreign_keys=[team_leader_id])
     members = relationship("User", back_populates="team", foreign_keys=[User.team_id])
 
-    job_cleaners = relationship("JobCleaner", back_populates="team")
+    assignments = relationship("Assignment", back_populates="team")
 
     def to_dict(self):
         return {
@@ -85,20 +85,20 @@ class Job(Base):
     property_id = Column(Integer, ForeignKey('properties.id'))
     property = relationship("Property", back_populates="jobs")
 
-    job_cleaners = relationship("JobCleaner", back_populates="job")
+    assignments = relationship("Assignment", back_populates="job")
  
     def __repr__(self):
         return f"<Job(id={self.id}, job_title='{self.job_title}', date='{self.date}', is_complete='{self.is_complete}')>"
 
-class JobCleaner(Base):
-    __tablename__ = 'job_cleaners'
+class Assignment(Base):
+    __tablename__ = 'assignments'
     id = Column(Integer, primary_key=True)
     job_id = Column(Integer, ForeignKey('jobs.id'), nullable=False)
     user_id = Column(Integer, ForeignKey('users.id'), nullable=True) # For individual cleaners
     team_id = Column(Integer, ForeignKey('teams.id'), nullable=True) # For assigned teams
 
-    job = relationship("Job", back_populates="job_cleaners")
-    user = relationship("User", foreign_keys=[user_id])
+    job = relationship("Job", back_populates="assignments")
+    user = relationship("User", foreign_keys=[user_id])  
     team = relationship("Team", foreign_keys=[team_id])
 
     __table_args__ = (UniqueConstraint('job_id', 'user_id', name='_job_user_uc'),
@@ -181,9 +181,9 @@ def create_initial_property_and_job(Session):
         session.commit()
 
         # Assign the cleaner to the job
-        job_cleaner = JobCleaner(job_id=job1.id, user_id=cleaner.id)
-        job_team = JobCleaner(job_id=job1.id, team_id=1)
-        session.add(job_cleaner)
+        assignment = Assignment(job_id=job1.id, user_id=cleaner.id)
+        job_team = Assignment(job_id=job1.id, team_id=1)
+        session.add(assignment)
         session.add(job_team)   
         session.commit()
         print("Initial job created and assigned to cleaner.")

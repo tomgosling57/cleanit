@@ -4,6 +4,7 @@ from config import DATE_FORMAT
 from services.job_service import JobService
 from services.team_service import TeamService
 from services.user_service import UserService
+from services.assignment_service import AssignmentService
 from database import get_db, teardown_db
 from datetime import date, datetime, time
 
@@ -56,7 +57,7 @@ def get_job_creation_form():
 
 def timetable(date: str = None):    
     db = get_db()
-    job_service = JobService(db)
+    assignment_service = AssignmentService(db)
     
     if date:
         try:
@@ -66,7 +67,7 @@ def timetable(date: str = None):
     else:
         date_obj = datetime.today().date()
 
-    jobs = job_service.get_user_jobs(current_user.id, current_user.team_id, date_obj)
+    jobs = assignment_service.get_assignments_for_user_on_date(current_user.id, current_user.team_id, date_obj)
     team_service = TeamService(db)    
     team = team_service.get_team(current_user.team_id)
     team_leader_id = team.team_leader_id if team else None
