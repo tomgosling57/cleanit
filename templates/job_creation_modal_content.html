@@ -18,20 +18,18 @@
     <label for="duration">Duration (hours):</label>
     <input type="number" id="duration" name="duration" step="0.5" required>
 
-    <div class="form-group">
-        <label for="assigned_teams">Assigned Teams:</label>
-        <select id="assigned_teams" name="assigned_teams" multiple>
-            {% for team in teams %}
-                <option value="{{ team.id }}">{{ team.name }}</option>
-            {% endfor %}
-        </select>
-        <label for="assigned_cleaners">Assigned Cleaners:</label>
-        <select id="assigned_cleaners" name="assigned_cleaners" multiple>
-            {% for user in users %}
-                <option value="{{ user.id }}">{{ user.name }}</option>
-            {% endfor %}
-        </select>
-    </div>  
+    <label for="assigned_teams">Assigned Teams:</label>
+    <select id="assigned_teams" name="assigned_teams" multiple>
+        {% for team in teams %}
+            <option value="{{ team.id }}">{{ team.name }}</option>
+        {% endfor %}
+    </select>
+    <label for="assigned_cleaners">Assigned Cleaners:</label>
+    <select id="assigned_cleaners" name="assigned_fcleaners" multiple>
+        {% for user in users %}
+            <option value="{{ user.id }}">{{ user.username }}</option>
+        {% endfor %}
+    </select>
 
     <label for="job_type">Job Type:</label>
     <input type="text" id="job_type" name="job_type">
