@@ -12,6 +12,7 @@
 <body>
     <!-- Script must remain in body -->
     <script src="https://cdn.jsdelivr.net/npm/dragula@3.7.3/dist/dragula.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script>
         document.body.addEventListener('htmx:afterSwap', (event) => {
         // Re-init dragula on updated content
@@ -35,6 +36,7 @@
     </main>
     <script src="https://unpkg.com/htmx.org@1.9.10"></script> 
     <script>
+        // Keyboard shortcuts
         document.addEventListener('keydown', function(event) {
             if (event.key === "Escape") {
                 event.preventDefault();
