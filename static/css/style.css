@@ -118,6 +118,7 @@ input:focus {
     color: var(--secondary-color);    
     background-color: var(--accent-color);
     box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+    outline: none;
 }
 input:placeholder {
     color: var(--placeholder-text-color);

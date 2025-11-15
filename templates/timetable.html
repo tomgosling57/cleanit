@@ -5,7 +5,10 @@
 {% block content %}
     <div class="container">
         <div class="header-with-button">
-            <h1>My Assigned Jobs for Today</h1>
+            <h1>Jobs</h1>
+            <div class="input-wrapper">
+                <input type="text" id="timetable-datepicker" placeholder="Select Date" value="{{ selected_date }}"/>
+            </div>
             {% if current_user.role == 'owner' %}
                 <button class="button"
                         hx-get="{{ url_for('job.create_job') }}"
