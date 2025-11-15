@@ -22,3 +22,23 @@ class AssignmentService:
         # Query for jobs using the extracted job IDs
         jobs = self.db_session.query(Job).options(joinedload(Job.property)).filter(Job.id.in_(job_ids)).all()
         return jobs
+    
+    def create_assignment(self, job_id, user_id=None, team_id=None):
+        if not user_id and not team_id:
+            return None
+        assignment = Assignment(job_id=job_id, user_id=user_id, team_id=team_id)
+        self.db_session.add(assignment)
+        self.db_session.commit()
+        return assignment
+    
+    def delete_assignment(self, assignment_id):
+        assignment = self.db_session.query(Assignment).filter(Assignment.id == assignment_id).first()
+        if assignment:
+            self.db_session.delete(assignment)
+            self.db_session.commit()
+            return True
+        return False
+    
+    def get_assignments_for_job(self, job_id):
+        assignments = self.db_session.query(Assignment).filter(Assignment.job_id == job_id).all()
+        return assignments

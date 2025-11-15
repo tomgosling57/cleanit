@@ -164,13 +164,15 @@ def create_job():
 
     db = get_db()
     job_service = JobService(db)
-    
+    assignment_service = AssignmentService(db)    
+
     job_title = request.form.get('job_title')
     property_address = request.form.get('property_address')
     date_str = request.form.get('date')
     time_str = request.form.get('time')
     duration = request.form.get('duration')
-    assigned_cleaner_id = request.form.get('assigned_cleaner_id')
+    assigned_teams = request.form.getlist('assigned_teams')
+    assigned_cleaners = request.form.getlist('assigned_cleaners')
     job_type = request.form.get('job_type')
     notes = request.form.get('notes')
 
@@ -194,12 +196,17 @@ def create_job():
         'time': job_time,
         'duration': duration,
         'description': notes,
-        'assigned_cleaners': assigned_cleaner_id,
         'job_type': job_type,
         'property_id': property_obj.id
     }
     new_job = job_service.create_job(new_job_data)
-    
+
+    # Create job assignments for cleaners and teams
+    for team_id in assigned_teams:
+        assignment_service.create_assignment(job_id=new_job.id, team_id=team_id)
+    for cleaner_id in assigned_cleaners:
+        assignment_service.create_assignment(job_id=new_job.id, cleaner_id=cleaner_id)
+
     # Get all jobs to re-render the entire job list
     jobs = job_service.get_all_jobs()
     teardown_db()
