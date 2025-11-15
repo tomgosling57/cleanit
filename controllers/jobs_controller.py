@@ -1,6 +1,6 @@
 from flask import render_template, render_template_string, redirect, url_for, flash, request, jsonify, Response
 from flask_login import current_user
-from config import DATE_FORMAT
+from config import DATE_FORMAT, DATE_FORMAT_FLATPICKR
 from services.job_service import JobService
 from services.team_service import TeamService
 from services.user_service import UserService
