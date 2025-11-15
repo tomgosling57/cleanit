@@ -86,7 +86,6 @@ def update_job(job_id):
         teardown_db()
         return jsonify({'error': 'Job not found'}), 404
 
-    job_title = request.form.get('job_title')
     property_address = request.form.get('property_address')
     date_str = request.form.get('date')
     time_str = request.form.get('time')
@@ -95,8 +94,7 @@ def update_job(job_id):
     job_type = request.form.get('job_type')
     notes = request.form.get('notes')
 
-    if not all([job_title, property_address, date_str, time_str, duration]):
-        print(f"Missing fields: Job Title: {job_title}, Property Address: {property_address}, Date: {date_str}, Time: {time_str}, Duration:: {duration}")
+    if not all([property_address, date_str, time_str, duration]):
         teardown_db()
         return jsonify({'error': 'Missing required fields'}), 400
 
@@ -112,7 +110,6 @@ def update_job(job_id):
         property_obj = job_service.create_property(property_address)
 
     updated_job_data = {
-        'job_title': job_title,
         'date': job_date,
         'time': job_time,
         'duration': duration,
@@ -167,7 +164,6 @@ def create_job():
     job_service = JobService(db)
     assignment_service = AssignmentService(db)    
 
-    job_title = request.form.get('job_title')
     property_address = request.form.get('property_address')
     date_str = request.form.get('date')
     time_str = request.form.get('time')
@@ -176,8 +172,9 @@ def create_job():
     assigned_cleaners = request.form.getlist('assigned_cleaners')
     job_type = request.form.get('job_type')
     notes = request.form.get('notes')
+    selected_date = request.form.get('selected_date')
 
-    if not all([job_title, property_address, date_str, time_str, duration]):
+    if not all([property_address, date_str, time_str, duration]):
         return jsonify({'error': 'Missing required fields'}), 400
 
     try:
@@ -191,7 +188,6 @@ def create_job():
         property_obj = job_service.create_property(property_address)
 
     new_job_data = {
-        'job_title': job_title,
         'is_complete': False,
         'date': job_date,
         'time': job_time,

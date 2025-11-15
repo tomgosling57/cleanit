@@ -16,7 +16,6 @@ class JobService:
             )
         ).all()
         for job in jobs:
-            print(f"Job ID: {job.id}, Title: {job.job_title}")
             if job.property:
                 print(f"  Property Address: {job.property.address}")
                 print(f"  Property ID: {job.property_id}")
@@ -29,8 +28,6 @@ class JobService:
         job = self.db_session.query(Job).filter_by(id=job_id).first()
         if not job:
             return None
-
-        job.job_title = job_data.get('job_title', job.job_title)
         job.date = job_data.get('date', job.date)
         job.time = job_data.get('time', job.time)
         job.duration = job_data.get('duration', job.duration)
@@ -72,12 +69,10 @@ class JobService:
 
     def create_job(self, job_data):
         new_job = Job(
-            job_title=job_data['job_title'],
             date=job_data['date'],
             time=job_data['time'],
             duration=job_data['duration'],
             description=job_data.get('description'),
-            assigned_cleaners=job_data.get('assigned_cleaners'),
             is_complete=False,
             job_type=job_data.get('job_type'),
             property_id=job_data['property_id']

@@ -73,7 +73,6 @@ class Job(Base):
     __tablename__ = 'jobs'
 
     id = Column(Integer, primary_key=True)
-    job_title = Column(String, nullable=False)
     date = Column(Date, nullable=False)
     time = Column(Time, nullable=False)
     duration = Column(String, nullable=False)
@@ -88,7 +87,7 @@ class Job(Base):
     assignments = relationship("Assignment", back_populates="job")
  
     def __repr__(self):
-        return f"<Job(id={self.id}, job_title='{self.job_title}', date='{self.date}', is_complete='{self.is_complete}')>"
+        return f"<Job(id={self.id}, date='{self.date}', is_complete='{self.is_complete}')>"
 
 class Assignment(Base):
     __tablename__ = 'assignments'
@@ -169,7 +168,6 @@ def create_initial_property_and_job(Session):
         # Create a job for today
         today = date.today()
         job1 = Job(
-            job_title='Morning Clean',
             date=today,
             time=time(9, 0),
             duration='2 hours',
