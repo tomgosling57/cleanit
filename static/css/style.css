@@ -268,3 +268,8 @@ select, textarea {
   'opsz' 24;
   color: var(--icon-color);
 }
+select {
+    resize: vertical; 
+    overflow: auto;
+    height: 75px;
+}

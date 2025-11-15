@@ -202,11 +202,8 @@
 }
 
 select#edit-team-members, select#create-team-members {
-    resize: vertical; 
-    overflow: auto;
     height: 150px;
 }
-
 
 .delete-button {
     color: #aaa;
