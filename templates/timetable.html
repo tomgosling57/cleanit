@@ -50,10 +50,16 @@
 
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <script>
-        document.addEventListener('keydown', function(event) {
-            if (event.key === 'Escape') {
-                document.getElementById('job-details-modal').style.display = 'none';
-                document.getElementById('job-creation-modal').style.display = 'none';
+        <!-- This code is for the date picker -->
+        flatpickr("#timetable-datepicker", {
+            dateFormat: "Y-m-d",
+            defaultDate: "today",
+            onChange: function(selectedDates, dateStr, instance) {
+                // Fetch jobs for the selected date via HTMX
+                htmx.ajax('GET', '/jobs?date=' + dateStr, {
+                    target: 'main',
+                    swap: 'innerHTML'
+                });
             }
         });
     </script>
