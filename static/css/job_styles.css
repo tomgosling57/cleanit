@@ -1,4 +1,4 @@
-  .job-actions button {
+.job-actions button {
     margin-right: 10px;
     padding: 8px 12px;
     border: none;
@@ -9,29 +9,62 @@
 }
 .job-actions button:hover {
     background-color: #0056b3;
-}
+    }
 .job-actions button:disabled {
     background-color: #cccccc;
     cursor: not-allowed;
 }
-input#timetable-datepicker {
-    background-color: var(--background-color);
+div#date-picker-wrapper {
     font-size: 2rem;
     min-width: 50px;
-    max-width: 100%;
+    max-width: 300px;
     margin-bottom: 0px;
     text-align: center;
-    outline: none;
-    border: none;
-    color: var(--primary-color);
     box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
-    padding: .5em;
+    font-weight: 300;
 }
-input#timetable-datepicker:focus {
+/* .job-list {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+} */
+.job-card {
+    max-height: 500px;
+    /* max-width: 800px; */
+    flex-direction: row;
+    display: flex;
+    justify-content: space-between;
+}
+.job-status-actions {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-end;
+}
+.job-status-actions p, .job-status-actions .job-status-container {
+    margin-right: 12px;
+}
+div#date-picker-wrapper:focus {
     color: var(--primary-color);
+}
+
+input#timetable-datepicker {
+    border: none;
+    background-color: inherit;
+    color: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+    text-align: center;
+    margin: 0;
+    padding: 0;
 }
 .input-wrapper {
   position: relative;
-  display: inline-block;
+  flex-direction: row;
+  display: flex;
 }
 
+.fa-solid {
+    display: none;
+}
