@@ -6,8 +6,8 @@
 }
 
 .user-card {
-    background-color: #ffffff;
-    border: 1px solid #ddd;
+    background-color: var(--card-background);
+    border: 1px solid var(--border-color);
     border-radius: 10px;
     padding: 20px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
@@ -19,7 +19,7 @@
 }
 
 .user-card h3 {
-    color: #000;
+    color: var(--primary-color);
     margin-top: 0;
     margin-bottom: 10px;
     font-size: 1.3em;
