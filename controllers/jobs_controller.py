@@ -1,9 +1,11 @@
 from flask import render_template, render_template_string, redirect, url_for, flash, request, jsonify, Response
 from flask_login import current_user
+from config import DATE_FORMAT
 from services.job_service import JobService
+from services.team_service import TeamService
 from services.user_service import UserService
 from database import get_db, teardown_db
-from datetime import date, time
+from datetime import date, datetime, time
 
 def update_job_status(job_id):
     if not current_user.is_authenticated or current_user.role not in ['cleaner', 'owner', 'team-leader']:
@@ -52,12 +54,24 @@ def get_job_creation_form():
     teardown_db()
     return render_template('job_creation_modal_content.html', cleaners=cleaners)
 
-def timetable():    
+def timetable(date: str = None):    
     db = get_db()
     job_service = JobService(db)
-    jobs = job_service.get_user_jobs(current_user.id, current_user.team_id)
+    
+    if date:
+        try:
+            date_obj = datetime.strptime(date, DATE_FORMAT).date()
+        except ValueError:
+            date_obj = None
+    else:
+        date_obj = datetime.today().date()
+
+    jobs = job_service.get_user_jobs(current_user.id, current_user.team_id, date_obj)
+    team_service = TeamService(db)    
+    team = team_service.get_team(current_user.team_id)
+    team_leader_id = team.team_leader_id if team else None
     teardown_db()
-    return render_template('timetable.html', jobs=jobs)
+    return render_template('timetable.html', jobs=jobs, team_leader_id=team_leader_id, user_role=current_user.role, user_id=current_user.id, selected_date=date_obj)
 
 def update_job(job_id):
     if current_user.role != 'owner':
