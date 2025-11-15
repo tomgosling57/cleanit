@@ -50,13 +50,27 @@
 
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <script>
-        <!-- This code is for the date picker -->
         flatpickr("#timetable-datepicker", {
             dateFormat: "{{ date_format }}",
             defaultDate: "{{ selected_date }}",
             onChange: function(selectedDates, dateStr, instance) {
                 // Fetch jobs for the selected date via HTMX
                 window.location.assign('{{ url_for("job.timetable") }}?date=' + dateStr);
+            }
+        });
+    </script>
+    <script>
+        // Use htmx.on to ensure Flatpickr is initialized after HTMX swaps content
+        htmx.on("htmx:afterSwap", function(event) {
+            console.log("htmx:afterSwap event triggered inside htmx.on.");
+            try {
+                flatpickr("#date", {
+                    dateFormat: "{{ date_format }}",
+                    defaultDate: "{{ selected_date }}"
+                });
+                console.log("Flatpickr initialized successfully.");
+            } catch (error) {
+                console.error("Error initializing Flatpickr:", error);
             }
         });
     </script>
