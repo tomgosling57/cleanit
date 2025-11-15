@@ -56,7 +56,7 @@
             defaultDate: "{{ selected_date }}",
             onChange: function(selectedDates, dateStr, instance) {
                 // Fetch jobs for the selected date via HTMX
-                htmx.ajax('POST', '/jobs?date=' + dateStr);
+                window.location.assign('{{ url_for("job.timetable") }}?date=' + dateStr);
             }
         });
     </script>

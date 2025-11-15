@@ -12,12 +12,8 @@ def teardown_job_db(exception=None):
 @job_bp.route('/', methods=['GET'])
 @login_required
 def timetable():
-    return jobs_controller.timetable(request.args.get('date'))
-
-@job_bp.route('/', methods=['POST'])
-@login_required
-def update_timetable():
-    return jobs_controller.update_timetable(request.args.get('date'))
+    date = request.args.get('date')
+    return jobs_controller.timetable(date)
 
 @job_bp.route('/job/<int:job_id>/update_status', methods=['POST'])
 def update_job_status(job_id):

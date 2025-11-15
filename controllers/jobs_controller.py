@@ -80,9 +80,6 @@ def timetable(date: str = None):
     return render_template('timetable.html', jobs=jobs, team_leader_id=team_leader_id, user_role=current_user.role, 
                            user_id=current_user.id, selected_date=selected_date, date_format=DATE_FORMAT_FLATPICKR)
 
-def update_timetable(date: str):
-    return redirect(url_for('job.timetable', date=date))                           
-
 def update_job(job_id):
     if current_user.role != 'owner':
         return jsonify({'error': 'Unauthorized'}), 403
