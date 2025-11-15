@@ -9,10 +9,15 @@ job_bp = Blueprint('job', __name__, url_prefix='/jobs')
 def teardown_job_db(exception=None):
     teardown_db(exception)
 
-@job_bp.route('/')
+@job_bp.route('/', methods=['GET'])
 @login_required
 def timetable():
-    return jobs_controller.timetable()
+    return jobs_controller.timetable(request.args.get('date'))
+
+@job_bp.route('/', methods=['POST'])
+@login_required
+def update_timetable():
+    return jobs_controller.update_timetable(request.args.get('date'))
 
 @job_bp.route('/job/<int:job_id>/update_status', methods=['POST'])
 def update_job_status(job_id):

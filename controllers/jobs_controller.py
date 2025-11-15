@@ -56,24 +56,32 @@ def get_job_creation_form():
     teams = team_service.get_all_teams()
     teardown_db()
     return render_template('job_creation_modal_content.html', users=users, teams=teams)
+
 def timetable(date: str = None):    
     db = get_db()
     assignment_service = AssignmentService(db)
-    
+
+    date_obj = datetime.today().date()
+
+    # Use given date if provided    
     if date:
         try:
             date_obj = datetime.strptime(date, DATE_FORMAT).date()
         except ValueError:
             date_obj = None
-    else:
-        date_obj = datetime.today().date()
 
     jobs = assignment_service.get_assignments_for_user_on_date(current_user.id, current_user.team_id, date_obj)
     team_service = TeamService(db)    
     team = team_service.get_team(current_user.team_id)
     team_leader_id = team.team_leader_id if team else None
     teardown_db()
-    return render_template('timetable.html', jobs=jobs, team_leader_id=team_leader_id, user_role=current_user.role, user_id=current_user.id, selected_date=date_obj)
+
+    selected_date = date_obj.strftime(DATE_FORMAT)
+    return render_template('timetable.html', jobs=jobs, team_leader_id=team_leader_id, user_role=current_user.role, 
+                           user_id=current_user.id, selected_date=selected_date, date_format=DATE_FORMAT_FLATPICKR)
+
+def update_timetable(date: str):
+    return redirect(url_for('job.timetable', date=date))                           
 
 def update_job(job_id):
     if current_user.role != 'owner':
@@ -209,6 +217,9 @@ def create_job():
     teardown_db()
 
     if new_job:
+        if job_date.strftime(DATE_FORMAT) != selected_date:
+            # If the new job's date doesn't match the currently selected date, don't update the list
+            return Response(status=204)  # No Content
         return render_template('job_list_fragment.html', jobs=jobs)
     return jsonify({'error': 'Failed to create job'}), 500
 
