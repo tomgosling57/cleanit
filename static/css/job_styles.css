@@ -23,7 +23,7 @@ div#date-picker-wrapper {
     box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
     font-weight: 300;
 }
-.job-card {
+.job-card-details {
     max-height: 500px;
     /* max-width: 800px; */
     flex-direction: row;
@@ -33,7 +33,7 @@ div#date-picker-wrapper {
 .job-status-actions {
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    /* justify-content: center; */
     align-items: flex-end;
 }
 .job-status-actions p, .job-status-actions .job-status-container {
@@ -61,4 +61,11 @@ input#timetable-datepicker {
 
 .fa-solid {
     display: none;
+}
+
+.job-close-button {
+    position: absolute;
+    top: 8px;
+    right: 15px;
+    cursor: pointer;
 }

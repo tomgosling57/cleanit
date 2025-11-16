@@ -20,6 +20,9 @@ class PropertyService:
         
         returns: Property"""
         return self.db_session.query(Property).filter_by(id=property_id).first()
+    
+    def get_property_by_address(self, address):
+        return self.db_session.query(Property).filter_by(address=address).first()
 
     def create_property(self, property_data):
         """

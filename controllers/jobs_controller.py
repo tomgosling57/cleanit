@@ -77,6 +77,7 @@ def timetable(date: str = None):
     teardown_db()
 
     selected_date = date_obj.strftime(DATE_FORMAT)
+    current_user.selected_date = selected_date
     return render_template('timetable.html', jobs=jobs, team_leader_id=team_leader_id, user_role=current_user.role, 
                            user_id=current_user.id, selected_date=selected_date, date_format=DATE_FORMAT_FLATPICKR)
 
@@ -119,7 +120,6 @@ def update_job(job_id):
         'time': job_time,
         'duration': duration,
         'description': notes,
-        'assigned_cleaners': "assigned_cleaner_id",
         'job_type': job_type,
         'property_id': property_obj.id
     }
@@ -129,7 +129,6 @@ def update_job(job_id):
     if updated_job:
         # Fetch the updated job details for the modal
         job = job_service.get_job_details(job_id)
-        job.assigned_cleaners_list = job.assigned_cleaners.split(',') if job.assigned_cleaners else []
         
         # Render job details for the modal
         job_details_html = render_template('job_details_modal_content.html', job=job)
@@ -207,7 +206,7 @@ def create_job():
     for team_id in assigned_teams:
         assignment_service.create_assignment(job_id=new_job.id, team_id=team_id)
     for cleaner_id in assigned_cleaners:
-        assignment_service.create_assignment(job_id=new_job.id, cleaner_id=cleaner_id)
+        assignment_service.create_assignment(job_id=new_job.id, user_id=cleaner_id)
 
     # Get all jobs to re-render the entire job list
     jobs = job_service.get_all_jobs()
@@ -229,9 +228,9 @@ def delete_job(job_id):
     job_service = JobService(db)
     success = job_service.delete_job(job_id)
     if success:
-        jobs = job_service.get_all_jobs()
+        jobs = job_service.get_all_jobs().all()
         teardown_db()
         return render_template('job_list_fragment.html', jobs=jobs)
-    
+        
     teardown_db()
     return jsonify({'error': 'Job not found'}), 404

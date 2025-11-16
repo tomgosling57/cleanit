@@ -1,11 +1,14 @@
 <div class="job-card" id="job-{{ job.id }}">
-    <div classe="job-info">
-        <p><strong>Time:</strong> {{ job.time.strftime('%H:%M') }}</p>
-        <p><strong>Duration:</strong> {{ job.duration }}</p>
-        <p><strong>Property Address:</strong> {{ job.property.address }}</p>
-    </div>
-    <div class="job-status-actions">
-        {% include "job_actions_fragment.html" %}
-        <p>{% include 'job_status_fragment.html' %}</p>
+    <span class="job-close-button small-icon close-button" data-job-id="{{ job.id }}">&times;</span>
+    <div class="job-card-details">
+        <div class="job-info">
+            <p><strong>Time:</strong> {{ job.time.strftime('%H:%M') }}</p>
+            <p><strong>Duration:</strong> {{ job.duration }}</p>
+            <p><strong>Property Address:</strong> {{ job.property.address }}</p>
+        </div>
+        <div class="job-status-actions">
+            {% include "job_actions_fragment.html" %}
+            <p>{% include 'job_status_fragment.html' %}</p>
+        </div>
     </div>
 </div>

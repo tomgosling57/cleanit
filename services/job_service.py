@@ -1,4 +1,6 @@
 from database import Job, Property, User, Assignment
+from services.property_service import PropertyService
+from services.assignment_service import AssignmentService
 from sqlalchemy import and_, or_
 from sqlalchemy.orm import joinedload
 from datetime import date
@@ -6,6 +8,8 @@ from datetime import date
 class JobService:
     def __init__(self, db_session):
         self.db_session = db_session
+        self.property_service = PropertyService(db_session)
+        self.assignment_service = AssignmentService(db_session)
 
     def get_cleaner_jobs_for_today(self, cleaner_id):
         today = date.today()
@@ -35,10 +39,10 @@ class JobService:
         job.assigned_cleaners = job_data.get('assigned_cleaners', job.assigned_cleaners)
         property_address = job_data.get('property_address')
         if property_address:
-            property_obj = self.get_property_by_address(property_address)
+            property_obj = self.property_service.get_property_by_address(property_address)
             if not property_obj:
-                property_obj = self.create_property(property_address)
-            job.property_id = property
+                property_obj = self.property_service.create_property(property_address)
+            job.property_id = property_obj.id
         self.db_session.commit()
         return job
 
@@ -57,15 +61,6 @@ class JobService:
     def get_all_jobs(self):
         jobs = self.db_session.query(Job).options(joinedload(Job.property))
         return jobs
-
-    def get_property_by_address(self, address):
-        return self.db_session.query(Property).filter_by(address=address).first()
-
-    def create_property(self, address, access_notes=None):
-        new_property = Property(address=address, access_notes=access_notes)
-        self.db_session.add(new_property)
-        self.db_session.commit()
-        return new_property
 
     def create_job(self, job_data):
         new_job = Job(
@@ -86,19 +81,19 @@ class JobService:
     
     def remove_team_from_jobs(self, team_id):
 
-        jobs = self.db_session.query(Job).filter(
-            or_(
-                Job.assigned_teams.like(f'%,{team_id},%'),
-                Job.assigned_teams == f'{team_id}'
-            )
-        ).all()
-        for job in jobs:
-            job.assigned_teams = job.assigned_teams.replace(f'%,{team_id},%', '')
+        assignments = self.db_session.query(Assignment).filter_by(team_id=team_id).all()
+        for assignment in assignments:
+            self.db_session.delete(assignment)
         self.db_session.commit()
 
     def delete_job(self, job_id):
         job = self.db_session.query(Job).filter_by(id=job_id).first()
         if job:
+            # Delete all associated assignments first
+            assignments = self.assignment_service.get_assignments_for_job(job_id)
+            for assignment in assignments:
+                self.db_session.delete(assignment)
+            
             self.db_session.delete(job)
             self.db_session.commit()
             return True

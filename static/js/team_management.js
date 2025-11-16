@@ -202,7 +202,7 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('Team list updated, re-initializing Dragula.');
         initDragula();
     });
-    const closeButtons = document.querySelectorAll('.close-button');
+    const closeButtons = document.querySelectorAll('.team-close-button');
         closeButtons.forEach(button => {
         button.addEventListener('click', () => {
             const teamId = button.dataset.teamId;
