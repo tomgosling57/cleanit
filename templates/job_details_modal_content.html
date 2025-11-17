@@ -1,39 +1,96 @@
 <h2>Job Details</h2>
-<div class="job-details-group">
-    <p><strong>Time:</strong> {{ job.time.strftime('%H:%M') }}</p>
-    <p><strong>Duration:</strong> {{ job.duration }}</p>
-    <p><strong>Property Address:</strong> {{ job.property.address }}</p>
-</div>
-<div class="job-details-group">
-    <p><strong>Client Name:</strong> {{ job.property.client_name }}{% if job.property.client_name %}{% else %} Unknown {% endif %}</p>
-    <p><strong>Client Phone:</strong> {{ job.property.client_phone }}{% if job.property.client_phone %}{% else %} Unknown {% endif %}</p>
-</div>
-<div class="job-details-group">
-        <p><strong>Assigned Teams:</strong>
-        {% for team in job_teams %}
-            {{ team.name }}{% if not loop.last %}, {% endif %}
-        {% endfor %}
-    </p>
+<div class="job-details-compact">
+    <!-- Group 1: Property, Client & Access Details -->
+    <div class="group-card property-group-card">
+        <div class="group-content">
+            <div class="group-item">
+                <span class="item-icon">📍</span>
+                <div class="item-content">
+                    <div class="primary-info">{{ job.property.address }}</div>
+                </div>
+            </div>
+            <div class="group-item">
+                <span class="item-icon">👤</span>
+                <div class="item-content">
+                    <div class="primary-info">{{ job.property.client_name or 'Unknown Client' }}</div>
+                    <div class="secondary-info">{{ job.property.client_phone or 'No phone' }}</div>
+                </div>
+            </div>
+            {% if job.property.access_notes %}
+            <div class="group-item">
+                <span class="item-icon">🔑</span>
+                <div class="item-content">
+                    <div class="primary-info">{{ job.property.access_notes }}</div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
 
-    <p><strong>Assigned Cleaners:</strong>
-        {% for cleaner in job_cleaners %}
-            {{ cleaner.username }}{% if not loop.last %}, {% endif %}
-        {% endfor %}
-    </p>
-</div>
-<div class="job-details-group">
-    <p><strong>Description:</strong> {{ job.description }}</p>
-    <p><strong>Access Notes:</strong> {{ job.property.access_notes }}</p>
-</div>
-<div class="job-details-group">        
-    {% include 'job_status_fragment.html' %}
-    {% if current_user.role == 'owner' %}
-        <button hx-get="{{ url_for('job.update_job', job_id=job.id) }}"
-            hx-target="#job-details-modal-content"
-            hx-swap="innerHTML"
-            hx-trigger="click"
-        class="button">
-            Edit Job
-        </button>
-    {% endif %}
+    <!-- Group 2: Time, Duration & Description -->
+    <div class="group-card schedule-group-card">
+        <div class="group-content">
+            <div class="group-item">
+                <span class="item-icon">🕐</span>
+                <div class="item-content">
+                    <div class="primary-info">{{ job.time.strftime('%H:%M') }}</div>
+                    <div class="secondary-info">{{ job.duration }}h duration</div>
+                </div>
+            </div>
+            <div class="group-item">
+                <span class="item-icon">📝</span>
+                <div class="item-content">
+                    <div class="primary-info">{{ job.description }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Group 3: Teams & Cleaners -->
+    <div class="group-card assignment-group-card">
+        <div class="group-content">
+            <div class="group-item">
+                <span class="item-icon">👥</span>
+                <div class="item-content">
+                    <div class="primary-info">
+                        {% if job_teams %}
+                            {% for team in job_teams %}
+                                <span class="assignment-tag">{{ team.name }}</span>
+                            {% endfor %}
+                        {% else %}
+                            <span class="no-assignment">No teams assigned</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="group-item">
+                <span class="item-icon">🧹</span>
+                <div class="item-content">
+                    <div class="primary-info">
+                        {% if job_cleaners %}
+                            {% for cleaner in job_cleaners %}
+                                <span class="assignment-tag">{{ cleaner.username }}</span>
+                            {% endfor %}
+                        {% else %}
+                            <span class="no-assignment">No cleaners assigned</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status & Actions -->
+    <div class="status-actions">
+        {% include 'job_status_fragment.html' %}
+        {% if current_user.role == 'owner' %}
+            <button hx-get="{{ url_for('job.update_job', job_id=job.id) }}"
+                hx-target="#job-details-modal-content"
+                hx-swap="innerHTML"
+                hx-trigger="click"
+            class="button edit-button">
+                ✏️ Edit
+            </button>
+        {% endif %}
+    </div>
 </div>

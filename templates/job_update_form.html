@@ -5,49 +5,104 @@ hx-swap="multi: #job-details-modal-content:innerHTML, #job-list:innerHTML"
 hx-include="#edit-job-form"
 >
     <h2>Edit Job</h2>
-    <div class="job-details-group">
+    <div class="job-update-compact">
+        <!-- Group 1: Time, Duration & Description (TOP) -->
         <div class="form-group">
-            <label for="time">Time:</label>
-            <input type="time" id="time" name="time" value="{{ job.time.strftime('%H:%M') }}" required pattern="^([01]\d|2[0-3]):[0-5]\d$" title="Please enter time in 24-hour format (HH:mm)">
+            <div class="form-card time-card">
+                <div class="card-header">
+                    <span class="card-icon">🕐</span>
+                    <span class="card-title">Schedule</span>
+                </div>
+                <div class="form-row">
+                    <div class="form-field">
+                        <input type="time" id="time" name="time" value="{{ job.time.strftime('%H:%M') }}" required pattern="^([01]\d|2[0-3]):[0-5]\d$" title="Please enter time in 24-hour format (HH:mm)">
+                    </div>
+                    <div class="form-field">
+                        <input type="number" id="duration" name="duration" value="{{ job.duration }}" min="1" max="12" required>
+                    </div>
+                </div>
+            </div>
+            <div class="form-card description-card">
+                <div class="card-header">
+                    <span class="card-icon">📝</span>
+                    <span class="card-title">Description</span>
+                </div>
+                <div class="form-field">
+                    <textarea id="description" name="notes" rows="3" placeholder="Job description">{{ job.description }}</textarea>
+                </div>
+            </div>
         </div>
-        <div class="form-group">    
-            <label for="time">Time:</label>
-            <input type="time" id="time" name="time" value="{{ job.time.strftime('%H:%M') }}" required pattern="^([01]\d|2[0-3]):[0-5]\d$" title="Please enter time in 24-hour format (HH:mm)">
+    
+        <!-- Group 2: Property, Client & Access Details -->
+        <div class="form-group">
+            <div class="form-card address-card">
+                <div class="card-header">
+                    <span class="card-icon">📍</span>
+                    <span class="card-title">Property</span>
+                </div>
+                <div class="form-field">
+                    <input type="text" id="property_address" name="property_address" value="{{ job.property.address }}" required>
+                </div>
+            </div>
+            <div class="form-card client-card">
+                <div class="card-header">
+                    <span class="card-icon">👤</span>
+                    <span class="card-title">Client</span>
+                </div>
+                <div class="form-field">
+                    <input type="text" value="{{ job.property.client_name or 'Unknown Client' }}" readonly>
+                </div>
+                <div class="form-field">
+                    <input type="text" value="{{ job.property.client_phone or 'No phone' }}" readonly>
+                </div>
+            </div>
+            {% if job.property.access_notes %}
+            <div class="form-card access-card">
+                <div class="card-header">
+                    <span class="card-icon">🔑</span>
+                    <span class="card-title">Access</span>
+                </div>
+                <div class="form-field">
+                    <textarea rows="2" readonly>{{ job.property.access_notes }}</textarea>
+                </div>
+            </div>
+            {% endif %}
         </div>
-        <div class=form-group>
-            <label for "duration">Duration (hours):</label>
-            <input type="number" id="duration" name="duration" value="{{ job.duration }}" min="1" max="12" required>
+    
+        <!-- Group 3: Teams & Cleaners -->
+        <div class="form-group">
+            <div class="form-card teams-card">
+                <div class="card-header">
+                    <span class="card-icon">👥</span>
+                    <span class="card-title">Teams</span>
+                </div>
+                <div class="form-field">
+                    <select id="assigned_teams" name="assigned_teams" multiple class="compact-select">
+                        {% for team in teams %}
+                            <option value="{{ team.id }}">{{ team.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="form-card cleaners-card">
+                <div class="card-header">
+                    <span class="card-icon">🧹</span>
+                    <span class="card-title">Cleaners</span>
+                </div>
+                <div class="form-field">
+                    <select id="assigned_cleaners" name="assigned_cleaners" multiple class="compact-select">
+                        {% for user in users %}
+                            <option value="{{ user.id }}">{{ user.username }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+    
+        <div class="form-actions">
+            <button type="submit" class="button save-button">
+                💾 Save Changes
+            </button>
         </div>
     </div>
-    <div class="job-details-group">
-        <div class="form-group">
-            <label for='property-address'>Property Address:</label>
-            <input type="text" id="property_address" name="property_address" value="{{ job.property.address }}" required>
-        </div>
-        <div class="form-group">
-            <label for='description'>Description:</label>
-            <textarea id="description" name="notes" rows="4" cols="50">{{ job.description }}</textarea>
-        </div>
-    </div>
-    <div class="job-details-group">
-        <div class="form-group">            
-            <label for="assigned_teams">Assigned Teams:</label>
-            <select id="assigned_teams" name="assigned_teams" multiple>
-                {% for team in teams %}
-                    <option value="{{ team.id }}">{{ team.name }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        <div class="form-group"    >
-            <label for="assigned_cleaners">Assigned Cleaners:</label>
-            <select id="assigned_cleaners" name="assigned_fcleaners" multiple>
-                {% for user in users %}
-                    <option value="{{ user.id }}">{{ user.username }}</option>
-                {% endfor %}
-            </select>
-        </div>  
-    </div>
-    <button type="submit" class="button">
-        Save Changes
-    </button>
 </form>
