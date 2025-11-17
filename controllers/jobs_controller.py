@@ -4,6 +4,7 @@ from config import DATE_FORMAT, DATE_FORMAT_FLATPICKR
 from services.job_service import JobService
 from services.team_service import TeamService
 from services.user_service import UserService
+from services.property_service import PropertyService   
 from services.assignment_service import AssignmentService
 from database import get_db, teardown_db
 from datetime import date, datetime, time
@@ -157,11 +158,15 @@ def get_job_update_form(job_id):
     db = get_db()
     job_service = JobService(db)
     user_service = UserService(db)
+    property_service = PropertyService(db)
+    assignment_service = AssignmentService(db)
     job = job_service.get_job_details(job_id)
     cleaners = user_service.get_users_by_role('cleaner')
+    assignments = assignment_service.get_assignments_for_job(job_id)
+    properties = property_service.get_all_properties()
     teardown_db()
     if job:
-        return render_template('job_update_form.html', job=job, cleaners=cleaners)
+        return render_template('job_update_form.html', job=job, cleaners=cleaners, assignments=assignments, properties=properties)
     return jsonify({'error': 'Job not found'}), 404
 
 def create_job():

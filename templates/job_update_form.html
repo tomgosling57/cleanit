@@ -80,22 +80,12 @@ hx-include="#edit-job-form"
                     <span class="card-icon">👥</span>
                     <span class="card-title">Teams</span>
                 </div>
-                <div class="form-field assignment-field">
-                    <select id="team_select" class="compact-select">
+                <div class="form-field">
+                    <select id="assigned_teams" name="assigned_teams" multiple>
                         {% for team in teams %}
-                            <option value="{{ team.id }}">{{ team.name }}</option>
+                            <option value="{{ team.id }}" {% if team in job_teams %}selected{% endif %}>{{ team.name }}</option>
                         {% endfor %}
                     </select>
-                    <button type="button" class="add-button" onclick="addAssignment('team')">➕</button>
-                </div>
-                <div id="selected_teams" class="assignment-tags">
-                    {% for team in job_teams %}
-                        <span class="assignment-tag" data-id="{{ team.id }}">
-                            {{ team.name }}
-                            <input type="hidden" name="assigned_teams" value="{{ team.id }}">
-                            <button type="button" class="remove-button" onclick="removeAssignment(this)">✖️</button>
-                        </span>
-                    {% endfor %}
                 </div>
             </div>
             <div class="form-card cleaners-card">
@@ -103,22 +93,12 @@ hx-include="#edit-job-form"
                     <span class="card-icon">🧹</span>
                     <span class="card-title">Cleaners</span>
                 </div>
-                <div class="form-field assignment-field">
-                    <select id="cleaner_select" class="compact-select">
+                <div class="form-field">
+                    <select id="assigned_cleaners" name="assigned_cleaners" multiple>
                         {% for user in users %}
-                            <option value="{{ user.id }}">{{ user.username }}</option>
+                            <option value="{{ user.id }}" {% if user in job_cleaners %}selected{% endif %}>{{ user.username }}</option>
                         {% endfor %}
                     </select>
-                    <button type="button" class="add-button" onclick="addAssignment('cleaner')">➕</button>
-                </div>
-                <div id="selected_cleaners" class="assignment-tags">
-                    {% for cleaner in job_cleaners %}
-                        <span class="assignment-tag" data-id="{{ cleaner.id }}">
-                            {{ cleaner.username }}
-                            <input type="hidden" name="assigned_cleaners" value="{{ cleaner.id }}">
-                            <button type="button" class="remove-button" onclick="removeAssignment(this)">✖️</button>
-                        </span>
-                    {% endfor %}
                 </div>
             </div>
         </div>
@@ -130,31 +110,3 @@ hx-include="#edit-job-form"
         </div>
     </div>
 </form>
-
-<script>
-    function addAssignment(type) {
-        const selectElement = document.getElementById(type + '_select');
-        const selectedId = selectElement.value;
-        const selectedName = selectElement.options[selectElement.selectedIndex].text;
-        const selectedAssignmentsDiv = document.getElementById('selected_' + type + 's');
-
-        if (selectedId && !document.querySelector(`#selected_${type}s .assignment-tag[data-id="${selectedId}"]`)) {
-            const tag = document.createElement('span');
-            tag.className = 'assignment-tag';
-            tag.setAttribute('data-id', selectedId);
-            tag.innerHTML = `
-                ${selectedName}
-                <input type="hidden" name="assigned_${type}s" value="${selectedId}">
-                <button type="button" class="remove-button" onclick="removeAssignment(this)">✖️</button>
-            `;
-            selectedAssignmentsDiv.appendChild(tag);
-        }
-    }
-
-    function removeAssignment(buttonElement) {
-        const tag = buttonElement.closest('.assignment-tag');
-        if (tag) {
-            tag.remove();
-        }
-    }
-</script>
