@@ -4,10 +4,11 @@ from config import DATE_FORMAT, DATE_FORMAT_FLATPICKR
 from services.job_service import JobService
 from services.team_service import TeamService
 from services.user_service import UserService
-from services.property_service import PropertyService   
+from services.property_service import PropertyService
 from services.assignment_service import AssignmentService
 from database import get_db, teardown_db
 from datetime import date, datetime, time
+from collections import defaultdict
 
 def update_job_status(job_id):
     if not current_user.is_authenticated or current_user.role not in ['cleaner', 'owner', 'team-leader']:
@@ -40,7 +41,7 @@ def get_job_details(job_id):
     job_service = JobService(db)
     job = job_service.get_job_details(job_id)
     assignment_service = AssignmentService(db)
-    cleaners = assignment_service.get_cleaners_for_job(job_id)
+    cleaners = assignment_service.get_users_for_job(job_id)
     teams = assignment_service.get_teams_for_job(job_id)
     teardown_db()
 
@@ -151,6 +152,94 @@ def update_job(job_id):
 
     return jsonify({'error': 'Failed to update job'}), 500
 
+def get_job_assignments_categorized(job_date_str=None):
+    """Get categorized teams and users for job assignment based on current workload"""
+    if current_user.role != 'owner':
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    if not job_date_str:
+        job_date_str = request.form.get('date') or date.today().isoformat()
+
+    try:
+        job_date = date.fromisoformat(job_date_str)
+    except ValueError:
+        return jsonify({'error': 'Invalid date format'}), 400
+
+    db = get_db()
+    team_service = TeamService(db)
+    assignment_service = AssignmentService(db)
+    
+    # Get all teams and users
+    all_teams = team_service.get_all_teams()
+    
+    # Get assignments for the date to count current workload
+    all_assignments = assignment_service.get_all_jobs_for_date(job_date)
+    
+    # Count current assignments per team
+    team_job_counts = defaultdict(int)
+    user_job_counts = defaultdict(int)
+    
+    for assignment in all_assignments:
+        # Count team assignments
+        for team in assignment.teams:
+            team_job_counts[team.id] += 1
+        
+        # Count user assignments
+        for user in assignment.users:
+            user_job_counts[user.id] += 1
+    
+    # Categorize teams based on current workload
+    available_teams = []
+    partially_booked_teams = []
+    fully_booked_teams = []
+    
+    for team in all_teams:
+        team_dict = team.to_dict()
+        team_dict['current_job_count'] = team_job_counts[team.id]
+        
+        if team_dict['current_job_count'] == 0:
+            available_teams.append(team_dict)
+        elif team_dict['current_job_count'] <= 2:  # Threshold for "partially booked"
+            partially_booked_teams.append(team_dict)
+        else:
+            fully_booked_teams.append(team_dict)
+    
+    # Categorize users (cleaners) based on current workload
+    available_cleaners = []
+    partially_booked_cleaners = []
+    fully_booked_cleaners = []
+    
+    for team in all_teams:
+        for member in team.members:
+            if member.role == 'cleaner':
+                user_dict = member.to_dict()
+                user_dict['current_job_count'] = user_job_counts[member.id]
+                user_dict['team_name'] = team.name
+                
+                if user_dict['current_job_count'] == 0:
+                    available_cleaners.append(user_dict)
+                elif user_dict['current_job_count'] <= 2:  # Threshold for "partially booked"
+                    partially_booked_cleaners.append(user_dict)
+                else:
+                    fully_booked_cleaners.append(user_dict)
+    
+    teardown_db()
+    
+    categorized_assignments = {
+        'teams': {
+            'available': available_teams,
+            'partially_booked': partially_booked_teams,
+            'fully_booked': fully_booked_teams
+        },
+        'cleaners': {
+            'available': available_cleaners,
+            'partially_booked': partially_booked_cleaners,
+            'fully_booked': fully_booked_cleaners
+        }
+    }
+    
+    return jsonify(categorized_assignments)
+
 def get_job_update_form(job_id):
     if current_user.role != 'owner':
         return jsonify({'error': 'Unauthorized'}), 403
@@ -158,15 +247,18 @@ def get_job_update_form(job_id):
     db = get_db()
     job_service = JobService(db)
     user_service = UserService(db)
+    team_service = TeamService(db)
     property_service = PropertyService(db)
     assignment_service = AssignmentService(db)
     job = job_service.get_job_details(job_id)
-    cleaners = user_service.get_users_by_role('cleaner')
-    assignments = assignment_service.get_assignments_for_job(job_id)
+    teams = team_service.get_all_teams()
+    users = user_service.get_all_users()
+    job_users = assignment_service.get_users_for_job(job_id)
+    job_teams = assignment_service.get_teams_for_job(job_id)
     properties = property_service.get_all_properties()
     teardown_db()
     if job:
-        return render_template('job_update_form.html', job=job, cleaners=cleaners, assignments=assignments, properties=properties)
+        return render_template('job_update_form.html', job=job, users=users, job_users=job_users, properties=properties, teams=teams, job_teams=job_teams)
     return jsonify({'error': 'Job not found'}), 404
 
 def create_job():

@@ -204,7 +204,9 @@ div.job-details-group div.form-group {
     margin: 2px 4px 2px 0;
     border: 1px solid rgba(79, 179, 191, 0.3);
 }
-
+#assigned_cleaners, #assigned_teams {
+    height: 100px;
+}
 .no-assignment {
     color: var(--text-light);
     font-style: italic;

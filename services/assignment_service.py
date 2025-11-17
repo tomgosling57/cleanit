@@ -58,7 +58,7 @@ class AssignmentService:
         for user_id in user_ids:
             self.create_assignment(job_id=job_id, user_id=user_id)
 
-    def get_cleaners_for_job(self, job_id):
+    def get_users_for_job(self, job_id):
         assignments = self.db_session.query(Assignment).filter(
             and_(
                 Assignment.job_id == job_id,
