@@ -1,4 +1,6 @@
-from database import Assignment, User, Job
+
+from database import Assignment, User, Job, Team
+from sqlalchemy import and_
 from sqlalchemy.orm import joinedload
 from datetime import date
 
@@ -42,3 +44,36 @@ class AssignmentService:
     def get_assignments_for_job(self, job_id):
         assignments = self.db_session.query(Assignment).filter(Assignment.job_id == job_id).all()
         return assignments
+
+    def update_assignments(self, job_id, team_ids=[], user_ids=[]):
+        # First, delete existing assignments for the job
+        self.db_session.query(Assignment).filter(Assignment.job_id == job_id).delete()
+        self.db_session.commit()
+
+        # Create new assignments for teams
+        for team_id in team_ids:
+            self.create_assignment(job_id=job_id, team_id=team_id)
+
+        # Create new assignments for users
+        for user_id in user_ids:
+            self.create_assignment(job_id=job_id, user_id=user_id)
+
+    def get_cleaners_for_job(self, job_id):
+        assignments = self.db_session.query(Assignment).filter(
+            and_(
+                Assignment.job_id == job_id,
+                Assignment.user_id != None
+            )
+        ).all()
+        cleaners = self.db_session.query(User).filter(User.id.in_([assignment.user_id for assignment in assignments])).all()
+        return cleaners
+
+    def get_teams_for_job(self, job_id):
+        assignments = self.db_session.query(Assignment).filter(
+            and_(
+                Assignment.job_id == job_id,
+                Assignment.team_id != None
+            )
+        ).all()
+        teams = self.db_session.query(Team).filter(Team.id.in_([assignment.team_id for assignment in assignments])).all()
+        return teams

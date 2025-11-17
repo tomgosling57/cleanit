@@ -69,3 +69,16 @@ input#timetable-datepicker {
     right: 15px;
     cursor: pointer;
 }
+
+.job-details-group {
+    margin-bottom: 5px;
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    align-items: center;
+    justify-content: space-between;
+}
+
+div.job-details-group div.form-group {
+    max-width: 100%;
+}

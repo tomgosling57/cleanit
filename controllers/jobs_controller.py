@@ -38,11 +38,13 @@ def get_job_details(job_id):
     db = get_db()
     job_service = JobService(db)
     job = job_service.get_job_details(job_id)
+    assignment_service = AssignmentService(db)
+    cleaners = assignment_service.get_cleaners_for_job(job_id)
+    teams = assignment_service.get_teams_for_job(job_id)
     teardown_db()
 
     if job:
-        job.assigned_cleaners_list = job.assigned_cleaners.split(',') if job.assigned_cleaners else []
-        return render_template('job_details_modal_content.html', job=job)
+        return render_template('job_details_modal_content.html', job=job, job_cleaners=cleaners, job_teams=teams)
     return jsonify({'error': 'Job not found'}), 404
 
 def get_job_creation_form():
@@ -96,7 +98,8 @@ def update_job(job_id):
     date_str = request.form.get('date')
     time_str = request.form.get('time')
     duration = request.form.get('duration')
-    assigned_cleaner_id = request.form.get('assigned_cleaner_id')
+    assigned_cleaners = request.form.getlist('assigned_cleaners')
+    assigned_teams = request.form.getlist('assigned_teams')
     job_type = request.form.get('job_type')
     notes = request.form.get('notes')
 
@@ -124,6 +127,8 @@ def update_job(job_id):
         'property_id': property_obj.id
     }
     updated_job = job_service.update_job(job_id, updated_job_data)
+    assignment_service = AssignmentService(db)
+    assignment_service.update_assignments(updated_job.id, team_ids=assigned_teams, user_ids=assigned_cleaners)
     teardown_db()
 
     if updated_job:
@@ -201,12 +206,8 @@ def create_job():
         'property_id': property_obj.id
     }
     new_job = job_service.create_job(new_job_data)
-
-    # Create job assignments for cleaners and teams
-    for team_id in assigned_teams:
-        assignment_service.create_assignment(job_id=new_job.id, team_id=team_id)
-    for cleaner_id in assigned_cleaners:
-        assignment_service.create_assignment(job_id=new_job.id, user_id=cleaner_id)
+    assignment_service = AssignmentService(db)
+    assignment_service.update_assignments(new_job.id, team_ids=assigned_teams, user_ids=assigned_cleaners)
 
     # Get all jobs to re-render the entire job list
     jobs = job_service.get_all_jobs()

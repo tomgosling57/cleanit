@@ -1,7 +1,7 @@
 from database import Job, Property, User, Assignment
 from services.property_service import PropertyService
 from services.assignment_service import AssignmentService
-from sqlalchemy import and_, or_
+from sqlalchemy import and_
 from sqlalchemy.orm import joinedload
 from datetime import date
 

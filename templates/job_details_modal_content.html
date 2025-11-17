@@ -1,25 +1,39 @@
 <h2>Job Details</h2>
-<h3>{{ job.job_title }}</h3>
-<p><strong>Time:</strong> {{ job.time.strftime('%H:%M') }}</p>
-<p><strong>Duration:</strong> {{ job.duration }}</p>
-<p><strong>Status:</strong> {% if job.is_complete %}Complete{% else %}Pending{% endif %}</p>
-<p><strong>Property Address:</strong> {{ job.property.address }}</p>
-<p><strong>Client Name:</strong> {{ job.property.client_name }}</p>
-<p><strong>Client Phone:</strong> {{ job.property.client_phone }}</p>
-<p><strong>Description:</strong> {{ job.description }}</p>
-<p><strong>Assigned Cleaners:</strong>
-    {% for cleaner in job.assigned_cleaners.split(',') %}
-        {{ cleaner.username }}{% if not loop.last %}, {% endif %}
-    {% endfor %}
-</p>
+<div class="job-details-group">
+    <p><strong>Time:</strong> {{ job.time.strftime('%H:%M') }}</p>
+    <p><strong>Duration:</strong> {{ job.duration }}</p>
+    <p><strong>Property Address:</strong> {{ job.property.address }}</p>
+</div>
+<div class="job-details-group">
+    <p><strong>Client Name:</strong> {{ job.property.client_name }}{% if job.property.client_name %}{% else %} Unknown {% endif %}</p>
+    <p><strong>Client Phone:</strong> {{ job.property.client_phone }}{% if job.property.client_phone %}{% else %} Unknown {% endif %}</p>
+</div>
+<div class="job-details-group">
+        <p><strong>Assigned Teams:</strong>
+        {% for team in job_teams %}
+            {{ team.name }}{% if not loop.last %}, {% endif %}
+        {% endfor %}
+    </p>
 
-<p><strong>Access Notes:</strong> {{ job.property.access_notes }}</p>
-{% if current_user.role == 'owner' %}
-    <button hx-get="{{ url_for('job.update_job', job_id=job.id) }}"
-        hx-target="#job-details-modal-content"
-        hx-swap="innerHTML"
-        hx-trigger="click"
-    class="button">
-        Edit Job
-    </button>
-{% endif %}
+    <p><strong>Assigned Cleaners:</strong>
+        {% for cleaner in job_cleaners %}
+            {{ cleaner.username }}{% if not loop.last %}, {% endif %}
+        {% endfor %}
+    </p>
+</div>
+<div class="job-details-group">
+    <p><strong>Description:</strong> {{ job.description }}</p>
+    <p><strong>Access Notes:</strong> {{ job.property.access_notes }}</p>
+</div>
+<div class="job-details-group">        
+    {% include 'job_status_fragment.html' %}
+    {% if current_user.role == 'owner' %}
+        <button hx-get="{{ url_for('job.update_job', job_id=job.id) }}"
+            hx-target="#job-details-modal-content"
+            hx-swap="innerHTML"
+            hx-trigger="click"
+        class="button">
+            Edit Job
+        </button>
+    {% endif %}
+</div>

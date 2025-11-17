@@ -5,27 +5,48 @@ hx-swap="multi: #job-details-modal-content:innerHTML, #job-list:innerHTML"
 hx-include="#edit-job-form"
 >
     <h2>Edit Job</h2>
-    <label for="job_title">Job Title:</label>
-    <input type="text" id="job_title" name="job_title" value="{{ job.job_title }}" required>
-    <label for="time">Time:</label>
-    <input type="time" id="time" name="time" value="{{ job.time.strftime('%H:%M') }}" required pattern="^([01]\d|2[0-3]):[0-5]\d$" title="Please enter time in 24-hour format (HH:mm)">
-    <label for="date">Date:</label>
-    <input type="date" id="date" name="date" value="{{ job.date }}">
-    <label for "duration">Duration (hours):</label>
-    <input type="number" id="duration" name="duration" value="{{ job.duration }}" min="1" max="12" required>
-    <label for='property-address'>Property Address:</label>
-    <input type="text" id="property_address" name="property_address" value="{{ job.property.address }}" required>
-    <label for='description'>Description:</label>
-    <textarea id="description" name="notes" rows="4" cols="50">{{ job.description }}</textarea>
-    <label for="job_type">Job Type:</label>
-    <input type="text" id="job_type" name="job_type" value="{{ job.job_type }}">
-    <label for="assigned-cleaner-id">Assigned Cleaners:</label>
-    <select name="assigned_cleaners" id="assigned-cleaner-id">
-        {% for cleaner in cleaners %}
-                <option value="{{ cleaner.id }}" {% if cleaner.id in job.assigned_cleaners.split(',') %}selected{% endif %}>{{ cleaner.username }}</option>
-        {% endfor %}
-    </select>
-
+    <div class="job-details-group">
+        <div class="form-group">
+            <label for="time">Time:</label>
+            <input type="time" id="time" name="time" value="{{ job.time.strftime('%H:%M') }}" required pattern="^([01]\d|2[0-3]):[0-5]\d$" title="Please enter time in 24-hour format (HH:mm)">
+        </div>
+        <div class="form-group">    
+            <label for="time">Time:</label>
+            <input type="time" id="time" name="time" value="{{ job.time.strftime('%H:%M') }}" required pattern="^([01]\d|2[0-3]):[0-5]\d$" title="Please enter time in 24-hour format (HH:mm)">
+        </div>
+        <div class=form-group>
+            <label for "duration">Duration (hours):</label>
+            <input type="number" id="duration" name="duration" value="{{ job.duration }}" min="1" max="12" required>
+        </div>
+    </div>
+    <div class="job-details-group">
+        <div class="form-group">
+            <label for='property-address'>Property Address:</label>
+            <input type="text" id="property_address" name="property_address" value="{{ job.property.address }}" required>
+        </div>
+        <div class="form-group">
+            <label for='description'>Description:</label>
+            <textarea id="description" name="notes" rows="4" cols="50">{{ job.description }}</textarea>
+        </div>
+    </div>
+    <div class="job-details-group">
+        <div class="form-group">            
+            <label for="assigned_teams">Assigned Teams:</label>
+            <select id="assigned_teams" name="assigned_teams" multiple>
+                {% for team in teams %}
+                    <option value="{{ team.id }}">{{ team.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group"    >
+            <label for="assigned_cleaners">Assigned Cleaners:</label>
+            <select id="assigned_cleaners" name="assigned_fcleaners" multiple>
+                {% for user in users %}
+                    <option value="{{ user.id }}">{{ user.username }}</option>
+                {% endfor %}
+            </select>
+        </div>  
+    </div>
     <button type="submit" class="button">
         Save Changes
     </button>
