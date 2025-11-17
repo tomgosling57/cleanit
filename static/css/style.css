@@ -414,7 +414,8 @@ textarea:focus {
         max-width: none;
         margin: 10px;
         padding: 20px;
-        max-height: 90vh;
+        max-height: none;
+        height: 95%;
     }
     
     .job-details-compact,
