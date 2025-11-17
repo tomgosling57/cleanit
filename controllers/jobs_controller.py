@@ -56,10 +56,12 @@ def get_job_creation_form():
     db = get_db()
     user_service = UserService(db)
     team_service = TeamService(db)
+    property_service = PropertyService(db)
     users = user_service.get_all_users()
     teams = team_service.get_all_teams()
+    properties = property_service.get_all_properties()
     teardown_db()
-    return render_template('job_creation_modal_content.html', users=users, teams=teams)
+    return render_template('job_creation_modal_content.html', users=users, teams=teams, properties=properties)
 
 def timetable(date: str = None):    
     db = get_db()

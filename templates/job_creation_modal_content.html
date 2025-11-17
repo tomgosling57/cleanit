@@ -3,36 +3,107 @@
       hx-swap="innerHTML"
       hx-on--after-request="if(event.detail.successful) { document.getElementById('job-creation-modal').style.display='none'; document.getElementById('job-creation-form').reset(); }">
     <h2>Create New Job</h2>
-
-    <label for="property_address">Property Address:</label>
-    <input type="text" id="property_address" name="property_address" required>
-
-    <label for="date">Date:</label>
-    <input type="text" id="date" name="date" required>
-
-    <label for="time">Time:</label>
-    <input type="time" id="time" name="time" required>
-
-    <label for="duration">Duration (hours):</label>
-    <input type="number" id="duration" name="duration" step="0.5" required>
-
-    <label for="assigned_teams">Assigned Teams:</label>
-    <select id="assigned_teams" name="assigned_teams" multiple>
-        {% for team in teams %}
-            <option value="{{ team.id }}">{{ team.name }}</option>
-        {% endfor %}
-    </select>
-    <label for="assigned_cleaners">Assigned Cleaners:</label>
-    <select id="assigned_cleaners" name="assigned_fcleaners" multiple>
-        {% for user in users %}
-            <option value="{{ user.id }}">{{ user.username }}</option>
-        {% endfor %}
-    </select>
-
-    <label for="notes">Notes:</label>
-    <textarea id="notes" name="notes"></textarea>
+    <div class="job-update-compact">
+        <!-- Group 1: Time, Duration & Description (TOP) -->
+        <div class="form-group">
+            <div class="form-card time-card">
+                <div class="card-header">
+                    <span class="card-icon">🕐</span>
+                    <span class="card-title">Schedule</span>
+                </div>
+                <div class="form-row">
+                    <div class="form-field">
+                        <input type="time" id="time" name="time" required pattern="^([01]\d|2[0-3]):[0-5]\d$" title="Please enter time in 24-hour format (HH:mm)">
+                    </div>
+                    <div class="form-field">
+                        <input type="number" id="duration" name="duration" min="1" max="12" required>
+                    </div>
+                </div>
+            </div>
+            <div class="form-card description-card">
+                <div class="card-header">
+                    <span class="card-icon">📝</span>
+                    <span class="card-title">Description</span>
+                </div>
+                <div class="form-field">
+                    <textarea id="description" name="notes" rows="3" placeholder="Job description"></textarea>
+                </div>
+            </div>
+        </div>
     
-    <input type="hidden" name="selected_date" value="{{ selected_date }}">
-    <button type="submit" class="button">Create Job</button>
-    <button type="button" class="button" onclick="document.getElementById('job-creation-modal').style.display='none'">Cancel</button>
+        <!-- Group 2: Property, Client & Access Details -->
+        <div class="form-group">
+            <div class="form-card address-card">
+                <div class="card-header">
+                    <span class="card-icon">📍</span>
+                    <span class="card-title">Property</span>
+                </div>
+                <div class="form-field">
+                    <select id="property_id" name="property_id" required>
+                        {% for property in properties %}
+                            <option value="{{ property.id }}">{{ property.address }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="form-card client-card">
+                <div class="card-header">
+                    <span class="card-icon">👤</span>
+                    <span class="card-title">Client</span>
+                </div>
+                <div class="form-field">
+                    <input type="text" value="Select a property to view client details" readonly>
+                </div>
+                <div class="form-field">
+                    <input type="text" value="Client information will appear here" readonly>
+                </div>
+            </div>
+            <div class="form-card access-card">
+                <div class="card-header">
+                    <span class="card-icon">🔑</span>
+                    <span class="card-title">Access</span>
+                </div>
+                <div class="form-field">
+                    <textarea rows="2" placeholder="Access notes will appear here" readonly></textarea>
+                </div>
+            </div>
+        </div>
+    
+        <!-- Group 3: Teams & Cleaners -->
+        <div class="form-group">
+            <div class="form-card teams-card">
+                <div class="card-header">
+                    <span class="card-icon">👥</span>
+                    <span class="card-title">Teams</span>
+                </div>
+                <div class="form-field">
+                    <select id="assigned_teams" name="assigned_teams" multiple>
+                        {% for team in teams %}
+                            <option value="{{ team.id }}">{{ team.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="form-card cleaners-card">
+                <div class="card-header">
+                    <span class="card-icon">🧹</span>
+                    <span class="card-title">Cleaners</span>
+                </div>
+                <div class="form-field">
+                    <select id="assigned_cleaners" name="assigned_cleaners" multiple>
+                        {% for user in users %}
+                            <option value="{{ user.id }}">{{ user.username }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+    
+        <div class="form-actions">
+            <button type="submit" class="button save-button">
+                💾 Create Job
+            </button>
+            <button type="button" class="button" onclick="document.getElementById('job-creation-modal').style.display='none'">Cancel</button>
+        </div>
+    </div>
 </form>
