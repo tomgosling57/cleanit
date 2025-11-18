@@ -48,6 +48,9 @@ class JobHelper:
             job_time = datetime.strptime(time_str, DATETIME_FORMATS["TIME_FORMAT"]).time()
             job_end_time = datetime.strptime(end_time_str, DATETIME_FORMATS["TIME_FORMAT"]).time()
 
+            if job_time and job_end_time and job_time >= job_end_time:
+                errors['time'] = 'Start time must be before end time.'
+
             if arrival_datetime_str:
                 # Assuming arrival_datetime_str might come in ISO format or a specific DATETIME_FORMAT
                 # Try ISO format first, then fall back to DATETIME_FORMAT if it exists
