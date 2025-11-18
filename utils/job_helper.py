@@ -1,6 +1,9 @@
 from flask import request, render_template_string, session
 from datetime import datetime, date
-from config import DATETIME_FORMATS
+from config import DATETIME_FORMATS, BACK_TO_BACK_THRESHOLD
+from services.job_service import JobService
+from services.assignment_service import AssignmentService
+from flask_login import current_user
 
 class JobHelper:
     @staticmethod
@@ -132,3 +135,25 @@ class JobHelper:
         elif isinstance(selected_date_from_session, date):
             return selected_date_from_session
         return datetime.today().date() # Fallback to today if not a date object
+
+    @staticmethod
+    def render_job_updates(db, job_id, current_user, DATETIME_FORMATS, BACK_TO_BACK_THRESHOLD, selected_date_for_fetch):
+        """
+        Fetches updated job details and renders the job details and job list fragments.
+        Returns a tuple: (job_details_html, job_list_html)
+        """
+        job_service = JobService(db)
+        assignment_service = AssignmentService(db)
+
+        # Fetch the updated job details for the modal
+        job = job_service.get_job_details(job_id)
+        back_to_back_job_ids = job_service.get_back_to_back_jobs_for_date(job.date, threshold_minutes=BACK_TO_BACK_THRESHOLD)
+        
+        # Render job details for the modal
+        job_details_html = render_template_string('{% include "job_details_modal_content.html" %}', job=job, DATETIME_FORMATS=DATETIME_FORMATS)
+        
+        # Re-fetch all jobs to ensure the list is up-to-date
+        assigned_jobs = assignment_service.get_assignments_for_user_on_date(current_user.id, current_user.team_id, selected_date_for_fetch)
+        job_list_html = render_template_string('{% include "job_list_fragment.html" %}', jobs=assigned_jobs, DATETIME_FORMATS=DATETIME_FORMATS, back_to_back_job_ids=back_to_back_job_ids)
+        
+        return job_details_html, job_list_html

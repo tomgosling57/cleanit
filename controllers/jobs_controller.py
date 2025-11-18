@@ -66,8 +66,12 @@ def get_job_creation_form():
     users = user_service.get_all_users()
     teams = team_service.get_all_teams()
     properties = property_service.get_all_properties()
+    
+    # Retrieve selected_date from session, default to today if not found
+    selected_date_from_session = session.get('selected_date', datetime.today().date())
+    
     teardown_db()
-    return render_template('job_creation_modal_content.html', users=users, teams=teams, properties=properties, DATETIME_FORMATS=DATETIME_FORMATS, today=datetime.today())
+    return render_template('job_creation_modal_content.html', users=users, teams=teams, properties=properties, DATETIME_FORMATS=DATETIME_FORMATS, today=datetime.today(), selected_date=selected_date_from_session)
 
 def timetable(date: str = None):    
     db = get_db()
@@ -119,23 +123,14 @@ def update_job(job_id):
     assignment_service.update_assignments(updated_job.id, team_ids=assigned_teams, user_ids=assigned_cleaners)
 
     if updated_job:
-        # Fetch the updated job details for the modal
-        job = job_service.get_job_details(job_id)
-        back_to_back_job_ids = job_service.get_back_to_back_jobs_for_date(job.date, threshold_minutes=BACK_TO_BACK_THRESHOLD)
-        
-        # Render job details for the modal
-        job_details_html = render_template('job_details_modal_content.html', job=job, DATETIME_FORMATS=DATETIME_FORMATS)
-        
-        # Re-fetch all jobs to ensure the list is up-to-date
         selected_date_for_fetch = JobHelper.get_selected_date_from_session()
-        assigned_jobs = assignment_service.get_assignments_for_user_on_date(current_user.id, current_user.team_id, selected_date_for_fetch)
-        print(f"all jobs: {assigned_jobs}")
-        job_list_html = render_template('job_list_fragment.html', jobs=assigned_jobs, DATETIME_FORMATS=DATETIME_FORMATS, back_to_back_job_ids=back_to_back_job_ids)
+        job_details_html, job_list_html = JobHelper.render_job_updates(
+            db, job_id, current_user, DATETIME_FORMATS, BACK_TO_BACK_THRESHOLD, selected_date_for_fetch
+        )
         
-        # Combine them with OOB swap attributes
         response_html = f'<div hx-swap-oob="innerHTML:#job-details-modal-content">{job_details_html}</div>' \
                         f'<div id="job-list" hx-swap-oob="outerHTML:#job-list">{job_list_html}</div>'
-        teardown_db()        
+        teardown_db()
         return response_html
     teardown_db()
     return jsonify({'error': 'Failed to update job'}), 500
@@ -258,67 +253,37 @@ def create_job():
     job_service = JobService(db)
     assignment_service = AssignmentService(db)    
 
-    property_id = request.form.get('property_id')
-    date_str = request.form.get('date')
-    time_str = request.form.get('time')
-    arrival_datetime_str = request.form.get('arrival_datetime')
-    end_time_str = request.form.get('end_time')
-    assigned_teams = request.form.getlist('assigned_teams')
-    assigned_cleaners = request.form.getlist('assigned_cleaners')
-    job_type = request.form.get('job_type')
-    notes = request.form.get('notes')
-    selected_date = request.form.get('selected_date')
+    selected_date_obj = JobHelper.get_selected_date_from_session()
+    selected_date = selected_date_obj.strftime(DATETIME_FORMATS["DATE_FORMAT"])
 
-    errors = {}
-    if not property_id:
-        errors['property_address'] = 'Property address is required.'
-    if not date_str:
-        errors['date'] = 'Date is required.'
-    if not time_str:
-        errors['time'] = 'Start time is required.'
-    if not end_time_str:
-        errors['end_time'] = 'End time is required.'
+    new_job_data, assigned_teams, assigned_cleaners, error_response = JobHelper.process_job_form()
 
-    if errors:
+    if error_response:
         teardown_db()
-        return render_template_string('{% include "_form_errors.html" %}', errors=errors), 400
-
-    try:
-        job_date = datetime.strptime(date_str, DATETIME_FORMATS["DATE_FORMAT"]).date()
-        job_time = datetime.strptime(time_str, DATETIME_FORMATS["TIME_FORMAT"]).time()
-        job_end_time = datetime.strptime(end_time_str, DATETIME_FORMATS["TIME_FORMAT"]).time()
-        
-        job_arrival_datetime = None
-        if arrival_datetime_str:
-            job_arrival_datetime = datetime.strptime(arrival_datetime_str, DATETIME_FORMATS["DATETIME_FORMAT"])
-    except ValueError:
-        teardown_db()
-        errors['date_time_format'] = 'Invalid date or time format.'
-        return render_template_string('{% include "_form_errors.html" %}', errors=errors), 400
-
-    new_job_data = {
-        'is_complete': False,
-        'date': job_date,
-        'time': job_time,
-        'arrival_datetime': job_arrival_datetime,
-        'end_time': job_end_time,
-        'description': notes,
-        'job_type': job_type,
-        'property_id': property_id
-    }
+        return error_response
+    
+    new_job_data['is_complete'] = False # New jobs are not complete by default
     new_job = job_service.create_job(new_job_data)
     assignment_service = AssignmentService(db)
     assignment_service.update_assignments(new_job.id, team_ids=assigned_teams, user_ids=assigned_cleaners)
 
-    # Get all jobs to re-render the entire job list
-    jobs = job_service.get_all_jobs()
+    # Store job_date before tearing down the database session
+    new_job_date = new_job.date
+
+    # Re-fetch all jobs and render the list fragment
+    selected_date_for_fetch = JobHelper.get_selected_date_from_session()
+    _, job_list_html = JobHelper.render_job_updates(
+        db, new_job.id, current_user, DATETIME_FORMATS, BACK_TO_BACK_THRESHOLD, selected_date_for_fetch
+    )
+
     teardown_db()
 
     if new_job:
-        if job_date.strftime(DATETIME_FORMATS["DATE_FORMAT"]) != selected_date:
+        print(f"selected_date: {selected_date}")
+        if new_job_date.strftime(DATETIME_FORMATS["DATE_FORMAT"]) != selected_date:
             # If the new job's date doesn't match the currently selected date, don't update the list
             return Response(status=204)  # No Content
-        return render_template('job_list_fragment.html', jobs=jobs)
+        return job_list_html
     return jsonify({'error': 'Failed to create job'}), 500
 
 
