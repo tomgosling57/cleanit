@@ -116,9 +116,19 @@ def update_job(job_id):
     job_type = request.form.get('job_type')
     notes = request.form.get('notes')
 
-    if not all([property_address, date_str, time_str, end_time_str]):
+    errors = {}
+    if not property_address:
+        errors['property_address'] = 'Property address is required.'
+    if not date_str:
+        errors['date'] = 'Date is required.'
+    if not time_str:
+        errors['time'] = 'Start time is required.'
+    if not end_time_str:
+        errors['end_time'] = 'End time is required.'
+
+    if errors:
         teardown_db()
-        return jsonify({'error': 'Missing required fields'}), 400
+        return render_template_string('{% include "_form_errors.html" %}', errors=errors), 400
 
     try:
         job_date = datetime.strptime(date_str, DATETIME_FORMATS["DATE_FORMAT"]).date()
@@ -130,7 +140,8 @@ def update_job(job_id):
             job_arrival_datetime = datetime.strptime(arrival_datetime_str, DATETIME_FORMATS["DATETIME_FORMAT"])
     except ValueError:
         teardown_db()
-        return jsonify({'error': 'Invalid date or time format'}), 400
+        errors['date_time_format'] = 'Invalid date or time format.'
+        return render_template_string('{% include "_form_errors.html" %}', errors=errors), 400
 
     property_obj = job_service.get_property_by_address(property_address)
     if not property_obj:
@@ -298,8 +309,19 @@ def create_job():
     notes = request.form.get('notes')
     selected_date = request.form.get('selected_date')
 
-    if not all([property_address, date_str, time_str, end_time_str]):
-        return jsonify({'error': 'Missing required fields'}), 400
+    errors = {}
+    if not property_address:
+        errors['property_address'] = 'Property address is required.'
+    if not date_str:
+        errors['date'] = 'Date is required.'
+    if not time_str:
+        errors['time'] = 'Start time is required.'
+    if not end_time_str:
+        errors['end_time'] = 'End time is required.'
+
+    if errors:
+        teardown_db()
+        return render_template_string('{% include "_form_errors.html" %}', errors=errors), 400
 
     try:
         job_date = datetime.strptime(date_str, DATETIME_FORMATS["DATE_FORMAT"]).date()
@@ -310,7 +332,9 @@ def create_job():
         if arrival_datetime_str:
             job_arrival_datetime = datetime.strptime(arrival_datetime_str, DATETIME_FORMATS["DATETIME_FORMAT"])
     except ValueError:
-        return jsonify({'error': 'Invalid date or time format'}), 400
+        teardown_db()
+        errors['date_time_format'] = 'Invalid date or time format.'
+        return render_template_string('{% include "_form_errors.html" %}', errors=errors), 400
 
     property_obj = job_service.get_property_by_address(property_address)
     if not property_obj:

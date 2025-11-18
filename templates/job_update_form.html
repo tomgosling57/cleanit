@@ -3,8 +3,10 @@ hx-put="{{ url_for('job.update_job', job_id=job.id) }}"
 hx-target="#job-details-modal-content, #job-list"
 hx-swap="multi: #job-details-modal-content:innerHTML, #job-list:innerHTML"
 hx-include="#edit-job-form"
+hx-on--after-request="if(!event.detail.successful) { document.getElementById('form-errors-container-update').innerHTML = event.detail.xhr.response; } else { document.getElementById('job-details-modal').style.display='none'; }"
 >
     <h2>Edit Job</h2>
+    <div id="form-errors-container-update"></div>
     <div class="job-update-compact">
         <!-- Group 1: Time, Duration & Description (TOP) -->
         <div class="form-group">

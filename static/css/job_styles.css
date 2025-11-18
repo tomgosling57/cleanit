@@ -510,3 +510,21 @@ div.job-details-group div.form-group {
     align-items: baseline;  
     max-width: 100%;
 }
+
+.error-messages {
+    color: #dc3545; /* A standard red for error messages */
+    font-size: 0.9rem;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    padding: 5px;
+}
+
+.error-messages ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.error-messages li {
+    margin-bottom: 5px;
+}
