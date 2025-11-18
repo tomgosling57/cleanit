@@ -9,6 +9,7 @@ from services.assignment_service import AssignmentService
 from database import get_db, teardown_db
 from datetime import date, datetime
 from collections import defaultdict
+from utils.job_helper import JobHelper
 
 def update_job_status(job_id):
     if not current_user.is_authenticated or current_user.role not in ['cleaner', 'owner', 'team-leader']:
@@ -107,53 +108,12 @@ def update_job(job_id):
         teardown_db()
         return jsonify({'error': 'Job not found'}), 404
 
-    property_id = request.form.get('property_id')
-    date_str = request.form.get('date')
-    time_str = request.form.get('time')
-    arrival_datetime_str = request.form.get('arrival_datetime')
-    end_time_str = request.form.get('end_time')
-    assigned_cleaners = request.form.getlist('assigned_cleaners')
-    assigned_teams = request.form.getlist('assigned_teams')
-    job_type = request.form.get('job_type')
-    notes = request.form.get('notes')
+    updated_job_data, assigned_teams, assigned_cleaners, error_response = JobHelper.process_job_form()
 
-    errors = {}
-    if not property_id:
-        errors['property_address'] = 'Property address is required.'
-    if not date_str:
-        errors['date'] = 'Date is required.'
-    if not time_str:
-        errors['time'] = 'Start time is required.'
-    if not end_time_str:
-        errors['end_time'] = 'End time is required.'
-
-    if errors:
+    if error_response:
         teardown_db()
-        return render_template_string('{% include "_form_errors.html" %}', errors=errors), 400
+        return error_response
 
-    try:
-
-        job_date = datetime.strptime(date_str, DATETIME_FORMATS["DATE_FORMAT"]).date()
-        job_time = datetime.strptime(time_str, DATETIME_FORMATS["TIME_FORMAT"]).time()
-        job_end_time = datetime.strptime(end_time_str, DATETIME_FORMATS["TIME_FORMAT"]).time()
-        job_arrival_datetime = None
-
-        if arrival_datetime_str:
-            job_arrival_datetime = datetime.fromisoformat(arrival_datetime_str)
-    except ValueError:
-        teardown_db()
-        errors['date_time_format'] = 'Invalid date or time format.'
-        return render_template_string('{% include "_form_errors.html" %}', errors=errors), 400
-
-    updated_job_data = {
-        'date': job_date,
-        'time': job_time,
-        'arrival_datetime': job_arrival_datetime,
-        'end_time': job_end_time,
-        'description': notes,
-        'job_type': job_type,
-        'property_id': property_id
-    }
     updated_job = job_service.update_job(job_id, updated_job_data)
     assignment_service = AssignmentService(db)
     assignment_service.update_assignments(updated_job.id, team_ids=assigned_teams, user_ids=assigned_cleaners)
@@ -167,7 +127,8 @@ def update_job(job_id):
         job_details_html = render_template('job_details_modal_content.html', job=job, DATETIME_FORMATS=DATETIME_FORMATS)
         
         # Re-fetch all jobs to ensure the list is up-to-date
-        assigned_jobs = assignment_service.get_assignments_for_user_on_date(current_user.id, current_user.team_id, session['selected_date'])
+        selected_date_for_fetch = JobHelper.get_selected_date_from_session()
+        assigned_jobs = assignment_service.get_assignments_for_user_on_date(current_user.id, current_user.team_id, selected_date_for_fetch)
         print(f"all jobs: {assigned_jobs}")
         job_list_html = render_template('job_list_fragment.html', jobs=assigned_jobs, DATETIME_FORMATS=DATETIME_FORMATS, back_to_back_job_ids=back_to_back_job_ids)
         
