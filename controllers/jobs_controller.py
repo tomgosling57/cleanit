@@ -109,6 +109,7 @@ def update_job(job_id):
     property_address = request.form.get('property_address')
     date_str = request.form.get('date')
     time_str = request.form.get('time')
+    arrival_time_str = request.form.get('arrival_time')
     end_time_str = request.form.get('end_time')
     assigned_cleaners = request.form.getlist('assigned_cleaners')
     assigned_teams = request.form.getlist('assigned_teams')
@@ -123,6 +124,7 @@ def update_job(job_id):
         job_date = date.fromisoformat(date_str)
         job_time = time.fromisoformat(time_str)
         job_end_time = time.fromisoformat(end_time_str)
+        job_arrival_time = time.fromisoformat(arrival_time_str) if arrival_time_str else None
     except ValueError:
         teardown_db()
         return jsonify({'error': 'Invalid date or time format'}), 400
@@ -134,6 +136,7 @@ def update_job(job_id):
     updated_job_data = {
         'date': job_date,
         'time': job_time,
+        'arrival_time': job_arrival_time,
         'end_time': job_end_time,
         'description': notes,
         'job_type': job_type,
@@ -284,6 +287,7 @@ def create_job():
     property_address = request.form.get('property_address')
     date_str = request.form.get('date')
     time_str = request.form.get('time')
+    arrival_time_str = request.form.get('arrival_time')
     end_time_str = request.form.get('end_time')
     assigned_teams = request.form.getlist('assigned_teams')
     assigned_cleaners = request.form.getlist('assigned_cleaners')
@@ -298,6 +302,7 @@ def create_job():
         job_date = date.fromisoformat(date_str)
         job_time = time.fromisoformat(time_str)
         job_end_time = time.fromisoformat(end_time_str)
+        job_arrival_time = time.fromisoformat(arrival_time_str) if arrival_time_str else None
     except ValueError:
         return jsonify({'error': 'Invalid date or time format'}), 400
 
@@ -309,6 +314,7 @@ def create_job():
         'is_complete': False,
         'date': job_date,
         'time': job_time,
+        'arrival_time': job_arrival_time,
         'end_time': job_end_time,
         'description': notes,
         'job_type': job_type,

@@ -33,8 +33,11 @@
             <div class="group-item">
                 <span class="item-icon">🕐</span>
                 <div class="item-content">
-                    <div class="primary-info">{{ job.time.strftime('%H:%M') }}</div>
-                    <div class="secondary-info">Ends: {{ job.end_time.strftime('%H:%M') }} ({{ job.duration }})</div>
+                    {% if job.arrival_time %}
+                        <div class="secondary-info">Arrival: {{ job.arrival_time.strftime('%H:%M') }}</div>
+                    {% endif %}
+                    <div class="primary-info">Start: {{ job.time.strftime('%H:%M') }}</div>
+                    <div class="secondary-info">End: {{ job.end_time.strftime('%H:%M') }} ({{ job.duration }})</div>
                 </div>
             </div>
             <div class="group-item">
