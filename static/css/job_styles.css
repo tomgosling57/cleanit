@@ -481,3 +481,33 @@ div.job-details-group div.form-group {
     background-color: #f8d7da; /* Light red background */
     box-shadow: 0 2px 8px rgba(220, 53, 69, 0.2); /* Subtle red shadow */
 }
+
+.job-arrival-badge {
+    position: relative;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    color: white;
+    z-index: 10;
+}
+
+.job-arrival-badge.same-day {
+    background-color: #dc3545; /* Bootstrap danger red */
+}
+
+.job-arrival-badge.next-day {
+    background-color: #ffc107; /* Bootstrap warning yellow */
+    color: #343a40; /* Dark text for better contrast on yellow */
+}
+
+.job-statuses {
+    display: flex;        
+    flex-direction: row;
+    margin: 10px;
+    justify-content: space-between;
+    
+    /* regulates the size of the arrival badge */
+    align-items: baseline;  
+    max-width: 100%;
+}

@@ -96,6 +96,7 @@ h2 {
 }
 
 .job-card {
+    position: relative; /* Added for proper absolute positioning of children */
     background-color: var(--card-background);
     border: 1px solid var(--border-color);
     border-left: 4px solid var(--accent-color);

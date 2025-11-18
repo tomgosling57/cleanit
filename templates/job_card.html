@@ -8,7 +8,14 @@
         </div>
         <div class="job-status-actions">
             {% include "job_actions_fragment.html" %}
-            <p>{% include 'job_status_fragment.html' %}</p>
+            <div class="job-statuses">
+                <p>{% include 'job_status_fragment.html' %}</p>
+                {% if job.arrival_datetime and job.arrival_datetime.date() == job.date %}
+                <div class="job-arrival-badge same-day">Same Day Arrival</div>
+                {% elif job.arrival_datetime and (job.arrival_datetime.date() - job.date).days == 1 %}
+                <div class="job-arrival-badge next-day">Next Day Arrival</div>
+                {% endif %}
+            </div>
         </div>
     </div>
 </div>
