@@ -267,14 +267,14 @@ textarea:focus {
 }
 
 .status-completed {
-    background-color: rgba(62, 168, 114, 0.1);
-    color: var(--success-color);
+    color: var(--background-color);
+    background-color: var(--success-color);
     border: 1px solid rgba(62, 168, 114, 0.3);
 }
 
 .status-pending {
-    background-color: rgba(79, 179, 191, 0.1);
-    color: var(--info-color);
+    color: var(--background-color);
+    background-color: var(--info-color);
     border: 1px solid rgba(79, 179, 191, 0.3);
 }
 
