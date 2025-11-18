@@ -76,7 +76,6 @@ def get_job_creation_form():
 def timetable(date: str = None):    
     db = get_db()
     job_service = JobService(db) # Instantiate JobService
-    assignment_service = AssignmentService(db)
 
     date_obj = datetime.today().date()
     session['selected_date'] = date_obj
@@ -88,7 +87,7 @@ def timetable(date: str = None):
         except ValueError:
             date_obj = None
 
-    jobs = assignment_service.get_assignments_for_user_on_date(current_user.id, current_user.team_id, date_obj)
+    jobs = job_service.get_jobs_for_user_on_date(current_user.id, current_user.team_id, date_obj)
     back_to_back_job_ids = job_service.get_back_to_back_jobs_for_date(date_obj, threshold_minutes=15) # Get back-to-back jobs
     team_service = TeamService(db)
     team = team_service.get_team(current_user.team_id)
