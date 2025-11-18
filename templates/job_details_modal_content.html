@@ -37,7 +37,7 @@
                     <div class="secondary-info">End: {{ job.end_time.strftime('%H:%M') }} ({{ job.duration }})</div>
                 </div>
             </div>
-            {% if job.arrival_time %}
+            {% if job.arrival_datetime %}
             <div class="group-item">
                 <span class="item-icon">🕒</span>
                 <div class="item-content">

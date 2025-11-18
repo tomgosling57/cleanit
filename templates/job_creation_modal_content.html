@@ -21,12 +21,8 @@
                         <input type="time" id="end_time" name="end_time" required pattern="^([01]\d|2[0-3]):[0-5]\d$" title="Please enter end time in 24-hour format (HH:mm)">
                     </div>
                     <div class="form-field">
-                        <label for="arrival_date">Tenant Arrival Date</label>
-                        <input type="text" id="arrival_date" name="arrival_date" class="flatpickr" data-date-format="{{ date_format_flatpickr }}" placeholder="Select Date">
-                    </div>
-                    <div class="form-field">
-                        <label for="arrival_time">Tenant Arrival Time</label>
-                        <input type="text" id="arrival_time" name="arrival_time" class="flatpickr" data-date-format="{{ time_format_flatpickr }}" data-enable-time="true" data-no-calendar="true" placeholder="Select Time">
+                        <label for="arrival_datetime">Tenant Arrival Date & Time</label>
+                        <input type="datetime-local" id="arrival_datetime" name="arrival_datetime" class="flatpickr" data-date-format="{{ datetime_format_flatpickr }}" data-enable-time="true" data-no-calendar="false" placeholder="Select Date and Time">
                     </div>
                 </div>
             </div>

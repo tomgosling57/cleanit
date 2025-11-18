@@ -76,7 +76,7 @@ class Job(Base):
     id = Column(Integer, primary_key=True)
     date = Column(Date, nullable=False)
     time = Column(Time, nullable=False)
-    arrival_time = Column(DateTime, nullable=True)
+    arrival_datetime = Column(DateTime, nullable=True)
     end_time = Column(Time, nullable=False)
     description = Column(String)
     is_complete = Column(Boolean, default=False)
@@ -90,26 +90,26 @@ class Job(Base):
  
     @hybrid_property
     def arrival_date(self):
-        if self.arrival_time:
-            return self.arrival_time.date()
+        if self.arrival_datetime:
+            return self.arrival_datetime.date()
         return None
 
     @arrival_date.expression
     def arrival_date(cls):
-        return func.date(cls.arrival_time)
+        return func.date(cls.arrival_datetime)
 
     @hybrid_property
     def arrival_time_only(self):
-        if self.arrival_time:
-            return self.arrival_time.time()
+        if self.arrival_datetime:
+            return self.arrival_datetime.time()
         return None
 
     @arrival_time_only.expression
     def arrival_time_only(cls):
-        return func.time(cls.arrival_time)
+        return func.time(cls.arrival_datetime)
 
     def __repr__(self):
-        return f"<Job(id={self.id}, date='{self.date}', time='{self.time}', arrival_date='{self.arrival_date}', arrival_time_only='{self.arrival_time_only}', end_time='{self.end_time}', is_complete='{self.is_complete}')>"
+        return f"<Job(id={self.id}, date='{self.date}', time='{self.time}', arrival_datetime='{self.arrival_datetime}', end_time='{self.end_time}', is_complete='{self.is_complete}')>"
 
     @hybrid_property
     def duration(self):
@@ -224,7 +224,7 @@ def create_initial_property_and_job(Session):
         job1 = Job(
             date=today,
             time=time(9, 0),
-            arrival_time=datetime.combine(today, time(8, 45)), # Added arrival time
+            arrival_datetime=datetime.combine(today, time(8, 45)), # Added arrival datetime
             end_time=time(11, 0), # Assuming a 2-hour job for initial data
             description='Full house clean, focus on kitchen and bathrooms.',
             is_complete=False,
@@ -245,7 +245,7 @@ def create_initial_property_and_job(Session):
         job2 = Job(
             date=today,
             time=time(12, 0),
-            arrival_time=datetime.combine(today, time(11, 45)), # Added arrival time
+            arrival_datetime=datetime.combine(today, time(11, 45)), # Added arrival datetime
             end_time=time(14, 0),
             description='Back-to-back job 1: Kitchen deep clean.',
             is_complete=False,
@@ -257,7 +257,7 @@ def create_initial_property_and_job(Session):
         job3 = Job(
             date=today,
             time=time(14, 0),
-            arrival_time=datetime.combine(today, time(13, 45)), # Added arrival time
+            arrival_datetime=datetime.combine(today, time(13, 45)), # Added arrival datetime
             end_time=time(16, 0),
             description='Back-to-back job 2: Bathroom deep clean.',
             is_complete=False,
