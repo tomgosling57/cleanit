@@ -11,14 +11,20 @@ hx-include="#edit-job-form"
             <div class="form-card time-card">
                 <div class="card-header">
                     <span class="card-icon">🕐</span>
-                    <span class="card-title">Schedule</span>
+                    <span class="card-title">Schedule & Arrival</span>
                 </div>
                 <div class="form-row">
                     <div class="form-field">
+                        <label for="time">Start Time</label>
                         <input type="time" id="time" name="time" value="{{ job.time.strftime('%H:%M') }}" required pattern="^([01]\d|2[0-3]):[0-5]\d$" title="Please enter start time in 24-hour format (HH:mm)">
                     </div>
                     <div class="form-field">
+                        <label for="end_time">End Time</label>
                         <input type="time" id="end_time" name="end_time" value="{{ job.end_time.strftime('%H:%M') }}" required pattern="^([01]\d|2[0-3]):[0-5]\d$" title="Please enter end time in 24-hour format (HH:mm)">
+                    </div>
+                    <div class="form-field">
+                        <label for="arrival_time">Tenant Arrival Time</label>
+                        <input type="time" id="arrival_time" name="arrival_time" value="{{ job.arrival_time.strftime('%H:%M') if job.arrival_time else '' }}" pattern="^([01]\d|2[0-3]):[0-5]\d$" title="Please enter tenant arrival time in 24-hour format (HH:mm)">
                     </div>
                 </div>
             </div>
@@ -46,15 +52,6 @@ hx-include="#edit-job-form"
                             <option value="{{ property.id }}" {% if job.property.id == property.id %}selected{% endif %}>{{ property.address }}</option>
                         {% endfor %}
                     </select>
-                </div>
-            </div>
-            <div class="form-card arrival-time-card">
-                <div class="card-header">
-                    <span class="card-icon">⏰</span>
-                    <span class="card-title">Arrival Time</span>
-                </div>
-                <div class="form-field">
-                    <input type="time" id="arrival_time" name="arrival_time" value="{{ job.arrival_time.strftime('%H:%M') if job.arrival_time else '' }}" pattern="^([01]\d|2[0-3]):[0-5]\d$" title="Please enter arrival time in 24-hour format (HH:mm)">
                 </div>
             </div>
             <div class="form-card client-card">
