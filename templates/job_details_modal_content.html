@@ -1,6 +1,6 @@
 <h2>Job Details</h2>
 <div class="job-details-compact">
-    <!-- Group 1: Property, Client & Access Details -->
+    <!-- Group 1: Property, Tenant & Access Details -->
     <div class="group-card property-group-card">
         <div class="group-content">
             <div class="group-item">
@@ -12,8 +12,8 @@
             <div class="group-item">
                 <span class="item-icon">👤</span>
                 <div class="item-content">
-                    <div class="primary-info">{{ job.property.client_name or 'Unknown Client' }}</div>
-                    <div class="secondary-info">{{ job.property.client_phone or 'No phone' }}</div>
+                    <div class="primary-info">Arrives: {{ job.arrival_date.strftime('%d/%m/%Y') }}</div>
+                    <div class="secondary-info">Time: {{ job.arrival_time_only.strftime('%H:%M') }}</div>
                 </div>
             </div>
             {% if job.property.access_notes %}
@@ -38,13 +38,6 @@
                 </div>
             </div>
             {% if job.arrival_datetime %}
-            <div class="group-item">
-                <span class="item-icon">🕒</span>
-                <div class="item-content">
-                    <div class="primary-info">Tenant Arrival Date: {{ job.arrival_date.strftime('%d-%m-%Y') }}</div>
-                    <div class="secondary-info">Tenant Arrival Time: {{ job.arrival_time_only.strftime('%H:%M') }}</div>
-                </div>
-            </div>
             {% endif %}
             <div class="group-item">
                 <span class="item-icon">📝</span>

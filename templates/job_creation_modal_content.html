@@ -9,7 +9,7 @@
             <div class="form-card time-card">
                 <div class="card-header">
                     <span class="card-icon">🕐</span>
-                    <span class="card-title">Schedule & Arrival</span>
+                    <span class="card-title">Date & Time</span>
                 </div>
                 <div class="form-row">
                     <div class="form-field">
@@ -21,8 +21,8 @@
                         <input type="time" id="end_time" name="end_time" required pattern="^([01]\d|2[0-3]):[0-5]\d$" title="Please enter end time in 24-hour format (HH:mm)">
                     </div>
                     <div class="form-field">
-                        <label for="arrival_datetime">Tenant Arrival Date & Time</label>
-                        <input type="datetime-local" id="arrival_datetime" name="arrival_datetime" class="flatpickr" data-date-format="{{ datetime_format_flatpickr }}" data-enable-time="true" data-no-calendar="false" placeholder="Select Date and Time">
+                        <label for="date">Date</label>
+                        <input type="date-local" id="date" name="arrival_datetime" class="flatpickr" data-date-format="{{ date_format_flatpickr }}" data-no-calendar="false" placeholder="Select Date">
                     </div>
                 </div>
             </div>
@@ -37,7 +37,7 @@
             </div>
         </div>
     
-        <!-- Group 2: Property, Client & Access Details -->
+        <!-- Group 2: Property, Tenant & Access Details -->
         <div class="form-group">
             <div class="form-card address-card">
                 <div class="card-header">
@@ -52,17 +52,15 @@
                     </select>
                 </div>
             </div>
-            <div class="form-card client-card">
+            <div class="form-card tenant-card">
                 <div class="card-header">
                     <span class="card-icon">👤</span>
-                    <span class="card-title">Client</span>
+                    <span class="card-title">Tenant</span>
                 </div>
                 <div class="form-field">
-                    <input type="text" value="Select a property to view client details" readonly>
-                </div>
-                <div class="form-field">
-                    <input type="text" value="Client information will appear here" readonly>
-                </div>
+                    <label for="arrival_datetime">Tenant Arrival Date & Time</label>
+                    <input type="datetime-local" id="arrival_datetime" name="arrival_datetime" class="flatpickr" data-date-format="{{ datetime_format_flatpickr }}" data-enable-time="true" data-no-calendar="false" placeholder="Select Date and Time">
+                </div>                  
             </div>
             <div class="form-card access-card">
                 <div class="card-header">

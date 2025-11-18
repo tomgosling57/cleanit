@@ -386,7 +386,7 @@ div.job-details-group div.form-group {
     border-left-color: var(--accent-color); /* Using accent-color for arrival time */
 }
 
-.client-card {
+.tenant-card {
     border-left-color: var(--secondary-color);
 }
 
