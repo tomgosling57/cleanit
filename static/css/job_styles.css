@@ -472,7 +472,12 @@ div.job-details-group div.form-group {
     border: 2px solid red;
     box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
 }
-.job-card.arrival-late {
+.job-card.arrival-next-day {
     background-color: #fff3cd; /* Light yellow background */
     box-shadow: 0 2px 8px rgba(255, 193, 7, 0.2); /* Subtle yellow shadow */
+}
+
+.job-card.arrival-same-day {
+    background-color: #f8d7da; /* Light red background */
+    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.2); /* Subtle red shadow */
 }
