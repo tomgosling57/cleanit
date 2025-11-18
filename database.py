@@ -224,7 +224,7 @@ def create_initial_property_and_job(Session):
         job1 = Job(
             date=today,
             time=time(9, 0),
-            arrival_datetime=datetime.combine(today, time(8, 45)), # Added arrival datetime
+            arrival_datetime=datetime.combine(today + timedelta(days=2), time(8, 45)), # Added arrival datetime
             end_time=time(11, 0), # Assuming a 2-hour job for initial data
             description='Full house clean, focus on kitchen and bathrooms.',
             is_complete=False,
@@ -245,7 +245,7 @@ def create_initial_property_and_job(Session):
         job2 = Job(
             date=today,
             time=time(12, 0),
-            arrival_datetime=datetime.combine(today, time(11, 45)), # Added arrival datetime
+            arrival_datetime=datetime.combine(today + timedelta(days=1), time(11, 45)), # Added arrival datetime
             end_time=time(14, 0),
             description='Back-to-back job 1: Kitchen deep clean.',
             is_complete=False,
@@ -279,6 +279,7 @@ def create_initial_property_and_job(Session):
         session.add(job_team3)
         session.commit()
         print("Two back-to-back jobs created and assigned to cleaner.")
+
     session.close()
 
 def create_initial_team(Session):
@@ -302,3 +303,4 @@ def create_initial_team(Session):
         else:
             print("Owner or cleaner user not found. Team creation skipped.")
     session.close()
+

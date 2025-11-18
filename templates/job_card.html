@@ -1,4 +1,4 @@
-<div class="job-card {% if job.id in back_to_back_job_ids %}back-to-back-job{% endif %}" id="job-{{ job.id }}">
+<div class="job-card {% if job.id in back_to_back_job_ids %}back-to-back-job{% endif %} {% if job.arrival_datetime and job.arrival_datetime.date() == job.date %}arrival-late{% endif %}" id="job-{{ job.id }}">
     <span class="job-close-button small-icon close-button" data-job-id="{{ job.id }}">&times;</span>
     <div class="job-card-details">
         <div class="job-info">
