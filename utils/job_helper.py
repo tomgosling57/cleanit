@@ -136,22 +136,32 @@ class JobHelper:
         return datetime.today().date() # Fallback to today if not a date object
 
     @staticmethod
+    def render_job_details_fragment(db, job_id, DATETIME_FORMATS):
+        """
+        Fetches job details and renders the job details modal fragment.
+        Returns the HTML for the job details modal.
+        """
+        job_service = JobService(db)
+        job = job_service.get_job_details(job_id)
+        return render_template_string('{% include "job_details_modal_content.html" %}', job=job, DATETIME_FORMATS=DATETIME_FORMATS)
+
+    @staticmethod
+    def render_job_list_fragment(db, current_user, DATETIME_FORMATS, BACK_TO_BACK_THRESHOLD, selected_date_for_fetch):
+        """
+        Fetches the list of jobs for the current user/team on a specific date and renders the job list fragment.
+        Returns the HTML for the job list.
+        """
+        job_service = JobService(db)
+        assigned_jobs = job_service.get_jobs_for_user_on_date(current_user.id, current_user.team_id, selected_date_for_fetch)
+        back_to_back_job_ids = job_service.get_back_to_back_jobs_for_date(selected_date_for_fetch, threshold_minutes=BACK_TO_BACK_THRESHOLD)
+        return render_template_string('{% include "job_list_fragment.html" %}', jobs=assigned_jobs, DATETIME_FORMATS=DATETIME_FORMATS, back_to_back_job_ids=back_to_back_job_ids)
+
+    @staticmethod
     def render_job_updates(db, job_id, current_user, DATETIME_FORMATS, BACK_TO_BACK_THRESHOLD, selected_date_for_fetch):
         """
         Fetches updated job details and renders the job details and job list fragments.
         Returns a tuple: (job_details_html, job_list_html)
         """
-        job_service = JobService(db)
-
-        # Fetch the updated job details for the modal
-        job = job_service.get_job_details(job_id)
-        back_to_back_job_ids = job_service.get_back_to_back_jobs_for_date(job.date, threshold_minutes=BACK_TO_BACK_THRESHOLD)
-        
-        # Render job details for the modal
-        job_details_html = render_template_string('{% include "job_details_modal_content.html" %}', job=job, DATETIME_FORMATS=DATETIME_FORMATS)
-        
-        # Re-fetch all jobs to ensure the list is up-to-date
-        assigned_jobs = job_service.get_jobs_for_user_on_date(current_user.id, current_user.team_id, selected_date_for_fetch)
-        job_list_html = render_template_string('{% include "job_list_fragment.html" %}', jobs=assigned_jobs, DATETIME_FORMATS=DATETIME_FORMATS, back_to_back_job_ids=back_to_back_job_ids)
-        
+        job_details_html = JobHelper.render_job_details_fragment(db, job_id, DATETIME_FORMATS)
+        job_list_html = JobHelper.render_job_list_fragment(db, current_user, DATETIME_FORMATS, BACK_TO_BACK_THRESHOLD, selected_date_for_fetch)
         return job_details_html, job_list_html

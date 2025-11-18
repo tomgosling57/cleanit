@@ -123,8 +123,9 @@ def update_job(job_id):
 
     if updated_job:
         selected_date_for_fetch = JobHelper.get_selected_date_from_session()
-        job_details_html, job_list_html = JobHelper.render_job_updates(
-            db, job_id, current_user, DATETIME_FORMATS, BACK_TO_BACK_THRESHOLD, selected_date_for_fetch
+        job_details_html = JobHelper.render_job_details_fragment(db, job_id, DATETIME_FORMATS)
+        job_list_html = JobHelper.render_job_list_fragment(
+            db, current_user, DATETIME_FORMATS, BACK_TO_BACK_THRESHOLD, selected_date_for_fetch
         )
         
         response_html = f'<div hx-swap-oob="innerHTML:#job-details-modal-content">{job_details_html}</div>' \
@@ -266,9 +267,6 @@ def create_job():
     assignment_service = AssignmentService(db)
     assignment_service.update_assignments(new_job.id, team_ids=assigned_teams, user_ids=assigned_cleaners)
 
-    # Store job_date before tearing down the database session
-    new_job_date = new_job.date
-
     # Re-fetch all jobs and render the list fragment
     selected_date_for_fetch = JobHelper.get_selected_date_from_session()
     _, job_list_html = JobHelper.render_job_updates(
@@ -279,9 +277,6 @@ def create_job():
 
     if new_job:
         print(f"selected_date: {selected_date}")
-        if new_job_date.strftime(DATETIME_FORMATS["DATE_FORMAT"]) != selected_date:
-            # If the new job's date doesn't match the currently selected date, don't update the list
-            return Response(status=204)  # No Content
         return job_list_html
     return jsonify({'error': 'Failed to create job'}), 500
 
@@ -294,9 +289,12 @@ def delete_job(job_id):
     job_service = JobService(db)
     success = job_service.delete_job(job_id)
     if success:
-        jobs = job_service.get_all_jobs().all()
+        selected_date_for_fetch = JobHelper.get_selected_date_from_session()
+        job_list_html = JobHelper.render_job_list_fragment(
+            db, current_user, DATETIME_FORMATS, BACK_TO_BACK_THRESHOLD, selected_date_for_fetch
+        )
         teardown_db()
-        return render_template('job_list_fragment.html', jobs=jobs)
+        return job_list_html
         
     teardown_db()
     return jsonify({'error': 'Job not found'}), 404
