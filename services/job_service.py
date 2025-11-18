@@ -34,7 +34,7 @@ class JobService:
             return None
         job.date = job_data.get('date', job.date)
         job.time = job_data.get('time', job.time)
-        job.duration = job_data.get('duration', job.duration)
+        job.end_time = job_data.get('end_time', job.end_time)
         job.description = job_data.get('description', job.description)
         job.assigned_cleaners = job_data.get('assigned_cleaners', job.assigned_cleaners)
         property_address = job_data.get('property_address')
@@ -66,7 +66,7 @@ class JobService:
         new_job = Job(
             date=job_data['date'],
             time=job_data['time'],
-            duration=job_data['duration'],
+            end_time=job_data['end_time'],
             description=job_data.get('description'),
             is_complete=False,
             job_type=job_data.get('job_type'),

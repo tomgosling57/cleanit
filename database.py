@@ -1,10 +1,11 @@
 import os
-from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, Date, Time, Boolean, UniqueConstraint
+from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, Date, Time, Boolean, UniqueConstraint, func
 from sqlalchemy.orm import sessionmaker, declarative_base, relationship
+from sqlalchemy.ext.hybrid import hybrid_property, hybrid_method
 from werkzeug.security import generate_password_hash
 from flask import g, current_app
 from flask_login import UserMixin
-from datetime import date, time
+from datetime import date, time, timedelta, datetime
 
 # Define the base for declarative models
 Base = declarative_base()
@@ -75,7 +76,7 @@ class Job(Base):
     id = Column(Integer, primary_key=True)
     date = Column(Date, nullable=False)
     time = Column(Time, nullable=False)
-    duration = Column(String, nullable=False)
+    end_time = Column(Time, nullable=False)
     description = Column(String)
     is_complete = Column(Boolean, default=False)
     job_type = Column(String)
@@ -87,7 +88,39 @@ class Job(Base):
     assignments = relationship("Assignment", back_populates="job")
  
     def __repr__(self):
-        return f"<Job(id={self.id}, date='{self.date}', is_complete='{self.is_complete}')>"
+        return f"<Job(id={self.id}, date='{self.date}', time='{self.time}', end_time='{self.end_time}', is_complete='{self.is_complete}')>"
+
+    @hybrid_property
+    def duration(self):
+        if self.time and self.end_time:
+            # Calculate duration in minutes
+            start_datetime = datetime.combine(self.date, self.time)
+            end_datetime = datetime.combine(self.date, self.end_time)
+            
+            # Handle cases where end_time is on the next day (e.g., 22:00 - 02:00)
+            if end_datetime < start_datetime:
+                end_datetime += timedelta(days=1)
+
+            duration_timedelta = end_datetime - start_datetime
+            total_minutes = int(duration_timedelta.total_seconds() / 60)
+            
+            hours = total_minutes // 60
+            minutes = total_minutes % 60
+            
+            if minutes > 0:
+                return f"{hours}h {minutes}m"
+            return f"{hours}h"
+        return None
+
+    @duration.expression
+    def duration(cls):
+        # This is a placeholder for a more complex SQL expression if needed
+        # For now, it returns a string representation, which is not directly sortable/filterable in SQL
+        # A more robust solution for SQL querying would involve storing duration or a calculated field
+        return func.printf('%dh %dm',
+                           (func.julianday(cls.end_time) - func.julianday(cls.time)) * 24,
+                           ((func.julianday(cls.end_time) - func.julianday(cls.time)) * 24 * 60) % 60
+                          )
 
 class Assignment(Base):
     __tablename__ = 'assignments'
@@ -170,7 +203,7 @@ def create_initial_property_and_job(Session):
         job1 = Job(
             date=today,
             time=time(9, 0),
-            duration='2 hours',
+            end_time=time(11, 0), # Assuming a 2-hour job for initial data
             description='Full house clean, focus on kitchen and bathrooms.',
             is_complete=False,
             property=property1

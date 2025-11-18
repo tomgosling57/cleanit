@@ -3,7 +3,7 @@
     <div class="job-card-details">
         <div class="job-info">
             <p><strong>Time:</strong> {{ job.time.strftime('%H:%M') }}</p>
-            <p><strong>Duration:</strong> {{ job.duration }}</p>
+            <p><strong>Ends:</strong> {{ job.end_time.strftime('%H:%M') }} ({{ job.duration }})</p>
             <p><strong>Property Address:</strong> {{ job.property.address }}</p>
         </div>
         <div class="job-status-actions">

@@ -34,7 +34,7 @@
                 <span class="item-icon">🕐</span>
                 <div class="item-content">
                     <div class="primary-info">{{ job.time.strftime('%H:%M') }}</div>
-                    <div class="secondary-info">{{ job.duration }}h duration</div>
+                    <div class="secondary-info">Ends: {{ job.end_time.strftime('%H:%M') }} ({{ job.duration }})</div>
                 </div>
             </div>
             <div class="group-item">

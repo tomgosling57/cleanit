@@ -101,19 +101,20 @@ def update_job(job_id):
     property_address = request.form.get('property_address')
     date_str = request.form.get('date')
     time_str = request.form.get('time')
-    duration = request.form.get('duration')
+    end_time_str = request.form.get('end_time')
     assigned_cleaners = request.form.getlist('assigned_cleaners')
     assigned_teams = request.form.getlist('assigned_teams')
     job_type = request.form.get('job_type')
     notes = request.form.get('notes')
 
-    if not all([property_address, date_str, time_str, duration]):
+    if not all([property_address, date_str, time_str, end_time_str]):
         teardown_db()
         return jsonify({'error': 'Missing required fields'}), 400
 
     try:
         job_date = date.fromisoformat(date_str)
         job_time = time.fromisoformat(time_str)
+        job_end_time = time.fromisoformat(end_time_str)
     except ValueError:
         teardown_db()
         return jsonify({'error': 'Invalid date or time format'}), 400
@@ -125,7 +126,7 @@ def update_job(job_id):
     updated_job_data = {
         'date': job_date,
         'time': job_time,
-        'duration': duration,
+        'end_time': job_end_time,
         'description': notes,
         'job_type': job_type,
         'property_id': property_obj.id
@@ -275,19 +276,20 @@ def create_job():
     property_address = request.form.get('property_address')
     date_str = request.form.get('date')
     time_str = request.form.get('time')
-    duration = request.form.get('duration')
+    end_time_str = request.form.get('end_time')
     assigned_teams = request.form.getlist('assigned_teams')
     assigned_cleaners = request.form.getlist('assigned_cleaners')
     job_type = request.form.get('job_type')
     notes = request.form.get('notes')
     selected_date = request.form.get('selected_date')
 
-    if not all([property_address, date_str, time_str, duration]):
+    if not all([property_address, date_str, time_str, end_time_str]):
         return jsonify({'error': 'Missing required fields'}), 400
 
     try:
         job_date = date.fromisoformat(date_str)
         job_time = time.fromisoformat(time_str)
+        job_end_time = time.fromisoformat(end_time_str)
     except ValueError:
         return jsonify({'error': 'Invalid date or time format'}), 400
 
@@ -299,7 +301,7 @@ def create_job():
         'is_complete': False,
         'date': job_date,
         'time': job_time,
-        'duration': duration,
+        'end_time': job_end_time,
         'description': notes,
         'job_type': job_type,
         'property_id': property_obj.id
