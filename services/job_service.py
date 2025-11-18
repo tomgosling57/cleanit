@@ -59,14 +59,21 @@ class JobService:
             next_job = jobs_on_date[i+1]
 
             # Combine date with time to create datetime objects for comparison
+            current_job_start_datetime = datetime.combine(target_date, current_job.time)
             current_job_end_datetime = datetime.combine(target_date, current_job.end_time)
             next_job_start_datetime = datetime.combine(target_date, next_job.time)
+            next_job_end_datetime = datetime.combine(target_date, next_job.end_time)
 
-            time_difference = next_job_start_datetime - current_job_end_datetime
+            # Condition for overlap: (start1 < end2) and (start2 < end1)
+            # Condition for back-to-back within threshold: (next_start - current_end) <= threshold and >= 0
             
-            # Check if the time difference is positive (next job starts after current job ends)
-            # and within the configurable threshold
-            if timedelta(minutes=0) <= time_difference <= timedelta(minutes=threshold_minutes):
+            is_overlapping = (current_job_start_datetime < next_job_end_datetime) and \
+                             (next_job_start_datetime < current_job_end_datetime)
+            
+            time_difference = next_job_start_datetime - current_job_end_datetime
+            is_within_threshold = (timedelta(minutes=0) <= time_difference <= timedelta(minutes=threshold_minutes))
+
+            if is_overlapping or is_within_threshold:
                 back_to_back_job_ids.add(current_job.id)
                 back_to_back_job_ids.add(next_job.id)
                 

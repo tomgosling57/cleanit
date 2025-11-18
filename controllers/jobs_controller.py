@@ -93,13 +93,13 @@ def timetable(date: str = None):
     team_service = TeamService(db)
     team = team_service.get_team(current_user.team_id)
     team_leader_id = team.team_leader_id if team else None
-    teardown_db()
-
     selected_date = date_obj.strftime(DATETIME_FORMATS["DATE_FORMAT"])
     current_user.selected_date = selected_date
-    return render_template('timetable.html', jobs=jobs, team_leader_id=team_leader_id, user_role=current_user.role,
+    response = render_template('timetable.html', jobs=jobs, team_leader_id=team_leader_id, user_role=current_user.role,
                            user_id=current_user.id, selected_date=selected_date, DATETIME_FORMATS=DATETIME_FORMATS,
                            back_to_back_job_ids=back_to_back_job_ids) # Pass back-to-back job IDs to template
+    teardown_db()
+    return response
 
 def update_job(job_id):
     if current_user.role != 'owner':
