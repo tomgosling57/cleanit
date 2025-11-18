@@ -1,3 +1,53 @@
+/* Team Timetable View Styles */
+.team-columns-container {
+    display: flex;
+    flex-wrap: wrap; /* Allow columns to wrap to the next line */
+    gap: 20px; /* Space between team columns */
+    justify-content: flex-start; /* Align columns to the start */
+}
+
+.team-column {
+    flex: 1 1 calc(33.33% - 20px); /* Default to 3 columns, adjust for gap */
+    box-sizing: border-box; /* Include padding and border in the element's total width and height */
+    border: 1px solid #ddd; /* Match job card border */
+    border-radius: 8px; /* Match job card border-radius */
+    padding: 10px; /* Reduced padding */
+    background-color: #fff; /* Match job card background */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06); /* Subtle shadow, similar to job cards */
+    margin-bottom: 20px; /* Space between rows of team columns */
+}
+
+.team-column-header {
+    text-align: center;
+    margin-top: 0;
+    margin-bottom: 10px; /* Reduced margin */
+    color: var(--primary-color); /* Use a primary color for consistency */
+    font-size: 1.1rem; /* Slightly smaller font size */
+    font-weight: 600;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #eee; /* Subtle separator */
+}
+
+.no-jobs-message {
+    text-align: center;
+    color: #666;
+    font-style: italic;
+    padding: 10px;
+}
+
+/* Responsive adjustments for team columns */
+@media (max-width: 1200px) {
+    .team-column {
+        flex: 1 1 calc(50% - 20px); /* 2 columns on medium screens */
+    }
+}
+
+@media (max-width: 768px) {
+    .team-column {
+        flex: 1 1 100%; /* 1 column on small screens */
+    }
+}
+
 .job-actions button {
     margin-right: 10px;
     padding: 8px 12px;

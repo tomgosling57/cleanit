@@ -1,4 +1,5 @@
 
+from collections import defaultdict
 from database import Assignment, User, Job, Team
 from sqlalchemy import and_
 from sqlalchemy.orm import joinedload
@@ -60,3 +61,35 @@ class AssignmentService:
         ).all()
         teams = self.db_session.query(Team).filter(Team.id.in_([assignment.team_id for assignment in assignments])).all()
         return teams
+
+    def get_jobs_grouped_by_team_for_date(self, target_date: date):
+        """
+        Fetches all jobs for a given date and groups them by assigned team.
+        Returns a dictionary where keys are Team objects and values are lists of Job objects.
+        """
+        # Eagerly load related Job, Property, Team, and User objects
+        jobs_with_assignments = self.db_session.query(Job).options(
+            joinedload(Job.property),
+            joinedload(Job.assignments).joinedload(Assignment.team),
+            joinedload(Job.assignments).joinedload(Assignment.user)
+        ).filter(Job.date == target_date).all()
+
+        jobs_by_team = defaultdict(list)
+        all_teams = self.db_session.query(Team).all()
+        
+        # Initialize jobs_by_team with all teams to ensure all teams are present, even if they have no jobs
+        for team in all_teams:
+            jobs_by_team[team] = []
+
+        for job in jobs_with_assignments:
+            assigned_to_any_team = False
+            for assignment in job.assignments:
+                if assignment.team:
+                    jobs_by_team[assignment.team].append(job)
+                    assigned_to_any_team = True
+            # If a job is not assigned to any team, it should still be displayed, perhaps under an "Unassigned" category
+            if not assigned_to_any_team:
+                # Create a dummy Team object for unassigned jobs or handle it in the controller
+                # For now, let's assume jobs must be assigned to a team to appear in this view
+                pass
+        return jobs_by_team

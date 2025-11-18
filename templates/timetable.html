@@ -10,6 +10,9 @@
                 <input type="text" id="timetable-datepicker" placeholder="Select Date"/><i class="fa-solid fa-calendar"></i>
             </div>
             {% if current_user.role == 'owner' %}
+                <button class="button" id="toggle-team-view-button" onclick="toggleTeamView()">
+                    Team View
+                </button>
                 <button class="button"
                         hx-get="{{ url_for('job.create_job') }}"
                         hx-target="#job-creation-modal-content"
@@ -20,9 +23,28 @@
             {% endif %}
         </div>
 
-            <div class="job-list" id="job-list">
-                {% include 'job_list_fragment.html' %}
+        <div class="job-list" id="job-list">
+            {% include 'job_list_fragment.html' %}
+        </div>
+
+        {% if current_user.role == 'owner' %}
+        <div class="team-timetable-view" id="team-timetable-view" style="display:none;">
+            <div class="team-columns-container">
+                {% for team in all_teams %}
+                    <div class="team-column">
+                        <h3 class="team-column-header">{{ team.name }}</h3>
+                        {% if jobs_by_team[team] %}
+                            {% for job in jobs_by_team[team] %}
+                                {% include 'job_card.html' with context %}
+                            {% endfor %}
+                        {% else %}
+                            <p class="no-jobs-message">No jobs for this team.</p>
+                        {% endif %}
+                    </div>
+                {% endfor %}
             </div>
+        </div>
+        {% endif %}
     </div>
 
     <!-- Job Details Modal -->
@@ -73,5 +95,22 @@
                 console.error("Error initializing Flatpickr:", error);
             }
         });
+    </script>
+    <script>
+        function toggleTeamView() {
+            const jobListView = document.getElementById('job-list');
+            const teamTimetableView = document.getElementById('team-timetable-view');
+            const toggleButton = document.getElementById('toggle-team-view-button');
+
+            if (jobListView.style.display !== 'none') {
+                jobListView.style.display = 'none';
+                teamTimetableView.style.display = 'flex'; // Use flex for columns
+                toggleButton.textContent = 'Default View';
+            } else {
+                jobListView.style.display = 'block';
+                teamTimetableView.style.display = 'none';
+                toggleButton.textContent = 'Team View';
+            }
+        }
     </script>
 {% endblock %}

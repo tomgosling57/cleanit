@@ -75,7 +75,9 @@ def get_job_creation_form():
 
 def timetable(date: str = None):    
     db = get_db()
-    job_service = JobService(db) # Instantiate JobService
+    job_service = JobService(db)
+    team_service = TeamService(db)
+    assignment_service = AssignmentService(db)
 
     date_obj = datetime.today().date()
     session['selected_date'] = date_obj
@@ -88,15 +90,18 @@ def timetable(date: str = None):
             date_obj = None
 
     jobs = job_service.get_jobs_for_user_on_date(current_user.id, current_user.team_id, date_obj)
-    back_to_back_job_ids = job_service.get_back_to_back_jobs_for_date(date_obj, threshold_minutes=15) # Get back-to-back jobs
-    team_service = TeamService(db)
+    back_to_back_job_ids = job_service.get_back_to_back_jobs_for_date(date_obj, threshold_minutes=BACK_TO_BACK_THRESHOLD)
+
+    all_teams = team_service.get_all_teams()
+    jobs_by_team = assignment_service.get_jobs_grouped_by_team_for_date(date_obj)
+
     team = team_service.get_team(current_user.team_id)
     team_leader_id = team.team_leader_id if team else None
     selected_date = date_obj.strftime(DATETIME_FORMATS["DATE_FORMAT"])
     current_user.selected_date = selected_date
     response = render_template('timetable.html', jobs=jobs, team_leader_id=team_leader_id, user_role=current_user.role,
                            user_id=current_user.id, selected_date=selected_date, DATETIME_FORMATS=DATETIME_FORMATS,
-                           back_to_back_job_ids=back_to_back_job_ids) # Pass back-to-back job IDs to template
+                           back_to_back_job_ids=back_to_back_job_ids, all_teams=all_teams, jobs_by_team=jobs_by_team)
     teardown_db()
     return response
 

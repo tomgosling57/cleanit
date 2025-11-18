@@ -284,23 +284,135 @@ def create_initial_property_and_job(Session):
 
 def create_initial_team(Session):
     session = Session()
-    if not session.query(Team).first():
-        # Get the owner and cleaner users
-        owner = session.query(User).filter_by(role='owner').first()
-        cleaner = session.query(User).filter_by(username='cleaner').first()
+    
+    # Get the owner, team_leader, and cleaner users
+    owner = session.query(User).filter_by(role='owner').first()
+    team_leader_user = session.query(User).filter_by(username='team_leader').first()
+    cleaner = session.query(User).filter_by(username='cleaner').first()
+
+    if owner and cleaner and team_leader_user:
+        # Create 'Initial Team' if it doesn't exist
+        if not session.query(Team).filter_by(name='Initial Team').first():
+            initial_team = Team(name='Initial Team', team_leader_id=owner.id)
+            session.add(initial_team)
+            session.commit()
+            owner.team_id = initial_team.id
+            cleaner.team_id = initial_team.id
+            session.commit()
+            print("Initial Team created with owner as team leader and cleaner as team member.")
         
-        if owner and cleaner:
-            # Create the initial team
-            team = Team(name='Initial Team', team_leader_id=owner.id)
-            session.add(team)
+        # Create 'Alpha Team' if it doesn't exist
+        if not session.query(Team).filter_by(name='Alpha Team').first():
+            alpha_team = Team(name='Alpha Team', team_leader_id=team_leader_user.id)
+            session.add(alpha_team)
             session.commit()
-            
-            # Assign the team leader and team member
-            owner.team_id = team.id
-            cleaner.team_id = team.id
+            team_leader_user.team_id = alpha_team.id
             session.commit()
-            print("Initial team created with owner as team leader and cleaner as team member.")
-        else:
-            print("Owner or cleaner user not found. Team creation skipped.")
+            print("Alpha Team created with team_leader as team leader.")
+    else:
+        print("Owner, team_leader, or cleaner user not found. Team creation skipped.")
+    
+    session.close()
+
+def create_initial_property_and_job(Session):
+    session = Session()
+    cleaner = session.query(User).filter_by(username='cleaner').first()
+    alpha_team = session.query(Team).filter_by(name='Alpha Team').first()
+
+    if cleaner and not session.query(Property).first():
+        # Create a property
+        property1 = Property(address='123 Main St, Anytown', access_notes='Key under mat')
+        session.add(property1)
+        session.commit()
+        print("Initial property created.")
+
+        # Create a job for today
+        today = date.today()
+        job1 = Job(
+            date=today,
+            time=time(9, 0),
+            arrival_datetime=datetime.combine(today + timedelta(days=2), time(8, 45)), # Added arrival datetime
+            end_time=time(11, 0), # Assuming a 2-hour job for initial data
+            description='Full house clean, focus on kitchen and bathrooms.',
+            is_complete=False,
+            property=property1
+        )
+        session.add(job1)
+        session.commit()
+
+        # Assign the cleaner to the job
+        assignment1 = Assignment(job_id=job1.id, user_id=cleaner.id)
+        job_team1 = Assignment(job_id=job1.id, team_id=1)
+        session.add(assignment1)
+        session.add(job_team1)
+        session.commit()
+        print("Initial job created and assigned to cleaner.")
+
+        # Create two back-to-back jobs for today
+        job2 = Job(
+            date=today,
+            time=time(12, 0),
+            arrival_datetime=datetime.combine(today + timedelta(days=1), time(11, 45)), # Added arrival datetime
+            end_time=time(14, 0),
+            description='Back-to-back job 1: Kitchen deep clean.',
+            is_complete=False,
+            property=property1
+        )
+        session.add(job2)
+        session.commit()
+
+        job3 = Job(
+            date=today,
+            time=time(14, 0),
+            arrival_datetime=datetime.combine(today, time(13, 45)), # Added arrival datetime
+            end_time=time(16, 0),
+            description='Back-to-back job 2: Bathroom deep clean.',
+            is_complete=False,
+            property=property1
+        )
+        session.add(job3)
+        session.commit()
+
+        # Assign the cleaner to the back-to-back jobs
+        assignment2 = Assignment(job_id=job2.id, user_id=cleaner.id)
+        job_team2 = Assignment(job_id=job2.id, team_id=1)
+        session.add(assignment2)
+        session.add(job_team2)
+        session.commit()
+
+        assignment3 = Assignment(job_id=job3.id, user_id=cleaner.id)
+        job_team3 = Assignment(job_id=job3.id, team_id=1)
+        session.add(assignment3)
+        session.add(job_team3)
+        session.commit()
+        print("Two back-to-back jobs created and assigned to cleaner.")
+
+    if alpha_team and not session.query(Job).filter(Job.description == 'Alpha Team Job').first():
+        # Create a property for Alpha Team's job
+        property_alpha = Property(address='456 Oak Ave, Teamville', access_notes='Code 1234')
+        session.add(property_alpha)
+        session.commit()
+        print("Property for Alpha Team created.")
+
+        # Create a job for Alpha Team
+        today = date.today()
+        job_alpha = Job(
+            date=today,
+            time=time(10, 0),
+            arrival_datetime=datetime.combine(today, time(9, 45)),
+            end_time=time(12, 0),
+            description='Alpha Team Job: Exterior window clean.',
+            is_complete=False,
+            property=property_alpha
+        )
+        session.add(job_alpha)
+        session.commit()
+
+        # Assign Alpha Team to the job
+        assignment_alpha = Assignment(job_id=job_alpha.id, team_id=alpha_team.id)
+        session.add(assignment_alpha)
+        session.commit()
+        print("Alpha Team job created and assigned to Alpha Team.")
+
     session.close()
 
