@@ -51,7 +51,7 @@
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <script>
         flatpickr("#timetable-datepicker", {
-            dateFormat: "{{ date_format }}",
+            dateFormat: "{{ DATETIME_FORMATS['DATE_FORMAT_FLATPICKR'] }}",
             defaultDate: "{{ selected_date }}",
             onChange: function(selectedDates, dateStr, instance) {
                 // Fetch jobs for the selected date via HTMX
@@ -65,7 +65,7 @@
             console.log("htmx:afterSwap event triggered inside htmx.on.");
             try {
                 flatpickr("#date", {
-                    dateFormat: "{{ date_format }}",
+                    dateFormat: "{{ DATETIME_FORMATS['DATE_FORMAT_FLATPICKR'] }}",
                     defaultDate: "{{ selected_date }}"
                 });
                 console.log("Flatpickr initialized successfully.");

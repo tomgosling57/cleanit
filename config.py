@@ -1,7 +1,8 @@
-
-DATE_FORMAT = "%d-%m-%Y"
-DATE_FORMAT_FLATPICKR = "d-m-Y"
-DATETIME_FORMAT = "%d-%m-%Y %H:%M"
-DATETIME_FORMAT_FLATPICKR = "d-m-Y H:i"
-TIME_FORMAT = "%H:%M"
-TIME_FORMAT_FLATPICKR = "H:i"
+DATETIME_FORMATS = {
+    "DATE_FORMAT": "%d-%m-%Y",
+    "DATE_FORMAT_FLATPICKR": "d-m-Y",
+    "DATETIME_FORMAT": "%d-%m-%Y %H:%M",
+    "DATETIME_FORMAT_FLATPICKR": "d-m-Y H:i",
+    "TIME_FORMAT": "%H:%M",
+    "TIME_FORMAT_FLATPICKR": "H:i"
+}

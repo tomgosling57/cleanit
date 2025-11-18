@@ -16,15 +16,15 @@ hx-include="#edit-job-form"
                 <div class="form-row">
                     <div class="form-field">
                         <label for="time">Start Time</label>
-                        <input type="time" id="time" name="time" value="{{ job.time.strftime('%H:%M') }}" required pattern="^([01]\d|2[0-3]):[0-5]\d$" title="Please enter start time in 24-hour format (HH:mm)">
+                        <input type="time" id="time" name="time" value="{{ job.time.strftime(DATETIME_FORMATS['TIME_FORMAT']) }}" required pattern="^([01]\d|2[0-3]):[0-5]\d$" title="Please enter start time in 24-hour format (HH:mm)">
                     </div>
                     <div class="form-field">
                         <label for="end_time">End Time</label>
-                        <input type="time" id="end_time" name="end_time" value="{{ job.end_time.strftime('%H:%M') }}" required pattern="^([01]\d|2[0-3]):[0-5]\d$" title="Please enter end time in 24-hour format (HH:mm)">
+                        <input type="time" id="end_time" name="end_time" value="{{ job.end_time.strftime(DATETIME_FORMATS['TIME_FORMAT']) }}" required pattern="^([01]\d|2[0-3]):[0-5]\d$" title="Please enter end time in 24-hour format (HH:mm)">
                     </div>
                     <div class="form-field">
                         <label for="date">Date</label>
-                        <input type="date-local" id="date" name="arrival_datetime" class="flatpickr" data-date-format="{{ date_format_flatpickr }}" data-no-calendar="false" placeholder="Select Date">
+                        <input type="date-local" id="date" name="date" class="flatpickr" data-date-format="{{ DATETIME_FORMATS['DATE_FORMAT_FLATPICKR'] }}" data-no-calendar="false" placeholder="Select Date">
                     </div>
                 </div>
             </div>
@@ -61,7 +61,7 @@ hx-include="#edit-job-form"
                 </div>
                 <div class="form-field">
                     <label for="arrival_datetime">Tenant Arrival Date & Time</label>
-                    <input type="datetime-local" id="arrival_datetime" name="arrival_datetime" class="flatpickr" data-date-format="{{ datetime_format_flatpickr }}" data-enable-time="true" data-no-calendar="false" placeholder="Select Date and Time">
+                    <input type="datetime-local" id="arrival_datetime" name="arrival_datetime" class="flatpickr" data-date-format="{{ DATETIME_FORMATS['DATETIME_FORMAT_FLATPICKR'] }}" data-enable-time="true" data-no-calendar="false" placeholder="Select Date and Time">
                 </div>
             </div>
             {% if job.property.access_notes %}

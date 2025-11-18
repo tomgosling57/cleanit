@@ -12,8 +12,8 @@
             <div class="group-item">
                 <span class="item-icon">👤</span>
                 <div class="item-content">
-                    <div class="primary-info">Arrives: {{ job.arrival_date.strftime('%d/%m/%Y') }}</div>
-                    <div class="secondary-info">Time: {{ job.arrival_time_only.strftime('%H:%M') }}</div>
+                    <div class="primary-info">Arrives: {{ job.arrival_date.strftime(DATETIME_FORMATS['DATE_FORMAT']) }}</div>
+                    <div class="secondary-info">Time: {{ job.arrival_time_only.strftime(DATETIME_FORMATS['TIME_FORMAT']) }}</div>
                 </div>
             </div>
             {% if job.property.access_notes %}
@@ -33,8 +33,8 @@
             <div class="group-item">
                 <span class="item-icon">🕐</span>
                 <div class="item-content">
-                    <div class="primary-info">Start: {{ job.time.strftime('%H:%M') }}</div>
-                    <div class="secondary-info">End: {{ job.end_time.strftime('%H:%M') }} ({{ job.duration }})</div>
+                    <div class="primary-info">Start: {{ job.time.strftime(DATETIME_FORMATS['TIME_FORMAT']) }}</div>
+                    <div class="secondary-info">End: {{ job.end_time.strftime(DATETIME_FORMATS['TIME_FORMAT']) }} ({{ job.duration }})</div>
                 </div>
             </div>
             {% if job.arrival_datetime %}

@@ -22,7 +22,7 @@
                     </div>
                     <div class="form-field">
                         <label for="date">Date</label>
-                        <input type="date-local" id="date" name="arrival_datetime" class="flatpickr" data-date-format="{{ date_format_flatpickr }}" data-no-calendar="false" placeholder="Select Date">
+                        <input type="date-local" id="date" name="arrival_datetime" class="flatpickr" data-date-format="{{ DATETIME_FORMATS['DATE_FORMAT_FLATPICKR'] }}" data-no-calendar="false" placeholder="Select Date">
                     </div>
                 </div>
             </div>
@@ -59,7 +59,7 @@
                 </div>
                 <div class="form-field">
                     <label for="arrival_datetime">Tenant Arrival Date & Time</label>
-                    <input type="datetime-local" id="arrival_datetime" name="arrival_datetime" class="flatpickr" data-date-format="{{ datetime_format_flatpickr }}" data-enable-time="true" data-no-calendar="false" placeholder="Select Date and Time">
+                    <input type="datetime-local" id="arrival_datetime" name="arrival_datetime" class="flatpickr" data-date-format="{{ DATETIME_FORMATS['DATETIME_FORMAT_FLATPICKR'] }}" data-enable-time="true" data-no-calendar="false" placeholder="Select Date and Time">
                 </div>                  
             </div>
             <div class="form-card access-card">

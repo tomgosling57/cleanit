@@ -1,6 +1,6 @@
 from flask import render_template, render_template_string, redirect, url_for, flash, request, jsonify, Response
 from flask_login import current_user
-from config import DATE_FORMAT, DATE_FORMAT_FLATPICKR, DATETIME_FORMAT, DATETIME_FORMAT_FLATPICKR, TIME_FORMAT, TIME_FORMAT_FLATPICKR
+from config import DATETIME_FORMATS
 from services.job_service import JobService
 from services.team_service import TeamService
 from services.user_service import UserService
@@ -52,7 +52,7 @@ def get_job_details(job_id):
     teams = assignment_service.get_teams_for_job(job_id)
     teardown_db()
 
-    return render_template('job_details_modal_content.html', job=job, job_cleaners=cleaners, job_teams=teams, back_to_back_job_ids=back_to_back_job_ids, date_format_flatpickr=DATE_FORMAT_FLATPICKR, time_format_flatpickr=TIME_FORMAT_FLATPICKR, datetime_format_flatpickr=DATETIME_FORMAT_FLATPICKR)
+    return render_template('job_details_modal_content.html', job=job, job_cleaners=cleaners, job_teams=teams, back_to_back_job_ids=back_to_back_job_ids, DATETIME_FORMATS=DATETIME_FORMATS)
 
 def get_job_creation_form():
     if current_user.role != 'owner':
@@ -66,7 +66,7 @@ def get_job_creation_form():
     teams = team_service.get_all_teams()
     properties = property_service.get_all_properties()
     teardown_db()
-    return render_template('job_creation_modal_content.html', users=users, teams=teams, properties=properties, date_format_flatpickr=DATE_FORMAT_FLATPICKR, time_format_flatpickr=TIME_FORMAT_FLATPICKR, datetime_format_flatpickr=DATETIME_FORMAT_FLATPICKR)
+    return render_template('job_creation_modal_content.html', users=users, teams=teams, properties=properties, DATETIME_FORMATS=DATETIME_FORMATS)
 
 def timetable(date: str = None):    
     db = get_db()
@@ -78,7 +78,7 @@ def timetable(date: str = None):
     # Use given date if provided
     if date:
         try:
-            date_obj = datetime.strptime(date, DATE_FORMAT).date()
+            date_obj = datetime.strptime(date, DATETIME_FORMATS["DATE_FORMAT"]).date()
         except ValueError:
             date_obj = None
 
@@ -89,10 +89,10 @@ def timetable(date: str = None):
     team_leader_id = team.team_leader_id if team else None
     teardown_db()
 
-    selected_date = date_obj.strftime(DATE_FORMAT)
+    selected_date = date_obj.strftime(DATETIME_FORMATS["DATE_FORMAT"])
     current_user.selected_date = selected_date
     return render_template('timetable.html', jobs=jobs, team_leader_id=team_leader_id, user_role=current_user.role,
-                           user_id=current_user.id, selected_date=selected_date, date_format=DATE_FORMAT_FLATPICKR,
+                           user_id=current_user.id, selected_date=selected_date, DATETIME_FORMATS=DATETIME_FORMATS,
                            back_to_back_job_ids=back_to_back_job_ids) # Pass back-to-back job IDs to template
 
 def update_job(job_id):
@@ -121,13 +121,13 @@ def update_job(job_id):
         return jsonify({'error': 'Missing required fields'}), 400
 
     try:
-        job_date = datetime.strptime(date_str, DATE_FORMAT).date()
-        job_time = datetime.strptime(time_str, TIME_FORMAT).time()
-        job_end_time = datetime.strptime(end_time_str, TIME_FORMAT).time()
+        job_date = datetime.strptime(date_str, DATETIME_FORMATS["DATE_FORMAT"]).date()
+        job_time = datetime.strptime(time_str, DATETIME_FORMATS["TIME_FORMAT"]).time()
+        job_end_time = datetime.strptime(end_time_str, DATETIME_FORMATS["TIME_FORMAT"]).time()
         
         job_arrival_datetime = None
         if arrival_datetime_str:
-            job_arrival_datetime = datetime.strptime(arrival_datetime_str, DATETIME_FORMAT)
+            job_arrival_datetime = datetime.strptime(arrival_datetime_str, DATETIME_FORMATS["DATETIME_FORMAT"])
     except ValueError:
         teardown_db()
         return jsonify({'error': 'Invalid date or time format'}), 400
@@ -155,7 +155,7 @@ def update_job(job_id):
         job = job_service.get_job_details(job_id)
         
         # Render job details for the modal
-        job_details_html = render_template('job_details_modal_content.html', job=job, date_format_flatpickr=DATE_FORMAT_FLATPICKR, time_format_flatpickr=TIME_FORMAT_FLATPICKR, datetime_format_flatpickr=DATETIME_FORMAT_FLATPICKR)
+        job_details_html = render_template('job_details_modal_content.html', job=job, DATETIME_FORMATS=DATETIME_FORMATS)
         
         # Re-fetch all jobs to ensure the list is up-to-date
         all_jobs = job_service.get_all_jobs() 
@@ -275,7 +275,7 @@ def get_job_update_form(job_id):
     properties = property_service.get_all_properties()
     teardown_db()
     if job:
-        return render_template('job_update_form.html', job=job, users=users, job_users=job_users, properties=properties, teams=teams, job_teams=job_teams, date_format_flatpickr=DATE_FORMAT_FLATPICKR, time_format_flatpickr=TIME_FORMAT_FLATPICKR, datetime_format_flatpickr=DATETIME_FORMAT_FLATPICKR)
+        return render_template('job_update_form.html', job=job, users=users, job_users=job_users, properties=properties, teams=teams, job_teams=job_teams, DATETIME_FORMATS=DATETIME_FORMATS)
     return jsonify({'error': 'Job not found'}), 404
 
 def create_job():
@@ -302,13 +302,13 @@ def create_job():
         return jsonify({'error': 'Missing required fields'}), 400
 
     try:
-        job_date = datetime.strptime(date_str, DATE_FORMAT).date()
-        job_time = datetime.strptime(time_str, TIME_FORMAT).time()
-        job_end_time = datetime.strptime(end_time_str, TIME_FORMAT).time()
+        job_date = datetime.strptime(date_str, DATETIME_FORMATS["DATE_FORMAT"]).date()
+        job_time = datetime.strptime(time_str, DATETIME_FORMATS["TIME_FORMAT"]).time()
+        job_end_time = datetime.strptime(end_time_str, DATETIME_FORMATS["TIME_FORMAT"]).time()
         
         job_arrival_datetime = None
         if arrival_datetime_str:
-            job_arrival_datetime = datetime.strptime(arrival_datetime_str, DATETIME_FORMAT)
+            job_arrival_datetime = datetime.strptime(arrival_datetime_str, DATETIME_FORMATS["DATETIME_FORMAT"])
     except ValueError:
         return jsonify({'error': 'Invalid date or time format'}), 400
 
@@ -335,7 +335,7 @@ def create_job():
     teardown_db()
 
     if new_job:
-        if job_date.strftime(DATE_FORMAT) != selected_date:
+        if job_date.strftime(DATETIME_FORMATS["DATE_FORMAT"]) != selected_date:
             # If the new job's date doesn't match the currently selected date, don't update the list
             return Response(status=204)  # No Content
         return render_template('job_list_fragment.html', jobs=jobs)
