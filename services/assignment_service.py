@@ -8,6 +8,7 @@ class AssignmentService:
     def __init__(self, db_session):
         self.db_session = db_session
     
+    # TODO: move to job service
     def get_assignments_for_user_on_date(self, user_id, team_id, date: date):
         user = self.db_session.query(User).filter(User.id == user_id).first()
         if not user:

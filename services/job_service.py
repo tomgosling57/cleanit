@@ -10,24 +10,7 @@ class JobService:
         self.db_session = db_session
         self.property_service = PropertyService(db_session)
         self.assignment_service = AssignmentService(db_session)
-
-    def get_cleaner_jobs_for_today(self, cleaner_id):
-        today = date.today()
-        jobs = self.db_session.query(Job).join(Property).filter(
-            and_(
-                Job.assigned_cleaners.like(f"%{cleaner_id}%"),
-                Job.date == today
-            )
-        ).all()
-        for job in jobs:
-            if job.property:
-                print(f"  Property Address: {job.property.address}")
-                print(f"  Property ID: {job.property_id}")
-            else:
-                print("  No property associated.")
-
-        return jobs
-
+        
     def update_job(self, job_id, job_data):
         job = self.db_session.query(Job).filter_by(id=job_id).first()
         if not job:
@@ -37,7 +20,6 @@ class JobService:
         job.arrival_datetime = job_data.get('arrival_datetime', job.arrival_datetime)
         job.end_time = job_data.get('end_time', job.end_time)
         job.description = job_data.get('description', job.description)
-        job.assigned_cleaners = job_data.get('assigned_cleaners', job.assigned_cleaners)
         property_address = job_data.get('property_address')
         if property_address:
             property_obj = self.property_service.get_property_by_address(property_address)

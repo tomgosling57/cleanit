@@ -1,9 +1,12 @@
 <form id="edit-job-form"
 hx-put="{{ url_for('job.update_job', job_id=job.id) }}"
-hx-target="#job-details-modal-content, #job-list"
-hx-swap="multi: #job-details-modal-content:innerHTML, #job-list:innerHTML"
 hx-include="#edit-job-form"
-hx-on--after-request="if(!event.detail.successful) { document.getElementById('form-errors-container-update').innerHTML = event.detail.xhr.response; } else { document.getElementById('job-details-modal').style.display='none'; }"
+hx-on--after-request="if(!event.detail.successful) { 
+    document.getElementById('form-errors-container-update').innerHTML = event.detail.xhr.response; 
+} else { 
+    document.getElementById('job-details-modal-content').style.display='none'; }"
+
+
 >
     <h2>Edit Job</h2>
     <div id="form-errors-container-update"></div>
@@ -26,7 +29,7 @@ hx-on--after-request="if(!event.detail.successful) { document.getElementById('fo
                     </div>
                     <div class="form-field">
                         <label for="date">Date</label>
-                        <input type="date-local" id="date" name="date" class="flatpickr" data-date-format="{{ DATETIME_FORMATS['DATE_FORMAT_FLATPICKR'] }}" data-no-calendar="false" placeholder="Select Date">
+                        <input type="date-local" id="date" name="date" value="{{ job.date.strftime(DATETIME_FORMATS['DATE_FORMAT']) }}" placeholder="Select Date">
                     </div>
                 </div>
             </div>
@@ -63,7 +66,7 @@ hx-on--after-request="if(!event.detail.successful) { document.getElementById('fo
                 </div>
                 <div class="form-field">
                     <label for="arrival_datetime">Tenant Arrival Date & Time</label>
-                    <input type="datetime-local" id="arrival_datetime" name="arrival_datetime" class="flatpickr" data-date-format="{{ DATETIME_FORMATS['DATETIME_FORMAT_FLATPICKR'] }}" data-enable-time="true" data-no-calendar="false" placeholder="Select Date and Time">
+                    <input type="datetime-local" id="arrival_datetime" name="arrival_datetime" value="{{ job.arrival_datetime.isoformat() if job.arrival_datetime else None}}" placeholder="Select Date and Time">
                 </div>
             </div>
             {% if job.property.access_notes %}

@@ -1,13 +1,13 @@
-from flask import render_template, render_template_string, redirect, url_for, flash, request, jsonify, Response
+from flask import render_template, render_template_string, redirect, url_for, flash, request, jsonify, Response, session
 from flask_login import current_user
-from config import DATETIME_FORMATS
+from config import DATETIME_FORMATS, BACK_TO_BACK_THRESHOLD
 from services.job_service import JobService
 from services.team_service import TeamService
 from services.user_service import UserService
 from services.property_service import PropertyService
 from services.assignment_service import AssignmentService
 from database import get_db, teardown_db
-from datetime import date, datetime, time
+from datetime import date, datetime
 from collections import defaultdict
 
 def update_job_status(job_id):
@@ -66,7 +66,7 @@ def get_job_creation_form():
     teams = team_service.get_all_teams()
     properties = property_service.get_all_properties()
     teardown_db()
-    return render_template('job_creation_modal_content.html', users=users, teams=teams, properties=properties, DATETIME_FORMATS=DATETIME_FORMATS)
+    return render_template('job_creation_modal_content.html', users=users, teams=teams, properties=properties, DATETIME_FORMATS=DATETIME_FORMATS, today=datetime.today())
 
 def timetable(date: str = None):    
     db = get_db()
@@ -74,6 +74,7 @@ def timetable(date: str = None):
     assignment_service = AssignmentService(db)
 
     date_obj = datetime.today().date()
+    session['selected_date'] = date_obj
 
     # Use given date if provided
     if date:
@@ -106,7 +107,7 @@ def update_job(job_id):
         teardown_db()
         return jsonify({'error': 'Job not found'}), 404
 
-    property_address = request.form.get('property_address')
+    property_id = request.form.get('property_id')
     date_str = request.form.get('date')
     time_str = request.form.get('time')
     arrival_datetime_str = request.form.get('arrival_datetime')
@@ -117,7 +118,7 @@ def update_job(job_id):
     notes = request.form.get('notes')
 
     errors = {}
-    if not property_address:
+    if not property_id:
         errors['property_address'] = 'Property address is required.'
     if not date_str:
         errors['date'] = 'Date is required.'
@@ -131,21 +132,18 @@ def update_job(job_id):
         return render_template_string('{% include "_form_errors.html" %}', errors=errors), 400
 
     try:
+
         job_date = datetime.strptime(date_str, DATETIME_FORMATS["DATE_FORMAT"]).date()
         job_time = datetime.strptime(time_str, DATETIME_FORMATS["TIME_FORMAT"]).time()
         job_end_time = datetime.strptime(end_time_str, DATETIME_FORMATS["TIME_FORMAT"]).time()
-        
         job_arrival_datetime = None
+
         if arrival_datetime_str:
-            job_arrival_datetime = datetime.strptime(arrival_datetime_str, DATETIME_FORMATS["DATETIME_FORMAT"])
+            job_arrival_datetime = datetime.fromisoformat(arrival_datetime_str)
     except ValueError:
         teardown_db()
         errors['date_time_format'] = 'Invalid date or time format.'
         return render_template_string('{% include "_form_errors.html" %}', errors=errors), 400
-
-    property_obj = job_service.get_property_by_address(property_address)
-    if not property_obj:
-        property_obj = job_service.create_property(property_address)
 
     updated_job_data = {
         'date': job_date,
@@ -154,30 +152,31 @@ def update_job(job_id):
         'end_time': job_end_time,
         'description': notes,
         'job_type': job_type,
-        'property_id': property_obj.id
+        'property_id': property_id
     }
     updated_job = job_service.update_job(job_id, updated_job_data)
     assignment_service = AssignmentService(db)
     assignment_service.update_assignments(updated_job.id, team_ids=assigned_teams, user_ids=assigned_cleaners)
-    teardown_db()
 
     if updated_job:
         # Fetch the updated job details for the modal
         job = job_service.get_job_details(job_id)
+        back_to_back_job_ids = job_service.get_back_to_back_jobs_for_date(job.date, threshold_minutes=BACK_TO_BACK_THRESHOLD)
         
         # Render job details for the modal
         job_details_html = render_template('job_details_modal_content.html', job=job, DATETIME_FORMATS=DATETIME_FORMATS)
         
         # Re-fetch all jobs to ensure the list is up-to-date
-        all_jobs = job_service.get_all_jobs() 
-        job_list_html = render_template('job_list_fragment.html', jobs=all_jobs)
+        assigned_jobs = assignment_service.get_assignments_for_user_on_date(current_user.id, current_user.team_id, session['selected_date'])
+        print(f"all jobs: {assigned_jobs}")
+        job_list_html = render_template('job_list_fragment.html', jobs=assigned_jobs, DATETIME_FORMATS=DATETIME_FORMATS, back_to_back_job_ids=back_to_back_job_ids)
         
         # Combine them with OOB swap attributes
         response_html = f'<div hx-swap-oob="innerHTML:#job-details-modal-content">{job_details_html}</div>' \
                         f'<div id="job-list" hx-swap-oob="outerHTML:#job-list">{job_list_html}</div>'
-        
+        teardown_db()        
         return response_html
-
+    teardown_db()
     return jsonify({'error': 'Failed to update job'}), 500
 
 def get_job_assignments_categorized(job_date_str=None):
@@ -298,7 +297,7 @@ def create_job():
     job_service = JobService(db)
     assignment_service = AssignmentService(db)    
 
-    property_address = request.form.get('property_address')
+    property_id = request.form.get('property_id')
     date_str = request.form.get('date')
     time_str = request.form.get('time')
     arrival_datetime_str = request.form.get('arrival_datetime')
@@ -310,7 +309,7 @@ def create_job():
     selected_date = request.form.get('selected_date')
 
     errors = {}
-    if not property_address:
+    if not property_id:
         errors['property_address'] = 'Property address is required.'
     if not date_str:
         errors['date'] = 'Date is required.'
@@ -336,10 +335,6 @@ def create_job():
         errors['date_time_format'] = 'Invalid date or time format.'
         return render_template_string('{% include "_form_errors.html" %}', errors=errors), 400
 
-    property_obj = job_service.get_property_by_address(property_address)
-    if not property_obj:
-        property_obj = job_service.create_property(property_address)
-
     new_job_data = {
         'is_complete': False,
         'date': job_date,
@@ -348,7 +343,7 @@ def create_job():
         'end_time': job_end_time,
         'description': notes,
         'job_type': job_type,
-        'property_id': property_obj.id
+        'property_id': property_id
     }
     new_job = job_service.create_job(new_job_data)
     assignment_service = AssignmentService(db)
