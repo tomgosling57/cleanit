@@ -216,7 +216,7 @@ div.job-details-group div.form-group {
 .status-actions {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: baseline;
     padding: 12px 16px;
     background-color: var(--background-color);
     border-radius: 8px;
@@ -505,6 +505,7 @@ div.job-details-group div.form-group {
     display: flex;        
     flex-direction: row;
     margin: 10px;
+    gap: 10px;
     justify-content: space-between;
     
     /* regulates the size of the arrival badge */
