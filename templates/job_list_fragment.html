@@ -1,6 +1,6 @@
 {% if jobs %}
     {% for job in jobs %}
-        {% include 'job_card.html' %}
+        {% include 'job_card.html' with context %}
     {% endfor %}
 {% else %}
     <p>No jobs assigned for today. Enjoy your day!</p>

@@ -40,14 +40,19 @@ def get_job_details(job_id):
     db = get_db()
     job_service = JobService(db)
     job = job_service.get_job_details(job_id)
+    
+    if not job:
+        teardown_db()
+        return jsonify({'error': 'Job not found'}), 404
+
+    back_to_back_job_ids = job_service.get_back_to_back_jobs_for_date(job.date, threshold_minutes=15)
+    
     assignment_service = AssignmentService(db)
     cleaners = assignment_service.get_users_for_job(job_id)
     teams = assignment_service.get_teams_for_job(job_id)
     teardown_db()
 
-    if job:
-        return render_template('job_details_modal_content.html', job=job, job_cleaners=cleaners, job_teams=teams)
-    return jsonify({'error': 'Job not found'}), 404
+    return render_template('job_details_modal_content.html', job=job, job_cleaners=cleaners, job_teams=teams, back_to_back_job_ids=back_to_back_job_ids)
 
 def get_job_creation_form():
     if current_user.role != 'owner':
@@ -65,11 +70,12 @@ def get_job_creation_form():
 
 def timetable(date: str = None):    
     db = get_db()
+    job_service = JobService(db) # Instantiate JobService
     assignment_service = AssignmentService(db)
 
     date_obj = datetime.today().date()
 
-    # Use given date if provided    
+    # Use given date if provided
     if date:
         try:
             date_obj = datetime.strptime(date, DATE_FORMAT).date()
@@ -77,15 +83,17 @@ def timetable(date: str = None):
             date_obj = None
 
     jobs = assignment_service.get_assignments_for_user_on_date(current_user.id, current_user.team_id, date_obj)
-    team_service = TeamService(db)    
+    back_to_back_job_ids = job_service.get_back_to_back_jobs_for_date(date_obj, threshold_minutes=15) # Get back-to-back jobs
+    team_service = TeamService(db)
     team = team_service.get_team(current_user.team_id)
     team_leader_id = team.team_leader_id if team else None
     teardown_db()
 
     selected_date = date_obj.strftime(DATE_FORMAT)
     current_user.selected_date = selected_date
-    return render_template('timetable.html', jobs=jobs, team_leader_id=team_leader_id, user_role=current_user.role, 
-                           user_id=current_user.id, selected_date=selected_date, date_format=DATE_FORMAT_FLATPICKR)
+    return render_template('timetable.html', jobs=jobs, team_leader_id=team_leader_id, user_role=current_user.role,
+                           user_id=current_user.id, selected_date=selected_date, date_format=DATE_FORMAT_FLATPICKR,
+                           back_to_back_job_ids=back_to_back_job_ids) # Pass back-to-back job IDs to template
 
 def update_job(job_id):
     if current_user.role != 'owner':

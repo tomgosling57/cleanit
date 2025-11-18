@@ -463,3 +463,8 @@ div.job-details-group div.form-group {
         font-size: 0.8rem;
     }
 }
+
+.job-card.back-to-back-job {
+    border: 2px solid red;
+    box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+}

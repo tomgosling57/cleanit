@@ -212,12 +212,49 @@ def create_initial_property_and_job(Session):
         session.commit()
 
         # Assign the cleaner to the job
-        assignment = Assignment(job_id=job1.id, user_id=cleaner.id)
-        job_team = Assignment(job_id=job1.id, team_id=1)
-        session.add(assignment)
-        session.add(job_team)   
+        assignment1 = Assignment(job_id=job1.id, user_id=cleaner.id)
+        job_team1 = Assignment(job_id=job1.id, team_id=1)
+        session.add(assignment1)
+        session.add(job_team1)
         session.commit()
         print("Initial job created and assigned to cleaner.")
+
+        # Create two back-to-back jobs for today
+        job2 = Job(
+            date=today,
+            time=time(12, 0),
+            end_time=time(14, 0),
+            description='Back-to-back job 1: Kitchen deep clean.',
+            is_complete=False,
+            property=property1
+        )
+        session.add(job2)
+        session.commit()
+
+        job3 = Job(
+            date=today,
+            time=time(14, 0),
+            end_time=time(16, 0),
+            description='Back-to-back job 2: Bathroom deep clean.',
+            is_complete=False,
+            property=property1
+        )
+        session.add(job3)
+        session.commit()
+
+        # Assign the cleaner to the back-to-back jobs
+        assignment2 = Assignment(job_id=job2.id, user_id=cleaner.id)
+        job_team2 = Assignment(job_id=job2.id, team_id=1)
+        session.add(assignment2)
+        session.add(job_team2)
+        session.commit()
+
+        assignment3 = Assignment(job_id=job3.id, user_id=cleaner.id)
+        job_team3 = Assignment(job_id=job3.id, team_id=1)
+        session.add(assignment3)
+        session.add(job_team3)
+        session.commit()
+        print("Two back-to-back jobs created and assigned to cleaner.")
     session.close()
 
 def create_initial_team(Session):
