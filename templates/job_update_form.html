@@ -23,8 +23,12 @@ hx-include="#edit-job-form"
                         <input type="time" id="end_time" name="end_time" value="{{ job.end_time.strftime('%H:%M') }}" required pattern="^([01]\d|2[0-3]):[0-5]\d$" title="Please enter end time in 24-hour format (HH:mm)">
                     </div>
                     <div class="form-field">
+                        <label for="arrival_date">Tenant Arrival Date</label>
+                        <input type="text" id="arrival_date" name="arrival_date" value="{{ job.arrival_date.strftime('%d-%m-%Y') if job.arrival_date else '' }}" class="flatpickr" data-date-format="{{ date_format_flatpickr }}" placeholder="Select Date">
+                    </div>
+                    <div class="form-field">
                         <label for="arrival_time">Tenant Arrival Time</label>
-                        <input type="time" id="arrival_time" name="arrival_time" value="{{ job.arrival_time.strftime('%H:%M') if job.arrival_time else '' }}" pattern="^([01]\d|2[0-3]):[0-5]\d$" title="Please enter tenant arrival time in 24-hour format (HH:mm)">
+                        <input type="text" id="arrival_time" name="arrival_time" value="{{ job.arrival_time_only.strftime('%H:%M') if job.arrival_time_only else '' }}" class="flatpickr" data-date-format="{{ time_format_flatpickr }}" data-enable-time="true" data-no-calendar="true" placeholder="Select Time">
                     </div>
                 </div>
             </div>

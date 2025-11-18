@@ -1,5 +1,5 @@
 import os
-from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, Date, Time, Boolean, UniqueConstraint, func
+from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, Date, Time, Boolean, UniqueConstraint, func, DateTime
 from sqlalchemy.orm import sessionmaker, declarative_base, relationship
 from sqlalchemy.ext.hybrid import hybrid_property, hybrid_method
 from werkzeug.security import generate_password_hash
@@ -76,7 +76,7 @@ class Job(Base):
     id = Column(Integer, primary_key=True)
     date = Column(Date, nullable=False)
     time = Column(Time, nullable=False)
-    arrival_time = Column(Time, nullable=True)
+    arrival_time = Column(DateTime, nullable=True)
     end_time = Column(Time, nullable=False)
     description = Column(String)
     is_complete = Column(Boolean, default=False)
@@ -88,8 +88,28 @@ class Job(Base):
 
     assignments = relationship("Assignment", back_populates="job")
  
+    @hybrid_property
+    def arrival_date(self):
+        if self.arrival_time:
+            return self.arrival_time.date()
+        return None
+
+    @arrival_date.expression
+    def arrival_date(cls):
+        return func.date(cls.arrival_time)
+
+    @hybrid_property
+    def arrival_time_only(self):
+        if self.arrival_time:
+            return self.arrival_time.time()
+        return None
+
+    @arrival_time_only.expression
+    def arrival_time_only(cls):
+        return func.time(cls.arrival_time)
+
     def __repr__(self):
-        return f"<Job(id={self.id}, date='{self.date}', time='{self.time}', arrival_time='{self.arrival_time}', end_time='{self.end_time}', is_complete='{self.is_complete}')>"
+        return f"<Job(id={self.id}, date='{self.date}', time='{self.time}', arrival_date='{self.arrival_date}', arrival_time_only='{self.arrival_time_only}', end_time='{self.end_time}', is_complete='{self.is_complete}')>"
 
     @hybrid_property
     def duration(self):
@@ -204,7 +224,7 @@ def create_initial_property_and_job(Session):
         job1 = Job(
             date=today,
             time=time(9, 0),
-            arrival_time=time(8, 45), # Added arrival time
+            arrival_time=datetime.combine(today, time(8, 45)), # Added arrival time
             end_time=time(11, 0), # Assuming a 2-hour job for initial data
             description='Full house clean, focus on kitchen and bathrooms.',
             is_complete=False,
@@ -225,7 +245,7 @@ def create_initial_property_and_job(Session):
         job2 = Job(
             date=today,
             time=time(12, 0),
-            arrival_time=time(11, 45), # Added arrival time
+            arrival_time=datetime.combine(today, time(11, 45)), # Added arrival time
             end_time=time(14, 0),
             description='Back-to-back job 1: Kitchen deep clean.',
             is_complete=False,
@@ -237,7 +257,7 @@ def create_initial_property_and_job(Session):
         job3 = Job(
             date=today,
             time=time(14, 0),
-            arrival_time=time(13, 45), # Added arrival time
+            arrival_time=datetime.combine(today, time(13, 45)), # Added arrival time
             end_time=time(16, 0),
             description='Back-to-back job 2: Bathroom deep clean.',
             is_complete=False,

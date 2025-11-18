@@ -41,7 +41,8 @@
             <div class="group-item">
                 <span class="item-icon">🕒</span>
                 <div class="item-content">
-                    <div class="primary-info">Tenant Arrival: {{ job.arrival_time.strftime('%H:%M') }}</div>
+                    <div class="primary-info">Tenant Arrival Date: {{ job.arrival_date.strftime('%d-%m-%Y') }}</div>
+                    <div class="secondary-info">Tenant Arrival Time: {{ job.arrival_time_only.strftime('%H:%M') }}</div>
                 </div>
             </div>
             {% endif %}

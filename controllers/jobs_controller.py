@@ -1,6 +1,6 @@
 from flask import render_template, render_template_string, redirect, url_for, flash, request, jsonify, Response
 from flask_login import current_user
-from config import DATE_FORMAT, DATE_FORMAT_FLATPICKR
+from config import DATE_FORMAT, DATE_FORMAT_FLATPICKR, DATETIME_FORMAT, DATETIME_FORMAT_FLATPICKR, TIME_FORMAT, TIME_FORMAT_FLATPICKR
 from services.job_service import JobService
 from services.team_service import TeamService
 from services.user_service import UserService
@@ -52,7 +52,7 @@ def get_job_details(job_id):
     teams = assignment_service.get_teams_for_job(job_id)
     teardown_db()
 
-    return render_template('job_details_modal_content.html', job=job, job_cleaners=cleaners, job_teams=teams, back_to_back_job_ids=back_to_back_job_ids)
+    return render_template('job_details_modal_content.html', job=job, job_cleaners=cleaners, job_teams=teams, back_to_back_job_ids=back_to_back_job_ids, date_format_flatpickr=DATE_FORMAT_FLATPICKR, time_format_flatpickr=TIME_FORMAT_FLATPICKR)
 
 def get_job_creation_form():
     if current_user.role != 'owner':
@@ -66,7 +66,7 @@ def get_job_creation_form():
     teams = team_service.get_all_teams()
     properties = property_service.get_all_properties()
     teardown_db()
-    return render_template('job_creation_modal_content.html', users=users, teams=teams, properties=properties)
+    return render_template('job_creation_modal_content.html', users=users, teams=teams, properties=properties, date_format_flatpickr=DATE_FORMAT_FLATPICKR, time_format_flatpickr=TIME_FORMAT_FLATPICKR)
 
 def timetable(date: str = None):    
     db = get_db()
@@ -109,6 +109,7 @@ def update_job(job_id):
     property_address = request.form.get('property_address')
     date_str = request.form.get('date')
     time_str = request.form.get('time')
+    arrival_date_str = request.form.get('arrival_date')
     arrival_time_str = request.form.get('arrival_time')
     end_time_str = request.form.get('end_time')
     assigned_cleaners = request.form.getlist('assigned_cleaners')
@@ -124,7 +125,12 @@ def update_job(job_id):
         job_date = date.fromisoformat(date_str)
         job_time = time.fromisoformat(time_str)
         job_end_time = time.fromisoformat(end_time_str)
-        job_arrival_time = time.fromisoformat(arrival_time_str) if arrival_time_str else None
+        
+        job_arrival_time = None
+        if arrival_date_str and arrival_time_str:
+            job_arrival_date = datetime.strptime(arrival_date_str, DATE_FORMAT).date()
+            job_arrival_time_only = datetime.strptime(arrival_time_str, TIME_FORMAT).time()
+            job_arrival_time = datetime.combine(job_arrival_date, job_arrival_time_only)
     except ValueError:
         teardown_db()
         return jsonify({'error': 'Invalid date or time format'}), 400
@@ -152,7 +158,7 @@ def update_job(job_id):
         job = job_service.get_job_details(job_id)
         
         # Render job details for the modal
-        job_details_html = render_template('job_details_modal_content.html', job=job)
+        job_details_html = render_template('job_details_modal_content.html', job=job, date_format_flatpickr=DATE_FORMAT_FLATPICKR, time_format_flatpickr=TIME_FORMAT_FLATPICKR)
         
         # Re-fetch all jobs to ensure the list is up-to-date
         all_jobs = job_service.get_all_jobs() 
@@ -272,7 +278,7 @@ def get_job_update_form(job_id):
     properties = property_service.get_all_properties()
     teardown_db()
     if job:
-        return render_template('job_update_form.html', job=job, users=users, job_users=job_users, properties=properties, teams=teams, job_teams=job_teams)
+        return render_template('job_update_form.html', job=job, users=users, job_users=job_users, properties=properties, teams=teams, job_teams=job_teams, date_format_flatpickr=DATE_FORMAT_FLATPICKR, time_format_flatpickr=TIME_FORMAT_FLATPICKR)
     return jsonify({'error': 'Job not found'}), 404
 
 def create_job():
@@ -287,6 +293,7 @@ def create_job():
     property_address = request.form.get('property_address')
     date_str = request.form.get('date')
     time_str = request.form.get('time')
+    arrival_date_str = request.form.get('arrival_date')
     arrival_time_str = request.form.get('arrival_time')
     end_time_str = request.form.get('end_time')
     assigned_teams = request.form.getlist('assigned_teams')
@@ -302,7 +309,12 @@ def create_job():
         job_date = date.fromisoformat(date_str)
         job_time = time.fromisoformat(time_str)
         job_end_time = time.fromisoformat(end_time_str)
-        job_arrival_time = time.fromisoformat(arrival_time_str) if arrival_time_str else None
+        
+        job_arrival_time = None
+        if arrival_date_str and arrival_time_str:
+            job_arrival_date = datetime.strptime(arrival_date_str, DATE_FORMAT).date()
+            job_arrival_time_only = datetime.strptime(arrival_time_str, TIME_FORMAT).time()
+            job_arrival_time = datetime.combine(job_arrival_date, job_arrival_time_only)
     except ValueError:
         return jsonify({'error': 'Invalid date or time format'}), 400
 

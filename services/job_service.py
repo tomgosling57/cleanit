@@ -34,7 +34,10 @@ class JobService:
             return None
         job.date = job_data.get('date', job.date)
         job.time = job_data.get('time', job.time)
-        job.arrival_time = job_data.get('arrival_time', job.arrival_time)
+        if 'arrival_time' in job_data and job_data['arrival_time']:
+            job.arrival_time = datetime.fromisoformat(job_data['arrival_time'])
+        else:
+            job.arrival_time = None
         job.end_time = job_data.get('end_time', job.end_time)
         job.description = job_data.get('description', job.description)
         job.assigned_cleaners = job_data.get('assigned_cleaners', job.assigned_cleaners)
@@ -94,7 +97,7 @@ class JobService:
         new_job = Job(
             date=job_data['date'],
             time=job_data['time'],
-            arrival_time=job_data.get('arrival_time'),
+            arrival_time=datetime.fromisoformat(job_data['arrival_time']) if job_data.get('arrival_time') else None,
             end_time=job_data['end_time'],
             description=job_data.get('description'),
             is_complete=False,
