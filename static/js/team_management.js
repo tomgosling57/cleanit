@@ -1,64 +1,5 @@
-function initDragula() {
-    // If there's an existing instance, clean it up
-    if (window.drake) {
-        try {
-            window.drake.destroy();
-        } catch (e) {
-            // Dragula’s destroy() isn’t always defined on all builds, so be safe
-            console.warn('Could not destroy existing Dragula instance:', e);
-        }
-    }
-
-    const teamContainers = Array.from(document.querySelectorAll('.members-list'));
-    if (teamContainers.length === 0) return;
-
-    const drake = dragula(teamContainers);
-
-    drake.on('drop', handleDrop);
-
-    window.drake = drake; // keep global ref
-    console.log('Dragula initialised for', teamContainers.length, 'containers');
-}
-
-function handleDrop(el, target, source) {
-    const memberId = el.dataset.memberId;
-    const newTeamId = target.closest('.team-card').id;
-    const newTeamIdNumber = newTeamId.split('-').pop();
-    const oldTeamId = source.closest('.team-card').id;
-    const oldTeamIdNumber = oldTeamId.split('-').pop();
-    const apiUrl = `/teams/team/${newTeamIdNumber}/member/add`;
-
-    fetch(apiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            user_id: memberId,
-            old_team_id: oldTeamIdNumber
-        })
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (!data.success) {
-            alert('Error: ' + (data.error || 'Unknown error'));
-            return;
-        }
-        const oldTeamElement = htmx.find('#' + oldTeamId);
-        const newTeamElement = htmx.find('#' + newTeamId);
-
-        if (oldTeamElement) {
-            oldTeamElement.outerHTML = data.oldTeam;
-            htmx.process(htmx.find('#' + oldTeamId)); // Re-process HTMX attributes
-        }
-        if (newTeamElement) {
-            newTeamElement.outerHTML = data.newTeam;
-            htmx.process(htmx.find('#' + newTeamId)); // Re-process HTMX attributes
-        }
-
-        // reinit for the updated DOM
-        initDragula();
-    })
-    .catch(console.error);
-}
+// team_management.js
+import { initTeamMemberDragula } from './drag_and_drop.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     const teamModal = document.getElementById('team-modal');
@@ -99,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         for (const categoryKey in memberCategories) {
-            if (categorizedUsers[categoryKey] && categorizedUsers[categoryKey].length > 0) {
+            if (categorizedUsers[categoryKey] && categorizedUsers[categoryY].length > 0) {
                 const optgroup = document.createElement('optgroup');
                 optgroup.label = memberCategories[categoryKey];
                 categorizedUsers[categoryKey].forEach(user => {
@@ -199,8 +140,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     document.body.addEventListener('teamListUpdated', () => {
-        console.log('Team list updated, re-initializing Dragula.');
-        initDragula();
+        console.log('Team list updated, re-initializing Dragula for team members.');
+        initTeamMemberDragula();
     });
     const closeButtons = document.querySelectorAll('.team-close-button');
         closeButtons.forEach(button => {
@@ -221,3 +162,5 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 });
+
+initTeamMemberDragula(); // Initial call to set up Dragula for team members

@@ -42,6 +42,39 @@ class AssignmentService:
         for user_id in user_ids:
             self.create_assignment(job_id=job_id, user_id=user_id)
 
+    def update_job_team_assignment(self, job_id, old_team_id, new_team_id):
+        """
+        Updates a job's team assignment by removing the old team and adding the new team.
+        Assumes a job can only be assigned to one team at a time for drag-and-drop reassignments.
+        If a job can have multiple teams, this logic needs to be adjusted.
+        """
+        # Remove the old team assignment for the job
+        if old_team_id:
+            self.db_session.query(Assignment).filter(
+                and_(
+                    Assignment.job_id == job_id,
+                    Assignment.team_id == old_team_id
+                )
+            ).delete()
+            self.db_session.commit()
+
+        # Add the new team assignment for the job
+        if new_team_id:
+            # Check if an assignment to the new team already exists to prevent duplicates
+            existing_assignment = self.db_session.query(Assignment).filter(
+                and_(
+                    Assignment.job_id == job_id,
+                    Assignment.team_id == new_team_id
+                )
+            ).first()
+            if not existing_assignment:
+                self.create_assignment(job_id=job_id, team_id=new_team_id)
+            else:
+                print(f"Job {job_id} is already assigned to team {new_team_id}. No new assignment created.")
+        
+        # If old_team_id is None and new_team_id is None, it means the job is being unassigned from a team
+        # or moved to an 'unassigned' state, which is not explicitly handled here but could be added.
+
     def get_users_for_job(self, job_id):
         assignments = self.db_session.query(Assignment).filter(
             and_(

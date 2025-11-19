@@ -311,3 +311,47 @@ def delete_job(job_id):
         
     teardown_db()
     return jsonify({'error': 'Job not found'}), 404
+
+def reassign_job_team(job_id):
+    if not current_user.is_authenticated or current_user.role != 'owner':
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+
+    data = request.get_json()
+    new_team_id = data.get('new_team_id')
+    old_team_id = data.get('old_team_id')
+
+    db = get_db()
+    assignment_service = AssignmentService(db)
+    job_service = JobService(db)
+    team_service = TeamService(db)
+
+    try:
+        assignment_service.update_job_team_assignment(job_id, old_team_id, new_team_id)
+        
+        # Re-render the affected team columns
+        selected_date_for_fetch = JobHelper.get_selected_date_from_session()
+        all_teams = team_service.get_all_teams()
+        jobs_by_team = assignment_service.get_jobs_grouped_by_team_for_date(selected_date_for_fetch)
+        team_back_to_back_job_ids = {}
+        for team_obj in all_teams:
+            team_back_to_back_job_ids[team_obj.id] = job_service.get_back_to_back_jobs_for_team_on_date(
+                team_obj.id, selected_date_for_fetch, threshold_minutes=BACK_TO_BACK_THRESHOLD
+            )
+
+        # Render the entire team timetable view to ensure all columns are updated correctly
+        # This will trigger the jobAssignmentsUpdated event in the frontend
+        response_html = render_template_string(
+            '{% include "team_timetable_fragment.html" %}',
+            all_teams=all_teams,
+            jobs_by_team=jobs_by_team,
+            team_back_to_back_job_ids=team_back_to_back_job_ids,
+            DATETIME_FORMATS=DATETIME_FORMATS,
+            current_user=current_user # Pass current_user for job_card.html includes
+        )
+        teardown_db()
+        return jsonify({'success': True, 'html': response_html})
+
+    except Exception as e:
+        teardown_db()
+        print(f"Error reassigning job team: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500

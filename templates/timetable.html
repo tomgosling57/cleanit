@@ -28,22 +28,8 @@
         </div>
 
         {% if current_user.role == 'owner' %}
-        <div class="team-timetable-view" id="team-timetable-view" style="display:none;">
-            <div class="team-columns-container">
-                {% for team in all_teams %}
-                    <div class="team-column">
-                        <h3 class="team-column-header">{{ team.name }}</h3>
-                        {% if jobs_by_team[team] %}
-                            {% for job in jobs_by_team[team] %}
-                                {% set back_to_back_job_ids = team_back_to_back_job_ids[team.id] %}
-                                {% include 'job_card.html' with context %}
-                            {% endfor %}
-                        {% else %}
-                            <p class="no-jobs-message">No jobs for this team.</p>
-                        {% endif %}
-                    </div>
-                {% endfor %}
-            </div>
+        <div class="team-timetable-view" id="team-timetable-view" style="display:none;" hx-swap-oob="outerHTML:#team-timetable-view">
+            {% include 'team_timetable_fragment.html' %}
         </div>
         {% endif %}
     </div>
@@ -97,7 +83,9 @@
             }
         });
     </script>
-    <script>
+    <script type="module">
+        import { initJobCardDragula } from "{{ url_for('static', filename='js/drag_and_drop.js') }}";
+
         function toggleTeamView() {
             const jobListView = document.getElementById('job-list');
             const teamTimetableView = document.getElementById('team-timetable-view');
@@ -107,11 +95,25 @@
                 jobListView.style.display = 'none';
                 teamTimetableView.style.display = 'flex'; // Use flex for columns
                 toggleButton.textContent = 'Default View';
+                initJobCardDragula(); // Initialize Dragula for job cards when team view is toggled
             } else {
                 jobListView.style.display = 'block';
                 teamTimetableView.style.display = 'none';
                 toggleButton.textContent = 'Team View';
             }
+        }
+
+        document.body.addEventListener('jobAssignmentsUpdated', () => {
+            console.log('Job assignments updated, re-initializing Dragula for job cards.');
+            initJobCardDragula();
+        });
+
+        // Expose toggleTeamView to the global scope for the onclick attribute in HTML
+        window.toggleTeamView = toggleTeamView;
+
+        // Initial call to set up Dragula for job cards if team view is already active on load
+        if (document.getElementById('team-timetable-view').style.display !== 'none') {
+            initJobCardDragula();
         }
     </script>
 {% endblock %}
