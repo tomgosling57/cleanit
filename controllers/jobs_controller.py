@@ -136,9 +136,9 @@ def update_job(job_id):
 
     if updated_job:
         selected_date_for_fetch = JobHelper.get_selected_date_from_session()
-        job_details_html = JobHelper.render_job_details_fragment(db, job_id, DATETIME_FORMATS)
+        job_details_html = JobHelper.render_job_details_fragment(db, job_id)
         job_list_html = JobHelper.render_job_list_fragment(
-            db, current_user, DATETIME_FORMATS, BACK_TO_BACK_THRESHOLD, selected_date_for_fetch
+            db, current_user,  selected_date_for_fetch
         )
         
         response_html = f'<div hx-swap-oob="innerHTML:#job-details-modal-content">{job_details_html}</div>' \
@@ -283,7 +283,7 @@ def create_job():
     # Re-fetch all jobs and render the list fragment
     selected_date_for_fetch = JobHelper.get_selected_date_from_session()
     _, job_list_html = JobHelper.render_job_updates(
-        db, new_job.id, current_user, DATETIME_FORMATS, BACK_TO_BACK_THRESHOLD, selected_date_for_fetch
+        db, new_job.id, current_user, selected_date_for_fetch
     )
 
     teardown_db()
@@ -304,7 +304,7 @@ def delete_job(job_id):
     if success:
         selected_date_for_fetch = JobHelper.get_selected_date_from_session()
         job_list_html = JobHelper.render_job_list_fragment(
-            db, current_user, DATETIME_FORMATS, BACK_TO_BACK_THRESHOLD, selected_date_for_fetch
+            db, current_user, selected_date_for_fetch
         )
         teardown_db()
         return job_list_html
@@ -330,24 +330,7 @@ def reassign_job_team(job_id):
         
         # Re-render the affected team columns
         selected_date_for_fetch = JobHelper.get_selected_date_from_session()
-        all_teams = team_service.get_all_teams()
-        jobs_by_team = assignment_service.get_jobs_grouped_by_team_for_date(selected_date_for_fetch)
-        team_back_to_back_job_ids = {}
-        for team_obj in all_teams:
-            team_back_to_back_job_ids[team_obj.id] = job_service.get_back_to_back_jobs_for_team_on_date(
-                team_obj.id, selected_date_for_fetch, threshold_minutes=BACK_TO_BACK_THRESHOLD
-            )
-
-        # Render the entire team timetable view to ensure all columns are updated correctly
-        # This will trigger the jobAssignmentsUpdated event in the frontend
-        response_html = render_template_string(
-            '{% include "team_timetable_fragment.html" %}',
-            all_teams=all_teams,
-            jobs_by_team=jobs_by_team,
-            team_back_to_back_job_ids=team_back_to_back_job_ids,
-            DATETIME_FORMATS=DATETIME_FORMATS,
-            current_user=current_user # Pass current_user for job_card.html includes
-        )
+        response_html = JobHelper.render_teams_timetable_fragment(db, current_user, selected_date_for_fetch)
         teardown_db()
         return jsonify({'success': True, 'html': response_html})
 
@@ -355,3 +338,4 @@ def reassign_job_team(job_id):
         teardown_db()
         print(f"Error reassigning job team: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
+

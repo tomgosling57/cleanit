@@ -29,6 +29,10 @@ class AssignmentService:
         assignments = self.db_session.query(Assignment).filter(Assignment.job_id == job_id).all()
         return assignments
 
+    def get_assignments_for_jobs(self, job_ids):
+        assignments = self.db_session.query(Assignment).filter(Assignment.job_id.in_(job_ids)).all()
+        return assignments
+    
     def update_assignments(self, job_id, team_ids=[], user_ids=[]):
         # First, delete existing assignments for the job
         self.db_session.query(Assignment).filter(Assignment.job_id == job_id).delete()

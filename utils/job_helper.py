@@ -2,7 +2,10 @@ from flask import request, render_template_string, session
 from datetime import datetime, date
 from config import DATETIME_FORMATS, BACK_TO_BACK_THRESHOLD
 from services.job_service import JobService
+from services.assignment_service import AssignmentService
 from flask_login import current_user
+
+from services.team_service import TeamService
 
 class JobHelper:
     @staticmethod
@@ -139,7 +142,7 @@ class JobHelper:
         return datetime.today().date() # Fallback to today if not a date object
 
     @staticmethod
-    def render_job_details_fragment(db, job_id, DATETIME_FORMATS):
+    def render_job_details_fragment(db, job_id):
         """
         Fetches job details and renders the job details modal fragment.
         Returns the HTML for the job details modal.
@@ -149,7 +152,7 @@ class JobHelper:
         return render_template_string('{% include "job_details_modal_content.html" %}', job=job, DATETIME_FORMATS=DATETIME_FORMATS)
 
     @staticmethod
-    def render_job_list_fragment(db, current_user, DATETIME_FORMATS, BACK_TO_BACK_THRESHOLD, selected_date_for_fetch):
+    def render_job_list_fragment(db, current_user, selected_date_for_fetch):
         """
         Fetches the list of jobs for the current user/team on a specific date and renders the job list fragment.
         Returns the HTML for the job list.
@@ -160,7 +163,36 @@ class JobHelper:
         return render_template_string('{% include "job_list_fragment.html" %}', jobs=assigned_jobs, DATETIME_FORMATS=DATETIME_FORMATS, back_to_back_job_ids=back_to_back_job_ids)
 
     @staticmethod
-    def render_job_updates(db, job_id, current_user, DATETIME_FORMATS, BACK_TO_BACK_THRESHOLD, selected_date_for_fetch):
+    def render_teams_timetable_fragment(db, current_user, selected_date_for_fetch):
+        """
+        Fetches the table of jobs categorized by their team assignments for a specific date.
+        Returns the HTML of the Teams Timetable.
+        """
+        assignment_service = AssignmentService(db)
+        job_service = JobService(db)
+        team_service = TeamService(db)
+        all_teams = team_service.get_all_teams()
+        jobs_by_team = assignment_service.get_jobs_grouped_by_team_for_date(selected_date_for_fetch)
+        team_back_to_back_job_ids = {}
+        for team_obj in all_teams:
+            team_back_to_back_job_ids[team_obj.id] = job_service.get_back_to_back_jobs_for_team_on_date(
+                team_obj.id, selected_date_for_fetch, threshold_minutes=BACK_TO_BACK_THRESHOLD
+            )
+        
+        # Render the entire team timetable view to ensure all columns are updated correctly
+        # This will trigger the jobAssignmentsUpdated event in the frontend
+        response_html = render_template_string(
+            '{% include "team_timetable_fragment.html" %}',
+            all_teams=all_teams,
+            jobs_by_team=jobs_by_team,
+            team_back_to_back_job_ids=team_back_to_back_job_ids,
+            DATETIME_FORMATS=DATETIME_FORMATS,
+            current_user=current_user # Pass current_user for job_card.html includes
+        )
+        return response_html
+
+    @staticmethod
+    def render_job_updates(db, job_id, current_user, selected_date_for_fetch):
         """
         Fetches updated job details and renders the job details and job list fragments.
         Returns a tuple: (job_details_html, job_list_html)

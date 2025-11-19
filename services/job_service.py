@@ -50,7 +50,7 @@ class JobService:
         Identifies jobs on a specific date that are back-to-back within a given threshold.
         Returns a list of job IDs that are considered back-to-back.
         """
-        jobs_on_date = self.db_session.query(Job).filter(Job.date == target_date).order_by(Job.time).all()
+        jobs_on_date = self.db_session.query(Job).filter(Job.date == target_date).all()
         
         back_to_back_job_ids = set()
 
@@ -89,7 +89,7 @@ class JobService:
                 Job.date == target_date,
                 Assignment.team_id == team_id
             )
-        ).order_by(Job.time).all()
+        ).all()
 
         back_to_back_job_ids = set()
 
@@ -122,7 +122,7 @@ class JobService:
         # Get all Assignment entries for this user
         assignments = self.db_session.query(Assignment).join(Job).filter(Job.date == date).filter(
             Assignment.user_id == user_id or Assignment.team_id == team_id
-        ).options(joinedload(Assignment.job, innerjoin=True)).all()
+        ).options(joinedload(Assignment.job, innerjoin=True)).order_by(Job.time).all()
 
         # Extract job IDs from Assignment entries
         job_ids = list(set(jc.job_id for jc in assignments))
