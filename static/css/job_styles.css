@@ -9,12 +9,13 @@
 .team-column {
     flex: 1 1 calc(33.33% - 20px); /* Default to 3 columns, adjust for gap */
     box-sizing: border-box; /* Include padding and border in the element's total width and height */
-    border: 1px solid #ddd; /* Match job card border */
     border-radius: 8px; /* Match job card border-radius */
     padding: 10px; /* Reduced padding */
-    background-color: #fff; /* Match job card background */
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06); /* Subtle shadow, similar to job cards */
+    background-color: var(--card-background); /* Match job card background */
     margin-bottom: 20px; /* Space between rows of team columns */
+    outline: none;
+    border: none;
+    box-shadow: none;
 }
 
 .team-column-header {
