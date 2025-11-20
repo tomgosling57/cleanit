@@ -36,6 +36,15 @@
         });
 
     </script>
+    <script>
+        // Navigation Functions
+        function getTimetable(date) {
+            window.location.assign("{{ url_for('job.timetable') }}?date=" + date);
+        }
+        function getTeamTimetable(date) {
+            window.location.assign("{{ url_for('job.timetable') }}?date=" + date);
+        }
+    </script>
     <header>
         <nav>
             <a href="{{ url_for('job.timetable') }}">My Jobs</a>

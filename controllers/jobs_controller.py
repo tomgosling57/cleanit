@@ -113,6 +113,38 @@ def timetable(date: str = None):
     teardown_db()
     return response
 
+def team_timetable(date: str = None):
+    db = get_db()
+    job_service = JobService(db)
+    team_service = TeamService(db)
+    assignment_service = AssignmentService(db)
+
+    date_obj = datetime.today().date()
+    session['selected_date'] = date_obj
+
+    if date:
+        try:
+            date_obj = datetime.strptime(date, DATETIME_FORMATS["DATE_FORMAT"]).date()
+        except ValueError:
+            date_obj = None
+
+    all_teams = team_service.get_all_teams()
+    jobs_by_team = assignment_service.get_jobs_grouped_by_team_for_date(date_obj)
+
+    team_back_to_back_job_ids = {}
+    for team_obj in all_teams:
+        team_back_to_back_job_ids[team_obj.id] = job_service.get_back_to_back_jobs_for_team_on_date(
+            team_obj.id, date_obj, threshold_minutes=BACK_TO_BACK_THRESHOLD
+        )
+
+    selected_date = date_obj.strftime(DATETIME_FORMATS["DATE_FORMAT"])
+    current_user.selected_date = selected_date
+    response = render_template('team_timetable.html', selected_date=selected_date, DATETIME_FORMATS=DATETIME_FORMATS,
+                               all_teams=all_teams, jobs_by_team=jobs_by_team,
+                               team_back_to_back_job_ids=team_back_to_back_job_ids)
+    teardown_db()
+    return response
+
 def update_job(job_id):
     if current_user.role != 'owner':
         return jsonify({'error': 'Unauthorized'}), 403

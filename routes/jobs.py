@@ -15,6 +15,12 @@ def timetable():
     date = request.args.get('date')
     return jobs_controller.timetable(date)
 
+@job_bp.route('/teams/', methods=['GET'])
+@login_required
+def team_timetable():
+    date = request.args.get('date')
+    return jobs_controller.team_timetable(date)
+
 @job_bp.route('/job/<int:job_id>/update_status', methods=['POST'])
 def update_job_status(job_id):
     return jobs_controller.update_job_status(job_id)
