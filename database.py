@@ -1,4 +1,5 @@
 import os
+import random
 from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, Date, Time, Boolean, UniqueConstraint, func, DateTime
 from sqlalchemy.orm import sessionmaker, declarative_base, relationship
 from sqlalchemy.ext.hybrid import hybrid_property, hybrid_method
@@ -282,137 +283,116 @@ def create_initial_property_and_job(Session):
 
     session.close()
 
+def _create_team(session, team_name, team_leader_id, members=None):
+    team = session.query(Team).filter_by(name=team_name).first()
+    if not team:
+        team = Team(name=team_name, team_leader_id=team_leader_id)
+        session.add(team)
+        session.commit()
+        print(f"{team_name} created with team leader ID {team_leader_id}.")
+        if members:
+            for member in members:
+                member.team_id = team.id
+            session.commit()
+            print(f"Members assigned to {team_name}.")
+    return team
+
 def create_initial_team(Session):
     session = Session()
     
-    # Get the owner, team_leader, and cleaner users
     owner = session.query(User).filter_by(role='owner').first()
     team_leader_user = session.query(User).filter_by(username='team_leader').first()
     cleaner = session.query(User).filter_by(username='cleaner').first()
 
     if owner and cleaner and team_leader_user:
-        # Create 'Initial Team' if it doesn't exist
-        if not session.query(Team).filter_by(name='Initial Team').first():
-            initial_team = Team(name='Initial Team', team_leader_id=owner.id)
-            session.add(initial_team)
-            session.commit()
-            owner.team_id = initial_team.id
-            cleaner.team_id = initial_team.id
-            session.commit()
-            print("Initial Team created with owner as team leader and cleaner as team member.")
-        
-        # Create 'Alpha Team' if it doesn't exist
-        if not session.query(Team).filter_by(name='Alpha Team').first():
-            alpha_team = Team(name='Alpha Team', team_leader_id=team_leader_user.id)
-            session.add(alpha_team)
-            session.commit()
-            team_leader_user.team_id = alpha_team.id
-            session.commit()
-            print("Alpha Team created with team_leader as team leader.")
+        initial_team = _create_team(session, 'Initial Team', owner.id, members=[owner, cleaner])
+        alpha_team = _create_team(session, 'Alpha Team', team_leader_user.id, members=[team_leader_user])
+        beta_team = _create_team(session, 'Beta Team', team_leader_user.id)
+        charlie_team = _create_team(session, 'Charlie Team', team_leader_user.id)
+        delta_team = _create_team(session, 'Delta Team', team_leader_user.id)
     else:
         print("Owner, team_leader, or cleaner user not found. Team creation skipped.")
     
     session.close()
 
+def _create_job(session, date, time, end_time, description, property_obj, team_obj=None, user_obj=None):
+    # Randomize arrival date: same day, day after, or two days after
+    days_offset = random.choice([0, 1, 2])
+    arrival_date_for_job = date + timedelta(days=days_offset)
+    
+    job = Job(
+        date=date,
+        time=time,
+        arrival_datetime=datetime.combine(arrival_date_for_job, time) - timedelta(minutes=15),
+        end_time=end_time,
+        description=description,
+        is_complete=False,
+        property=property_obj
+    )
+    session.add(job)
+    session.commit()
+    print(f"Job '{description}' created.")
+
+    if user_obj:
+        assignment = Assignment(job_id=job.id, user_id=user_obj.id)
+        session.add(assignment)
+        session.commit()
+        print(f"Job '{description}' assigned to user {user_obj.username}.")
+    
+    if team_obj:
+        assignment = Assignment(job_id=job.id, team_id=team_obj.id)
+        session.add(assignment)
+        session.commit()
+        print(f"Job '{description}' assigned to team {team_obj.name}.")
+    return job
+
 def create_initial_property_and_job(Session):
     session = Session()
     cleaner = session.query(User).filter_by(username='cleaner').first()
+    initial_team = session.query(Team).filter_by(name='Initial Team').first()
     alpha_team = session.query(Team).filter_by(name='Alpha Team').first()
+    beta_team = session.query(Team).filter_by(name='Beta Team').first()
+    charlie_team = session.query(Team).filter_by(name='Charlie Team').first()
+    delta_team = session.query(Team).filter_by(name='Delta Team').first()
 
-    if cleaner and not session.query(Property).first():
-        # Create a property
+    property1 = session.query(Property).filter_by(address='123 Main St, Anytown').first()
+    property_alpha = session.query(Property).filter_by(address='456 Oak Ave, Teamville').first()
+
+    if not property1:
         property1 = Property(address='123 Main St, Anytown', access_notes='Key under mat')
         session.add(property1)
         session.commit()
-        print("Initial property created.")
-
-        # Create a job for today
-        today = date.today()
-        job1 = Job(
-            date=today,
-            time=time(9, 0),
-            arrival_datetime=datetime.combine(today + timedelta(days=2), time(8, 45)), # Added arrival datetime
-            end_time=time(11, 0), # Assuming a 2-hour job for initial data
-            description='Full house clean, focus on kitchen and bathrooms.',
-            is_complete=False,
-            property=property1
-        )
-        session.add(job1)
-        session.commit()
-
-        # Assign the cleaner to the job
-        assignment1 = Assignment(job_id=job1.id, user_id=cleaner.id)
-        job_team1 = Assignment(job_id=job1.id, team_id=1)
-        session.add(assignment1)
-        session.add(job_team1)
-        session.commit()
-        print("Initial job created and assigned to cleaner.")
-
-        # Create two back-to-back jobs for today
-        job2 = Job(
-            date=today,
-            time=time(12, 0),
-            arrival_datetime=datetime.combine(today + timedelta(days=1), time(11, 45)), # Added arrival datetime
-            end_time=time(14, 0),
-            description='Back-to-back job 1: Kitchen deep clean.',
-            is_complete=False,
-            property=property1
-        )
-        session.add(job2)
-        session.commit()
-
-        job3 = Job(
-            date=today,
-            time=time(14, 0),
-            arrival_datetime=datetime.combine(today, time(13, 45)), # Added arrival datetime
-            end_time=time(16, 0),
-            description='Back-to-back job 2: Bathroom deep clean.',
-            is_complete=False,
-            property=property1
-        )
-        session.add(job3)
-        session.commit()
-
-        # Assign the cleaner to the back-to-back jobs
-        assignment2 = Assignment(job_id=job2.id, user_id=cleaner.id)
-        job_team2 = Assignment(job_id=job2.id, team_id=1)
-        session.add(assignment2)
-        session.add(job_team2)
-        session.commit()
-
-        assignment3 = Assignment(job_id=job3.id, user_id=cleaner.id)
-        job_team3 = Assignment(job_id=job3.id, team_id=1)
-        session.add(assignment3)
-        session.add(job_team3)
-        session.commit()
-        print("Two back-to-back jobs created and assigned to cleaner.")
-
-    if alpha_team and not session.query(Job).filter(Job.description == 'Alpha Team Job').first():
-        # Create a property for Alpha Team's job
+        print("Initial property '123 Main St, Anytown' created.")
+    
+    if not property_alpha:
         property_alpha = Property(address='456 Oak Ave, Teamville', access_notes='Code 1234')
         session.add(property_alpha)
         session.commit()
-        print("Property for Alpha Team created.")
+        print("Property '456 Oak Ave, Teamville' created for Alpha Team.")
 
-        # Create a job for Alpha Team
-        today = date.today()
-        job_alpha = Job(
-            date=today,
-            time=time(10, 0),
-            arrival_datetime=datetime.combine(today, time(9, 45)),
-            end_time=time(12, 0),
-            description='Alpha Team Job: Exterior window clean.',
-            is_complete=False,
-            property=property_alpha
-        )
-        session.add(job_alpha)
-        session.commit()
+    today = date.today()
 
-        # Assign Alpha Team to the job
-        assignment_alpha = Assignment(job_id=job_alpha.id, team_id=alpha_team.id)
-        session.add(assignment_alpha)
-        session.commit()
-        print("Alpha Team job created and assigned to Alpha Team.")
+    # Initial jobs
+    if cleaner and initial_team and not session.query(Job).filter(Job.description.like('Full house clean%')).first():
+        _create_job(session, today, time(9, 0), time(11, 0), 'Full house clean, focus on kitchen and bathrooms.', property1, team_obj=initial_team, user_obj=cleaner)
+        _create_job(session, today, time(12, 0), time(14, 0), 'Back-to-back job 1: Kitchen deep clean.', property1, team_obj=initial_team, user_obj=cleaner)
+        _create_job(session, today, time(14, 0), time(16, 0), 'Back-to-back job 2: Bathroom deep clean.', property1, team_obj=initial_team, user_obj=cleaner)
+
+    # Alpha Team job
+    if alpha_team and property_alpha and not session.query(Job).filter(Job.description.like('Alpha Team Job%')).first():
+        _create_job(session, today, time(10, 0), time(12, 0), 'Alpha Team Job: Exterior window clean.', property_alpha, team_obj=alpha_team)
+
+    # Beta Team job
+    if beta_team and property1 and not session.query(Job).filter(Job.description.like('Beta Team Job%')).first():
+        _create_job(session, today, time(13, 0), time(15, 0), 'Beta Team Job: Garden maintenance.', property1, team_obj=beta_team)
+
+    # Charlie Team job
+    if charlie_team and property_alpha and not session.query(Job).filter(Job.description.like('Charlie Team Job%')).first():
+        _create_job(session, today, time(9, 30), time(11, 30), 'Charlie Team Job: Roof and gutter clean.', property_alpha, team_obj=charlie_team)
+
+    # Delta Team job
+    if delta_team and property1 and not session.query(Job).filter(Job.description.like('Delta Team Job%')).first():
+        _create_job(session, today, time(15, 0), time(17, 0), 'Delta Team Job: Driveway pressure wash.', property1, team_obj=delta_team)
 
     session.close()
 
