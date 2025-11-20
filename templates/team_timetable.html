@@ -10,7 +10,7 @@
                 <input type="text" id="timetable-datepicker" placeholder="Select Date"/><i class="fa-solid fa-calendar"></i>
             </div>
             {% if current_user.role == 'owner' %}
-                <button class="button" onclick="window.location.href='{{ url_for("job.timetable") }}?date={{ selected_date }}'">
+                <button class="button" onclick="window.location.href='{{ url_for('job.timetable') }}?date={{ selected_date }}';">
                     Default View
                 </button>
                 <button class="button"
@@ -21,6 +21,15 @@
                     Create Job
                 </button>
             {% endif %}
+        </div>
+
+        <div class="scroll-buttons-container">
+            <button class="scroll-button" id="scroll-left-button" aria-label="Scroll Left">
+                <i class="fa-solid fa-chevron-left"></i>
+            </button>
+            <button class="scroll-button" id="scroll-right-button" aria-label="Scroll Right">
+                <i class="fa-solid fa-chevron-right"></i>
+            </button>
         </div>
 
         <div class="team-timetable-view" id="team-timetable-view" hx-swap-oob="outerHTML:#team-timetable-view">
@@ -79,6 +88,7 @@
     </script>
     <script type="module">
         import { initJobCardDragula } from "{{ url_for('static', filename='js/drag_and_drop.js') }}";
+        import { initTimetableScrolling } from "{{ url_for('static', filename='js/timetable_scrolling.js') }}";
 
         document.body.addEventListener('jobAssignmentsUpdated', () => {
             console.log('Job assignments updated, re-initializing Dragula for job cards.');
@@ -87,5 +97,16 @@
 
         // Initial call to set up Dragula for job cards if team view is already active on load
         initJobCardDragula();
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initTimetableScrolling();
+        });
+
+        htmx.on("htmx:afterSwap", (event) => {
+            if (event.detail.target.id === 'team-timetable-view') {
+                console.log('team-timetable-view swapped, re-initializing timetable scrolling.');
+                initTimetableScrolling();
+            }
+        });
     </script>
 {% endblock %}
