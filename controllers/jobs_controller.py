@@ -335,11 +335,17 @@ def delete_job(job_id):
     success = job_service.delete_job(job_id)
     if success:
         selected_date_for_fetch = JobHelper.get_selected_date_from_session()
-        job_list_html = JobHelper.render_job_list_fragment(
-            db, current_user, selected_date_for_fetch
-        )
+        view_type = request.form.get('view_type')
+
+        if view_type == 'team':
+            response_html = JobHelper.render_teams_timetable_fragment(db, current_user, selected_date_for_fetch)
+        else:
+            # Default to normal job list if view_type is not 'team' or not provided
+            response_html = JobHelper.render_job_list_fragment(
+                db, current_user, selected_date_for_fetch
+            )
         teardown_db()
-        return job_list_html
+        return response_html
         
     teardown_db()
     return jsonify({'error': 'Job not found'}), 404

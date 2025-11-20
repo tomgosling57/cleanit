@@ -2,8 +2,9 @@
 <div class="job-card {% if job.id in back_to_back_job_ids %}back-to-back-job{% endif %} {% if job.arrival_datetime and job.arrival_datetime.date() == job.date %}arrival-same-day{% elif job.arrival_datetime and (job.arrival_datetime.date() - job.date).days == 1 %}arrival-next-day{% endif %}" id="job-{{ job.id }}">
     <span class="job-close-button small-icon close-button" data-job-id="{{ job.id }}"
     hx-delete="/jobs/job/{{ job.id }}/delete"
-    hx-target="#job-list"
+    hx-target="{% if view_type == 'team' %}#team-timetable-view{% else %}#job-list{% endif %}"
     hx-swap="innerHTML"
+    hx-vals='{"view_type": "{{ view_type }}"}'
     hx-confirm="Are you sure you want to delete this job? This action cannot be undone."
     style="cursor: pointer">&times;</span>
     

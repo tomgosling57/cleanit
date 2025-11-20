@@ -6,6 +6,7 @@
             {% if jobs_by_team[team] %}
                 {% for job in jobs_by_team[team] %}
                     {% set back_to_back_job_ids = team_back_to_back_job_ids[team.id] %}
+                    {% set view_type = 'team' %}
                     {% include 'job_card.html' with context %}
                 {% endfor %}
             {% else %}

@@ -1,5 +1,6 @@
 {% if jobs %}
     {% for job in jobs %}
+        {% set view_type = 'normal' %}
         {% include 'job_card.html' with context %}
     {% endfor %}
 {% else %}
