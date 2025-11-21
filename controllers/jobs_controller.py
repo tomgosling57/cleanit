@@ -24,8 +24,6 @@ def update_job_status(job_id):
     if job:
         # Accessing job.property to eagerly load it before the session is torn down
         # This prevents DetachedInstanceError when rendering the template
-        # Accessing job.property to eagerly load it before the session is torn down
-        # This prevents DetachedInstanceError when rendering the template
         _ = job.property.address
         response = render_template_string('{% include "job_status_fragment.html" %} {% include "job_actions_fragment.html" %}', job=job, user=current_user, is_oob_swap=True)
         teardown_db()
@@ -34,7 +32,7 @@ def update_job_status(job_id):
     teardown_db()
     return jsonify({'error': 'Job not found'}), 404
 
-def get_job_details(job_id):
+def get_job_details(job_id, selected_date=None):
     if current_user.role not in ['cleaner', 'team_leader', 'owner']:
         return jsonify({'error': 'Unauthorized'}), 403
 
@@ -53,9 +51,9 @@ def get_job_details(job_id):
     teams = assignment_service.get_teams_for_job(job_id)
     teardown_db()
 
-    return render_template('job_details_modal.html', job=job, job_cleaners=cleaners, job_teams=teams, back_to_back_job_ids=back_to_back_job_ids, DATETIME_FORMATS=DATETIME_FORMATS)
+    return render_template('job_details_modal.html', job=job, job_cleaners=cleaners, job_teams=teams, back_to_back_job_ids=back_to_back_job_ids, DATETIME_FORMATS=DATETIME_FORMATS, selected_date=selected_date)
 
-def get_job_creation_form():
+def get_job_creation_form(selected_date=None):
     if current_user.role != 'owner':
         return jsonify({'error': 'Unauthorized'}), 403
 
@@ -67,11 +65,17 @@ def get_job_creation_form():
     teams = team_service.get_all_teams()
     properties = property_service.get_all_properties()
     
-    # Retrieve selected_date from session, default to today if not found
-    selected_date_from_session = session.get('selected_date', datetime.today().date())
+    # Prioritize selected_date from query parameter, then session, then default to today
+    if selected_date:
+        try:
+            selected_date_obj = datetime.strptime(selected_date, DATETIME_FORMATS["DATE_FORMAT"]).date()
+        except ValueError:
+            selected_date_obj = datetime.today().date()
+    else:
+        selected_date_obj = session.get('selected_date', datetime.today().date())
     
     teardown_db()
-    return render_template('job_creation_modal.html', users=users, teams=teams, properties=properties, DATETIME_FORMATS=DATETIME_FORMATS, today=datetime.today(), selected_date=selected_date_from_session)
+    return render_template('job_creation_modal.html', users=users, teams=teams, properties=properties, DATETIME_FORMATS=DATETIME_FORMATS, today=datetime.today(), selected_date=selected_date_obj)
 
 def timetable(date: str = None):    
     db = get_db()
@@ -268,7 +272,7 @@ def get_job_assignments_categorized(job_date_str=None):
     
     return jsonify(categorized_assignments)
 
-def get_job_update_form(job_id):
+def get_job_update_form(job_id, selected_date=None):
     if current_user.role != 'owner':
         return jsonify({'error': 'Unauthorized'}), 403
 
@@ -286,7 +290,7 @@ def get_job_update_form(job_id):
     properties = property_service.get_all_properties()
     teardown_db()
     if job:
-        return render_template('job_update_modal.html', job=job, users=users, job_users=job_users, properties=properties, teams=teams, job_teams=job_teams, DATETIME_FORMATS=DATETIME_FORMATS)
+        return render_template('job_update_modal.html', job=job, users=users, job_users=job_users, properties=properties, teams=teams, job_teams=job_teams, DATETIME_FORMATS=DATETIME_FORMATS, selected_date=selected_date)
     return jsonify({'error': 'Job not found'}), 404
 
 def create_job():

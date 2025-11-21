@@ -29,7 +29,7 @@ hx-on--after-request="if(!event.detail.successful) {
                     </div>
                     <div class="form-field">
                         <label for="date">Date</label>
-                        <input type="date-local" id="date" name="date" value="{{ job.date.strftime(DATETIME_FORMATS['DATE_FORMAT']) }}" placeholder="Select Date">
+                        <input type="date-local" id="date" name="date" value="{{ selected_date if selected_date else job.date.strftime(DATETIME_FORMATS['DATE_FORMAT']) }}" placeholder="Select Date">
                     </div>
                 </div>
             </div>

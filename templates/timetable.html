@@ -14,7 +14,7 @@
                     Team View
                 </button>
                 <button class="button"
-                        hx-get="{{ url_for('job.create_job') }}"
+                        hx-get="{{ url_for('job.create_job', selected_date=selected_date) }}"
                         hx-target="#job-modal-content"
                         hx-trigger="click"
                         hx-on--after-request="document.getElementById('job-modal').style.display='block'">
