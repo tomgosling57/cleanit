@@ -104,7 +104,7 @@
             {% endif %}
         </div>
         {% if current_user.role == 'owner' %}
-            <button hx-get="{{ url_for('job.update_job', job_id=job.id, selected_date=selected_date) }}"
+            <button hx-get="{{ url_for('job.update_job', job_id=job.id, view_type=view_type) }}"
                 hx-target="#job-modal-content"
                 hx-swap="innerHTML"
                 hx-trigger="click"

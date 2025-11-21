@@ -5,10 +5,11 @@ hx-on--after-request="if(!event.detail.successful) {
     document.getElementById('form-errors-container-update').innerHTML = event.detail.xhr.response; 
 } else { 
     document.getElementById('job-modal').style.display='none'; }"
-hx-target="#job-list"
+hx-target="{% if view_type == 'team' %}#team-timetable-view{% else %}#job-list{% endif %}"
 hx-swap="innerHTML"
 
 >
+    <input type="hidden" name="view_type" value="{{ view_type }}">
     <h2>Edit Job</h2>
     <div id="form-errors-container-update"></div>
     <div class="job-update-compact">
@@ -30,7 +31,7 @@ hx-swap="innerHTML"
                     </div>
                     <div class="form-field">
                         <label for="date">Date</label>
-                        <input type="date-local" id="date" name="date" value="{{ selected_date if selected_date else job.date.strftime(DATETIME_FORMATS['DATE_FORMAT']) }}" placeholder="Select Date">
+                        <input type="date-local" id="date" name="date" value="{{ job.date.strftime(DATETIME_FORMATS['DATE_FORMAT']) }}" placeholder="Select Date">
                     </div>
                 </div>
             </div>

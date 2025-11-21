@@ -15,7 +15,7 @@
             <p><strong>Property Address:</strong> {{ job.property.address }}</p>
         </div>
         <div class="job-status-actions">
-            {% include "job_actions_fragment.html" %}
+            {% include "job_actions_fragment.html" with context %}
             <div class="job-statuses">
                 {% include 'job_status_fragment.html' %}
                 {% if job.arrival_datetime and job.arrival_datetime.date() == job.date %}

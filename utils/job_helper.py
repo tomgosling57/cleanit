@@ -160,7 +160,7 @@ class JobHelper:
         job_service = JobService(db)
         assigned_jobs = job_service.get_jobs_for_user_on_date(current_user.id, current_user.team_id, selected_date_for_fetch)
         back_to_back_job_ids = job_service.get_back_to_back_jobs_for_date(selected_date_for_fetch, threshold_minutes=BACK_TO_BACK_THRESHOLD)
-        return render_template_string('{% include "job_list_fragment.html" %}', jobs=assigned_jobs, DATETIME_FORMATS=DATETIME_FORMATS, back_to_back_job_ids=back_to_back_job_ids)
+        return render_template_string('{% include "job_list_fragment.html" %}', jobs=assigned_jobs, DATETIME_FORMATS=DATETIME_FORMATS, back_to_back_job_ids=back_to_back_job_ids, view_type='normal', current_user=current_user)
 
     @staticmethod
     def render_teams_timetable_fragment(db, current_user, selected_date_for_fetch):
@@ -187,7 +187,11 @@ class JobHelper:
             jobs_by_team=jobs_by_team,
             team_back_to_back_job_ids=team_back_to_back_job_ids,
             DATETIME_FORMATS=DATETIME_FORMATS,
-            current_user=current_user # Pass current_user for job_card.html includes
+            current_user=current_user,
+            view_type='team',
+            user_role=current_user.role,
+            user_id=current_user.id,
+            team_leader_id=current_user.team_id # Assuming current_user.team_id is the team leader's ID for simplicity, or needs to be fetched
         )
         return response_html
 
