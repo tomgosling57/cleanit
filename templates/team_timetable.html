@@ -36,26 +36,8 @@
             {% include 'team_timetable_fragment.html' %}
         </div>
     </div>
-  
-    <!-- Job Details Modal -->
-    <div id="job-modal" class="modal" style="display:none;">
-        <div class="modal-content">
-            <span class="close-button" onclick="document.getElementById('job-modal').style.display='none'">&times;</span>
-            <div id="job-modal-content">
-                <!-- Job will be loaded here via HTMX -->
-            </div>
-        </div>
-    </div>
-
-    <!-- Job Creation Modal -->
-    <div id="job-modal" class="modal" style="display:none;">
-        <div class="modal-content">
-            <span class="close-button" onclick="document.getElementById('job-modal').style.display='none'">&times;</span>
-            <div id="job-modal-content">
-                <!-- Job creation form will be loaded here via HTMX -->
-            </div>
-        </div>
-    </div>
+    
+    {% include 'job_modal.html' %}
 
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/job_styles.css') }}">
