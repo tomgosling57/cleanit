@@ -1,0 +1,10 @@
+<h2>Jobs for {{ property.address }}</h2>
+<div class="job-list-container">
+    {% if jobs %}
+        {% for job in jobs %}
+            {% include 'job_card.html' with context %} {# Pass context to job_card.html #}
+        {% endfor %}
+    {% else %}
+        <p>No jobs found for this property.</p>
+    {% endif %}
+</div>

@@ -1,5 +1,28 @@
-<div class="property-card">
+<div class="property-card" id="property-card-{{ property.id }}">
     <h3>{{ property.address }}</h3>
     <p><strong>Address:</strong> {{ property.address }}</p>
     <p><strong>Access Notes:</strong> {{ property.access_notes if property.access_notes else "N/A" }}</p>
+    <div class="property-actions">
+        <button class="button edit-button"
+                hx-get="{{ url_for('properties.update_property_route', property_id=property.id) }}"
+                hx-target="#property-details-modal-content"
+                hx-trigger="click"
+                hx-on--after-request="document.getElementById('property-details-modal').style.display='block'">
+            ✏️ Edit
+        </button>
+        <button class="button view-jobs-button"
+                hx-get="{{ url_for('properties.get_property_jobs_route', property_id=property.id) }}"
+                hx-target="#property-details-modal-content"
+                hx-trigger="click"
+                hx-on--after-request="document.getElementById('property-details-modal').style.display='block'">
+            📋 View Jobs
+        </button>
+        <button class="button delete-button"
+                hx-delete="{{ url_for('properties.delete_property_route', property_id=property.id) }}"
+                hx-target="#property-list"
+                hx-swap="innerHTML"
+                hx-confirm="Are you sure you want to delete this property? This action cannot be undone.">
+            🗑️ Delete
+        </button>
+    </div>
 </div>

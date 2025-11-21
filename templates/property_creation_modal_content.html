@@ -1,0 +1,31 @@
+<form id="property-creation-form" hx-post="{{ url_for('properties.create_property_route') }}"
+      hx-target="#property-list"
+      hx-swap="innerHTML"
+      hx-on--after-request="if(event.detail.successful) { document.getElementById('property-creation-modal').style.display='none'; document.getElementById('property-creation-form').reset(); } else { document.getElementById('form-errors-container').innerHTML = event.detail.xhr.response; }">
+    <h2>Create New Property</h2>
+    <div id="form-errors-container"></div>
+    <div class="job-update-compact"> {# Reusing job-update-compact for consistent styling #}
+        <div class="form-group">
+            <div class="form-card address-card">
+                <div class="card-header">
+                    <span class="card-icon">📍</span>
+                    <span class="card-title">Property Details</span>
+                </div>
+                <div class="form-field">
+                    <label for="address">Address</label>
+                    <input type="text" id="address" name="address" required placeholder="Enter property address">
+                </div>
+                <div class="form-field">
+                    <label for="access_notes">Access Notes</label>
+                    <textarea id="access_notes" name="access_notes" rows="3" placeholder="Any specific access instructions"></textarea>
+                </div>
+            </div>
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="button save-button">
+                💾 Create Property
+            </button>
+            <button type="button" class="button" onclick="document.getElementById('property-creation-modal').style.display='none'">Cancel</button>
+        </div>
+    </div>
+</form>

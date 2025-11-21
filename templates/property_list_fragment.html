@@ -1,0 +1,7 @@
+{% if properties %}
+    {% for property in properties %}
+        {% include 'property_card.html' with context %}
+    {% endfor %}
+{% else %}
+    <p>No properties found.</p>
+{% endif %}

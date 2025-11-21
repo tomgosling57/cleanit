@@ -45,6 +45,13 @@ class JobService:
         jobs = self.db_session.query(Job).options(joinedload(Job.property))
         return jobs
     
+    def get_jobs_by_property_id(self, property_id):
+        """
+        Retrieve all jobs for a specific property.
+        """
+        jobs = self.db_session.query(Job).options(joinedload(Job.property)).filter(Job.property_id == property_id).order_by(Job.date, Job.time).all()
+        return jobs
+
     def get_back_to_back_jobs_for_date(self, target_date: date, threshold_minutes: int = 15):
         """
         Identifies jobs on a specific date that are back-to-back within a given threshold.

@@ -1,0 +1,35 @@
+<form id="edit-property-form"
+      hx-put="{{ url_for('properties.update_property_route', property_id=property.id) }}"
+      hx-target="#property-card-{{ property.id }}"
+      hx-swap="outerHTML"
+      hx-on--after-request="if(!event.detail.successful) {
+          document.getElementById('form-errors-container-update').innerHTML = event.detail.xhr.response;
+      } else {
+          document.getElementById('property-details-modal').style.display='none'; }">
+    <h2>Edit Property</h2>
+    <div id="form-errors-container-update"></div>
+    <div class="job-update-compact"> {# Reusing job-update-compact for consistent styling #}
+        <div class="form-group">
+            <div class="form-card address-card">
+                <div class="card-header">
+                    <span class="card-icon">📍</span>
+                    <span class="card-title">Property Details</span>
+                </div>
+                <div class="form-field">
+                    <label for="address">Address</label>
+                    <input type="text" id="address" name="address" value="{{ property.address }}" required placeholder="Enter property address">
+                </div>
+                <div class="form-field">
+                    <label for="access_notes">Access Notes</label>
+                    <textarea id="access_notes" name="access_notes" rows="3" placeholder="Any specific access instructions">{{ property.access_notes }}</textarea>
+                </div>
+            </div>
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="button save-button">
+                💾 Save Changes
+            </button>
+            <button type="button" class="button" onclick="document.getElementById('property-details-modal').style.display='none'">Cancel</button>
+        </div>
+    </div>
+</form>
