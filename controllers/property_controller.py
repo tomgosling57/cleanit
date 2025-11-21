@@ -2,6 +2,7 @@ from flask import jsonify, render_template, redirect, url_for, request, flash, r
 from services.property_service import PropertyService
 from services.job_service import JobService # Import JobService
 from database import get_db, teardown_db
+from config import DATETIME_FORMATS
 
 def get_properties_view():
     """
@@ -40,7 +41,8 @@ def get_property_jobs_modal_content(property_id):
     
     jobs = job_service.get_jobs_by_property_id(property_id)
     teardown_db()
-    return render_template('property_jobs_modal_content.html', property=property, jobs=jobs)
+    # Pass jobs and DATETIME_FORMATS to the timetable fragment
+    return render_template('property_jobs_modal_content.html', property=property, jobs=jobs, DATETIME_FORMATS=DATETIME_FORMATS)
 
 def get_property_creation_form():
     """

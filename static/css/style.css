@@ -1,5 +1,6 @@
-    @import url('property_styles.css');
+@import url('property_styles.css');
 @import url('team_styles.css');
+@import url('job_styles.css');
 
 :root {
     --primary-color: #0a7ea4; /* Ocean Blue */
@@ -251,66 +252,6 @@ textarea:focus {
     }
 }
 
-/* Job Status Styles */
-.job-status-container {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.status-text {
-    font-weight: 600;
-    padding: 6px 14px;
-    border-radius: 20px;
-    font-size: 0.85rem;
-    letter-spacing: 0.3px;
-}
-
-.status-completed {
-    color: var(--background-color);
-    background-color: var(--success-color);
-    border: 1px solid rgba(62, 168, 114, 0.3);
-}
-
-.status-pending {
-    color: var(--background-color);
-    background-color: var(--info-color);
-    border: 1px solid rgba(79, 179, 191, 0.3);
-}
-
-.status-toggle-button {
-    padding: 8px 16px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 600;
-    font-size: 0.85rem;
-    letter-spacing: 0.3px;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-}
-
-.button-completed {
-    background-color: var(--info-color);
-    color: white;
-}
-
-.button-completed:hover {
-    background-color: var(--primary-color);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(79, 179, 191, 0.3);
-}
-
-.button-pending {
-    background-color: var(--success-color);
-    color: white;
-}
-
-.button-pending:hover {
-    background-color: var(--secondary-color);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(62, 168, 114, 0.3);
-}
 
 .header-with-button {
     display: flex;
