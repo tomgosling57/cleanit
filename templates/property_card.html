@@ -5,16 +5,16 @@
     <div class="property-actions">
         <button class="button edit-button"
                 hx-get="{{ url_for('properties.update_property_route', property_id=property.id) }}"
-                hx-target="#property-details-modal-content"
+                hx-target="#property-modal-content"
                 hx-trigger="click"
-                hx-on--after-request="document.getElementById('property-details-modal').style.display='block'">
+                hx-on--after-request="document.getElementById('property-modal').style.display='block'">
             ✏️ Edit
         </button>
         <button class="button view-jobs-button"
                 hx-get="{{ url_for('properties.get_property_jobs_route', property_id=property.id) }}"
-                hx-target="#property-details-modal-content"
+                hx-target="#property-modal-content"
                 hx-trigger="click"
-                hx-on--after-request="document.getElementById('property-details-modal').style.display='block'">
+                hx-on--after-request="document.getElementById('property-modal').style.display='block'">
             📋 View Jobs
         </button>
         <button class="button delete-button"

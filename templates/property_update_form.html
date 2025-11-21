@@ -5,7 +5,7 @@
       hx-on--after-request="if(!event.detail.successful) {
           document.getElementById('form-errors-container-update').innerHTML = event.detail.xhr.response;
       } else {
-          document.getElementById('property-details-modal').style.display='none'; }">
+          document.getElementById('property-modal').style.display='none'; }">
     <h2>Edit Property</h2>
     <div id="form-errors-container-update"></div>
     <div class="job-update-compact"> {# Reusing job-update-compact for consistent styling #}
@@ -29,7 +29,7 @@
             <button type="submit" class="button save-button">
                 💾 Save Changes
             </button>
-            <button type="button" class="button" onclick="document.getElementById('property-details-modal').style.display='none'">Cancel</button>
+            <button type="button" class="button" onclick="document.getElementById('property-modal').style.display='none'">Cancel</button>
         </div>
     </div>
 </form>

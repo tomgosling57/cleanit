@@ -8,9 +8,9 @@
             <h1>All Properties</h1>
             <button class="button"
                     hx-get="{{ url_for('properties.create_property_route') }}"
-                    hx-target="#property-creation-modal-content"
+                    hx-target="#property-modal-content"
                     hx-trigger="click"
-                    hx-on--after-request="document.getElementById('property-creation-modal').style.display='block'">
+                    hx-on--after-request="document.getElementById('property-modal').style.display='block'">
                 Create Property
             </button>
         </div>
@@ -19,26 +19,17 @@
         </div>
     </div>
 
-    <!-- Property Details/Edit/Jobs Modal -->
-    <div id="property-details-modal" class="modal" style="display:none;">
+    <!-- Property Modal -->
+    <div id="property-modal" class="modal" style="display:none;">
         <div class="modal-content">
-            <span class="close-button" onclick="document.getElementById('property-details-modal').style.display='none'">&times;</span>
-            <div id="property-details-modal-content">
-                <!-- Property details, edit form, or jobs list will be loaded here via HTMX -->
-            </div>
-        </div>
-    </div>
-
-    <!-- Property Creation Modal -->
-    <div id="property-creation-modal" class="modal" style="display:none;">
-        <div class="modal-content">
-            <span class="close-button" onclick="document.getElementById('property-creation-modal').style.display='none'">&times;</span>
-            <div id="property-creation-modal-content">
-                <!-- Property creation form will be loaded here via HTMX -->
+            <span class="close-button" onclick="document.getElementById('property-modal').style.display='none'">&times;</span>
+            <div id="property-modal-content">
+                <!-- Property creation and update forms as well as job list will be rendered here via HTMX -->
             </div>
         </div>
     </div>
 
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/property_styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/job_styles .css') }}">.
 {% endblock %}
