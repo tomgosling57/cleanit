@@ -53,7 +53,7 @@ def get_job_details(job_id):
     teams = assignment_service.get_teams_for_job(job_id)
     teardown_db()
 
-    return render_template('job_details_modal_content.html', job=job, job_cleaners=cleaners, job_teams=teams, back_to_back_job_ids=back_to_back_job_ids, DATETIME_FORMATS=DATETIME_FORMATS)
+    return render_template('job_details_modal.html', job=job, job_cleaners=cleaners, job_teams=teams, back_to_back_job_ids=back_to_back_job_ids, DATETIME_FORMATS=DATETIME_FORMATS)
 
 def get_job_creation_form():
     if current_user.role != 'owner':
@@ -71,7 +71,7 @@ def get_job_creation_form():
     selected_date_from_session = session.get('selected_date', datetime.today().date())
     
     teardown_db()
-    return render_template('job_creation_modal_content.html', users=users, teams=teams, properties=properties, DATETIME_FORMATS=DATETIME_FORMATS, today=datetime.today(), selected_date=selected_date_from_session)
+    return render_template('job_creation_modal.html', users=users, teams=teams, properties=properties, DATETIME_FORMATS=DATETIME_FORMATS, today=datetime.today(), selected_date=selected_date_from_session)
 
 def timetable(date: str = None):    
     db = get_db()
@@ -286,7 +286,7 @@ def get_job_update_form(job_id):
     properties = property_service.get_all_properties()
     teardown_db()
     if job:
-        return render_template('job_update_form.html', job=job, users=users, job_users=job_users, properties=properties, teams=teams, job_teams=job_teams, DATETIME_FORMATS=DATETIME_FORMATS)
+        return render_template('job_update_modal.html', job=job, users=users, job_users=job_users, properties=properties, teams=teams, job_teams=job_teams, DATETIME_FORMATS=DATETIME_FORMATS)
     return jsonify({'error': 'Job not found'}), 404
 
 def create_job():

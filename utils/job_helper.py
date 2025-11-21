@@ -149,7 +149,7 @@ class JobHelper:
         """
         job_service = JobService(db)
         job = job_service.get_job_details(job_id)
-        return render_template_string('{% include "job_details_modal_content.html" %}', job=job, DATETIME_FORMATS=DATETIME_FORMATS)
+        return render_template_string('{% include "job_details_modal.html" %}', job=job, DATETIME_FORMATS=DATETIME_FORMATS)
 
     @staticmethod
     def render_job_list_fragment(db, current_user, selected_date_for_fetch):
@@ -197,6 +197,6 @@ class JobHelper:
         Fetches updated job details and renders the job details and job list fragments.
         Returns a tuple: (job_details_html, job_list_html)
         """
-        job_details_html = JobHelper.render_job_details_fragment(db, job_id, DATETIME_FORMATS)
-        job_list_html = JobHelper.render_job_list_fragment(db, current_user, DATETIME_FORMATS, BACK_TO_BACK_THRESHOLD, selected_date_for_fetch)
+        job_details_html = JobHelper.render_job_details_fragment(db, job_id)
+        job_list_html = JobHelper.render_job_list_fragment(db, current_user, selected_date_for_fetch)
         return job_details_html, job_list_html

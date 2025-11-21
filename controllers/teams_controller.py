@@ -92,7 +92,7 @@ def get_create_team_form():
 
     return render_template_string(
         """
-        {% include 'team_create_modal_content.html' with context %}
+        {% include 'team_create_modal.html' with context %}
         """,
         categorized_users=categorized_users
     )
@@ -112,7 +112,7 @@ def get_edit_team_form(team_id):
     teardown_db()
     return render_template_string(
         """
-        {% include 'team_edit_modal_content.html' with context %}
+        {% include 'team_edit_modal.html' with context %}
         """,
         team=team
     )

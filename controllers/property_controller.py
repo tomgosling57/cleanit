@@ -42,13 +42,13 @@ def get_property_jobs_modal_content(property_id):
     jobs = job_service.get_jobs_by_property_id(property_id)
     teardown_db()
     # Pass jobs and DATETIME_FORMATS to the timetable fragment
-    return render_template('property_jobs_modal_content.html', property=property, jobs=jobs, DATETIME_FORMATS=DATETIME_FORMATS)
+    return render_template('property_jobs_modal.html', property=property, jobs=jobs, DATETIME_FORMATS=DATETIME_FORMATS)
 
 def get_property_creation_form():
     """
     Renders the property creation form.
     """
-    return render_template('property_creation_modal_content.html')
+    return render_template('property_creation_modal.html')
 
 def create_property():
     """
@@ -89,7 +89,7 @@ def get_property_update_form(property_id):
     teardown_db()
     if not property:
         return jsonify({'error': 'Property not found'}), 404
-    return render_template('property_update_form.html', property=property)
+    return render_template('property_update_modal.html', property=property)
 
 def update_property(property_id):
     """
