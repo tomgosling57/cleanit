@@ -70,21 +70,16 @@ def get_job_creation_form():
     
     teardown_db()
     return render_template('job_creation_modal.html', users=users, teams=teams, properties=properties, DATETIME_FORMATS=DATETIME_FORMATS, today=datetime.today(), selected_date=selected_date_obj)
-
+            
 def timetable(date: str = None):
     db = get_db()
     job_service = JobService(db)
     team_service = TeamService(db)
     assignment_service = AssignmentService(db)
 
-    # Use given date string if provided, otherwise use today's date string
-    if date:
-        session['selected_date'] = date
-    else:
-        session['selected_date'] = datetime.today().strftime(DATETIME_FORMATS["DATE_FORMAT"])
-    
+    date = JobHelper.process_selected_date(date)
     # Convert the session date string to a date object for service calls
-    date_obj = datetime.strptime(session['selected_date'], DATETIME_FORMATS["DATE_FORMAT"]).date()
+    date_obj = datetime.strptime(date, DATETIME_FORMATS["DATE_FORMAT"]).date()
 
     jobs = job_service.get_jobs_for_user_on_date(current_user.id, current_user.team_id, date_obj)
 
@@ -104,8 +99,7 @@ def timetable(date: str = None):
     response = render_template('timetable.html', jobs=jobs, team_leader_id=team_leader_id, user_role=current_user.role,
                            user_id=current_user.id, selected_date=selected_date, DATETIME_FORMATS=DATETIME_FORMATS,
                            back_to_back_job_ids=job_service.get_back_to_back_jobs_for_date(date_obj, threshold_minutes=BACK_TO_BACK_THRESHOLD),
-                           all_teams=all_teams, jobs_by_team=jobs_by_team,
-                           team_back_to_back_job_ids=team_back_to_back_job_ids)
+                           all_teams=all_teams)
     teardown_db()
     return response
 
@@ -115,14 +109,9 @@ def team_timetable(date: str = None):
     team_service = TeamService(db)
     assignment_service = AssignmentService(db)
 
-    # Use given date string if provided, otherwise use today's date string
-    if date:
-        session['selected_date'] = date
-    else:
-        session['selected_date'] = datetime.today().strftime(DATETIME_FORMATS["DATE_FORMAT"])
-    
+    date = JobHelper.process_selected_date(date)
     # Convert the session date string to a date object for service calls
-    date_obj = datetime.strptime(session['selected_date'], DATETIME_FORMATS["DATE_FORMAT"]).date()
+    date_obj = datetime.strptime(date, DATETIME_FORMATS["DATE_FORMAT"]).date()
 
     all_teams = team_service.get_all_teams()
     jobs_by_team = assignment_service.get_jobs_grouped_by_team_for_date(date_obj)
@@ -135,6 +124,9 @@ def team_timetable(date: str = None):
 
     selected_date = session['selected_date'] # Use the string directly from session
     current_user.selected_date = selected_date
+    print(f"teams: length: {len(all_teams)} first element: {all_teams[0]}")
+    print(f"jobs: num teams {len(jobs_by_team)}")
+    print(jobs_by_team)
     response = render_template('team_timetable.html', selected_date=selected_date, DATETIME_FORMATS=DATETIME_FORMATS,
                                all_teams=all_teams, jobs_by_team=jobs_by_team,
                                team_back_to_back_job_ids=team_back_to_back_job_ids)
@@ -165,7 +157,7 @@ def update_job(job_id):
 
     if updated_job:
         # Determine selected_date and view_type for rendering
-        date_to_render = JobHelper.get_selected_date_from_session()
+        date_to_render = JobHelper.process_selected_date()
         view_type_to_render = request.form.get('view_type')
 
         if view_type_to_render == 'team':
@@ -313,7 +305,7 @@ def create_job():
 
     if new_job:
         # Determine selected_date and view_type for rendering
-        date_to_render = JobHelper.get_selected_date_from_session()
+        date_to_render = JobHelper.process_selected_date()
         view_type_to_render = request.form.get('view_type')
 
         if view_type_to_render == 'team':
@@ -336,7 +328,7 @@ def delete_job(job_id):
     success = job_service.delete_job(job_id)
     if success:
         # Determine selected_date and view_type for rendering
-        date_to_render = JobHelper.get_selected_date_from_session()
+        date_to_render = JobHelper.process_selected_date()
         view_type_to_render = request.form.get('view_type')
 
         if view_type_to_render == 'team':
@@ -369,7 +361,7 @@ def reassign_job_team(job_id):
         assignment_service.update_job_team_assignment(job_id, old_team_id, new_team_id)
         
         # Re-render the affected team columns
-        selected_date_for_fetch = JobHelper.get_selected_date_from_session()
+        selected_date_for_fetch = JobHelper.process_selected_date()
         response_html = JobHelper.render_teams_timetable_fragment(db, current_user, selected_date_for_fetch)
         teardown_db()
         return jsonify({'success': True, 'html': response_html})

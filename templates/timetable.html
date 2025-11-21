@@ -10,7 +10,7 @@
                 <input type="text" id="timetable-datepicker" placeholder="Select Date"/><i class="fa-solid fa-calendar"></i>
             </div>
             {% if current_user.role == 'owner' %}
-                <button class="button" hx-get="{{ url_for('job.team_timetable', date=selected_date) }}" hx-push-url="true" hx-target="body" hx-swap="outerHTML">
+                <button class="button" onclick='window.location.assign("{{ url_for('job.team_timetable')}}")'>
                     Team View
                 </button>
                 <button class="button"
@@ -70,3 +70,4 @@
         // });
     </script>
 {% endblock %}
+

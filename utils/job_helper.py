@@ -126,20 +126,22 @@ class JobHelper:
         return job_data, form_data['assigned_teams'], form_data['assigned_cleaners'], None
 
     @staticmethod
-    def get_selected_date_from_session():
-        """
-        Retrieves the selected date from the session and ensures it's a datetime.date object.
-        Falls back to today's date if not found or invalid.
-        """
-        selected_date_from_session = session.get('selected_date')
-        if isinstance(selected_date_from_session, str):
-            try:
-                return datetime.strptime(selected_date_from_session, DATETIME_FORMATS["DATE_FORMAT"]).date()
-            except ValueError:
-                return datetime.today().date() # Fallback to today if format is invalid
-        elif isinstance(selected_date_from_session, date):
-            return selected_date_from_session
-        return datetime.today().date() # Fallback to today if not a date object
+    def process_selected_date(date: str = None):
+        """Chooses the right date value for the timetable views. If the given date is not none it will 
+        return the given date otherwise it will use the date value stored in this session or else today's date.
+        
+        Returns date string"""
+        if date: # Use given date if not none
+            session['selected_date'] = date
+        elif session.get('selected_date'): # Use session date if not none
+            date = session['selected_date']
+        else: # Else use today's date
+            session['selected_date'] = datetime.today().strftime(DATETIME_FORMATS["DATE_FORMAT"])
+            date = session['selected_date']
+        
+        return date
+        
+
 
     @staticmethod
     def render_job_details_fragment(db, job_id):
