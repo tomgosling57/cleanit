@@ -173,7 +173,7 @@ def update_job(job_id):
             db, current_user,  selected_date_for_fetch
         )
         
-        response_html = f'<div hx-swap-oob="innerHTML:#job-details-modal-content">{job_details_html}</div>' \
+        response_html = f'<div hx-swap-oob="innerHTML:#job-modal-content">{job_details_html}</div>' \
                         f'<div id="job-list" hx-swap-oob="outerHTML:#job-list">{job_list_html}</div>'
         teardown_db()
         return response_html

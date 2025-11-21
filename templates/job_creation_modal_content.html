@@ -1,7 +1,7 @@
-<form id="job-creation-form" hx-post="{{ url_for('job.create_job') }}"
+<form id="job-form" hx-post="{{ url_for('job.create_job') }}"
       hx-target="#job-list"
       hx-swap="innerHTML"
-      hx-on--after-request="if(event.detail.successful) { document.getElementById('job-creation-modal').style.display='none'; document.getElementById('job-creation-form').reset(); } else { document.getElementById('form-errors-container').innerHTML = event.detail.xhr.response; }">
+      hx-on--after-request="if(event.detail.successful) { document.getElementById('job-modal').style.display='none'; document.getElementById('job-form').reset(); } else { document.getElementById('form-errors-container').innerHTML = event.detail.xhr.response; }">
    <h2>Create New Job</h2>
    <div id="form-errors-container"></div>
    <div class="job-update-compact">
@@ -108,7 +108,7 @@
             <button type="submit" class="button save-button">
                 💾 Create Job
             </button>
-            <button type="button" class="button" onclick="document.getElementById('job-creation-modal').style.display='none'">Cancel</button>
+            <button type="button" class="button" onclick="document.getElementById('job-modal').style.display='none'">Cancel</button>
         </div>
     </div>
 </form>

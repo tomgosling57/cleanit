@@ -105,7 +105,7 @@
         </div>
         {% if current_user.role == 'owner' %}
             <button hx-get="{{ url_for('job.update_job', job_id=job.id) }}"
-                hx-target="#job-details-modal-content"
+                hx-target="#job-modal-content"
                 hx-swap="innerHTML"
                 hx-trigger="click"
             class="button edit-button">

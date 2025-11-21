@@ -15,9 +15,9 @@
                 </button>
                 <button class="button"
                         hx-get="{{ url_for('job.create_job') }}"
-                        hx-target="#job-creation-modal-content"
+                        hx-target="#job-modal-content"
                         hx-trigger="click"
-                        hx-on--after-request="document.getElementById('job-creation-modal').style.display='block'">
+                        hx-on--after-request="document.getElementById('job-modal').style.display='block'">
                     Create Job
                 </button>
             {% endif %}
@@ -38,20 +38,20 @@
     </div>
   
     <!-- Job Details Modal -->
-    <div id="job-details-modal" class="modal" style="display:none;">
+    <div id="job-modal" class="modal" style="display:none;">
         <div class="modal-content">
-            <span class="close-button" onclick="document.getElementById('job-details-modal').style.display='none'">&times;</span>
-            <div id="job-details-modal-content">
-                <!-- Job details will be loaded here via HTMX -->
+            <span class="close-button" onclick="document.getElementById('job-modal').style.display='none'">&times;</span>
+            <div id="job-modal-content">
+                <!-- Job will be loaded here via HTMX -->
             </div>
         </div>
     </div>
 
     <!-- Job Creation Modal -->
-    <div id="job-creation-modal" class="modal" style="display:none;">
+    <div id="job-modal" class="modal" style="display:none;">
         <div class="modal-content">
-            <span class="close-button" onclick="document.getElementById('job-creation-modal').style.display='none'">&times;</span>
-            <div id="job-creation-modal-content">
+            <span class="close-button" onclick="document.getElementById('job-modal').style.display='none'">&times;</span>
+            <div id="job-modal-content">
                 <!-- Job creation form will be loaded here via HTMX -->
             </div>
         </div>

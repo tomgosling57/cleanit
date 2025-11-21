@@ -8,9 +8,9 @@
         <span id="job-update-status-{{ job.id }}">{% if job.is_complete %}Mark Pending{% else %}Mark Complete{% endif %}</span>
     </button>
     <button hx-get="{{ url_for('job.get_job_details', job_id=job.id) }}"
-            hx-target="#job-details-modal-content"
+            hx-target="#job-modal-content"
             hx-trigger="click"
-            hx-on--after-request="document.getElementById('job-details-modal').style.display='block'"
+            hx-on--after-request="document.getElementById('job-modal').style.display='block'"
             class="button">
         View Details
     </button>
