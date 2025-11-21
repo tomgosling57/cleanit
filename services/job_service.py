@@ -20,11 +20,9 @@ class JobService:
         job.arrival_datetime = job_data.get('arrival_datetime', job.arrival_datetime)
         job.end_time = job_data.get('end_time', job.end_time)
         job.description = job_data.get('description', job.description)
-        property_address = job_data.get('property_address')
-        if property_address:
-            property_obj = self.property_service.get_property_by_address(property_address)
-            if not property_obj:
-                property_obj = self.property_service.create_property(property_address)
+        property_id = job_data.get('property_id')
+        if property_id:
+            property_obj = self.property_service.get_property_by_id(property_id)
             job.property_id = property_obj.id
         self.db_session.commit()
         return job

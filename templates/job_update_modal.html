@@ -4,8 +4,9 @@ hx-include="#edit-job-form"
 hx-on--after-request="if(!event.detail.successful) { 
     document.getElementById('form-errors-container-update').innerHTML = event.detail.xhr.response; 
 } else { 
-    document.getElementById('job-modal-content').style.display='none'; }"
-
+    document.getElementById('job-modal').style.display='none'; }"
+hx-target="#job-list"
+hx-swap="innerHTML"
 
 >
     <h2>Edit Job</h2>

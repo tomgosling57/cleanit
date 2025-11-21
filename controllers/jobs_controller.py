@@ -149,7 +149,7 @@ def team_timetable(date: str = None):
     teardown_db()
     return response
 
-def update_job(job_id):
+def update_job(job_id, selected_date=None, view_type=None):
     if current_user.role != 'owner':
         return jsonify({'error': 'Unauthorized'}), 403
 
@@ -161,24 +161,42 @@ def update_job(job_id):
         return jsonify({'error': 'Job not found'}), 404
 
     updated_job_data, assigned_teams, assigned_cleaners, error_response = JobHelper.process_job_form()
-
+    print("property_id:", updated_job_data.get('property_id'))
     if error_response:
         teardown_db()
         return error_response
 
     updated_job = job_service.update_job(job_id, updated_job_data)
+    print(f"{updated_job.property}")
     assignment_service = AssignmentService(db)
     assignment_service.update_assignments(updated_job.id, team_ids=assigned_teams, user_ids=assigned_cleaners)
 
     if updated_job:
-        selected_date_for_fetch = JobHelper.get_selected_date_from_session()
-        job_details_html = JobHelper.render_job_details_fragment(db, job_id)
-        job_list_html = JobHelper.render_job_list_fragment(
-            db, current_user,  selected_date_for_fetch
-        )
+        # Determine selected_date and view_type for rendering
+        date_to_render = selected_date
+        if not date_to_render:
+            date_to_render = request.form.get('selected_date')
+        if not date_to_render:
+            date_to_render = JobHelper.get_selected_date_from_session()
         
-        response_html = f'<div hx-swap-oob="innerHTML:#job-modal-content">{job_details_html}</div>' \
-                        f'<div id="job-list" hx-swap-oob="outerHTML:#job-list">{job_list_html}</div>'
+        view_type_to_render = view_type
+        if not view_type_to_render:
+            view_type_to_render = request.form.get('view_type')
+
+        # Ensure date_to_render is a date object for helper functions
+        if isinstance(date_to_render, str):
+            try:
+                date_to_render = datetime.strptime(date_to_render, DATETIME_FORMATS["DATE_FORMAT"]).date()
+            except ValueError:
+                date_to_render = datetime.today().date()
+        elif not isinstance(date_to_render, date):
+            date_to_render = datetime.today().date()
+
+        if view_type_to_render == 'team':
+            response_html = JobHelper.render_teams_timetable_fragment(db, current_user, date_to_render)
+        else:
+            response_html = JobHelper.render_job_list_fragment(db, current_user, date_to_render)
+        
         teardown_db()
         return response_html
     teardown_db()
@@ -293,17 +311,14 @@ def get_job_update_form(job_id, selected_date=None):
         return render_template('job_update_modal.html', job=job, users=users, job_users=job_users, properties=properties, teams=teams, job_teams=job_teams, DATETIME_FORMATS=DATETIME_FORMATS, selected_date=selected_date)
     return jsonify({'error': 'Job not found'}), 404
 
-def create_job():
+def create_job(selected_date=None, view_type=None):
     if current_user.role != 'owner':
         flash('Unauthorized access', 'error')
         return redirect(url_for('index'))
 
     db = get_db()
     job_service = JobService(db)
-    assignment_service = AssignmentService(db)    
-
-    selected_date_obj = JobHelper.get_selected_date_from_session()
-    selected_date = selected_date_obj.strftime(DATETIME_FORMATS["DATE_FORMAT"])
+    assignment_service = AssignmentService(db)
 
     new_job_data, assigned_teams, assigned_cleaners, error_response = JobHelper.process_job_form()
 
@@ -316,21 +331,39 @@ def create_job():
     assignment_service = AssignmentService(db)
     assignment_service.update_assignments(new_job.id, team_ids=assigned_teams, user_ids=assigned_cleaners)
 
-    # Re-fetch all jobs and render the list fragment
-    selected_date_for_fetch = JobHelper.get_selected_date_from_session()
-    _, job_list_html = JobHelper.render_job_updates(
-        db, new_job.id, current_user, selected_date_for_fetch
-    )
-
-    teardown_db()
-
     if new_job:
-        print(f"selected_date: {selected_date}")
-        return job_list_html
+        # Determine selected_date and view_type for rendering
+        date_to_render = selected_date
+        if not date_to_render:
+            date_to_render = request.form.get('selected_date')
+        if not date_to_render:
+            date_to_render = JobHelper.get_selected_date_from_session()
+        
+        view_type_to_render = view_type
+        if not view_type_to_render:
+            view_type_to_render = request.form.get('view_type')
+
+        # Ensure date_to_render is a date object for helper functions
+        if isinstance(date_to_render, str):
+            try:
+                date_to_render = datetime.strptime(date_to_render, DATETIME_FORMATS["DATE_FORMAT"]).date()
+            except ValueError:
+                date_to_render = datetime.today().date()
+        elif not isinstance(date_to_render, date):
+            date_to_render = datetime.today().date()
+
+        if view_type_to_render == 'team':
+            response_html = JobHelper.render_teams_timetable_fragment(db, current_user, date_to_render)
+        else:
+            response_html = JobHelper.render_job_list_fragment(db, current_user, date_to_render)
+        
+        teardown_db()
+        return response_html
+    teardown_db()
     return jsonify({'error': 'Failed to create job'}), 500
 
 
-def delete_job(job_id):
+def delete_job(job_id, selected_date=None, view_type=None):
     if current_user.role != 'owner':
         return jsonify({'error': 'Unauthorized'}), 403
 
@@ -338,15 +371,32 @@ def delete_job(job_id):
     job_service = JobService(db)
     success = job_service.delete_job(job_id)
     if success:
-        selected_date_for_fetch = JobHelper.get_selected_date_from_session()
-        view_type = request.form.get('view_type')
+        # Determine selected_date and view_type for rendering
+        date_to_render = selected_date
+        if not date_to_render:
+            date_to_render = request.form.get('selected_date')
+        if not date_to_render:
+            date_to_render = JobHelper.get_selected_date_from_session()
+        
+        view_type_to_render = view_type
+        if not view_type_to_render:
+            view_type_to_render = request.form.get('view_type')
 
-        if view_type == 'team':
-            response_html = JobHelper.render_teams_timetable_fragment(db, current_user, selected_date_for_fetch)
+        # Ensure date_to_render is a date object for helper functions
+        if isinstance(date_to_render, str):
+            try:
+                date_to_render = datetime.strptime(date_to_render, DATETIME_FORMATS["DATE_FORMAT"]).date()
+            except ValueError:
+                date_to_render = datetime.today().date()
+        elif not isinstance(date_to_render, date):
+            date_to_render = datetime.today().date()
+
+        if view_type_to_render == 'team':
+            response_html = JobHelper.render_teams_timetable_fragment(db, current_user, date_to_render)
         else:
             # Default to normal job list if view_type is not 'team' or not provided
             response_html = JobHelper.render_job_list_fragment(
-                db, current_user, selected_date_for_fetch
+                db, current_user, date_to_render
             )
         teardown_db()
         return response_html
