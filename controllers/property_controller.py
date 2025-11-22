@@ -1,4 +1,4 @@
-from flask import jsonify, render_template, redirect, url_for, request, flash, render_template_string
+from flask import jsonify, render_template, session, url_for, request, flash, render_template_string
 from services.property_service import PropertyService
 from services.job_service import JobService # Import JobService
 from database import get_db, teardown_db
@@ -12,7 +12,7 @@ def get_properties_view():
     property_service = PropertyService(db)
     properties = property_service.get_all_properties()
     teardown_db()
-    return render_template('properties.html', properties=properties)
+    return render_template('properties.html', properties=properties, view_type='property')
 
 def get_property_by_id(property_id):
     """
@@ -33,7 +33,7 @@ def get_property_jobs_modal_content(property_id):
     db = get_db()
     property_service = PropertyService(db)
     job_service = JobService(db)
-
+    session['property_id'] = property_id
     property = property_service.get_property_by_id(property_id)
     if not property:
         teardown_db()

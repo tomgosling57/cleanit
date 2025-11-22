@@ -5,7 +5,7 @@ hx-on--after-request="if(!event.detail.successful) {
     document.getElementById('form-errors-container-update').innerHTML = event.detail.xhr.response; 
 } else { 
     document.getElementById('job-modal').style.display='none'; }"
-hx-target="{% if view_type == 'team' %}#team-timetable-view{% else %}#job-list{% endif %}"
+hx-target="{% if view_type == 'team' %}#team-timetable-view{% else %}.job-list{% endif %}"
 hx-swap="innerHTML"
 
 >

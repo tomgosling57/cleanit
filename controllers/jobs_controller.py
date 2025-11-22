@@ -10,7 +10,7 @@ from database import get_db, teardown_db
 from datetime import date, datetime
 from collections import defaultdict
 from utils.job_helper import JobHelper
-
+from controllers.property_controller import get_property_jobs_modal_content
 def update_job_status(job_id):
     if not current_user.is_authenticated or current_user.role not in ['cleaner', 'owner', 'team-leader']:
         return jsonify({'error': 'Unauthorized'}), 401
@@ -163,6 +163,9 @@ def update_job(job_id):
         if view_type_to_render == 'team':
             print(f"Rendering team timetable fragment for date: {date_to_render}")
             response_html = JobHelper.render_teams_timetable_fragment(db, current_user, date_to_render)
+        if view_type_to_render == request.form.get('view_type'):
+            print(f"Rendering job list fragment for property: {session['property_id']}")
+            response_html = get_property_jobs_modal_content(session['property_id'])
         else:
             print(f"Rendering job list fragment for date: {date_to_render}")
             response_html = JobHelper.render_job_list_fragment(db, current_user, date_to_render)
