@@ -141,7 +141,48 @@ def update_user(user_id):
         teardown_db()
         return render_template('user_list_fragment', users=users)
     else:
-        return jsonify({'error': 'User not found'}), 404
+        return render_template('user_update_form.html', user=user, errors=['User update failed.'])
+
+def get_user_creation_form(user_id):
+    """Renders the update form for the given user id."""
+    if not current_user.is_authenticated:
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    db = get_db()
+    user_service = UserService(db)
+    roles = user_service.get_roles()
+    return render_template('user_creation_form.html', roles=roles)
+
+def create_user(user_id):
+    """Create user in the database."""
+    if not current_user.is_authenticated:
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    data = request.form.to_dict()
+    if not data:
+        return jsonify({'error': 'Invalid data provided'}), 400
+
+    # Clean the user form data and handle errors
+    db = get_db()
+    user_service = UserService(db)
+    user = user_service.get_user_by_id(user_id)
+    user_helper = UserHelper(db)
+    # Extract and validate user attributes from form data
+    data = user_helper.clean_user_form_data(data) 
+    # Validate with force_names=True to make sure first and last names are presentp
+    errors = user_helper.validate_user_form_data(data, force_names=True)
+    # Render errors to the UI
+    if errors:
+        return render_template('user_creation_form.html', user=user, errors=errors)
+    
+    # Create the user in the database if there are no errors
+    user, password = user_service.create_user(**data)
+    if user:
+        users = user_service.get_all_users()
+        teardown_db()
+        return render_template('user_list_fragment', users=users)
+    else:
+        return render_template('user_creation_form.html', user=user, errors=['User update failed.'])
 
 def delete_user(user_id):
     """Delete a user"""
