@@ -9,7 +9,7 @@ class UserHelper:
         self.user_service = UserService(session)
     
     @staticmethod
-    def _extract_user_form_data(data):
+    def extract_user_form_data(data):
         _return = {
             'id': data.get('id'),
             'email': data.get('email'),
