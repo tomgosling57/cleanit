@@ -9,7 +9,7 @@ class UserHelper:
         self.user_service = UserService(session)
     
     @staticmethod
-    def extract_user_form_data(data):
+    def clean_user_form_data(data):
         _return = {
             'id': data.get('id'),
             'email': data.get('email'),
@@ -24,13 +24,13 @@ class UserHelper:
 
         
     def create_user(self, data):
-        errors = []
+        """Creates a user in the database with a randomly generated password.
         
-        if 'password' not in data:
-            data['password'] = generate_strong_password()
-
+        Returns User object and password string"""
+        data['password'] = generate_strong_password()
         user = self.user_service.create_user(**data)
-
+        return user, data['password']
+    
     def validate_user_form_data(self, data, force_names=False):
         """Validates the given form data for creating a user. 
         Returns a list of error messages if if there are missing fields.  
