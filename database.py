@@ -1,4 +1,4 @@
-import os
+a
 import random
 from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, Date, Time, Boolean, UniqueConstraint, func, DateTime
 from sqlalchemy.orm import sessionmaker, declarative_base, relationship
@@ -16,7 +16,10 @@ class User(Base, UserMixin):
     __tablename__ = 'users'
 
     id = Column(Integer, primary_key=True)
-    username = Column(String, unique=True, nullable=False)
+    first_name = Column(String, nullable=False)
+    last_name = Column(String, nullable=False)
+    email = Column(String, nullable=False, unique=True)
+    phone = Column(String, nullable=True)
     password_hash = Column(String, nullable=False)
     role = Column(String, nullable=False, default='cleaner') # 'cleaner', 'team_leader', 'owner'
     team_id = Column(Integer, ForeignKey('teams.id'), nullable=True)
@@ -25,7 +28,7 @@ class User(Base, UserMixin):
     assignments = relationship("Assignment", back_populates="user")
 
     def __repr__(self):
-        return f"<User(id={self.id}, username='{self.username}', role='{self.role}')>"
+        return f"<User(id={self.id}, first_name='{self.first_name}', last_name='{self.last_name}', email='{self.email} role='{self.role}')>"
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -33,7 +36,9 @@ class User(Base, UserMixin):
     def to_dict(self):
         return {
             'id': self.id,
-            'username': self.username,
+            'first_name': self.first_name,
+            'last_name': self.last_name,
+            'email': self.email,
             'role': self.role,
             'team_id': self.team_id
         }
@@ -185,23 +190,23 @@ def create_initial_users(Session):
     session = Session()
     # create user with owner role
     if not session.query(User).filter_by(role='owner').first():
-        owner = User(username='owner', role='owner')
+        owner = User(first_name='Lily', last_name='Hargrave', email='owner@example.com', phone='12345678' role='owner')
         owner.set_password('ownerpassword') # Default password for owner
         session.add(owner)
         session.commit()
         print("Initial owner user created.")
 
     # create user with team_leader role
-    if not session.query(User).filter_by(username='team_leader').first():
-        team_leader = User(username='team_leader', role='team_leader')
+    if not session.query(User).filter_by(email='team_leader@example.com').first():
+        team_leader = User(first_name='Benjara', last_name="Brown", email='team_leader@example.com' role='team_leader')
         team_leader.set_password('team_leader_password')
         session.add(team_leader)
         session.commit()
         print("Initial team leader user created.")
 
     # create user with cleaner role
-    if not session.query(User).filter_by(username='cleaner').first():
-        cleaner = User(username='cleaner', role='cleaner')
+    if not session.query(User).filter_by(email='cleaner@example.com').first():
+        cleaner = User(first_name='Tom', last_name='Gosling', email='cleaner@example.com' role='cleaner')
         cleaner.set_password('cleanerpassword')
         session.add(cleaner)
         session.commit()
@@ -212,7 +217,7 @@ def create_initial_users(Session):
 
 def create_initial_property_and_job(Session):
     session = Session()
-    cleaner = session.query(User).filter_by(username='cleaner').first()
+    cleaner = session.query(User).filter_by(email='cleaner@example.com').first()
     if cleaner and not session.query(Property).first():
         # Create a property
         property1 = Property(address='123 Main St, Anytown', access_notes='Key under mat')
@@ -301,8 +306,8 @@ def create_initial_team(Session):
     session = Session()
     
     owner = session.query(User).filter_by(role='owner').first()
-    team_leader_user = session.query(User).filter_by(username='team_leader').first()
-    cleaner = session.query(User).filter_by(username='cleaner').first()
+    team_leader_user = session.query(User).filter_by(email='team_leader@example.com').first()
+    cleaner = session.query(User).filter_by(email='cleaner@example.com').first()
 
     if owner and cleaner and team_leader_user:
         initial_team = _create_team(session, 'Initial Team', owner.id, members=[owner, cleaner])
@@ -337,7 +342,7 @@ def _create_job(session, date, time, end_time, description, property_obj, team_o
         assignment = Assignment(job_id=job.id, user_id=user_obj.id)
         session.add(assignment)
         session.commit()
-        print(f"Job '{description}' assigned to user {user_obj.username}.")
+        print(f"Job '{description}' assigned to user {user_obj.first_name} {user_obj.last_name}.")
     
     if team_obj:
         assignment = Assignment(job_id=job.id, team_id=team_obj.id)
@@ -348,7 +353,7 @@ def _create_job(session, date, time, end_time, description, property_obj, team_o
 
 def create_initial_property_and_job(Session):
     session = Session()
-    cleaner = session.query(User).filter_by(username='cleaner').first()
+    cleaner = session.query(User).filter_by(email='cleaner@example.com').first()
     initial_team = session.query(Team).filter_by(name='Initial Team').first()
     alpha_team = session.query(Team).filter_by(name='Alpha Team').first()
     beta_team = session.query(Team).filter_by(name='Beta Team').first()
