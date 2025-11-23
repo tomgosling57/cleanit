@@ -1,6 +1,7 @@
-from werkzeug.security import generate_password_hash, check_password_hash
-from database import User, Team
+from werkzeug.security import check_password_hash
+from database import User
 from sqlalchemy.orm import joinedload
+from utils.password_generator import generate_strong_password
 
 class UserService:
     def __init__(self, db_session):
@@ -43,7 +44,7 @@ class UserService:
             return user
         return None
 
-    def create_user(self, first_name: str, last_name: str, email: str, password: str, role:str, phone:str=None, team_id: int=None):
+    def _create_user(self, first_name: str, last_name: str, email: str, password: str, role:str, phone:str=None, team_id: int=None):
         """Create a user within the user table with the given attributes. The email attribute must be unique. 
         The password will be hashed internally before it is stored in the table. Returns none if the email is not unique.
         
@@ -60,6 +61,14 @@ class UserService:
         self.db_session.refresh(new_user)
         self.db_session.commit()
         return new_user
+
+    def create_user(self, first_name: str, last_name: str, email: str, role:str, phone:str=None, team_id: int=None):
+        """Creates a user in the database with a randomly generated password.
+        
+        Returns User object and password string"""
+        password = generate_strong_password()
+        new_user = self._create_user(first_name=first_name, last_name=last_name, email=email, password=password, phone=phone, role=role, team_id=team_id)
+        return new_user, password
     
     def update_user(self, user_id, data):
         """Update a user within the User table with the given data.
