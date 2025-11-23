@@ -1,6 +1,5 @@
 
 from services.user_service import UserService
-from utils.password_generator import generate_strong_password
 
 class UserHelper:
 
@@ -21,15 +20,6 @@ class UserHelper:
             'team_id': data.get('team_id')
         }
         return _return
-
-        
-    def create_user(self, data):
-        """Creates a user in the database with a randomly generated password.
-        
-        Returns User object and password string"""
-        data['password'] = generate_strong_password()
-        user = self.user_service.create_user(**data)
-        return user, data['password']
     
     def validate_user_form_data(self, data, force_names=False):
         """Validates the given form data for creating a user. 
