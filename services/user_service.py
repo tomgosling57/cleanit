@@ -43,13 +43,31 @@ class UserService:
             return user
         return None
 
+    def create_user(self, first_name: str, last_name: str, email: str, password: str, role:str, phone:str=None, team_id: int=None):
+        """Create a user within the user table with the given attributes. The email attribute must be unique. 
+        The password will be hashed internally before it is stored in the table. Returns none if the email is not unique.
+        
+        Returns the Created User or None"""
+        existing_user = self.db_session.query(User).filter_by(email=email).first()
+
+        # Return none if the email is not unique
+        if existing_user:
+            return None
+        
+        new_user = User(first_name=first_name, last_name=last_name, email=email, phone=phone, role=role, team_id=team_id)
+        new_user.set_password(password)
+        self.db_session.add(new_user)
+        self.db_session.refresh(new_user)
+        self.db_session.commit()
+        return new_user
+    
     def update_user(self, user_id, data):
         """Update a user within the User table with the given data.
         
         Returns the updated User object or None"""
         user = self.db_session.query(User).filter_by(id=user_id).first()
 
-        # Return Noneif the user is not in the table
+        # Return if the user is not in the table
         if not user:
             return None
         
