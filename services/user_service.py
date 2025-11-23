@@ -27,22 +27,11 @@ class UserService:
         user = self.db_session.query(User).filter_by(id=user_id).first()
         return user
 
-    def get_user_by_username(self, username):
+    def get_user_by_email(self, email):
         """"""
-        user = self.db_session.query(User).filter_by(username=username).first()
+        user = self.db_session.query(User).filter_by(email=email).first()
         return user
-
-    def register_user(self, username, password, role='cleaner'):
-        existing_user = self.get_user_by_username(username)
-        if existing_user:
-            return None, 'Username already exists'
-        
-        new_user = User(username=username, role=role)
-        new_user.set_password(password)
-        self.db_session.add(new_user)
-        self.db_session.commit()
-        return {'id': new_user.id, 'username': new_user.username, 'role': new_user.role}, None
-
+    
     def authenticate_user(self, username, password):
         user = self.get_user_by_username(username)
         if user and check_password_hash(user.password_hash, password):
