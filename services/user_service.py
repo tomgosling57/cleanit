@@ -34,7 +34,15 @@ class UserService:
         Returns a User object or none"""
         user = self.db_session.query(User).filter_by(email=email).first()
         return user
-    
+
+    def get_roles(self):
+        """Gets the unique values for role from the User table.
+        
+        Returns a list of strings"""
+        roles = self.db_session.query(User.role).distinct().all()
+        roles = [''.join(role) for role in roles]
+        return roles
+
     def authenticate_user(self, email, password):
         """Authenticate a user within the User table via email and password.
 
