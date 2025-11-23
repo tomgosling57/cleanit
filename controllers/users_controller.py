@@ -83,23 +83,23 @@ def login():
     _return = render_template('login.html')
     
     if request.method == 'POST':
-        username = request.form.get('username')
+        email = request.form.get('email')
         password = request.form.get('password')
         
         db = get_db()
         user_service = UserService(db)
-        user = user_service.authenticate_user(username, password)
+        user = user_service.authenticate_user(email, password)
         teardown_db()
         
         if user:
             login_user(user)
-            flash(f'Welcome back, {user.username}!', 'success')
+            flash(f'Welcome back, {user.first_name}!', 'success')
             next = request.args.get('next')
             if not validate_request_host(next, request.host, current_app.debug):
                 _return = abort(400)
             _return = redirect(next or url_for('job.timetable')) # Redirect to job.timetable after successful login
         else:
-            flash('Invalid username or password', 'error')
+            flash('Invalid email or password', 'error')
     
     return _return
 
