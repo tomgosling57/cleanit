@@ -7,29 +7,24 @@ from flask_login import login_user, current_user, fresh_login_required
 def list_all_users_view():
     """List all users with their teams and roles for the owner view."""
     if not current_user.is_authenticated or current_user.role != 'owner':
-        flash('Unauthorized access.', 'error')
-        return redirect(url_for('job.timetable'))
+        return jsonify({'error': 'Unauthorized'}), 403
 
     db = get_db()
     user_service = UserService(db)
-    try:
-        users = user_service.get_all_users()
-        # Prepare data for rendering, including team names
-        users_data = []
-        for user in users:
-            user_teams = [user.team.name] if user.team else []
-            users_data.append({
-                'username': user.username,
-                'role': user.role,
-                'teams': user_teams
-            })
-        return render_template('users.html', users=users_data)
-    except Exception as e:
-        current_app.logger.error(f"Error listing users: {e}")
-        flash('An error occurred while fetching users.', 'error')
-        return redirect(url_for('job.timetable'))
-    finally:
-        teardown_db()
+
+
+    users = user_service.get_all_users()
+    # Prepare data for rendering, including team names
+    users_data = []
+    for user in users:
+        user_teams = [user.team.name] if user.team else []
+        users_data.append({
+            'username': f"{user.first_name} {user.last_name}",
+            'role': user.role,
+            'teams': user_teams
+        })
+    teardown_db()
+    return render_template('users.html', users=users_data)
 
 def list_users():
     """List all users (API endpoint)"""
@@ -39,7 +34,7 @@ def list_users():
         users = user_service.get_all_users()
         users_data = [{
             'id': user.id,
-            'username': user.username,
+            'username': f"{user.first_name} {user.last_name}",
             'role': user.role,
             'team_id': user.team_id
         } for user in users]
