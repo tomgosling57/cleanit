@@ -1,4 +1,4 @@
-a
+import os
 import random
 from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, Date, Time, Boolean, UniqueConstraint, func, DateTime
 from sqlalchemy.orm import sessionmaker, declarative_base, relationship
@@ -190,7 +190,7 @@ def create_initial_users(Session):
     session = Session()
     # create user with owner role
     if not session.query(User).filter_by(role='owner').first():
-        owner = User(first_name='Lily', last_name='Hargrave', email='owner@example.com', phone='12345678' role='owner')
+        owner = User(first_name='Lily', last_name='Hargrave', email='owner@example.com', phone='12345678', role='owner')
         owner.set_password('ownerpassword') # Default password for owner
         session.add(owner)
         session.commit()
@@ -198,7 +198,7 @@ def create_initial_users(Session):
 
     # create user with team_leader role
     if not session.query(User).filter_by(email='team_leader@example.com').first():
-        team_leader = User(first_name='Benjara', last_name="Brown", email='team_leader@example.com' role='team_leader')
+        team_leader = User(first_name='Benjara', last_name="Brown", email='team_leader@example.com', role='team_leader')
         team_leader.set_password('team_leader_password')
         session.add(team_leader)
         session.commit()
@@ -206,7 +206,7 @@ def create_initial_users(Session):
 
     # create user with cleaner role
     if not session.query(User).filter_by(email='cleaner@example.com').first():
-        cleaner = User(first_name='Tom', last_name='Gosling', email='cleaner@example.com' role='cleaner')
+        cleaner = User(first_name='Tom', last_name='Gosling', email='cleaner@example.com', role='cleaner')
         cleaner.set_password('cleanerpassword')
         session.add(cleaner)
         session.commit()
