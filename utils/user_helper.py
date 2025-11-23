@@ -7,6 +7,20 @@ class UserHelper:
     def __init__(self, session):
         self.session = session
         self.user_service = UserService(session)
+    
+    @staticmethod
+    def _extract_user_form_data(data):
+        _return = {
+            'id': data.get('id'),
+            'email': data.get('email'),
+            'first_name': data.get('first_name'),
+            'last_name': data.get('last_name'),
+            'password': data.get('password'),
+            'phone': data.get('phone'),
+            'role': data.get('role'),
+            'team_id': data.get('team_id')
+        }
+        return _return
 
     def create_user(self, data):
         errors = []
