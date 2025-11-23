@@ -76,38 +76,6 @@ def get_user(user_id):
     finally:
         teardown_db()
 
-def register():
-    """Register a new user"""    
-    _return = redirect(url_for('user.login'))
-    
-    if current_user.role == 'owner' and request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
-        role = request.form.get('role', 'cleaner')
-        
-        if not username or not password:
-            flash('Username and password are required', 'error')
-            return render_template('register.html')
-        
-        db = get_db()
-        user_service = UserService(db)
-        new_user, error = user_service.register_user(username, password, role)
-        teardown_db()
-        
-        if error:
-            flash(error, 'error')
-            return render_template('register.html')
-        
-        flash('User registered successfully!', 'success')
-    # If session role is owner and get request then rendered registered template
-    elif current_user.role == 'owner':
-        _return = render_template('register.html')
-    # If session user role is cleaner then redirect to index
-    elif current_user.role == 'cleaner':
-        _return = redirect(url_for('job.timetable'))
-
-    return _return
-
 def login():
     """User login"""
     _return = render_template('login.html')
