@@ -28,11 +28,16 @@ class UserService:
         return user
 
     def get_user_by_email(self, email):
-        """"""
+        """Get a user from the User table with the given email.
+        
+        Returns a User object or none"""
         user = self.db_session.query(User).filter_by(email=email).first()
         return user
     
     def authenticate_user(self, email, password):
+        """Authenticate a user within the User table via email and password.
+
+        Returns User object or None"""
         user = self.get_user_by_email(email)
         if user and check_password_hash(user.password_hash, password):
             return user
