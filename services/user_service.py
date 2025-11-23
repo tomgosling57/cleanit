@@ -32,8 +32,8 @@ class UserService:
         user = self.db_session.query(User).filter_by(email=email).first()
         return user
     
-    def authenticate_user(self, username, password):
-        user = self.get_user_by_username(username)
+    def authenticate_user(self, email, password):
+        user = self.get_user_by_email(email)
         if user and check_password_hash(user.password_hash, password):
             return user
         return None
