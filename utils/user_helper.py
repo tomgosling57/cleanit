@@ -22,16 +22,20 @@ class UserHelper:
         }
         return _return
 
+        
     def create_user(self, data):
         errors = []
         
         if 'password' not in data:
             data['password'] = generate_strong_password()
 
-        user = self.user_service.create_user(data)
+        user = self.user_service.create_user(**data)
 
-    def validate_create_user_data(self, data):
-        """Validates the given form data for creating a user.
+    def validate_user_form_data(self, data, force_names=False):
+        """Validates the given form data for creating a user. 
+        Returns a list of error messages if if there are missing fields.  
+
+        First and last name will only be validated if force_names is True.
         
         Returns a list of errors or none"""
         errors = []
@@ -41,10 +45,10 @@ class UserHelper:
         if 'email' not in data:
             errors.append('Missing email')
         
-        if 'first_name' not in data:
+        if 'first_name' not in data and force_names:
             errors.append('Missing first name')
 
-        if 'last_name' not in data:
+        if 'last_name' not in data and force_names:
             errors.append('Missing last name')
         
         if 'role' not in data:
