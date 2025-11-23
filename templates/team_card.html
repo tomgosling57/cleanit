@@ -15,7 +15,7 @@
             {% if team.members %}
                 {% for member in team.members %}
                     <li class="member-item {% if member.id == team.team_leader_id %}team-leader-member{% endif %}" data-member-id="{{ member.id }}" >
-                        <span class="member-name">{{ member.username }}
+                        <span class="member-name">{{ member.first_name }} {{member.last_name}}
                             {% if member.id == team.team_leader_id %}
                                 <span class="badge leader-badge">👑</span>
                             {% endif %}
@@ -31,4 +31,3 @@
         </ul>
     </div>
 </div>
-<!-- and I'm gonna rejoin case my camerasthat was was on differencecode . -->
