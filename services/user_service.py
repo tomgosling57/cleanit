@@ -44,17 +44,28 @@ class UserService:
         return None
 
     def update_user(self, user_id, data):
+        """Update a user within the User table with the given data.
+        
+        Returns the updated User object or None"""
         user = self.db_session.query(User).filter_by(id=user_id).first()
+
+        # Return Noneif the user is not in the table
         if not user:
             return None
         
-        if 'username' in data:
-            user.username = data['username']
+        if 'email' in data:
+            user.username = data['email']
         if 'role' in data:
             user.role = data['role']
         if 'password' in data:
             user.set_password(data['password'])
-        
+        if 'first_name' in data:
+            user.first_name = data['first_name']
+        if 'last_name' in data:
+            user.last_name = data['last_name']
+        if 'phone' in data:
+            user.phone = data['phone']
+
         self.db_session.commit()
         return user
 
