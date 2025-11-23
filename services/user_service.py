@@ -7,18 +7,28 @@ class UserService:
         self.db_session = db_session
 
     def get_all_users(self):
+        """Gets all users from the User table.
+        
+        Returns a list of User objects"""
         users = self.db_session.query(User).options(joinedload(User.team)).all()
         return users
 
     def get_users_by_role(self, role):
+        """Gets users from the User table filtering by role.
+        
+        Returns a list of User objects"""
         users = self.db_session.query(User).filter_by(role=role).all()
         return users
 
     def get_user_by_id(self, user_id):
+        """Gets a user from the User table with the given id.
+        
+        Returns a User object or None"""
         user = self.db_session.query(User).filter_by(id=user_id).first()
         return user
 
     def get_user_by_username(self, username):
+        """"""
         user = self.db_session.query(User).filter_by(username=username).first()
         return user
 
@@ -55,6 +65,9 @@ class UserService:
         return user
 
     def delete_user(self, user_id):
+        """Deletes the user from the Use table with the given id.
+        
+        Returns true or false"""
         user = self.db_session.query(User).filter_by(id=user_id).first()
         if not user:
             return False
@@ -64,6 +77,9 @@ class UserService:
         return True
 
     def remove_team_from_users(self, team_id):
+        """Removes the given team_id from all of the User objects within the User table.
+        
+        Returns None"""
         users = self.db_session.query(User).filter_by(team_id=team_id).all()
         for user in users:
             user.team_id = None
