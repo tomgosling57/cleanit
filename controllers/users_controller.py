@@ -201,8 +201,17 @@ def update_user(user_id):
     user = user_service.update_user(user_id, data)
     if user:
         users = user_service.get_all_users()
+        # Prepare data for rendering, including team names
+        users_data = []
+        for user in users:
+            user_teams = [user.team.name] if user.team else []
+            users_data.append({
+                'username': f"{user.first_name} {user.last_name}",
+                'role': user.role,
+                'teams': user_teams
+            })
         teardown_db()
-        return render_template('user_list_fragment', users=users)
+        return render_template('user_list_fragment', users=users_data)
     else:
         return render_template('user_update_form.html', user=user, errors=['User update failed.'])
 
@@ -260,8 +269,17 @@ def create_user():
     user, password = user_service.create_user(**data)
     if user:
         users = user_service.get_all_users()
+        # Prepare data for rendering, including team names
+        users_data = []
+        for user in users:
+            user_teams = [user.team.name] if user.team else []
+            users_data.append({
+                'username': f"{user.first_name} {user.last_name}",
+                'role': user.role,
+                'teams': user_teams
+            })
         teardown_db()
-        return render_template('user_list_fragment.html', users=users)
+        return render_template('user_list_fragment.html', users=users_data)
     else:
         return render_template('user_creation_form.html', user=user, errors=['User update failed.'])
 
