@@ -1,0 +1,53 @@
+<form id="user-creation-form" hx-post="{{ url_for('user.create_user') }}"
+      hx-target="#user-list"
+      hx-swap="innerHTML"
+      hx-on--after-request="if(event.detail.successful) { document.getElementById('user-modal').style.display='none'; document.getElementById('user-creation-form').reset(); } else { document.getElementById('form-errors-container').innerHTML = event.detail.xhr.response; }">
+    <h2>Create New Property</h2>
+    <div id="form-errors-container"></div>
+    
+        <div class="form-group">
+        <div class="form-card user-card">
+            <div class="card-header">
+                <span class="card-icon">👤</span>
+                <span class="card-title">Create User</span>
+            </div>
+            <div class="form-field">
+                <label for="first_name">First Name</label>
+                <input type="text" id="first_name" name="first_name" required placeholder="Enter first name">
+            </div>
+            <div class="form-field">
+                <label for="first_name">Last Name</label>
+                <input type="text" id="first_name" name="first_name" required placeholder="Enter last name">
+            </div>
+            <div class="form-field">
+                <label for="email">Email</label>
+                <input type="text" id="email" name="email" required placeholder="Enter email">
+            </div>
+            <div class="form-field">
+                <label for="phone">Phone Number</label>
+                <input type="text" id="phone" name="phone" required placeholder="Enter phone number">
+            </div>
+            <div class="form-field">
+                <label for="role">Staff Role</label>
+                <select>
+                    {% for role in roles %}
+                    <option value="{{ role }}">{{ role }}</option>
+                    {% endfor %}
+                </select>
+            <div class="form-field">
+                <label for="team_id">Team</label>
+                <select>
+                    {% for team in teams %}
+                    <option value="{{ team.id }}">{{ team.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="button save-button">
+                💾 Create Property
+            </button>
+            <button type="button" class="button" onclick="document.getElementById('property-modal').style.display='none'">Cancel</button>
+        </div>
+    </div>
+</form>
