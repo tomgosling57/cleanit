@@ -29,3 +29,15 @@
     margin-bottom: 8px;
     line-height: 1.5;
 }
+
+.user-card { 
+  display: flex;
+  flex-direction: column;
+}
+.edit-user-icon {
+    position: absolute;
+    align-self: self-end;
+}
+.edit-user-icon:hover {
+    color: var(--accent-color);
+}
