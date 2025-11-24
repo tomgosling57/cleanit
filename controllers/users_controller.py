@@ -151,9 +151,11 @@ def get_user_update_form(user_id):
         return jsonify({'error': 'Unauthorized'}), 403
     db = get_db()
     user_service = UserService(db)
+    team_service = TeamService(db)
     user = user_service.get_user_by_id(user_id)
+    teams = team_service.get_all_teams()
     roles = user_service.get_roles()
-    return render_template('user_update_form.html', user=user, roles=roles)
+    return render_template('user_update_form.html', user=user, roles=roles, teams=teams)
 
 def update_user(user_id):
     """Updates an existing user's details in the database.
