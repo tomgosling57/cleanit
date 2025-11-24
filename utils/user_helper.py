@@ -2,25 +2,31 @@
 from services.user_service import UserService
 
 class UserHelper:
-    """! @brief Helper class that performs form-related operations for the user controller.
+    """Helper class that performs form-related operations for the user controller.
     
     This class provides utility methods for cleaning and validating user form data,
     and interacts with the UserService for data persistence and retrieval.
     """
 
     def __init__(self, session):
-        """! @brief Initializes the UserHelper with a database session.
-        @param session The database session to be used by the user service.
+        """Initializes the UserHelper with a database session.
+        
+        Args:
+            session: The database session to be used by the user service.
         """
         self.session = session
         self.user_service = UserService(session)
     
     @staticmethod
     def clean_user_form_data(data, creation_form=False):
-        """! @brief Cleans and extracts relevant user data from a form submission.
-        @param data A dictionary containing the raw form data.
-        @param creation_form A boolean indicating if the data is for a new user creation form.
-        @return A dictionary containing the cleaned user data.
+        """Cleans and extracts relevant user data from a form submission.
+        
+        Args:
+            data: A dictionary containing the raw form data.
+            creation_form: A boolean indicating if the data is for a new user creation form.
+
+        Returns:
+            A dictionary containing the cleaned user data.
         """
         _return = {
             'email': data.get('email'),
@@ -36,10 +42,14 @@ class UserHelper:
         return _return
     
     def validate_user_form_data(self, data, force_names=False):
-        """! @brief Validates the given form data for creating a user.
-        @param data A dictionary containing the form data to validate.
-        @param force_names A boolean indicating if first and last names should be validated.
-        @return A list of error messages if there are missing fields or validation fails, otherwise None.
+        """Validates the given form data for creating a user.
+        
+        Args:
+            data: A dictionary containing the form data to validate.
+            force_names: A boolean indicating if first and last names should be validated.
+
+        Returns:
+            A list of error messages if there are missing fields or validation fails, otherwise None.
         """
         errors = []
         if 'email' in data:
