@@ -151,11 +151,9 @@ def get_user_update_form(user_id):
         return jsonify({'error': 'Unauthorized'}), 403
     db = get_db()
     user_service = UserService(db)
-    team_service = TeamService(db)
     user = user_service.get_user_by_id(user_id)
-    teams = team_service.get_all_teams()
     roles = user_service.get_roles()
-    return render_template('user_update_form.html', user=user, roles=roles, teams=teams)
+    return render_template('user_update_form.html', user=user, roles=roles)
 
 def update_user(user_id):
     """Updates an existing user's details in the database.
@@ -204,7 +202,7 @@ def update_user(user_id):
 def get_user_creation_form():
     """Renders the user creation form.
 
-    This function retrieves available roles and teams, then renders the 'user_creation_form.html' template.
+    This function retrieves available roles, then renders the 'user_creation_form.html' template.
     Access is restricted to authenticated users.
 
     Returns:
@@ -215,10 +213,8 @@ def get_user_creation_form():
     
     db = get_db()
     user_service = UserService(db)
-    team_service = TeamService(db)
     roles = user_service.get_roles()
-    teams = team_service.get_all_teams()
-    return render_template('user_creation_form.html', roles=roles, teams=teams)
+    return render_template('user_creation_form.html', roles=roles)
 
 def create_user():
     """Creates a new user in the database.
