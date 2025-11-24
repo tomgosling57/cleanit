@@ -1,0 +1,56 @@
+<form id="user-creation-form" 
+      hx-post="{{ url_for('user.update_user', user_id=user.id) }}"
+      hx-target="#form-errors-container"
+      hx-swap="innerHTML"
+      hx-on--after-request="if(event.detail.successful) { document.getElementById('user-modal').style.display='none'; document.getElementById('user-creation-form').reset(); } else { document.getElementById('form-errors-container').innerHTML = event.detail.xhr.response; }">
+    
+    <h2>Create New User</h2>
+    
+    <div class="form-errors-container" id="form-errors-container"></div>
+    
+        <div class="form-group">
+        <div class="form-card user-card">
+            <div class="card-header">
+                <span class="card-icon">👤</span>
+                <span class="card-title">User Details</span>
+            </div>
+            <div class="form-field">
+                <label for="first_name">First Name</label>
+                <input type="text" id="first_name" name="first_name" required value="{{user.first_name}}">
+            </div>
+            <div class="form-field">
+                <label for="last_name">Last Name</label>
+                <input type="text" id="last_name" name="last_name" required value="{{user.last_name}}">
+            </div>
+            <div class="form-field">
+                <label for="email">Email</label>
+                <input type="text" id="email" name="email" required value="{{user.email}}">
+            </div>
+            <div class="form-field">
+                <label for="phone">Phone Number</label>
+                <input type="text" id="phone" name="phone" value="{{user.phone}}">
+            </div>
+            <div class="form-field">
+                <label for="role">Staff Role</label>
+                <select name="role" id="role">
+                    {% for role in roles %}
+                    <option value="{{ role }}" {% if role == user.role %}selected{% endif %}>{{ role }}</option>
+                    {% endfor %}
+                </select>
+            <div class="form-field">
+                <label for="team_id">Team</label>
+                <select name="role" id="role">
+                    {% for team in teams %}
+                    <option value="{{ team.id }}" {% if team.id == user.team_id %}selected{% endif %}>{{ team.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="button save-button">
+                💾 Create User
+            </button>
+            <button type="button" class="button" onclick="document.getElementById('{{modal_name}}-modal').style.display='none'">Cancel</button>
+        </div>
+    </div>
+</form>
