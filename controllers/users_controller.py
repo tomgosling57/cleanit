@@ -279,9 +279,9 @@ def create_user():
                 'teams': user_teams
             })
         teardown_db()
-        user_list_fragment = render_template_string('user_list_fragment.html', users=users_data)
-        form_errors = render_template_string('_form_errors.html')
-        return f"{user_list_fragment}\n{render_template_string('user_list_fragment.html', users=users_data)}"
+        user_list_fragment = render_template('user_list_fragment.html', users=users_data)
+        form_errors = render_template('_form_errors.html')
+        return f"{user_list_fragment}\n{form_errors}"
     else:
         return render_template('_form_errors.html', errors={'database_error':'User update failed'}), 500
 
