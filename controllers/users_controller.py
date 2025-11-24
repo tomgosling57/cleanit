@@ -186,7 +186,8 @@ def update_user(user_id):
     errors = user_helper.validate_user_form_data(data)
     # Render errors to the UI
     if errors:
-        return render_template('_form_errors.html', errors=errors)
+        # Return failure a HTTP status to prevent the javascript from closing the modal
+        return render_template('_form_errors.html', errors=errors), 400
     
     # Update the database if there are no errors
     user = user_service.update_user(user_id, data)
@@ -197,6 +198,7 @@ def update_user(user_id):
         form_errors = render_template('_form_errors.html')
         return f"{user_list_fragment}\n{form_errors}"
     else:
+        # Return failure a HTTP status to prevent the javascript from closing the modal
         return render_template('_form_errors.html', errors={'database_error':'User update failed'}), 500
 
 def get_user_creation_form():
@@ -233,6 +235,7 @@ def create_user():
     
     data = request.form.to_dict()
     if not data:
+        # Return failure a HTTP status to prevent the javascript from closing the modal
         return jsonify({'error': 'Invalid data provided'}), 400
 
     # Clean the user form data and handle errors
@@ -245,6 +248,7 @@ def create_user():
     errors = user_helper.validate_user_form_data(data, force_names=True)
     # Render errors to the UI
     if errors:
+        # Return failure a HTTP status to prevent the javascript from closing the modal
         return render_template('_form_errors.html', errors=errors), 400
     
     # Create the user in the database if there are no errors
