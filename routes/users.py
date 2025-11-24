@@ -38,10 +38,10 @@ def create_user():
 def login():
     return users_controller.login()
 
-@user_bp.route('/user/<int:user_id>/update', methods=['PUT'])
+@user_bp.route('/user/<int:user_id>/update', methods=['PUT', 'GET'])
 @login_required
 def update_user(user_id):
-    return users_controller.update_user(user_id)
+    return users_controller.update_user(user_id) if request.method == 'PUT' else users_controller.get_user_update_form(user_id)
 
 @user_bp.route('/user/<int:user_id>/delete', methods=['DELETE'])
 @login_required

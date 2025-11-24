@@ -1,6 +1,6 @@
 <div class="user-card">
     <span class="material-symbols-outlined edit-user-icon"
-    hx-get="{{ url_for('user.update_user', view_type='normal') }}"
+    hx-get="{{ url_for('user.update_user', user_id=user.id) }}"
     hx-target="#user-modal-content"
     hx-swap="innerHTML"
     hx-trigger="click"
