@@ -182,7 +182,7 @@ def create_user():
     if user:
         users = user_service.get_all_users()
         teardown_db()
-        return render_template('user_list_fragment', users=users)
+        return render_template('user_list_fragment.html', users=users)
     else:
         return render_template('user_creation_form.html', user=user, errors=['User update failed.'])
 
