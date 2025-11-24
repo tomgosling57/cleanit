@@ -29,10 +29,10 @@ def users_view():
 def get_user_details(user_id):
     return users_controller.get_user(user_id)
 
-@user_bp.route('/user/register', methods=['GET', 'POST'])
+@user_bp.route('/user/create', methods=['GET', 'POST'])
 @login_required
-def register():
-    return users_controller.register()
+def create_user():
+    return users_controller.create_user() if request.method == 'POST' else users_controller.get_user_creation_form()
 
 @user_bp.route('/user/login', methods=['GET', 'POST'])
 def login():

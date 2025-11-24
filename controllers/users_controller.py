@@ -144,7 +144,7 @@ def update_user(user_id):
     else:
         return render_template('user_update_form.html', user=user, errors=['User update failed.'])
 
-def get_user_creation_form(user_id):
+def get_user_creation_form():
     """Renders the update form for the given user id."""
     if not current_user.is_authenticated:
         return jsonify({'error': 'Unauthorized'}), 403
@@ -156,7 +156,7 @@ def get_user_creation_form(user_id):
     teams = team_service.get_all_teams()
     return render_template('user_creation_form.html', roles=roles, teams=teams)
 
-def create_user(user_id):
+def create_user():
     """Create user in the database."""
     if not current_user.is_authenticated:
         return jsonify({'error': 'Unauthorized'}), 403
@@ -168,7 +168,6 @@ def create_user(user_id):
     # Clean the user form data and handle errors
     db = get_db()
     user_service = UserService(db)
-    user = user_service.get_user_by_id(user_id)
     user_helper = UserHelper(db)
     # Extract and validate user attributes from form data
     data = user_helper.clean_user_form_data(data) 

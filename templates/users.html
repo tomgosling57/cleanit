@@ -5,6 +5,16 @@
 {% block content %}
     <div class="container">
         <h1>All Users</h1>
+        {% if current_user.role == 'owner' %}    
+                <button class="button"
+                        hx-get="{{ url_for('user.create_user', view_type='normal') }}"
+                        hx-target="#user-modal-content"
+                        hx-swap="innerHTML"
+                        hx-trigger="click"
+                        hx-on--after-request="document.getElementById('user-modal').style.display='block'">
+                    Create User
+                </button>
+            {% endif %}
         <div class="user-list">
             {% if users %}
                 <div class="user-cards-container">
