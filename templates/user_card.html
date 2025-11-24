@@ -6,7 +6,7 @@
     hx-trigger="click"
     hx-on--after-request="document.getElementById('user-modal').style.display='block'">edit</span>
     <div class="user-details">
-        <h3>{{ user.username }}</h3>
+        <h3>{{ user.first_name }} {{ user.last_name }}</h3>
         <p><strong>Role:</strong> {{ user.role }}</p>
         <p><strong>Teams:</strong>
             {% if user.teams %}
