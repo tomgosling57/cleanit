@@ -177,7 +177,7 @@ def update_user(user_id):
     
     data = request.form.to_dict()
     if not data:
-        
+        return jsonify({'error': 'Invalid data provided'}), 400
 
     # Clean the user form data and handle errors
     db = get_db()
