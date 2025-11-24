@@ -49,23 +49,23 @@ class UserHelper:
             force_names: A boolean indicating if first and last names should be validated.
 
         Returns:
-            A list of error messages if there are missing fields or validation fails, otherwise None.
+            A dict of error messages if there are missing fields or validation fails, otherwise None.
         """
-        errors = []
+        errors = {}
         if 'email' in data:
             if self.user_service.get_user_by_email(data['email']):
-                errors.append('That email is already registered')
+                errors['email'] = 'Email address is already registered'
         if 'email' not in data:
-            errors.append('Missing email')
+            errors['email'] = 'Missing email address'
         
         if 'first_name' not in data and force_names:
-            errors.append('Missing first name')
+            errors['first_name'] = 'Missing first name'
  
         if 'last_name' not in data and force_names:
-            errors.append('Missing last name')
+            errors['last_name'] = 'Missing last name'
         
         if 'role' not in data:
-            errors.append('Missing user role')
+            errors['role'] = 'Missing phone numbers'
  
         # Return the error messages if the array is non empty
         if len(errors) > 0:

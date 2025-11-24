@@ -1,4 +1,4 @@
-from flask import request, jsonify, render_template, redirect, url_for, flash, session, abort, current_app
+from flask import render_template_string, request, jsonify, render_template, redirect, url_for, flash, session, abort, current_app
 from services.team_service import TeamService
 from utils.http import validate_request_host
 from database import get_db, teardown_db
@@ -263,7 +263,7 @@ def create_user():
     errors = user_helper.validate_user_form_data(data, force_names=True)
     # Render errors to the UI
     if errors:
-        return render_template('user_creation_form.html', user=user, errors=errors)
+        return render_template('_form_errors.html', errors=errors), 400
     
     # Create the user in the database if there are no errors
     user, password = user_service.create_user(**data)
@@ -279,9 +279,11 @@ def create_user():
                 'teams': user_teams
             })
         teardown_db()
-        return render_template('user_list_fragment.html', users=users_data)
+        user_list_fragment = render_template_string('user_list_fragment.html', users=users_data)
+        form_errors = render_template_string('_form_errors.html')
+        return f"{user_list_fragment}\n{render_template_string('user_list_fragment.html', users=users_data)}"
     else:
-        return render_template('user_creation_form.html', user=user, errors=['User update failed.'])
+        return render_template('_form_errors.html', errors={'database_error':'User update failed'}), 500
 
 def delete_user(user_id):
     """Deletes a user from the database.
