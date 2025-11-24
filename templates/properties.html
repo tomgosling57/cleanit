@@ -20,17 +20,14 @@
     </div>
 
     <!-- Property Modal -->
-    <div id="property-modal" class="modal" style="display:none;">
-        <div class="modal-content">
-            <span class="close-button" onclick="document.getElementById('property-modal').style.display='none'">&times;</span>
-            <div id="property-modal-content" class="job-list">
-                <!-- Property creation and update forms as well as job list will be rendered here via HTMX -->
-            </div>
-        </div>
-    </div>
+    {% with modal_name='property' %}
+    {% include 'modal.html' %} 
+    {% endwith %}
     
     <!-- Job Modal for Accessing Jobs on the Property Job List -->
-    {% include 'job_modal.html' %} 
+    {% with modal_name='job' %}
+    {% include 'modal.html' %} 
+    {% endwith %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/property_styles.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/job_styles .css') }}">.

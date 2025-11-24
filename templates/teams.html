@@ -22,14 +22,12 @@
             {% endif %}
         </div>
     </div>
-    <div id="team-modal" class="modal" style="display:none;">
-        <div class="modal-content">
-            <span class="close-button" onclick="document.getElementById('team-modal').style.display='none'">&times;</span>
-            <div id="team-modal-content">
-                <!-- Team edit form will be loaded here via JavaScript/HTMX -->
-            </div>
-        </div>
-    </div>
+    
+    <!-- Teams Modal -->
+    {% with modal_name='team' %}
+    {% include 'modal.html' %} 
+    {% endwith %}
+
     <script src="{{ url_for('static', filename='js/team_management.js') }}"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
