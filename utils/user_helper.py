@@ -8,17 +8,18 @@ class UserHelper:
         self.user_service = UserService(session)
     
     @staticmethod
-    def clean_user_form_data(data):
+    def clean_user_form_data(data, creation_form=False):
         _return = {
-            'id': data.get('id'),
             'email': data.get('email'),
             'first_name': data.get('first_name'),
             'last_name': data.get('last_name'),
-            'password': data.get('password'),
             'phone': data.get('phone'),
             'role': data.get('role'),
             'team_id': data.get('team_id')
         }
+        if not creation_form:
+            _return['id'] = data.get('id')
+            _return['password'] = data.get('password')
         return _return
     
     def validate_user_form_data(self, data, force_names=False):
