@@ -8,7 +8,14 @@ from flask_login import login_user, current_user, fresh_login_required
 from utils.user_helper import UserHelper
 
 def list_all_users_view():
-    """List all users with their teams and roles for the owner view."""
+    """Renders the user management page for owners.
+
+    This function retrieves all users from the database, enriches their data with team information,
+    and renders the 'users.html' template. Access is restricted to authenticated users with the 'owner' role.
+
+    Returns:
+        A rendered HTML page displaying all users and their details, or a JSON error if unauthorized.
+    """
     if not current_user.is_authenticated or current_user.role != 'owner':
         return jsonify({'error': 'Unauthorized'}), 403
 
@@ -30,7 +37,14 @@ def list_all_users_view():
     return render_template('users.html', users=users_data)
 
 def list_users():
-    """List all users (API endpoint)"""
+    """API endpoint to list all users.
+
+    Retrieves all users from the database and returns their ID, full name, role, and team ID.
+    This endpoint is intended for API consumption.
+
+    Returns:
+        A JSON array of user data, or a JSON error if an internal server error occurs.
+    """
     db = get_db()
     user_service = UserService(db)
     try:
@@ -49,6 +63,14 @@ def list_users():
         teardown_db()
 
 def get_all_categorized_users():
+    """Retrieves all users categorized by their team assignment.
+
+    This function fetches all users and categorizes them into 'on_this_team' (empty for new teams),
+    'on_a_different_team', and 'unassigned'. Access is restricted to authenticated users with the 'owner' role.
+
+    Returns:
+        A JSON object containing categorized user lists, or a JSON error if unauthorized.
+    """
     if current_user.role not in ['owner']:
         return jsonify({'error': 'Unauthorized'}), 403
 
@@ -65,7 +87,14 @@ def get_all_categorized_users():
     return jsonify(categorized_users)
 
 def get_user(user_id):
-    """Get a specific user by ID"""
+    """Retrieves a specific user by their ID.
+
+    Args:
+        user_id: The unique identifier of the user to retrieve.
+
+    Returns:
+        A JSON object containing the user's data if found, or a JSON error if the user is not found or an internal server error occurs.
+    """
     db = get_db()
     user_service = UserService(db)
     try:
@@ -80,7 +109,17 @@ def get_user(user_id):
         teardown_db()
 
 def login():
-    """User login"""
+    """Handles user login functionality.
+
+    This function processes both GET and POST requests for user login.
+    - GET: Renders the login form.
+    - POST: Authenticates the user based on provided email and password. If successful,
+            logs the user in, flashes a success message, and redirects to the 'job.timetable' page
+            or a 'next' URL if provided and validated. If authentication fails, flashes an error message.
+
+    Returns:
+        A rendered HTML login page, a redirect response on successful login, or an abort(400) on invalid host.
+    """
     _return = render_template('login.html')
     
     if request.method == 'POST':
@@ -105,7 +144,17 @@ def login():
     return _return
 
 def get_user_update_form(user_id):
-    """Renders the update form for the given user id."""
+    """Renders the user update form for a specific user.
+
+    This function retrieves the user details and available roles, then renders the 'user_update_form.html' template.
+    Access is restricted to authenticated users.
+
+    Args:
+        user_id: The unique identifier of the user to update.
+
+    Returns:
+        A rendered HTML form for user updates, or a JSON error if unauthorized.
+    """
     if not current_user.is_authenticated:
         return jsonify({'error': 'Unauthorized'}), 403
     
@@ -116,7 +165,20 @@ def get_user_update_form(user_id):
     return render_template('user_update_form.html', user=user, roles=roles)
 
 def update_user(user_id):
-    """Update user details in the database."""
+    """Updates an existing user's details in the database.
+
+    This function processes form data to update a user. It cleans and validates the input data.
+    If there are validation errors, it re-renders the update form with error messages.
+    On successful update, it renders the 'user_list_fragment' with the updated list of users.
+    Access is restricted to authenticated users.
+
+    Args:
+        user_id: The unique identifier of the user to update.
+
+    Returns:
+        A rendered HTML user update form with errors, or a rendered user list fragment on success,
+        or a JSON error if unauthorized or invalid data is provided.
+    """
     if not current_user.is_authenticated:
         return jsonify({'error': 'Unauthorized'}), 403
     
@@ -145,7 +207,14 @@ def update_user(user_id):
         return render_template('user_update_form.html', user=user, errors=['User update failed.'])
 
 def get_user_creation_form():
-    """Renders the update form for the given user id."""
+    """Renders the user creation form.
+
+    This function retrieves available roles and teams, then renders the 'user_creation_form.html' template.
+    Access is restricted to authenticated users.
+
+    Returns:
+        A rendered HTML form for user creation, or a JSON error if unauthorized.
+    """
     if not current_user.is_authenticated:
         return jsonify({'error': 'Unauthorized'}), 403
     
@@ -157,7 +226,17 @@ def get_user_creation_form():
     return render_template('user_creation_form.html', roles=roles, teams=teams)
 
 def create_user():
-    """Create user in the database."""
+    """Creates a new user in the database.
+
+    This function processes form data to create a new user. It cleans and validates the input data,
+    ensuring first and last names are present. If there are validation errors, it re-renders the
+    creation form with error messages. On successful creation, it renders the 'user_list_fragment.html'
+    with the updated list of users. Access is restricted to authenticated users.
+
+    Returns:
+        A rendered HTML user creation form with errors, or a rendered user list fragment on success,
+        or a JSON error if unauthorized or invalid data is provided.
+    """
     if not current_user.is_authenticated:
         return jsonify({'error': 'Unauthorized'}), 403
     
@@ -187,7 +266,18 @@ def create_user():
         return render_template('user_creation_form.html', user=user, errors=['User update failed.'])
 
 def delete_user(user_id):
-    """Delete a user"""
+    """Deletes a user from the database.
+
+    This function attempts to delete a user identified by `user_id`.
+    On successful deletion, it redirects to the 'user.list_all_users_view'.
+    If the user is not found, it returns a JSON error.
+
+    Args:
+        user_id: The unique identifier of the user to delete.
+
+    Returns:
+        A redirect response on successful deletion, or a JSON error if the user is not found.
+    """
     db = get_db()
     user_service = UserService(db)
     success = user_service.delete_user(user_id)
