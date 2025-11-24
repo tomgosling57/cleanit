@@ -149,7 +149,6 @@ def get_user_update_form(user_id):
     """
     if not current_user.is_authenticated:
         return jsonify({'error': 'Unauthorized'}), 403
-    print('here')
     db = get_db()
     user_service = UserService(db)
     user = user_service.get_user_by_id(user_id)
