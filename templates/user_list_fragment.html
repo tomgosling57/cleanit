@@ -1,0 +1,9 @@
+{% if users %}
+    <div class="user-cards-container">
+        {% for user in users %}
+            {% include 'user_card.html' %}
+        {% endfor %}
+    </div>
+{% else %}
+    <p>No users found.</p>
+{% endif %}

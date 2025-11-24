@@ -15,16 +15,8 @@
                     Create User
                 </button>
             {% endif %}
-        <div class="user-list">
-            {% if users %}
-                <div class="user-cards-container">
-                    {% for user in users %}
-                        {% include 'user_card.html' %}
-                    {% endfor %}
-                </div>
-            {% else %}
-                <p>No users found.</p>
-            {% endif %}
+        <div class="user-list" id="user-list">
+            {% include 'user_list_fragment.html' %}
         </div>
     </div>
     {% with modal_name="user" %}
