@@ -37,20 +37,14 @@
                     <option value="{{ role }}" {% if role == user.role %}selected{% endif %}>{{ role }}</option>
                     {% endfor %}
                 </select>
-            <div class="form-field">
-                <label for="team_id">Team</label>
-                <select name="role" id="role">
-                    {% for team in teams %}
-                        <option value="{{ team.id }}" {% if team.id == user.team_id %}selected{% endif %}>{{ team.name }}</option>
-                    {% endfor %}
-                </select>
             </div>
-        </div>
-        <div class="form-actions">
-            <button type="submit" class="button save-button">
-                💾 Create User
-            </button>
-            <button type="button" class="button" onclick="document.getElementById('{{modal_name}}-modal').style.display='none'">Cancel</button>
+        
+            <div class="form-actions">
+                <button type="submit" class="button save-button">
+                    💾 Update User
+                </button>
+                <button type="button" class="button" onclick="document.getElementById('{{modal_name}}-modal').style.display='none'">Cancel</button>
+            </div>
         </div>
     </div>
 </form>

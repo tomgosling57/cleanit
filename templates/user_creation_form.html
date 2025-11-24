@@ -37,13 +37,6 @@
                     <option value="{{ role }}">{{ role }}</option>
                     {% endfor %}
                 </select>
-            <div class="form-field">
-                <label for="team_id">Team</label>
-                <select name="role" id="role">
-                    {% for team in teams %}
-                    <option value="{{ team.id }}">{{ team.name }}</option>
-                    {% endfor %}
-                </select>
             </div>
         </div>
         <div class="form-actions">
