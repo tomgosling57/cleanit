@@ -396,3 +396,48 @@ textarea:focus {
         font-size: 0.8rem;
     }
 }
+
+div.job-details-group div.form-group {
+    max-width: 100%;
+}
+
+.form-group {
+    display: flex;
+    gap: 12px;
+    align-items: stretch;
+}
+
+.form-card {
+    background-color: var(--card-background);
+    border: 3px solid var(--border-color);
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: 0 2px 8px rgba(10, 126, 164, 0.06);
+}
+
+.form-row {
+    display: flex;
+    gap: 12px;
+}
+
+.form-field {
+    flex: 1;
+}
+
+.form-field input,
+.form-field textarea,
+.form-field select {
+    margin-bottom: 0;
+    height: 2.5rem;
+    font-size: 0.9rem;
+    padding: 8px 12px;
+}
+
+.form-field textarea {
+    min-height: 60px;
+    resize: vertical;
+}
+
+.form-field label {
+    margin-top: 15px;
+}
