@@ -1,5 +1,10 @@
 <div class="user-card">
-    <span class="material-symbols-outlined edit-user-icon">edit</span>
+    <span class="material-symbols-outlined edit-user-icon"
+    hx-get="{{ url_for('user.update_user', view_type='normal') }}"
+    hx-target="#user-modal-content"
+    hx-swap="innerHTML"
+    hx-trigger="click"
+    hx-on--after-request="document.getElementById('user-modal').style.display='block'">edit</span>
     <div class="user-details">
         <h3>{{ user.username }}</h3>
         <p><strong>Role:</strong> {{ user.role }}</p>
