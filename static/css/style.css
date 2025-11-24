@@ -441,3 +441,11 @@ div.job-details-group div.form-group {
 .form-field label {
     margin-top: 15px;
 }
+
+.form-error {
+    color: red;
+}
+
+.form-errors-container {
+    margin-bottom: 10px;
+}
