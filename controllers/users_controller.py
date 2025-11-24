@@ -1,4 +1,5 @@
 from flask import request, jsonify, render_template, redirect, url_for, flash, session, abort, current_app
+from services.team_service import TeamService
 from utils.http import validate_request_host
 from database import get_db, teardown_db
 from services.user_service import UserService
@@ -150,8 +151,10 @@ def get_user_creation_form(user_id):
     
     db = get_db()
     user_service = UserService(db)
+    team_service = TeamService(db)
     roles = user_service.get_roles()
-    return render_template('user_creation_form.html', roles=roles)
+    teams = team_service.get_all_teams()
+    return render_template('user_creation_form.html', roles=roles, teams=teams)
 
 def create_user(user_id):
     """Create user in the database."""
