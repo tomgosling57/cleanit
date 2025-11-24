@@ -1,4 +1,5 @@
-<form id="user-creation-form" hx-post="{{ url_for('user.create_user') }}"
+<form id="user-creation-form" 
+      hx-post="{{ url_for('user.create_user') }}"
       hx-target="#user-list"
       hx-swap="innerHTML"
       hx-on--after-request="if(event.detail.successful) { document.getElementById('user-modal').style.display='none'; document.getElementById('user-creation-form').reset(); } else { document.getElementById('form-errors-container').innerHTML = event.detail.xhr.response; }">
@@ -16,8 +17,8 @@
                 <input type="text" id="first_name" name="first_name" required placeholder="Enter first name">
             </div>
             <div class="form-field">
-                <label for="first_name">Last Name</label>
-                <input type="text" id="first_name" name="first_name" required placeholder="Enter last name">
+                <label for="last_name">Last Name</label>
+                <input type="text" id="last_name" name="last_name" required placeholder="Enter last name">
             </div>
             <div class="form-field">
                 <label for="email">Email</label>
