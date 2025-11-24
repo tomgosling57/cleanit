@@ -89,8 +89,8 @@ class UserService:
         new_user = User(first_name=first_name, last_name=last_name, email=email, phone=phone, role=role, team_id=team_id)
         new_user.set_password(password)
         self.db_session.add(new_user)
-        self.db_session.refresh(new_user)
         self.db_session.commit()
+        self.db_session.refresh(new_user)
         return new_user
 
     def create_user(self, first_name: str, last_name: str, email: str, role:str, phone:str=None, team_id: int=None):
