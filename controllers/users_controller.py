@@ -250,7 +250,7 @@ def create_user():
     user_helper = UserHelper(db)
     # Extract and validate user attributes from form data
     data = user_helper.clean_user_form_data(data, creation_form=True) 
-    # Validate with force_names=True to make sure first and last names are presentp
+    # Validate with force_names=True to make sure first and last names are present
     errors = user_helper.validate_user_form_data(data, force_names=True)
     # Render errors to the UI
     if errors:
