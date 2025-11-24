@@ -7,17 +7,15 @@
         <h1>All Users</h1>
         {% if current_user.role == 'owner' %}    
                 <button class="button"
-                        hx-get="{{ url_for('user.create_user', view_type='normal') }}"
-                        hx-target="#user-modal-content"
-                        hx-swap="innerHTML"
-                        hx-trigger="click"
-                        hx-on--after-request="document.getElementById('user-modal').style.display='block'">
-                    Create User
-                </button>
-            {% endif %}
-        <div class="user-list" id="user-list">
-            {% include 'user_list_fragment.html' %}
-        </div>
+                    hx-get="{{ url_for('user.create_user', view_type='normal') }}"
+                    hx-target="#user-modal-content"
+                    hx-swap="innerHTML"
+                    hx-trigger="click"
+                    hx-on--after-request="document.getElementById('user-modal').style.display='block'">
+                Create User
+            </button>
+        {% endif %}
+        {% include 'user_list_fragment.html' %}
     </div>
     {% with modal_name="user" %}
     {% include 'modal.html'%}
