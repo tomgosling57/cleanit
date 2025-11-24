@@ -127,17 +127,17 @@ class UserService:
         if not user:
             return None
         
-        if 'email' in data:
+        if data.get('email'):
             user.username = data['email']
-        if 'role' in data:
+        if data.get('role'):
             user.role = data['role']
-        if 'password' in data:
+        if data.get('password'):
             user.set_password(data['password'])
-        if 'first_name' in data:
+        if data.get('first_name'):
             user.first_name = data['first_name']
-        if 'last_name' in data:
+        if data.get('last_name'):
             user.last_name = data['last_name']
-        if 'phone' in data:
+        if data.get('phone'):
             user.phone = data['phone']
 
         self.db_session.commit()
