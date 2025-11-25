@@ -62,7 +62,7 @@ def update_user_password(user_id):
     else:
         authenticated_user =  user_service.authenticate_user(user.email, old_password)
     if authenticated_user and new_password and new_password_confirmation and new_password == new_password_confirmation:
-        authenticated_user.set_password(new_password)
+        user_service.change_user_password(authenticated_user, new_password)
         message = "Updated password successfully."
         user = authenticated_user
     elif not authenticated_user:
