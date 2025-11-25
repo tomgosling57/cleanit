@@ -51,7 +51,7 @@ def update_user_profile():
 
     db = get_db()
     user, errors = _update_user(current_user.id, db)    
-    return render_template('_errors.html'), 200
+    return render_template('user_update_form.html', user=user, errors=errors, user_profile=True, message="User updated successfully."), 200
 
 def list_users():
     """API endpoint to list all users.
@@ -233,7 +233,7 @@ def update_user(user_id):
         users = user_service.get_all_users()
         teardown_db()
         user_list_fragment = render_template('user_list_fragment.html', users=users)
-        form_errors = render_template('_errors.html')
+        form_errors = render_template('_errors.html', message="User updated successfully.")
         return f"{user_list_fragment}\n{form_errors}"
     else:
         # Return failure a HTTP status to prevent the javascript from closing the modal
