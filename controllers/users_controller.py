@@ -42,25 +42,34 @@ def get_user_update_password_form(user_id):
     return render_template('user_update_password_form.html', user=user)
 
 
-def update_user_password():
+def update_user_password(user_id):
     """Updates the current user's password.
     
     Returns new password string or none"""
     if not current_user.is_authenticated:
         return jsonify({'error': 'Unauthorized'}), 403
 
-    old_password = request.form.get('old-password')
+    old_password = request.form.get('old_password')
     new_password = request.form.get('new_password')
     new_password_confirmation = request.form.get('new_password_confirmation')
     db = get_db()
     user_service = UserService(db)
-    user =  user_service.authenticate_user(current_user.email, old_password)
-    errors = None
-    if user and new_password and new_password_confirmation and new_password == new_password_confirmation:
-        user.set_password(new_password)
+    user = user_service.get_user_by_id(user_id)
+    errors = {}
+    message = None
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+    else:
+        authenticated_user =  user_service.authenticate_user(user.email, old_password)
+    if authenticated_user and new_password and new_password_confirmation and new_password == new_password_confirmation:
+        authenticated_user.set_password(new_password)
+        message = "Updated password successfully."
+        user = authenticated_user
+    elif not authenticated_user:
+        errors = {'incorrect_password': 'The old password is incorrect.'}
     else:
         errors = {'password_confirmation': 'The new password and the confirmation did not match.'}    
-    return render_template('_errors.html',  errors=errors)
+    return render_template('user_update_password_form.html',  errors=errors if len(errors.keys()) > 0 else None, message=message, user=user)
     
 
 def get_user_profile():
