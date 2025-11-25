@@ -53,8 +53,15 @@ class UserHelper:
         """
         errors = {}
         if 'email' in data:
-            if self.user_service.get_user_by_email(data['email']):
-                errors['email'] = 'Email address is already registered'
+            # Check if the email is already registered to a user
+            user = self.user_service.get_user_by_email(data['email'])
+            form_user_id = data.get('id')
+            if user:
+                # If the user is not the same as the user being updated
+                # raise an error saying the email is registered
+                if user.id != int(form_user_id):
+                    errors['email'] = 'Email address is already registered'
+
         if 'email' not in data:
             errors['email'] = 'Missing email address'
         
