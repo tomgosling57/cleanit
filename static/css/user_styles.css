@@ -39,6 +39,7 @@
     flex-direction: row-reverse;
     align-self: self-end;
     position: absolute;
+    gap: 10px;
 }
 .user-card .delete-button,  .edit-user-icon {
     position: relative;
@@ -53,4 +54,8 @@
 }
 .edit-user-icon:hover {
     color: var(--accent-color);
+}
+.user-card .form-group {
+    display: flex;
+    flex-direction: column;
 }
