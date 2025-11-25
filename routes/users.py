@@ -28,6 +28,16 @@ def users_view():
 @login_required
 def get_user_details(user_id):
     return users_controller.get_user(user_id)
+    
+@user_bp.route('/profile', methods=['GET'])
+@login_required
+def get_user_profile():
+    return users_controller.get_user_profile()
+
+@user_bp.route('/profile', methods=['PUT'])
+@login_required
+def update_user_profile():
+    return users_controller.update_user_profile()
 
 @user_bp.route('/user/create', methods=['GET', 'POST'])
 @login_required

@@ -28,6 +28,31 @@ def list_all_users_view():
     teardown_db()
     return render_template('users.html', users=users)
 
+def get_user_profile():
+    """This function renders the 'user_update_form.html' template with the details of the current user.
+    
+    Returns:
+        A rendered HTML page containing the current users details."""
+    if not current_user.is_authenticated: 
+        return jsonify({'error': 'Unauthorized'}), 403
+    db = get_db()    
+    user_service = UserService(db)
+    roles = user_service.get_roles()
+    return render_template('user_profile.html', user_profile=True, user=current_user, roles=roles)
+
+
+def update_user_profile():
+    """This function leverages _update_user to update the current user in the database and re render the update form with the updated details.
+    
+    Returns:
+        A rendered HTML page containing the updated users details."""
+    if not current_user.is_authenticated: 
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    db = get_db()
+    user, errors = _update_user(current_user.id, db)    
+    return render_template('_errors.html'), 200
+
 def list_users():
     """API endpoint to list all users.
 
@@ -155,6 +180,29 @@ def get_user_update_form(user_id):
     roles = user_service.get_roles()
     return render_template('user_update_form.html', user=user, roles=roles)
 
+
+def _update_user(user_id, db):
+    """Updates the user in the database with the current form data.
+    
+    Args:
+        user_id: The unique identifier of the user to update.
+    
+    Returns:
+        The updated user object."""
+    data = request.form.to_dict()
+    if not data:
+        return jsonify({'error': 'Invalid data provided'}), 400
+
+    # Clean the user form data and handle errors    
+    user_service = UserService(db)
+    user = user_service.get_user_by_id(user_id)
+    user_helper = UserHelper(db)
+    data = user_helper.clean_user_form_data(data)
+    errors = user_helper.validate_user_form_data(data)
+    # Update the database if there are no errors
+    return user_service.update_user(user_id, data), errors
+
+
 def update_user(user_id):
     """Updates an existing user's details in the database.
 
@@ -172,26 +220,16 @@ def update_user(user_id):
     """
     if not current_user.is_authenticated:
         return jsonify({'error': 'Unauthorized'}), 403
-    
-    data = request.form.to_dict()
-    if not data:
-        return jsonify({'error': 'Invalid data provided'}), 400
 
-    # Clean the user form data and handle errors
-    db = get_db()
-    user_service = UserService(db)
-    user = user_service.get_user_by_id(user_id)
-    user_helper = UserHelper(db)
-    data = user_helper.clean_user_form_data(data)
-    errors = user_helper.validate_user_form_data(data)
+    db = get_db()    
+    user, errors = _update_user(user_id, db)
     # Render errors to the UI
     if errors:
         # Return failure a HTTP status to prevent the javascript from closing the modal
         return render_template('_errors.html', errors=errors), 400
     
-    # Update the database if there are no errors
-    user = user_service.update_user(user_id, data)
     if user:
+        user_service = UserService(db)
         users = user_service.get_all_users()
         teardown_db()
         user_list_fragment = render_template('user_list_fragment.html', users=users)

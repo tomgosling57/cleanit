@@ -1,9 +1,14 @@
 <form id="user-update-form" 
-      hx-put="{{ url_for('user.update_user', user_id=user.id) }}"
-      hx-target="#errors-container"
-      hx-swap="innerHTML"
-      hx-on--after-request="if(event.detail.successful) { document.getElementById('user-modal').style.display='none'; document.getElementById('user-update-form').reset(); } else { document.getElementById('errors-container').innerHTML = event.detail.xhr.response; }">
-    
+{% if user_profile %}
+hx-put="{{ url_for('user.update_user_profile') }}"
+hx-on--after-request="alert('Update complete');"
+{% else %}
+hx-put="{{ url_for('user.update_user', user_id=user.id) }}"
+hx-on--after-request="if(event.detail.successful) { document.getElementById('user-modal').style.display='none'; document.getElementById('user-update-form').reset(); } else { document.getElementById('errors-container').innerHTML = event.detail.xhr.response; }"
+{% endif %}
+hx-target="#errors-container"
+hx-swap="innerHTML"
+>
     <h2>Create New User</h2>
     {% if user_profile %}<p>Need to <a>reset your password?</a></p>{% endif %}
     <div class="errors-container" id="errors-container"></div>
@@ -43,7 +48,9 @@
                     <button type="submit" class="button save-button">
                         💾 Update User
                     </button>
+                    {% if not user_profile %}
                     <button type="button" class="button" onclick="document.getElementById('{{modal_name}}-modal').style.display='none'">Cancel</button>
+                    {% endif %}
                 </div>
             </div>
         </div>
