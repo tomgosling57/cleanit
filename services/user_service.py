@@ -128,7 +128,7 @@ class UserService:
             return None
         
         if data.get('email'):
-            user.username = data['email']
+            user.email = data['email']
         if data.get('role'):
             user.role = data['role']
         if data.get('password'):
