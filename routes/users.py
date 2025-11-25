@@ -28,6 +28,16 @@ def users_view():
 @login_required
 def get_user_details(user_id):
     return users_controller.get_user(user_id)
+
+@user_bp.route('/user/<int:user_id>/change_password', methods=['GET'])
+@login_required
+def get_user_update_password_form(user_id):
+    return users_controller.get_user_update_password_form(user_id)
+
+@user_bp.route('/user/<int:user_id>/change_password', methods=['PUT'])
+@login_required
+def update_user_password(user_id):
+    return users_controller.update_user_password(user_id)
     
 @user_bp.route('/profile', methods=['GET'])
 @login_required

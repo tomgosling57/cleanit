@@ -1,17 +1,27 @@
 <form id="user-update-form" 
 {% if user_profile %}
 hx-put="{{ url_for('user.update_user_profile') }}"
-hx-on--after-request="alert('Update complete');"
+hx-swap="outerHTML"
 {% else %}
 hx-put="{{ url_for('user.update_user', user_id=user.id) }}"
 hx-on--after-request="if(event.detail.successful) { document.getElementById('user-modal').style.display='none'; document.getElementById('user-update-form').reset(); } else { document.getElementById('errors-container').innerHTML = event.detail.xhr.response; }"
-{% endif %}
 hx-target="#errors-container"
 hx-swap="innerHTML"
+{% endif %}
 >
     <h2>Create New User</h2>
-    {% if user_profile %}<p>Need to <a>reset your password?</a></p>{% endif %}
-    <div class="errors-container" id="errors-container"></div>
+    {% if user_profile %}<p>Need to <a 
+        hx-get="{{ url_for('user.get_user_update_password_form', user_id=user.id)}}"
+        hx-target="#profile-modal-content"
+        hx-swap="innerHTML"
+        hx-trigger="click"
+        hx-on--after-request="document.getElementById('profile-modal').style.display='block'">reset your password?</a></p>
+        {% endif %}
+    <div class="errors-container" id="errors-container">
+        {% if user_profile %}
+        {% include '_errors.html' %}
+        {% endif %}
+    </div>
     <input hidden name="id" value="{{ user.id }}">
     <div class="form-group">
         <div class="form-card user-card">
@@ -31,7 +41,7 @@ hx-swap="innerHTML"
                 <label for="email">Email</label>
                 <input type="text" id="email" name="email" required value="{{user.email}}">
             </div>
-            <div class="form-field">
+            <div classp="form-field">
                 <label for="phone">Phone Number</label>
                 <input type="text" id="phone" name="phone" value="{{user.phone}}">
             </div>

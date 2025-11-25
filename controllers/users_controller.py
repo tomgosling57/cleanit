@@ -14,7 +14,7 @@ def list_all_users_view():
     and renders the 'users.html' template. Access is restricted to authenticated users with the 'owner' role.
 
     Returns:
-        A rendered HTML page displaying all users and their details, or a JSON error if unauthorized.
+        A rendered HTML component displaying all users and their details, or a JSON error if unauthorized.
     """
     if not current_user.is_authenticated or current_user.role != 'owner':
         return jsonify({'error': 'Unauthorized'}), 403
@@ -27,6 +27,41 @@ def list_all_users_view():
 
     teardown_db()
     return render_template('users.html', users=users)
+
+
+def get_user_update_password_form(user_id):
+    """Renders the 'user_update_password_form.html'.
+    
+    Returns:
+        A rendered HTML form."""
+    if not current_user.is_authenticated or current_user.role != 'owner':
+        return jsonify({'error': 'Unauthorized'}), 403
+    db = get_db()
+    user_service = UserService(db)
+    user = user_service.get_user_by_id(user_id)
+    return render_template('user_update_password_form.html', user=user)
+
+
+def update_user_password():
+    """Updates the current user's password.
+    
+    Returns new password string or none"""
+    if not current_user.is_authenticated:
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    old_password = request.form.get('old-password')
+    new_password = request.form.get('new_password')
+    new_password_confirmation = request.form.get('new_password_confirmation')
+    db = get_db()
+    user_service = UserService(db)
+    user =  user_service.authenticate_user(current_user.email, old_password)
+    errors = None
+    if user and new_password and new_password_confirmation and new_password == new_password_confirmation:
+        user.set_password(new_password)
+    else:
+        errors = {'password_confirmation': 'The new password and the confirmation did not match.'}    
+    return render_template('_errors.html',  errors=errors)
+    
 
 def get_user_profile():
     """This function renders the 'user_update_form.html' template with the details of the current user.
