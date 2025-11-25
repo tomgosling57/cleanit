@@ -378,7 +378,7 @@ def create_initial_property_and_job(Session):
     today = date.today()
 
     # Initial jobs
-    if cleaner and initial_team and not session.query(Job).filter(Job.description.like('Full house clean%')).first():
+    if cleaner and initial_team and not session.query(Job).filter(Job.date == today, Job.description.like('Full house clean%')).first():
         _create_job(session, today, time(9, 0), time(11, 0), 'Full house clean, focus on kitchen and bathrooms.', property1, team_obj=initial_team, user_obj=cleaner)
         _create_job(session, today, time(12, 0), time(14, 0), 'Back-to-back job 1: Kitchen deep clean.', property1, team_obj=initial_team, user_obj=cleaner)
         _create_job(session, today, time(14, 0), time(16, 0), 'Back-to-back job 2: Bathroom deep clean.', property1, team_obj=initial_team, user_obj=cleaner)
