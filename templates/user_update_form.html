@@ -1,12 +1,12 @@
 <form id="user-update-form" 
       hx-put="{{ url_for('user.update_user', user_id=user.id) }}"
-      hx-target="#form-errors-container"
+      hx-target="#errors-container"
       hx-swap="innerHTML"
-      hx-on--after-request="if(event.detail.successful) { document.getElementById('user-modal').style.display='none'; document.getElementById('user-update-form').reset(); } else { document.getElementById('form-errors-container').innerHTML = event.detail.xhr.response; }">
+      hx-on--after-request="if(event.detail.successful) { document.getElementById('user-modal').style.display='none'; document.getElementById('user-update-form').reset(); } else { document.getElementById('errors-container').innerHTML = event.detail.xhr.response; }">
     
     <h2>Create New User</h2>
     
-    <div class="form-errors-container" id="form-errors-container"></div>
+    <div class="errors-container" id="errors-container"></div>
         <input hidden name="id" value="{{ user.id }}">
         <div class="form-group">
         <div class="form-card user-card">

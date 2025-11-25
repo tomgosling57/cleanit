@@ -84,9 +84,9 @@ class JobHelper:
         }
 
     @staticmethod
-    def render_form_errors(errors):
-        """Renders form errors using the _form_errors.html template."""
-        return render_template_string('{% include "_form_errors.html" %}', errors=errors), 400
+    def render_errors(errors):
+        """Renders form errors using the _errors.html template."""
+        return render_template_string('{% include "_errors.html" %}', errors=errors), 400
 
     @staticmethod
     def process_job_form():
@@ -100,14 +100,14 @@ class JobHelper:
         
         errors = JobHelper.validate_job_form_data(form_data)
         if errors:
-            return None, None, None, JobHelper.render_form_errors(errors)
+            return None, None, None, JobHelper.render_errors(errors)
 
         job_date, job_time, job_end_time, job_arrival_datetime, datetime_errors = JobHelper.parse_job_datetime(
             form_data['date_str'], form_data['time_str'], form_data['end_time_str'], form_data['arrival_datetime_str']
         )
 
         if datetime_errors:
-            return None, None, None, JobHelper.render_form_errors(datetime_errors)
+            return None, None, None, JobHelper.render_errors(datetime_errors)
 
         parsed_data = {
             'job_date': job_date,

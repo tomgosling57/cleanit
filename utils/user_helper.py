@@ -7,7 +7,6 @@ class UserHelper:
     This class provides utility methods for cleaning and validating user form data,
     and interacts with the UserService for data persistence and retrieval.
     """
-
     def __init__(self, session):
         """Initializes the UserHelper with a database session.
         
