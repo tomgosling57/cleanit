@@ -278,8 +278,9 @@ def delete_user(user_id):
     db = get_db()
     user_service = UserService(db)
     success = user_service.delete_user(user_id)
+    users = user_service.get_all_users()
     teardown_db()
-    if success:
-        return redirect(url_for('user.list_all_users_view'), code=303)
-    else:
-        return jsonify({'error': 'User not found'}), 404
+    errors = {}
+    if not success:
+        errors['delete_user'] = 'Failed to delete user'
+    return render_template('user_list_fragment.html', users=users, errors=errors)
