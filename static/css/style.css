@@ -14,10 +14,15 @@
     --hover-color: #087a9e; /* Deep Ocean */
     --success-color: #3ea872; /* Fresh Green */
     --info-color: #4fb3bf; /* Aqua Blue */
+    --hyperlink-color: #5555f7;
 }
 
 * {
     box-sizing: border-box;
+}
+
+a {
+    color: var(--hyperlink-color);
 }
 
 body {
