@@ -5,45 +5,46 @@
       hx-on--after-request="if(event.detail.successful) { document.getElementById('user-modal').style.display='none'; document.getElementById('user-update-form').reset(); } else { document.getElementById('errors-container').innerHTML = event.detail.xhr.response; }">
     
     <h2>Create New User</h2>
-    
+    {% if user_profile %}<p>Need to <a>reset your password?</a></p>{% endif %}
     <div class="errors-container" id="errors-container"></div>
         <input hidden name="id" value="{{ user.id }}">
         <div class="form-group">
-        <div class="form-card user-card">
-            <div class="card-header">
-                <span class="card-icon">👤</span>
-                <span class="card-title">User Details</span>
-            </div>
-            <div class="form-field">
-                <label for="first_name">First Name</label>
-                <input type="text" id="first_name" name="first_name" required value="{{user.first_name}}">
-            </div>
-            <div class="form-field">
-                <label for="last_name">Last Name</label>
-                <input type="text" id="last_name" name="last_name" required value="{{user.last_name}}">
-            </div>
-            <div class="form-field">
-                <label for="email">Email</label>
-                <input type="text" id="email" name="email" required value="{{user.email}}">
-            </div>
-            <div class="form-field">
-                <label for="phone">Phone Number</label>
-                <input type="text" id="phone" name="phone" value="{{user.phone}}">
-            </div>
-            <div class="form-field">
-                <label for="role">Staff Role</label>
-                <select name="role" id="role">
-                    {% for role in roles %}
-                    <option value="{{ role }}" {% if role == user.role %}selected{% endif %}>{{ role }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-        
-            <div class="form-actions">
-                <button type="submit" class="button save-button">
-                    💾 Update User
-                </button>
-                <button type="button" class="button" onclick="document.getElementById('{{modal_name}}-modal').style.display='none'">Cancel</button>
+            <div class="form-card user-card">
+                <div class="card-header">
+                    <span class="card-icon">👤</span>
+                    <span class="card-title">User Details</span>
+                </div>
+                <div class="form-field">
+                    <label for="first_name">First Name</label>
+                    <input type="text" id="first_name" name="first_name" required value="{{user.first_name}}">
+                </div>
+                <div class="form-field">
+                    <label for="last_name">Last Name</label>
+                    <input type="text" id="last_name" name="last_name" required value="{{user.last_name}}">
+                </div>
+                <div class="form-field">
+                    <label for="email">Email</label>
+                    <input type="text" id="email" name="email" required value="{{user.email}}">
+                </div>
+                <div class="form-field">
+                    <label for="phone">Phone Number</label>
+                    <input type="text" id="phone" name="phone" value="{{user.phone}}">
+                </div>
+                <div class="form-field">
+                    <label for="role">Staff Role</label>
+                    <select name="role" id="role">
+                        {% for role in roles %}
+                        <option value="{{ role }}" {% if role == user.role %}selected{% endif %}>{{ role }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            
+                <div class="form-actions">
+                    <button type="submit" class="button save-button">
+                        💾 Update User
+                    </button>
+                    <button type="button" class="button" onclick="document.getElementById('{{modal_name}}-modal').style.display='none'">Cancel</button>
+                </div>
             </div>
         </div>
     </div>
