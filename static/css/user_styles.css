@@ -34,9 +34,22 @@
   display: flex;
   flex-direction: column;
 }
-.edit-user-icon {
-    position: absolute;
+.user-card-actions {
+    display: flex;
+    flex-direction: row-reverse;
     align-self: self-end;
+    position: absolute;
+}
+.user-card .delete-button,  .edit-user-icon {
+    position: relative;
+    /* align-self: self-end; */
+    margin-right: 5px;
+}
+.user-card .edit-user-icon {
+    font-size: 22px;
+}
+.user-card .delete-button {
+    bottom: 10px;
 }
 .edit-user-icon:hover {
     color: var(--accent-color);
