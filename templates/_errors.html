@@ -1,0 +1,10 @@
+{% if errors %}
+<div id="errors" class="error-messages">
+    <ul>
+        {% for field, message in errors.items() %}
+            <li>{{ message }}</li>
+        {% endfor %}
+    </ul>
+    <script>console.log('{{errors}}');</script>
+</div>
+{% endif %}
