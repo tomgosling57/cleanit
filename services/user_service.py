@@ -173,3 +173,17 @@ class UserService:
         for user in users:
             user.team_id = None
         self.db_session.commit()
+
+    def change_user_password(self, user: User, password: str):
+        """Changes the password for the given user.
+        
+        Args:
+            user: The User object to change the password for.
+            password: The new plain text password.
+
+        Returns:
+            None
+        """
+        user.set_password(password)
+        self.db_session.commit()
+        
