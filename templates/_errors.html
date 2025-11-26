@@ -11,3 +11,10 @@
 {% if message %}
 <span class="button">{{ message }}</span>
 {% endif %}
+{% if copy_content %}
+<script>
+    navigator.clipboard.writeText('{{ copy_content | safe }}');
+    alert('Copied {{ copy_content_name | safe }} to clipboard: {{ copy_content }}');
+</script>
+<!-- <span class="button" hx-on="click: navigator.clipboard.writeText('{{ copy_content }}'); this.innerText='Copied!'; setTimeout(() => { this.innerText='Click to copy content'; }, 2000);">Click to copy {{ copy_content_name }}</span> -->
+{% endif %}
