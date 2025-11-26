@@ -46,7 +46,7 @@ def get_user_update_password_form(user_id):
     db = get_db()
     user_service = UserService(db)
     user = user_service.get_user_by_id(user_id)
-    return render_template('user_update_password_form.html', user=user)
+    return render_template('user_update_password_form.html', user=user, current_user=current_user)
 
 
 def update_user_password(user_id):
@@ -78,6 +78,9 @@ def update_user_password(user_id):
         return jsonify({'error': 'User not found'}), 404
     else:
         authenticated_user =  user_service.authenticate_user(user.email, old_password)
+    if current_user.role == 'owner':
+        # Owners can change password without old password
+        authenticated_user = user        
     if authenticated_user and new_password and new_password_confirmation and new_password == new_password_confirmation:
         user_service.change_user_password(authenticated_user, new_password)
         message = "Updated password successfully."

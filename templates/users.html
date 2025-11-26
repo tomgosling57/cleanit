@@ -21,6 +21,9 @@
     {% with modal_name="user" %}
     {% include 'modal.html'%}
     {% endwith %}
+    {% with modal_name="profile" %}
+    {% include 'modal.html'%}
+    {% endwith %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/user_styles.css') }}">
 {% endblock %}

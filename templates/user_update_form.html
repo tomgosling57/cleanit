@@ -15,13 +15,12 @@ hx-swap="innerHTML"
         {% include '_errors.html' %}
         {% endif %}
     </div>
-    {% if user_profile %}<p>Need to <a 
+    <p>Need to <a 
         hx-get="{{ url_for('user.get_user_update_password_form', user_id=user.id)}}"
         hx-target="#profile-modal-content"
         hx-swap="innerHTML"
         hx-trigger="click"
         hx-on--after-request="document.getElementById('profile-modal').style.display='block'">reset your password?</a></p>
-        {% endif %}
     <input hidden name="id" value="{{ user.id }}">
     <div class="form-group">
         <div class="form-card user-card">
