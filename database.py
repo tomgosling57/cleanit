@@ -165,8 +165,7 @@ class Assignment(Base):
                       )
 
 # Database initialization function
-def init_db(app):
-    database_path = os.path.join(app.root_path, 'instance', 'cleanit.db')
+def init_db(app, database_path: str):
     engine = create_engine(f'sqlite:///{database_path}')
     Base.metadata.create_all(engine)
     Session = sessionmaker(bind=engine)

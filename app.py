@@ -1,36 +1,11 @@
-from flask import Flask, render_template, request, url_for, session, Response, redirect
-import os
-from database import init_db, create_initial_users, create_initial_property_and_job, create_initial_team, get_db, teardown_db
-from routes.users import user_bp
-from routes.jobs import job_bp
-from routes.teams import teams_bp
-from routes.properties import properties_bp
-import secrets
+from flask import request, url_for, Response, redirect
+from database import get_db, teardown_db
 from flask_login import LoginManager, current_user
 from services.user_service import UserService
-app = Flask(__name__)
+from app_factory import create_app
+
 login_manager = LoginManager()
-login_manager.init_app(app)
-login_manager.login_view = 'user.login'
-# TODO: Remove random secret
-app.config['SECRET_KEY'] = secrets.token_bytes(32)
-
-# Create the 'instance' folder if it doesn't exist
-instance_path = os.path.join(app.root_path, 'instance')
-os.makedirs(instance_path, exist_ok=True)
-
-# Initialize the database and create example objects
-Session = init_db(app)
-create_initial_users(Session)
-create_initial_team(Session)
-create_initial_property_and_job(Session)
-app.config['SQLALCHEMY_SESSION'] = Session
-
-# Register blueprints
-app.register_blueprint(user_bp)
-app.register_blueprint(job_bp)
-app.register_blueprint(teams_bp)
-app.register_blueprint(properties_bp)
+app = create_app(login_manager=login_manager)
 
 @login_manager.user_loader
 def load_user(user_id):
