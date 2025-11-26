@@ -11,11 +11,12 @@ from utils.user_helper import UserHelper
 def list_all_users_view():
     """Renders the user management page for owners.
 
-    This function retrieves all users from the database, enriches their data with team information,
-    and renders the 'users.html' template. Access is restricted to authenticated users with the 'owner' role.
+    This function retrieves all users from the database and renders the 'users.html' template.
+    Access is restricted to authenticated users with the 'owner' role.
 
     Returns:
-        A rendered HTML component displaying all users and their details, or a JSON error if unauthorized.
+        flask.Response: A rendered HTML component displaying all users and their details,
+                        or a JSON error if unauthorized.
     """
     if not current_user.is_authenticated or current_user.role != 'owner':
         return jsonify({'error': 'Unauthorized'}), 403
@@ -31,10 +32,15 @@ def list_all_users_view():
 
 
 def get_user_update_password_form(user_id):
-    """Renders the 'user_update_password_form.html'.
-    
+    """Renders the user password update form.
+
+    Args:
+        user_id (int): The unique identifier of the user whose password is to be updated.
+
     Returns:
-        A rendered HTML form."""
+        flask.Response: A rendered HTML form for updating the user's password,
+                        or a JSON error if unauthorized.
+    """
     if not current_user.is_authenticated or current_user.role != 'owner':
         return jsonify({'error': 'Unauthorized'}), 403
     db = get_db()
@@ -44,9 +50,19 @@ def get_user_update_password_form(user_id):
 
 
 def update_user_password(user_id):
-    """Updates the current user's password.
-    
-    Returns new password string or none"""
+    """Updates a user's password.
+
+    This function handles the submission of the password update form. It validates the old password
+    and ensures the new password and its confirmation match. If successful, the user's password
+    is updated. Access is restricted to authenticated users.
+
+    Args:
+        user_id (int): The unique identifier of the user whose password is to be updated.
+
+    Returns:
+        flask.Response: A rendered HTML fragment displaying success or error messages,
+                        or a JSON error if unauthorized or the user is not found.
+    """
     if not current_user.is_authenticated:
         return jsonify({'error': 'Unauthorized'}), 403
 
@@ -74,10 +90,15 @@ def update_user_password(user_id):
     
 
 def get_user_profile():
-    """This function renders the 'user_update_form.html' template with the details of the current user.
-    
+    """Renders the user profile page for the current authenticated user.
+
+    This function retrieves the current user's details and available roles, then renders the
+    'user_profile.html' template. Access is restricted to authenticated users.
+
     Returns:
-        A rendered HTML page containing the current users details."""
+        flask.Response: A rendered HTML page displaying the current user's profile,
+                        or a JSON error if unauthorized.
+    """
     if not current_user.is_authenticated: 
         return jsonify({'error': 'Unauthorized'}), 403
     db = get_db()    
@@ -87,10 +108,17 @@ def get_user_profile():
 
 
 def update_user_profile():
-    """This function leverages _update_user to update the current user in the database and re render the update form with the updated details.
-    
+    """Updates the current authenticated user's profile.
+
+    This function processes form data to update the current user's details. It leverages the
+    `_update_user` helper function for data cleaning, validation, and database update.
+    On successful update, it re-renders the 'user_update_form.html' with the updated details.
+    Access is restricted to authenticated users.
+
     Returns:
-        A rendered HTML page containing the updated users details."""
+        flask.Response: A rendered HTML page containing the updated user's details,
+                        or a JSON error if unauthorized.
+    """
     if not current_user.is_authenticated: 
         return jsonify({'error': 'Unauthorized'}), 403
 
@@ -102,10 +130,10 @@ def list_users():
     """API endpoint to list all users.
 
     Retrieves all users from the database and returns their ID, full name, role, and team ID.
-    This endpoint is intended for API consumption.
+    This endpoint is is intended for API consumption.
 
     Returns:
-        A JSON array of user data, or a JSON error if an internal server error occurs.
+        flask.Response: A JSON array of user data, or a JSON error if an internal server error occurs.
     """
     db = get_db()
     user_service = UserService(db)
@@ -131,7 +159,7 @@ def get_all_categorized_users():
     'on_a_different_team', and 'unassigned'. Access is restricted to authenticated users with the 'owner' role.
 
     Returns:
-        A JSON object containing categorized user lists, or a JSON error if unauthorized.
+        flask.Response: A JSON object containing categorized user lists, or a JSON error if unauthorized.
     """
     if current_user.role not in ['owner']:
         return jsonify({'error': 'Unauthorized'}), 403
@@ -152,10 +180,11 @@ def get_user(user_id):
     """Retrieves a specific user by their ID.
 
     Args:
-        user_id: The unique identifier of the user to retrieve.
+        user_id (int): The unique identifier of the user to retrieve.
 
     Returns:
-        A JSON object containing the user's data if found, or a JSON error if the user is not found or an internal server error occurs.
+        flask.Response: A JSON object containing the user's data if found,
+                        or a JSON error if the user is not found or an internal server error occurs.
     """
     db = get_db()
     user_service = UserService(db)
@@ -180,7 +209,8 @@ def login():
             or a 'next' URL if provided and validated. If authentication fails, flashes an error message.
 
     Returns:
-        A rendered HTML login page, a redirect response on successful login, or an abort(400) on invalid host.
+        flask.Response: A rendered HTML login page, a redirect response on successful login,
+                        or an abort(400) on invalid host.
     """
     _return = render_template('login.html')
     
@@ -212,10 +242,10 @@ def get_user_update_form(user_id):
     Access is restricted to authenticated users.
 
     Args:
-        user_id: The unique identifier of the user to update.
+        user_id (int): The unique identifier of the user to update.
 
     Returns:
-        A rendered HTML form for user updates, or a JSON error if unauthorized.
+        flask.Response: A rendered HTML form for user updates, or a JSON error if unauthorized.
     """
     if not current_user.is_authenticated:
         return jsonify({'error': 'Unauthorized'}), 403
@@ -227,13 +257,17 @@ def get_user_update_form(user_id):
 
 
 def _update_user(user_id, db):
-    """Updates the user in the database with the current form data.
-    
+    """Helper function to update a user in the database with the current form data.
+
+    This function cleans and validates the form data before attempting to update the user.
+
     Args:
-        user_id: The unique identifier of the user to update.
-    
+        user_id (int): The unique identifier of the user to update.
+        db: The database connection object.
+
     Returns:
-        The updated user object."""
+        tuple: A tuple containing the updated user object and a dictionary of errors (if any).
+    """
     data = request.form.to_dict()
     if not data:
         return jsonify({'error': 'Invalid data provided'}), 400
@@ -257,11 +291,11 @@ def update_user(user_id):
     Access is restricted to authenticated users.
 
     Args:
-        user_id: The unique identifier of the user to update.
+        user_id (int): The unique identifier of the user to update.
 
     Returns:
-        A rendered HTML user update form with errors, or a rendered user list fragment on success,
-        or a JSON error if unauthorized or invalid data is provided.
+        flask.Response: A rendered HTML user update form with errors, or a rendered user list fragment on success,
+                        or a JSON error if unauthorized or invalid data is provided.
     """
     if not current_user.is_authenticated:
         return jsonify({'error': 'Unauthorized'}), 403
@@ -291,7 +325,7 @@ def get_user_creation_form():
     Access is restricted to authenticated users.
 
     Returns:
-        A rendered HTML form for user creation, or a JSON error if unauthorized.
+        flask.Response: A rendered HTML form for user creation, or a JSON error if unauthorized.
     """
     if not current_user.is_authenticated:
         return jsonify({'error': 'Unauthorized'}), 403
@@ -310,8 +344,8 @@ def create_user():
     with the updated list of users. Access is restricted to authenticated users.
 
     Returns:
-        A rendered HTML user creation form with errors, or a rendered user list fragment on success,
-        or a JSON error if unauthorized or invalid data is provided.
+        flask.Response: A rendered HTML user creation form with errors, or a rendered user list fragment on success,
+                        or a JSON error if unauthorized or invalid data is provided.
     """
     if not current_user.is_authenticated:
         return jsonify({'error': 'Unauthorized'}), 403
@@ -348,14 +382,14 @@ def delete_user(user_id):
     """Deletes a user from the database.
 
     This function attempts to delete a user identified by `user_id`.
-    On successful deletion, it redirects to the 'user.list_all_users_view'.
-    If the user is not found, it returns a JSON error.
+    On successful deletion, it renders the 'user_list_fragment' with the updated list of users.
+    If the user is not found or deletion fails, it renders an error message.
 
     Args:
-        user_id: The unique identifier of the user to delete.
+        user_id (int): The unique identifier of the user to delete.
 
     Returns:
-        A redirect response on successful deletion, or a JSON error if the user is not found.
+        flask.Response: A rendered HTML fragment displaying the updated user list and any error messages.
     """
     db = get_db()
     user_service = UserService(db)
