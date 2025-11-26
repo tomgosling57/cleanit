@@ -1,3 +1,4 @@
+import html
 from flask import render_template_string, request, jsonify, render_template, redirect, url_for, flash, session, abort, current_app
 from services.team_service import TeamService
 from utils.http import validate_request_host
@@ -186,7 +187,7 @@ def login():
     if request.method == 'POST':
         email = request.form.get('email')
         password = request.form.get('password')
-        
+        password = html.unescape(password)
         db = get_db()
         user_service = UserService(db)
         user = user_service.authenticate_user(email, password)
