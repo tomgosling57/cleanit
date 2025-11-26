@@ -3,10 +3,11 @@
 {% block title %}My Profile{% endblock %}
 
 {% block content %}
-    <div class="user-profile container">
-        <h1>My Profile</h1>
-        <div id="errors-container"></div>
-        {% include 'user_update_form.html' %}
+    <div class="container">
+        <div id="user-profile">
+            <h1>My Profile</h1>
+            {% include 'user_update_form.html' %}
+        </div>
     </div>
     {% with modal_name="profile" %}
     {% include 'modal.html'%}
