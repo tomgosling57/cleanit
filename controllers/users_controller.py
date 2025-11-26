@@ -35,13 +35,13 @@ def get_user_update_password_form(user_id):
     """Renders the user password update form.
 
     Args:
-        user_id (int): The unique identifier of the user whose password is to be updated.
+        user_id (int): The unique identifier of the user whose password is to be updated. Access is restricted to authenticated users.
 
     Returns:
         flask.Response: A rendered HTML form for updating the user's password,
                         or a JSON error if unauthorized.
     """
-    if not current_user.is_authenticated or current_user.role != 'owner':
+    if not current_user.is_authenticated:
         return jsonify({'error': 'Unauthorized'}), 403
     db = get_db()
     user_service = UserService(db)
