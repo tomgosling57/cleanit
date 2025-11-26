@@ -409,7 +409,6 @@ input#timetable-datepicker {
     display: flex;
     justify-content: flex-end;
     padding-top: 16px;
-    border-top: 1px solid var(--border-color);
 }
 
 .save-button {
