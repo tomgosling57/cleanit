@@ -62,7 +62,7 @@ def create_property():
 
     if not address:
         teardown_db()
-        return render_template_string('{% include "_errors.html" with messages=["Address is required."] %}')
+        return render_template_string('{% include "_form_response.html" with messages=["Address is required."] %}')
 
     property_data = {
         'address': address,
@@ -77,7 +77,7 @@ def create_property():
         return render_template_string('{% include "property_list_fragment.html" %}', properties=properties)
     
     teardown_db()
-    return render_template_string('{% include "_errors.html" with messages=["Failed to create property."] %}')
+    return render_template_string('{% include "_form_response.html" with messages=["Failed to create property."] %}')
 
 def get_property_update_form(property_id):
     """
@@ -103,7 +103,7 @@ def update_property(property_id):
 
     if not address:
         teardown_db()
-        return render_template_string('{% include "_errors.html" with messages=["Address is required."] %}')
+        return render_template_string('{% include "_form_response.html" with messages=["Address is required."] %}')
 
     property_data = {
         'address': address,
@@ -117,7 +117,7 @@ def update_property(property_id):
         return render_template_string('{% include "property_card.html" %}', property=updated_property)
     
     teardown_db()
-    return render_template_string('{% include "_errors.html" with messages=["Failed to update property."] %}')
+    return render_template_string('{% include "_form_response.html" with messages=["Failed to update property."] %}')
 
 def delete_property(property_id):
     """

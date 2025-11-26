@@ -89,7 +89,7 @@ def update_user_password(user_id):
         errors = {'incorrect_password': 'The old password is incorrect.'}
     else:
         errors = {'password_confirmation': 'The new password and the confirmation did not match.'}    
-    return render_template('_errors.html',  errors=errors if len(errors.keys()) > 0 else None, message=message, user=user)
+    return render_template('_form_response.html',  errors=errors if len(errors.keys()) > 0 else None, message=message, user=user)
     
 
 def get_user_profile():
@@ -308,18 +308,18 @@ def update_user(user_id):
     # Render errors to the UI
     if errors:
         # Return failure a HTTP status to prevent the javascript from closing the modal
-        return render_template('_errors.html', errors=errors), 400
+        return render_template('_form_response.html', errors=errors), 400
     
     if user:
         user_service = UserService(db)
         users = user_service.get_all_users()
         teardown_db()
         user_list_fragment = render_template('user_list_fragment.html', users=users)
-        form_errors = render_template('_errors.html', message="User updated successfully.")
-        return f"{user_list_fragment}\n{form_errors}"
+        form_response = render_template('_form_response.html', message="User updated successfully.")
+        return f"{user_list_fragment}\n{form_response}"
     else:
         # Return failure a HTTP status to prevent the javascript from closing the modal
-        return render_template('_errors.html', errors={'database_error':'User update failed'}), 500
+        return render_template('_form_response.html', errors={'database_error':'User update failed'}), 500
 
 def get_user_creation_form():
     """Renders the user creation form.
@@ -368,7 +368,7 @@ def create_user():
     # Render errors to the UI
     if errors:
         # Return failure a HTTP status to prevent the javascript from closing the modal
-        return render_template('_errors.html', errors=errors), 400
+        return render_template('_form_response.html', errors=errors), 400
     
     # Create the user in the database if there are no errors
     user, password = user_service.create_user(**data)
@@ -376,10 +376,10 @@ def create_user():
         users = user_service.get_all_users()
         teardown_db()
         user_list_fragment = render_template('user_list_fragment.html', users=users)
-        form_errors = render_template('_errors.html', copy_content=password, copy_content_name="password")
-        return f"{user_list_fragment}\n{form_errors}"
+        form_response = render_template('_form_response.html', copy_content=password, copy_content_name="password")
+        return f"{user_list_fragment}\n{form_response}"
     else:
-        return render_template('_errors.html', errors={'database_error':'User update failed'}), 500
+        return render_template('_form_response.html', errors={'database_error':'User update failed'}), 500
 
 def delete_user(user_id):
     """Deletes a user from the database.
@@ -403,5 +403,5 @@ def delete_user(user_id):
     if not success:
         errors = {'delete_user': 'Failed to delete user'}
     user_list_fragment = render_template('user_list_fragment.html', users=users)
-    form_errors = render_template('_errors.html', errors=errors)
-    return f"{user_list_fragment}\n{form_errors}"
+    form_response = render_template('_form_response.html', errors=errors)
+    return f"{user_list_fragment}\n{form_response}"
