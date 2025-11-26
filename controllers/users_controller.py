@@ -107,7 +107,7 @@ def get_user_profile():
     db = get_db()    
     user_service = UserService(db)
     roles = user_service.get_roles()
-    return render_template('user_profile.html', user_profile=True, user=current_user, roles=roles)
+    return render_template('user_profile.html', user_profile=True, user=current_user, roles=roles, current_user=current_user)
 
 
 def update_user_profile():
@@ -256,7 +256,7 @@ def get_user_update_form(user_id):
     user_service = UserService(db)
     user = user_service.get_user_by_id(user_id)
     roles = user_service.get_roles()
-    return render_template('user_update_form.html', user=user, roles=roles)
+    return render_template('user_update_form.html', user=user, roles=roles, current_user=current_user)
 
 
 def _update_user(user_id, db):

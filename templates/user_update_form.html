@@ -40,10 +40,12 @@ hx-swap="innerHTML"
                 <label for="email">Email</label>
                 <input type="text" id="email" name="email" required value="{{user.email}}">
             </div>
-            <div classp="form-field">
+            <div class="form-field">
                 <label for="phone">Phone Number</label>
                 <input type="text" id="phone" name="phone" value="{{user.phone}}">
             </div>
+
+            {% if current_user.role == 'owner' %}
             <div class="form-field">
                 <label for="role">Staff Role</label>
                 <select name="role" id="role">
@@ -52,7 +54,7 @@ hx-swap="innerHTML"
                     {% endfor %}
                 </select>
             </div>
-        
+            {% endif %}
             <div class="form-actions">
                 <button type="submit" class="button save-button">
                     💾 Update User
