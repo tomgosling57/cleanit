@@ -69,7 +69,7 @@ def update_user_password(user_id):
         errors = {'incorrect_password': 'The old password is incorrect.'}
     else:
         errors = {'password_confirmation': 'The new password and the confirmation did not match.'}    
-    return render_template('user_update_password_form.html',  errors=errors if len(errors.keys()) > 0 else None, message=message, user=user)
+    return render_template('_errors.html',  errors=errors if len(errors.keys()) > 0 else None, message=message, user=user)
     
 
 def get_user_profile():
