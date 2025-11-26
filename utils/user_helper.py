@@ -40,7 +40,7 @@ class UserHelper:
             _return['password'] = data.get('password')
         return _return
     
-    def validate_user_form_data(self, data, force_names=False):
+    def validate_user_form_data(self, data, creation_form=False):
         """Validates the given form data for creating a user.
         
         Args:
@@ -54,20 +54,23 @@ class UserHelper:
         if 'email' in data:
             # Check if the email is already registered to a user
             user = self.user_service.get_user_by_email(data['email'])
-            form_user_id = data.get('id')
             if user:
-                # If the user is not the same as the user being updated
-                # raise an error saying the email is registered
-                if user.id != int(form_user_id):
+                if creation_form:
                     errors['email'] = 'Email address is already registered'
+                else:
+                    # If the user is not the same as the user being updated
+                    # raise an error saying the email is registered
+                    form_user_id = data.get('id')
+                    if user.id != int(form_user_id):
+                        errors['email'] = 'Email address is already registered'
 
         if 'email' not in data:
             errors['email'] = 'Missing email address'
         
-        if 'first_name' not in data and force_names:
+        if 'first_name' not in data and creation_form:
             errors['first_name'] = 'Missing first name'
  
-        if 'last_name' not in data and force_names:
+        if 'last_name' not in data and creation_form:
             errors['last_name'] = 'Missing last name'
         
         if 'role' not in data:
