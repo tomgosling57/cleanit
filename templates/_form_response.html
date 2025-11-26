@@ -15,7 +15,7 @@
 {% endif %}
 {% if copy_content %}
 <script>
-    navigator.clipboard.writeText('{{ copy_content | safe }}');
+    navigator.clipboard.writeText('{{ copy_content }}');
     alert('Copied {{ copy_content_name | safe }} to clipboard: {{ copy_content }}');
 </script>
 {% endif %}

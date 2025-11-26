@@ -1,7 +1,7 @@
 from werkzeug.security import check_password_hash
 from database import User
 from sqlalchemy.orm import joinedload
-from utils.password_generator import generate_strong_password
+from utils.password_generator import generate_password_with_requirements
 
 class UserService:
     def __init__(self, db_session):
@@ -107,7 +107,7 @@ class UserService:
         Returns:
             A tuple containing the User object and the generated password string.
         """
-        password = generate_strong_password()
+        password = generate_password_with_requirements()
         new_user = self._create_user(first_name=first_name, last_name=last_name, email=email, password=password, phone=phone, role=role, team_id=team_id)
         return new_user, password
     
