@@ -340,7 +340,7 @@ def create_user():
         users = user_service.get_all_users()
         teardown_db()
         user_list_fragment = render_template('user_list_fragment.html', users=users)
-        form_errors = render_template('_errors.html')
+        form_errors = render_template('_errors.html', copy_content=password, copy_content_name="password")
         return f"{user_list_fragment}\n{form_errors}"
     else:
         return render_template('_errors.html', errors={'database_error':'User update failed'}), 500
