@@ -190,7 +190,7 @@ def create_initial_users(Session):
     # create user with owner role
     if not session.query(User).filter_by(role='owner').first():
         owner = User(first_name='Lily', last_name='Hargrave', email='owner@example.com', phone='12345678', role='owner')
-        owner.set_password('ownerpassword') # Default password for owner
+        owner.set_password('owner_password') # Default password for owner
         session.add(owner)
         session.commit()
         print("Initial owner user created.")
@@ -206,7 +206,7 @@ def create_initial_users(Session):
     # create user with cleaner role
     if not session.query(User).filter_by(email='cleaner@example.com').first():
         cleaner = User(first_name='Tom', last_name='Gosling', email='cleaner@example.com', role='cleaner')
-        cleaner.set_password('cleanerpassword')
+        cleaner.set_password('cleaner_password')
         session.add(cleaner)
         session.commit()
         print("Initial cleaner user created.")
