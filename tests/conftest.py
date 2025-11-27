@@ -15,7 +15,11 @@ def test_db_path():
 
 @pytest.fixture(scope='session')
 def app(test_db_path):
-    """pytest-flask will use this fixture automatically"""
+    """
+    Configures and creates a Flask app for testing.
+    The database is configured to be seeded with deterministic data for consistent testing.
+    pytest-flask will use this fixture automatically.
+    """
     login_manager = LoginManager()
     
     test_config = {
@@ -24,6 +28,8 @@ def app(test_db_path):
         'SQLALCHEMY_DATABASE_URI': f'sqlite:///{test_db_path}',
         'DEBUG': True,
         'SECRET_KEY': 'test-secret-key',
+        'SEED_DATABASE_FOR_TESTING': True,
+        'INSERT_DUMMY_DATA': True,
     }
     
     app = create_app(login_manager=login_manager, test_config=test_config)

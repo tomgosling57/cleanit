@@ -165,10 +165,22 @@ class Assignment(Base):
                       )
 
 # Database initialization function
-def init_db(app, database_path: str):
+def init_db(app, database_path: str, seed_data: bool = False):
+    """
+    Initializes the database, creates all tables, and optionally seeds it with test data.
+
+    Args:
+        app: The Flask application instance.
+        database_path (str): The path to the SQLite database file.
+        seed_data (bool): If True, the database will be seeded with deterministic test data.
+    """
     engine = create_engine(f'sqlite:///{database_path}')
     Base.metadata.create_all(engine)
     Session = sessionmaker(bind=engine)
+
+    if seed_data:
+        seed_test_data(Session)
+
     return Session
 
 # Helper functions for database session management
@@ -180,151 +192,119 @@ def get_db():
     return g.db
 
 def teardown_db(exception=None):
+    """Closes the database session at the end of a request."""
     db = g.pop('db', None)
     if db is not None:
         db.close()
 
-# Function to create an initial owner user
-def create_initial_users(Session):
-    session = Session()
-    # create user with owner role
-    if not session.query(User).filter_by(role='owner').first():
-        owner = User(first_name='Lily', last_name='Hargrave', email='owner@example.com', phone='12345678', role='owner')
-        owner.set_password('owner_password') # Default password for owner
-        session.add(owner)
-        session.commit()
-        print("Initial owner user created.")
+def create_initial_users(session):
+    """
+    Creates a set of deterministic initial users (owner, team leader, cleaner)
+    and clears any existing users to ensure a clean state.
 
-    # create user with team_leader role
-    if not session.query(User).filter_by(email='team_leader@example.com').first():
-        team_leader = User(first_name='Benjara', last_name="Brown", email='team_leader@example.com', role='team_leader')
-        team_leader.set_password('team_leader_password')
-        session.add(team_leader)
-        session.commit()
-        print("Initial team leader user created.")
+    Args:
+        session: The SQLAlchemy session.
 
-    # create user with cleaner role
-    if not session.query(User).filter_by(email='cleaner@example.com').first():
-        cleaner = User(first_name='Tom', last_name='Gosling', email='cleaner@example.com', role='cleaner')
-        cleaner.set_password('cleaner_password')
-        session.add(cleaner)
-        session.commit()
-        print("Initial cleaner user created.")
+    Returns:
+        tuple: A tuple containing the created owner, team_leader, and cleaner User objects.
+    """
+    session.query(User).delete()
+    session.commit()
+
+    owner = User(id=1, first_name='Lily', last_name='Hargrave', email='owner@example.com', phone='12345678', role='owner')
+    owner.set_password('owner_password')
+    session.add(owner)
+
+    team_leader = User(id=2, first_name='Benjara', last_name="Brown", email='team_leader@example.com', role='team_leader')
+    team_leader.set_password('team_leader_password')
+    session.add(team_leader)
+
+    cleaner = User(id=3, first_name='Tom', last_name='Gosling', email='cleaner@example.com', role='cleaner')
+    cleaner.set_password('cleaner_password')
+    session.add(cleaner)
     
-    session.close()
+    session.commit()
+    print("Initial users created for deterministic testing.")
+    return owner, team_leader, cleaner
 
+def _create_team(session, team_name, team_leader_id, members=None, team_id=None):
+    """
+    Helper function to create or update a team with deterministic data.
 
-def create_initial_property_and_job(Session):
-    session = Session()
-    cleaner = session.query(User).filter_by(email='cleaner@example.com').first()
-    if cleaner and not session.query(Property).first():
-        # Create a property
-        property1 = Property(address='123 Main St, Anytown', access_notes='Key under mat')
-        session.add(property1)
-        session.commit()
-        print("Initial property created.")
+    Args:
+        session: The SQLAlchemy session.
+        team_name (str): The name of the team.
+        team_leader_id (int): The ID of the team leader.
+        members (list, optional): A list of User objects to assign to the team. Defaults to None.
+        team_id (int, optional): The explicit ID for the team. If None, SQLAlchemy assigns one.
 
-        # Create a job for today
-        today = date.today()
-        job1 = Job(
-            date=today,
-            time=time(9, 0),
-            arrival_datetime=datetime.combine(today + timedelta(days=2), time(8, 45)), # Added arrival datetime
-            end_time=time(11, 0), # Assuming a 2-hour job for initial data
-            description='Full house clean, focus on kitchen and bathrooms.',
-            is_complete=False,
-            property=property1
-        )
-        session.add(job1)
-        session.commit()
-
-        # Assign the cleaner to the job
-        assignment1 = Assignment(job_id=job1.id, user_id=cleaner.id)
-        job_team1 = Assignment(job_id=job1.id, team_id=1)
-        session.add(assignment1)
-        session.add(job_team1)
-        session.commit()
-        print("Initial job created and assigned to cleaner.")
-
-        # Create two back-to-back jobs for today
-        job2 = Job(
-            date=today,
-            time=time(12, 0),
-            arrival_datetime=datetime.combine(today + timedelta(days=1), time(11, 45)), # Added arrival datetime
-            end_time=time(14, 0),
-            description='Back-to-back job 1: Kitchen deep clean.',
-            is_complete=False,
-            property=property1
-        )
-        session.add(job2)
-        session.commit()
-
-        job3 = Job(
-            date=today,
-            time=time(14, 0),
-            arrival_datetime=datetime.combine(today, time(13, 45)), # Added arrival datetime
-            end_time=time(16, 0),
-            description='Back-to-back job 2: Bathroom deep clean.',
-            is_complete=False,
-            property=property1
-        )
-        session.add(job3)
-        session.commit()
-
-        # Assign the cleaner to the back-to-back jobs
-        assignment2 = Assignment(job_id=job2.id, user_id=cleaner.id)
-        job_team2 = Assignment(job_id=job2.id, team_id=1)
-        session.add(assignment2)
-        session.add(job_team2)
-        session.commit()
-
-        assignment3 = Assignment(job_id=job3.id, user_id=cleaner.id)
-        job_team3 = Assignment(job_id=job3.id, team_id=1)
-        session.add(assignment3)
-        session.add(job_team3)
-        session.commit()
-        print("Two back-to-back jobs created and assigned to cleaner.")
-
-    session.close()
-
-def _create_team(session, team_name, team_leader_id, members=None):
+    Returns:
+        Team: The created or updated Team object.
+    """
     team = session.query(Team).filter_by(name=team_name).first()
-    if not team:
-        team = Team(name=team_name, team_leader_id=team_leader_id)
+    if team:
+        team.team_leader_id = team_leader_id
+    else:
+        team = Team(id=team_id, name=team_name, team_leader_id=team_leader_id)
         session.add(team)
+    session.commit()
+
+    if members:
+        for member in members:
+            member.team_id = team.id
         session.commit()
-        print(f"{team_name} created with team leader ID {team_leader_id}.")
-        if members:
-            for member in members:
-                member.team_id = team.id
-            session.commit()
-            print(f"Members assigned to {team_name}.")
     return team
 
-def create_initial_team(Session):
-    session = Session()
-    
-    owner = session.query(User).filter_by(role='owner').first()
-    team_leader_user = session.query(User).filter_by(email='team_leader@example.com').first()
-    cleaner = session.query(User).filter_by(email='cleaner@example.com').first()
+def create_initial_teams(session, owner, team_leader_user, cleaner):
+    """
+    Creates a set of deterministic initial teams and clears any existing teams
+    to ensure a clean state.
 
-    if owner and cleaner and team_leader_user:
-        initial_team = _create_team(session, 'Initial Team', owner.id, members=[owner, cleaner])
-        alpha_team = _create_team(session, 'Alpha Team', team_leader_user.id, members=[team_leader_user])
-        beta_team = _create_team(session, 'Beta Team', team_leader_user.id)
-        charlie_team = _create_team(session, 'Charlie Team', team_leader_user.id)
-        delta_team = _create_team(session, 'Delta Team', team_leader_user.id)
-    else:
-        print("Owner, team_leader, or cleaner user not found. Team creation skipped.")
-    
-    session.close()
+    Args:
+        session: The SQLAlchemy session.
+        owner (User): The owner User object.
+        team_leader_user (User): The team leader User object.
+        cleaner (User): The cleaner User object.
 
-def _create_job(session, date, time, end_time, description, property_obj, team_obj=None, user_obj=None):
-    # Randomize arrival date: same day, day after, or two days after
-    days_offset = random.choice([0, 1, 2])
-    arrival_date_for_job = date + timedelta(days=days_offset)
+    Returns:
+        tuple: A tuple containing the created initial_team, alpha_team, beta_team,
+               charlie_team, and delta_team objects.
+    """
+    session.query(Team).delete()
+    session.commit()
+
+    initial_team = _create_team(session, 'Initial Team', owner.id, members=[owner, cleaner], team_id=1)
+    alpha_team = _create_team(session, 'Alpha Team', team_leader_user.id, members=[team_leader_user], team_id=2)
+    beta_team = _create_team(session, 'Beta Team', team_leader_user.id, team_id=3)
+    charlie_team = _create_team(session, 'Charlie Team', team_leader_user.id, team_id=4)
+    delta_team = _create_team(session, 'Delta Team', team_leader_user.id, team_id=5)
+    
+    print("Initial teams created for deterministic testing.")
+    return initial_team, alpha_team, beta_team, charlie_team, delta_team
+
+def _create_job(session, date, time, end_time, description, property_obj, team_obj=None, user_obj=None, job_id=None, arrival_date_offset=0):
+    """
+    Helper function to create a job with deterministic data.
+
+    Args:
+        session: The SQLAlchemy session.
+        date (date): The date of the job.
+        time (time): The start time of the job.
+        end_time (time): The end time of the job.
+        description (str): The description of the job.
+        property_obj (Property): The Property object associated with the job.
+        team_obj (Team, optional): The Team object assigned to the job. Defaults to None.
+        user_obj (User, optional): The User object assigned to the job. Defaults to None.
+        job_id (int, optional): The explicit ID for the job. If None, SQLAlchemy assigns one.
+        arrival_date_offset (int): The number of days to offset the arrival date from the job date.
+
+    Returns:
+        Job: The created Job object.
+    """
+    arrival_date_for_job = date + timedelta(days=arrival_date_offset)
     
     job = Job(
+        id=job_id,
         date=date,
         time=time,
         arrival_datetime=datetime.combine(arrival_date_for_job, time) - timedelta(minutes=15),
@@ -335,68 +315,85 @@ def _create_job(session, date, time, end_time, description, property_obj, team_o
     )
     session.add(job)
     session.commit()
-    print(f"Job '{description}' created.")
 
     if user_obj:
         assignment = Assignment(job_id=job.id, user_id=user_obj.id)
         session.add(assignment)
         session.commit()
-        print(f"Job '{description}' assigned to user {user_obj.first_name} {user_obj.last_name}.")
     
     if team_obj:
         assignment = Assignment(job_id=job.id, team_id=team_obj.id)
         session.add(assignment)
         session.commit()
-        print(f"Job '{description}' assigned to team {team_obj.name}.")
     return job
 
-def create_initial_property_and_job(Session):
-    session = Session()
-    cleaner = session.query(User).filter_by(email='cleaner@example.com').first()
-    initial_team = session.query(Team).filter_by(name='Initial Team').first()
-    alpha_team = session.query(Team).filter_by(name='Alpha Team').first()
-    beta_team = session.query(Team).filter_by(name='Beta Team').first()
-    charlie_team = session.query(Team).filter_by(name='Charlie Team').first()
-    delta_team = session.query(Team).filter_by(name='Delta Team').first()
+def create_initial_properties_and_jobs(session, owner, cleaner, initial_team, alpha_team, beta_team, charlie_team, delta_team):
+    """
+    Creates a set of deterministic initial properties and jobs, and clears any existing
+    properties, jobs, and assignments to ensure a clean state.
 
-    property1 = session.query(Property).filter_by(address='123 Main St, Anytown').first()
-    property_alpha = session.query(Property).filter_by(address='456 Oak Ave, Teamville').first()
+    Args:
+        session: The SQLAlchemy session.
+        owner (User): The owner User object.
+        cleaner (User): The cleaner User object.
+        initial_team (Team): The 'Initial Team' object.
+        alpha_team (Team): The 'Alpha Team' object.
+        beta_team (Team): The 'Beta Team' object.
+        charlie_team (Team): The 'Charlie Team' object.
+        delta_team (Team): The 'Delta Team' object.
 
-    if not property1:
-        property1 = Property(address='123 Main St, Anytown', access_notes='Key under mat')
-        session.add(property1)
-        session.commit()
-        print("Initial property '123 Main St, Anytown' created.")
+    Returns:
+        tuple: A tuple containing the created property1 and property_alpha objects.
+    """
+    session.query(Assignment).delete()
+    session.query(Job).delete()
+    session.query(Property).delete()
+    session.commit()
+
+    property1 = Property(id=1, address='123 Main St, Anytown', access_notes='Key under mat')
+    session.add(property1)
     
-    if not property_alpha:
-        property_alpha = Property(address='456 Oak Ave, Teamville', access_notes='Code 1234')
-        session.add(property_alpha)
-        session.commit()
-        print("Property '456 Oak Ave, Teamville' created for Alpha Team.")
+    property_alpha = Property(id=2, address='456 Oak Ave, Teamville', access_notes='Code 1234')
+    session.add(property_alpha)
+    session.commit()
+    print("Initial properties created for deterministic testing.")
 
     today = date.today()
 
     # Initial jobs
-    if cleaner and initial_team and not session.query(Job).filter(Job.date == today, Job.description.like('Full house clean%')).first():
-        _create_job(session, today, time(9, 0), time(11, 0), 'Full house clean, focus on kitchen and bathrooms.', property1, team_obj=initial_team, user_obj=cleaner)
-        _create_job(session, today, time(12, 0), time(14, 0), 'Back-to-back job 1: Kitchen deep clean.', property1, team_obj=initial_team, user_obj=cleaner)
-        _create_job(session, today, time(14, 0), time(16, 0), 'Back-to-back job 2: Bathroom deep clean.', property1, team_obj=initial_team, user_obj=cleaner)
+    _create_job(session, today, time(9, 0), time(11, 0), 'Full house clean, focus on kitchen and bathrooms.', property1, team_obj=initial_team, user_obj=cleaner, job_id=1, arrival_date_offset=2)
+    _create_job(session, today, time(12, 0), time(14, 0), 'Back-to-back job 1: Kitchen deep clean.', property1, team_obj=initial_team, user_obj=cleaner, job_id=2, arrival_date_offset=1)
+    _create_job(session, today, time(14, 0), time(16, 0), 'Back-to-back job 2: Bathroom deep clean.', property1, team_obj=initial_team, user_obj=cleaner, job_id=3, arrival_date_offset=0)
 
     # Alpha Team job
-    if alpha_team and property_alpha and not session.query(Job).filter(Job.description.like('Alpha Team Job%')).first():
-        _create_job(session, today, time(10, 0), time(12, 0), 'Alpha Team Job: Exterior window clean.', property_alpha, team_obj=alpha_team)
+    _create_job(session, today, time(10, 0), time(12, 0), 'Alpha Team Job: Exterior window clean.', property_alpha, team_obj=alpha_team, job_id=4)
 
     # Beta Team job
-    if beta_team and property1 and not session.query(Job).filter(Job.description.like('Beta Team Job%')).first():
-        _create_job(session, today, time(13, 0), time(15, 0), 'Beta Team Job: Garden maintenance.', property1, team_obj=beta_team)
+    _create_job(session, today, time(13, 0), time(15, 0), 'Beta Team Job: Garden maintenance.', property1, team_obj=beta_team, job_id=5)
 
     # Charlie Team job
-    if charlie_team and property_alpha and not session.query(Job).filter(Job.description.like('Charlie Team Job%')).first():
-        _create_job(session, today, time(9, 30), time(11, 30), 'Charlie Team Job: Roof and gutter clean.', property_alpha, team_obj=charlie_team)
+    _create_job(session, today, time(9, 30), time(11, 30), 'Charlie Team Job: Roof and gutter clean.', property_alpha, team_obj=charlie_team, job_id=6)
 
     # Delta Team job
-    if delta_team and property1 and not session.query(Job).filter(Job.description.like('Delta Team Job%')).first():
-        _create_job(session, today, time(15, 0), time(17, 0), 'Delta Team Job: Driveway pressure wash.', property1, team_obj=delta_team)
+    _create_job(session, today, time(15, 0), time(17, 0), 'Delta Team Job: Driveway pressure wash.', property1, team_obj=delta_team, job_id=7)
+    print("Initial jobs created and assigned for deterministic testing.")
+    return property1, property_alpha
 
+def seed_test_data(Session):
+    """
+    Seeds the database with a consistent set of deterministic test data.
+    This includes users, teams, properties, and jobs.
+    This function clears existing data before seeding to ensure a clean state.
+
+    Args:
+        Session: The SQLAlchemy session factory.
+    """
+    session = Session()
+    
+    owner, team_leader_user, cleaner = create_initial_users(session)
+    initial_team, alpha_team, beta_team, charlie_team, delta_team = create_initial_teams(session, owner, team_leader_user, cleaner)
+    create_initial_properties_and_jobs(session, owner, cleaner, initial_team, alpha_team, beta_team, charlie_team, delta_team)
+    
     session.close()
+    print("Test database seeded with deterministic data.")
 
