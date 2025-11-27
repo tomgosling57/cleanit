@@ -1,7 +1,6 @@
 # conftest.py
-from flask_login import LoginManager
 import pytest
-from playwright.sync_api import sync_playwright
+from flask_login import LoginManager
 from app_factory import create_app
 import tempfile
 import os
@@ -14,39 +13,24 @@ def test_db_path():
     os.close(db_fd)
     os.unlink(db_path)
 
-
 @pytest.fixture(scope='session')
 def app(test_db_path):
     """pytest-flask will use this fixture automatically"""
-    app = create_app(LoginManager(), {
+    login_manager = LoginManager()
+    
+    test_config = {
         'TESTING': True,
         'DATABASE': test_db_path,
         'SQLALCHEMY_DATABASE_URI': f'sqlite:///{test_db_path}',
         'WTF_CSRF_ENABLED': False,
-    })
+    }
     
-    with app.app_context():
-        # Initialize database
-        # db.create_all()
-        pass
-    
+    app = create_app(login_manager=login_manager, test_config=test_config)
     yield app
-
-
-# Playwright fixtures
-@pytest.fixture(scope="session")
-def browser():
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-        yield browser
-        browser.close()
-
-
-@pytest.fixture(scope="function")
-def page(browser, live_server):
-    """Use pytest-flask's live_server fixture"""
-    context = browser.new_context(base_url=live_server.url())
-    page = context.new_page()
-    yield page
-    page.close()
-    context.close()
+    
+@pytest.fixture
+def goto(page, live_server):
+    """Helper fixture that navigates to a path"""
+    def _goto(path="/"):
+        return page.goto(f"{live_server.url()}{path}")
+    return _goto
