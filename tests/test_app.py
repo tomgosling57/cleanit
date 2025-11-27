@@ -1,5 +1,5 @@
+# test_app.py
 import pytest
-
 
 def test_app_is_running(page, goto):
     """Test that the application launches and is accessible"""

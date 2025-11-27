@@ -1,3 +1,4 @@
+# controllers/users_controller.py
 import html
 from flask import render_template_string, request, jsonify, render_template, redirect, url_for, flash, session, abort, current_app
 from services.team_service import TeamService
