@@ -22,12 +22,14 @@ def app(test_db_path):
         'TESTING': True,
         'DATABASE': test_db_path,
         'SQLALCHEMY_DATABASE_URI': f'sqlite:///{test_db_path}',
-        'WTF_CSRF_ENABLED': False,
+        'DEBUG': True,
+        'SECRET_KEY': 'test-secret-key',
     }
     
     app = create_app(login_manager=login_manager, test_config=test_config)
-    yield app
     
+    yield app
+
 @pytest.fixture
 def goto(page, live_server):
     """Helper fixture that navigates to a path"""
