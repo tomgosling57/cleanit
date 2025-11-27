@@ -1,4 +1,5 @@
 # conftest.py
+from flask_login import LoginManager
 import pytest
 from playwright.sync_api import sync_playwright
 from app_factory import create_app
@@ -17,7 +18,7 @@ def test_db_path():
 @pytest.fixture(scope='session')
 def app(test_db_path):
     """pytest-flask will use this fixture automatically"""
-    app = create_app({
+    app = create_app(LoginManager(), {
         'TESTING': True,
         'DATABASE': test_db_path,
         'SQLALCHEMY_DATABASE_URI': f'sqlite:///{test_db_path}',
