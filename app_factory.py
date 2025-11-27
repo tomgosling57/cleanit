@@ -12,8 +12,9 @@ from services.user_service import UserService
 
 def create_app(login_manager=LoginManager(), test_config=None):
     app = Flask(__name__, instance_relative_config=True)
+    secret_key = test_config.get('SECRET_KEY') if test_config and 'SECRET_KEY' in test_config else secrets.token_bytes(32)
     app.config.from_mapping(
-        SECRET_KEY=secrets.token_hex(16),
+        SECRET_KEY=secret_key,
         DATABASE=os.path.join(app.instance_path, 'cleanit.db'),
         SQLALCHEMY_DATABASE_URI=f'sqlite:///{os.path.join(app.instance_path, "cleanit.db")}',
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
@@ -60,7 +61,6 @@ def create_app(login_manager=LoginManager(), test_config=None):
     def index():
         return redirect(url_for('user.login'))
     
-    app.config['SECRET_KEY'] = secrets.token_bytes(32)
     app.register_blueprint(user_bp)
     app.register_blueprint(job_bp)
     app.register_blueprint(teams_bp)
