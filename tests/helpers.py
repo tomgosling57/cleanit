@@ -52,3 +52,21 @@ def login_cleaner(page, goto) -> None:
     page.get_by_role("textbox", name="password").click()
     page.get_by_role("textbox", name="password").fill("cleaner_password")
     page.get_by_role("button", name="Login").click()
+
+def login_invalid_credentials(page, goto) -> None:
+    """
+    Executes the login flow with invalid credentials.
+
+    Args:
+        page: The page pytest-playwright fixture representing the current browser page.
+        goto: A fixture to navigate to a specified URL.
+
+    Returns:
+        None
+    """
+    goto("/")                               
+    page.get_by_role("textbox", name="email").click()
+    page.get_by_role("textbox", name="email").fill("invalid@example.com")
+    page.get_by_role("textbox", name="password").click()
+    page.get_by_role("textbox", name="password").fill("wrong_password")
+    page.get_by_role("button", name="Login").click()

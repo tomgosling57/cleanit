@@ -236,6 +236,7 @@ def login():
             _return = redirect(next or url_for('job.timetable')) # Redirect to job.timetable after successful login
         else:
             flash('Invalid email or password', 'error')
+            _return = redirect(url_for('user.login'))
     
     return _return
 
