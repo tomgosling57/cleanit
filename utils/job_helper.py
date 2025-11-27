@@ -154,18 +154,21 @@ class JobHelper:
         return render_template_string('{% include "job_details_modal.html" %}', job=job, DATETIME_FORMATS=DATETIME_FORMATS)
 
     @staticmethod
-    def render_job_list_fragment(db, current_user, selected_date_for_fetch):
+    def render_job_list_fragment(db, current_user, date_str):
         """
         Fetches the list of jobs for the current user/team on a specific date and renders the job list fragment.
         Returns the HTML for the job list.
         """
         job_service = JobService(db)
-        assigned_jobs = job_service.get_jobs_for_user_on_date(current_user.id, current_user.team_id, selected_date_for_fetch)
-        back_to_back_job_ids = job_service.get_back_to_back_jobs_for_date(selected_date_for_fetch, threshold_minutes=BACK_TO_BACK_THRESHOLD)
+        date_obj = datetime.strptime(date_str, DATETIME_FORMATS["DATE_FORMAT"]).date()
+        print(f"Fetching jobs for User ID: {current_user.id}, Team ID: {current_user.team_id}, Date: {date_str}")
+        assigned_jobs = job_service.get_jobs_for_user_on_date(current_user.id, current_user.team_id, date_obj)
+        print(f"Number of Jobs: {len(assigned_jobs)}")
+        back_to_back_job_ids = job_service.get_back_to_back_jobs_for_date(date_obj, threshold_minutes=BACK_TO_BACK_THRESHOLD)
         return render_template_string('{% include "job_list_fragment.html" %}', jobs=assigned_jobs, DATETIME_FORMATS=DATETIME_FORMATS, back_to_back_job_ids=back_to_back_job_ids, view_type='normal', current_user=current_user)
 
     @staticmethod
-    def render_teams_timetable_fragment(db, current_user, selected_date_for_fetch):
+    def render_teams_timetable_fragment(db, current_user, date_str):
         """
         Fetches the table of jobs categorized by their team assignments for a specific date.
         Returns the HTML of the Teams Timetable.
@@ -173,12 +176,13 @@ class JobHelper:
         assignment_service = AssignmentService(db)
         job_service = JobService(db)
         team_service = TeamService(db)
+        date_obj = datetime.strptime(date_str, DATETIME_FORMATS["DATE_FORMAT"]).date()
         all_teams = team_service.get_all_teams()
-        jobs_by_team = assignment_service.get_jobs_grouped_by_team_for_date(selected_date_for_fetch)
+        jobs_by_team = assignment_service.get_jobs_grouped_by_team_for_date(date_obj)
         team_back_to_back_job_ids = {}
         for team_obj in all_teams:
             team_back_to_back_job_ids[team_obj.id] = job_service.get_back_to_back_jobs_for_team_on_date(
-                team_obj.id, selected_date_for_fetch, threshold_minutes=BACK_TO_BACK_THRESHOLD
+                team_obj.id, date_obj, threshold_minutes=BACK_TO_BACK_THRESHOLD
             )
         
         # Render the entire team timetable view to ensure all columns are updated correctly
