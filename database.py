@@ -361,9 +361,9 @@ def create_initial_properties_and_jobs(session, owner, cleaner, initial_team, al
     today = date.today()
 
     # Initial jobs
-    _create_job(session, today, time(9, 0), time(11, 0), 'Full house clean, focus on kitchen and bathrooms.', property1, team_obj=initial_team, user_obj=cleaner, job_id=1, arrival_date_offset=2)
-    _create_job(session, today, time(12, 0), time(14, 0), 'Back-to-back job 1: Kitchen deep clean.', property1, team_obj=initial_team, user_obj=cleaner, job_id=2, arrival_date_offset=1)
-    _create_job(session, today, time(14, 0), time(16, 0), 'Back-to-back job 2: Bathroom deep clean.', property1, team_obj=initial_team, user_obj=cleaner, job_id=3, arrival_date_offset=0)
+    _create_job(session, today, time(9, 0), time(11, 0), 'Full house clean, focus on kitchen and bathrooms.', property1, team_obj=initial_team, job_id=1, arrival_date_offset=2)
+    _create_job(session, today, time(12, 0), time(14, 0), 'Back-to-back job 1: Kitchen deep clean.', property1, team_obj=initial_team, job_id=2, arrival_date_offset=1)
+    _create_job(session, today, time(14, 0), time(16, 0), 'Back-to-back job 2: Bathroom deep clean.', property1, team_obj=initial_team, job_id=3, arrival_date_offset=0)
     
     # Alpha Team job
     _create_job(session, today, time(10, 0), time(12, 0), 'Alpha Team Job: Exterior window clean.', property_alpha, team_obj=alpha_team, job_id=4)
