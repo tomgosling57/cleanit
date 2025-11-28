@@ -41,7 +41,7 @@ class JobService:
         return job
     
     def get_all_jobs(self):
-        jobs = self.db_session.query(Job).options(joinedload(Job.property))
+        jobs = self.db_session.query(Job).options(joinedload(Job.property)).order_by(Job.date, Job.time).all()
         return jobs
     
     def get_jobs_by_property_id(self, property_id):
@@ -56,7 +56,7 @@ class JobService:
         Identifies jobs on a specific date that are back-to-back within a given threshold.
         Returns a list of job IDs that are considered back-to-back.
         """
-        jobs_on_date = self.db_session.query(Job).filter(Job.date == target_date).all()
+        jobs_on_date = self.db_session.query(Job).filter(Job.date == target_date).order_by(Job.time).all()
         
         back_to_back_job_ids = set()
 
@@ -95,7 +95,7 @@ class JobService:
                 Job.date == target_date,
                 Assignment.team_id == team_id
             )
-        ).all()
+        ).order_by(Job.time).all()
 
         back_to_back_job_ids = set()
 
@@ -126,15 +126,14 @@ class JobService:
             return []
         
         # Get all Assignment entries for this user
-        assignments = self.db_session.query(Assignment).join(Job).filter(Job.date == date).filter(
-            Assignment.user_id == user_id or Assignment.team_id == team_id
-        ).options(joinedload(Assignment.job, innerjoin=True)).order_by(Job.time).all()
+        # Query for distinct Job objects directly, joining with Assignment and ordering
+        jobs = self.db_session.query(Job).options(joinedload(Job.property)).join(Assignment).filter(
+            and_(
+                Job.date == date,
+                (Assignment.user_id == user_id) | (Assignment.team_id == team_id)
+            )
+        ).order_by(Job.date, Job.time).group_by(Job.id).all() # Using group_by for distinct jobs and preserving order
 
-        # Extract job IDs from Assignment entries
-        job_ids = list(set(jc.job_id for jc in assignments))
-        
-        # Query for jobs using the extracted job IDs
-        jobs = self.db_session.query(Job).options(joinedload(Job.property)).filter(Job.id.in_(job_ids)).all()
         return jobs
 
     def create_job(self, job_data):
