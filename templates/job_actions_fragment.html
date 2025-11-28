@@ -1,4 +1,4 @@
-{% if user_role == 'owner' or user_id == team_leader_id %}
+{% if user_role in ['owner', 'team_leader'] %}
 <div class="job-actions" id="job-actions-{{ job.id }}">
     <button hx-post="{{ url_for('job.update_job_status', job_id=job.id) }}"
             hx-vals='{"is_complete": "{{ not job.is_complete }}" }'

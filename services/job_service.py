@@ -32,6 +32,7 @@ class JobService:
         if job:
             job.is_complete = is_complete
             self.db_session.commit()
+            self.db_session.refresh(job)
             return job
         return None
 

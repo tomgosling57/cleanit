@@ -13,7 +13,7 @@ from utils.job_helper import JobHelper
 from controllers.property_controller import get_property_jobs_modal_content
 
 def update_job_status(job_id):
-    if not current_user.is_authenticated or current_user.role not in ['cleaner', 'owner', 'team-leader']:
+    if not current_user.is_authenticated or current_user.role not in ['owner', 'team_leader']:
         return jsonify({'error': 'Unauthorized'}), 401
 
     is_complete = request.form.get('is_complete') == 'True'
@@ -26,7 +26,7 @@ def update_job_status(job_id):
         # Accessing job.property to eagerly load it before the session is torn down
         # This prevents DetachedInstanceError when rendering the template
         _ = job.property.address
-        response = render_template_string('{% include "job_status_fragment.html" %} {% include "job_actions_fragment.html" %}', job=job, user=current_user, is_oob_swap=True)
+        response = render_template_string('{% include "job_status_fragment.html" %} {% include "job_actions_fragment.html" %}', job=job, user_role=current_user.role, is_oob_swap=True)
         teardown_db()
         return response
     
