@@ -64,11 +64,13 @@
                 <div class="item-content">
                     <div class="primary-info">
                         {% if job_teams %}
+                        {% if job_teams|length > 0 %}
                             {% for team in job_teams %}
                                 <span class="assignment-tag">{{ team.name }}</span>
                             {% endfor %}
                         {% else %}
                             <span class="no-assignment">No teams assigned</span>
+                        {% endif %}
                         {% endif %}
                     </div>
                 </div>
@@ -78,11 +80,13 @@
                 <div class="item-content">
                     <div class="primary-info">
                         {% if job_cleaners %}
+                        {% if job_cleaners|length > 0 %}
                             {% for cleaner in job_cleaners %}
-                                <span class="assignment-tag">{{ cleaner.username }}</span>
+                                <span class="assignment-tag">{{ cleaner.first_name }} {{ cleaner.last_name }}</span>
                             {% endfor %}
                         {% else %}
                             <span class="no-assignment">No cleaners assigned</span>
+                        {% endif %}
                         {% endif %}
                     </div>
                 </div>
