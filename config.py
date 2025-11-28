@@ -3,6 +3,7 @@ DATETIME_FORMATS = {
     "DATE_FORMAT_FLATPICKR": "d-m-Y",
     "DATETIME_FORMAT": "%d-%m-%Y %H:%M",
     "DATETIME_FORMAT_FLATPICKR": "d-m-Y H:i",
+    "DATETIME_FORMAT_JOBS": "j F Y, H:i",
     "TIME_FORMAT": "%H:%M",
     "TIME_FORMAT_FLATPICKR": "H:i"
 }

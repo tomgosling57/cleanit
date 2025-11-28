@@ -22,9 +22,9 @@
             // Re-init flatpickr on updated content
             flatpickr(".flatpickr", {
                 enableTime: true,
-                dateFormat: "d-m-Y H:i", // Use the combined format
+                dateFormat: "{{DATETIME_FORMATS['DATETIME_FORMAT_FLATPICKR']}}", 
                 altInput: true,
-                altFormat: "F j, Y H:i",
+                altFormat: "{{DATETIME_FORMATS['DATETIME_FORMAT_JOBS']}}",
                 allowInput: true,
                 onOpen: function(selectedDates, dateStr, instance) {
                     // Ensure the calendar opens correctly for existing values

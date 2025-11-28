@@ -68,7 +68,7 @@ hx-swap="innerHTML"
                 </div>
                 <div class="form-field">
                     <label for="arrival_datetime">Tenant Arrival Date & Time</label>
-                    <input type="datetime-local" id="arrival_datetime" name="arrival_datetime" value="{{ job.arrival_datetime.isoformat() if job.arrival_datetime else None}}" placeholder="Select Date and Time">
+                    <input type="text" id="arrival_datetime" name="arrival_datetime" value="{{ job.arrival_datetime.strftime(DATETIME_FORMATS['DATETIME_FORMAT']) if job.arrival_datetime else '' }}" placeholder="Select Date and Time" class="flatpickr">
                 </div>
             </div>
             {% if job.property.access_notes %}

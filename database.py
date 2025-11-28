@@ -307,7 +307,7 @@ def _create_job(session, date, time, end_time, description, property_obj, team_o
         id=job_id,
         date=date,
         time=time,
-        arrival_datetime=datetime.combine(arrival_date_for_job, time) - timedelta(minutes=15),
+        arrival_datetime=datetime.combine(arrival_date_for_job, time),
         end_time=end_time,
         description=description,
         is_complete=False,
