@@ -3,6 +3,7 @@ from flask_login import current_user
 from services.team_service import TeamService
 from services.user_service import UserService
 from database import get_db, teardown_db
+from config import DATETIME_FORMATS
 
 def get_teams():
     if current_user.role not in ['owner']:
@@ -11,9 +12,9 @@ def get_teams():
     db = get_db()
     team_service = TeamService(db)
     teams = team_service.get_all_teams()
-
+ 
     teardown_db()
-    return render_template('teams.html', teams=teams)
+    return render_template('teams.html', teams=teams, DATETIME_FORMATS=DATETIME_FORMATS)
 
 def get_team(team_id):
     if current_user.role not in ['owner']:
@@ -70,7 +71,7 @@ def create_team():
 
     all_teams = team_service.get_all_teams()
     teardown_db()
-    response = Response(render_template('team_list.html', teams=all_teams))
+    response = Response(render_template('team_list.html', teams=all_teams, DATETIME_FORMATS=DATETIME_FORMATS))
     response.headers['HX-Trigger'] = 'teamListUpdated'
     return response
 
@@ -94,7 +95,8 @@ def get_create_team_form():
         """
         {% include 'team_create_modal.html' with context %}
         """,
-        categorized_users=categorized_users
+        categorized_users=categorized_users,
+        DATETIME_FORMATS=DATETIME_FORMATS
     )
 
 def get_edit_team_form(team_id):
@@ -114,7 +116,8 @@ def get_edit_team_form(team_id):
         """
         {% include 'team_edit_modal.html' with context %}
         """,
-        team=team
+        team=team,
+        DATETIME_FORMATS=DATETIME_FORMATS
     )
 
 def get_categorized_team_users(team_id):
@@ -154,7 +157,7 @@ def edit_team(team_id):
 
     all_teams = team_service.get_all_teams()
     teardown_db()
-    response = Response(render_template_string("{% include 'team_list.html' %}", teams=all_teams))
+    response = Response(render_template_string("{% include 'team_list.html' %}", teams=all_teams, DATETIME_FORMATS=DATETIME_FORMATS))
     response.headers['HX-Trigger'] = 'teamListUpdated'
     return response
 

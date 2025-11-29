@@ -107,7 +107,7 @@ hx-swap="innerHTML"
                 <div class="form-field">
                     <select id="assigned_cleaners" name="assigned_cleaners" multiple>
                         {% for user in users %}
-                            <option value="{{ user.id }}" {% if user in job_cleaners %}selected{% endif %}>{{ user.username }}</option>
+                            <option value="{{ user.id }}" {% if user in job_cleaners %}selected{% endif %}>{{ user.first_name }} {{ user.last_name }}</option>
                         {% endfor %}
                     </select>
                 </div>

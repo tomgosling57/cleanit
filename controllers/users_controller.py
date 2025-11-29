@@ -4,6 +4,7 @@ from flask import render_template_string, request, jsonify, render_template, red
 from services.team_service import TeamService
 from utils.http import validate_request_host
 from database import get_db, teardown_db
+from config import DATETIME_FORMATS
 from services.user_service import UserService
 from flask_login import login_user, current_user, fresh_login_required
 
@@ -27,9 +28,9 @@ def list_all_users_view():
 
 
     users = user_service.get_all_users()
-
+ 
     teardown_db()
-    return render_template('users.html', users=users)
+    return render_template('users.html', users=users, DATETIME_FORMATS=DATETIME_FORMATS)
 
 
 def get_user_update_password_form(user_id):
@@ -47,7 +48,7 @@ def get_user_update_password_form(user_id):
     db = get_db()
     user_service = UserService(db)
     user = user_service.get_user_by_id(user_id)
-    return render_template('user_update_password_form.html', user=user, current_user=current_user)
+    return render_template('user_update_password_form.html', user=user, current_user=current_user, DATETIME_FORMATS=DATETIME_FORMATS)
 
 
 def update_user_password(user_id):
@@ -108,7 +109,7 @@ def get_user_profile():
     db = get_db()    
     user_service = UserService(db)
     roles = user_service.get_roles()
-    return render_template('user_profile.html', user_profile=True, user=current_user, roles=roles, current_user=current_user)
+    return render_template('user_profile.html', user_profile=True, user=current_user, roles=roles, current_user=current_user, DATETIME_FORMATS=DATETIME_FORMATS)
 
 
 def update_user_profile():
@@ -127,8 +128,8 @@ def update_user_profile():
         return jsonify({'error': 'Unauthorized'}), 403
 
     db = get_db()
-    user, errors = _update_user(current_user.id, db)    
-    return render_template('user_update_form.html', user=user, errors=errors, user_profile=True, message="User updated successfully."), 200
+    user, errors = _update_user(current_user.id, db)
+    return render_template('user_update_form.html', user=user, errors=errors, user_profile=True, message="User updated successfully.", DATETIME_FORMATS=DATETIME_FORMATS), 200
 
 def list_users():
     """API endpoint to list all users.
@@ -258,7 +259,7 @@ def get_user_update_form(user_id):
     user_service = UserService(db)
     user = user_service.get_user_by_id(user_id)
     roles = user_service.get_roles()
-    return render_template('user_update_form.html', user=user, roles=roles, current_user=current_user)
+    return render_template('user_update_form.html', user=user, roles=roles, current_user=current_user, DATETIME_FORMATS=DATETIME_FORMATS)
 
 
 def _update_user(user_id, db):
@@ -338,7 +339,7 @@ def get_user_creation_form():
     db = get_db()
     user_service = UserService(db)
     roles = user_service.get_roles()
-    return render_template('user_creation_form.html', roles=roles)
+    return render_template('user_creation_form.html', roles=roles, DATETIME_FORMATS=DATETIME_FORMATS)
 
 def create_user():
     """Creates a new user in the database.

@@ -22,7 +22,7 @@
             // Re-init flatpickr on updated content
             flatpickr(".flatpickr", {
                 enableTime: true,
-                dateFormat: "{{DATETIME_FORMATS['DATETIME_FORMAT_FLATPICKR']}}", 
+                dateFormat: "{{DATETIME_FORMATS['DATETIME_FORMAT_FLATPICKR']}}", // this should be iso format but it would require a controller update as well
                 altInput: true,
                 altFormat: "{{DATETIME_FORMATS['DATETIME_FORMAT_JOBS_JS']}}",
                 allowInput: true,
