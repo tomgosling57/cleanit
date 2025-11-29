@@ -1,5 +1,7 @@
 # tests/test_timetable.py
+from datetime import datetime, time, timedelta
 from playwright.sync_api import expect
+from config import DATETIME_FORMATS
 from tests.helpers import login_cleaner, login_owner, login_team_leader, assert_job_card_variables, mark_job_as_complete
 
 
@@ -82,7 +84,35 @@ def test_owner_timetable(page, goto) -> None:
 
     # View job details modal
     job_card_1.get_by_role("button", name="View Details").click()
-    page.locator("#job-modal").get_by_text("×").click()
+    page.get_by_text("✏️ Edit").click()
+
+    # Assertions for the job update modal
+    job_update_modal = page.locator("#job-modal")
+    expect(job_update_modal).to_be_visible()
+
+    # Get the selected date from the timetable (assuming it's in an input with id="selected-date")
+    # Get the selected date from the timetable date picker
+    selected_date_from_timetable = page.locator("#timetable-datepicker").input_value()
+
+    # Assert Time and End Time
+    expect(job_update_modal.locator("#time")).to_have_value("09:00")
+    expect(job_update_modal.locator("#end_time")).to_have_value("11:00")
+
+    # Assert Date
+    expect(job_update_modal.locator("#date")).to_have_value(selected_date_from_timetable)
+
+    # Assert Description (assuming a default description for the test job)
+    expect(job_update_modal.locator("#description")).to_have_value("Full house clean, focus on kitchen and bathrooms.")
+
+    # Assert Property (assuming "123 Main St, Anytown" is the first property and its ID is selected)
+    expect(job_update_modal.locator("#property_id")).to_have_value("1") # Assuming property ID 1 for "123 Main St, Anytown"
+
+    # Assert Tenant Arrival Date & Time (assuming no arrival_datetime for the test job)
+    arrival_datetime = datetime.combine(datetime.today().date(), time(9, 0)) + timedelta(days=2)  # Assuming arrival is two days after the job date at 09:00
+    expect(job_update_modal.locator("#arrival_datetime")).to_have_value(arrival_datetime.strftime(DATETIME_FORMATS["DATETIME_FORMAT"]))
+
+
+    job_update_modal.get_by_text("×").click()
 
     job_card_2 = page.locator('div.job-card').nth(1)
     # Assert that jobs are listed in chronological order
