@@ -1,9 +1,11 @@
 # conftest.py
+from typing import Generator
 import pytest
 from flask_login import LoginManager
 from app_factory import create_app
 import tempfile
 import os
+from playwright.sync_api import Page, BrowserContext
 
 @pytest.fixture(scope='session')
 def test_db_path():
@@ -42,3 +44,10 @@ def goto(page, live_server):
     def _goto(path="/"):
         return page.goto(f"{live_server.url()}{path}")
     return _goto
+
+
+@pytest.fixture
+def page(context: BrowserContext) -> Generator[Page, None, None]:
+    page = context.new_page()
+    page.set_default_navigation_timeout(5000) # the timeout is in milliseconds
+    yield page
