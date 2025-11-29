@@ -26,7 +26,7 @@ def update_job_status(job_id):
         # Accessing job.property to eagerly load it before the session is torn down
         # This prevents DetachedInstanceError when rendering the template
         _ = job.property.address
-        response = render_template_string('{% include "job_status_fragment.html" %} {% include "job_actions_fragment.html" %}', job=job, user_role=current_user.role, is_oob_swap=True)
+        response = render_template_string('{% include "job_status_fragment.html" %} {% include "job_actions_fragment.html" %}', job=job, is_oob_swap=True)
         teardown_db()
         return response
     
@@ -97,7 +97,7 @@ def timetable(date: str = None):
     team_leader_id = team.team_leader_id if team else None
     selected_date = session['selected_date'] # Use the string directly from session
     current_user.selected_date = selected_date
-    response = render_template('timetable.html', jobs=jobs, team_leader_id=team_leader_id, user_role=current_user.role,
+    response = render_template('timetable.html', jobs=jobs, team_leader_id=team_leader_id,
                            user_id=current_user.id, selected_date=selected_date, DATETIME_FORMATS=DATETIME_FORMATS,
                            back_to_back_job_ids=job_service.get_back_to_back_jobs_for_date(date_obj, threshold_minutes=BACK_TO_BACK_THRESHOLD),
                            all_teams=all_teams)
