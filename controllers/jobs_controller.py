@@ -124,9 +124,6 @@ def team_timetable(date: str = None):
 
     selected_date = session['selected_date'] # Use the string directly from session
     current_user.selected_date = selected_date
-    print(f"teams: length: {len(all_teams)} first element: {all_teams[0]}")
-    print(f"jobs: num teams {len(jobs_by_team)}")
-    print(jobs_by_team)
     response = render_template('team_timetable.html', selected_date=selected_date, DATETIME_FORMATS=DATETIME_FORMATS,
                                all_teams=all_teams, jobs_by_team=jobs_by_team,
                                team_back_to_back_job_ids=team_back_to_back_job_ids)
@@ -145,13 +142,11 @@ def update_job(job_id):
         return jsonify({'error': 'Job not found'}), 404
 
     updated_job_data, assigned_teams, assigned_cleaners, error_response = JobHelper.process_job_form()
-    print("property_id:", updated_job_data.get('property_id'))
     if error_response:
         teardown_db()
         return error_response
 
     updated_job = job_service.update_job(job_id, updated_job_data)
-    print(f"{updated_job.property}")
     assignment_service = AssignmentService(db)
     assignment_service.update_assignments(updated_job.id, team_ids=assigned_teams, user_ids=assigned_cleaners)
 
@@ -161,16 +156,12 @@ def update_job(job_id):
         view_type_to_render = request.form.get('view_type')
 
         if view_type_to_render == 'team':
-            print(f"Rendering team timetable fragment for date: {date_to_render}")
             response_html = JobHelper.render_teams_timetable_fragment(db, current_user, date_to_render)
         if view_type_to_render == 'property':
-            print(f"Rendering job list fragment for property: {session['property_id']}")
             response_html = get_property_jobs_modal_content(session['property_id'])
         else:
-            print(f"Rendering job list fragment for date: {date_to_render}")
             response_html = JobHelper.render_job_list_fragment(db, current_user, date_to_render)
         
-        print(f"Response HTML length: {len(response_html) if response_html else 0}")
         teardown_db()
         return response_html
     teardown_db()
