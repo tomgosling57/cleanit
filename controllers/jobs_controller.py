@@ -283,7 +283,7 @@ def get_job_update_form(job_id, view_type=None):
     teardown_db()
     if job:
         selected_date = session.get('selected_date', datetime.today().date())
-        return render_template('job_update_modal.html', job=job, users=users, job_users=job_users, properties=properties, teams=teams, job_teams=job_teams, DATETIME_FORMATS=DATETIME_FORMATS, selected_date=selected_date, view_type=view_type)
+        return render_template('job_update_modal.html', job=job, users=users, job_cleaners=job_users, properties=properties, teams=teams, job_teams=job_teams, DATETIME_FORMATS=DATETIME_FORMATS, selected_date=selected_date, view_type=view_type)
     return jsonify({'error': 'Job not found'}), 404
 
 def create_job():
