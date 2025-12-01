@@ -7,6 +7,8 @@ import tempfile
 import os
 from playwright.sync_api import Page, BrowserContext
 
+from database import get_db, seed_test_data
+
 @pytest.fixture(scope='session')
 def test_db_path():
     """Create temp database"""
@@ -37,6 +39,16 @@ def app(test_db_path):
     app = create_app(login_manager=login_manager, test_config=test_config)
     
     yield app
+
+    
+@pytest.fixture(autouse=True)
+def rollback_db_after_test(app):
+    """Rollback database changes after each test to maintain isolation."""
+    yield  # Test runs here
+    
+    # After test completes, rollback any uncommitted changes
+    with app.app_context():
+        seed_test_data(app.config['SQLALCHEMY_SESSION'])  # Reseed data to initial state
 
 @pytest.fixture
 def goto(page, live_server):
