@@ -91,7 +91,7 @@ def test_update_job(page, goto) -> None:
     new_end_time = datetime.today().replace(hour=9, minute=0).time().strftime(DATETIME_FORMATS["TIME_FORMAT"])
     new_date = (datetime.today().date() + timedelta(days=1)).strftime(DATETIME_FORMATS["DATE_FORMAT"])
     new_job_description = "test"
-    new_arrival_datetime = datetime.combine(datetime.today().date() + timedelta(days=2), time(10, 0)).strftime(DATETIME_FORMATS["DATETIME_FORMAT"])
+    new_arrival_datetime = datetime.combine(datetime.today().date() + timedelta(days=1), time(10, 0)).strftime(DATETIME_FORMATS["DATETIME_FORMAT_JOBS_PY"])
     new_access_notes = "test"
     new_property_id = "2"
     new_assigned_teams =  ["1", "2"]    
@@ -100,6 +100,7 @@ def test_update_job(page, goto) -> None:
     job_update_modal.get_by_role("textbox", name="Start Time").fill(new_start_time)
     job_update_modal.locator("#access_notes").fill(new_access_notes)
     job_update_modal.locator("#property_id").select_option(new_property_id)
+    job_update_modal.locator('input[type="text"].flatpickr').fill(new_arrival_datetime)
     job_update_modal.locator("#assigned_teams").select_option(new_assigned_teams)
     job_update_modal.locator("#assigned_cleaners").select_option(new_assigned_cleaners)
     job_update_modal.get_by_role("button", name="💾 Save Changes").click()
@@ -107,7 +108,7 @@ def test_update_job(page, goto) -> None:
     assert_job_card_variables(job_card, {
         "time": f"Time: {new_start_time}",
         "address": "Property Address: 456 Oak Ave, Teamville"
-    })  
+    }, expected_indicators=["Next Day Arrival"])  
 
 def test_create_job(page, goto) -> None:
     """Tests that the create job flow works correctly for the owner.
