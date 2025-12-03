@@ -232,11 +232,16 @@ def login():
             login_user(user)
             flash(f'Welcome back, {user.first_name}!', 'success')
             next = request.args.get('next')
+
+            # Set the dev mode flag to true in order to skip host validation if in debug or testing mode
             dev_mode = current_app.config.get('DEBUG', False)
             if not dev_mode:
                 dev_mode = current_app.config.get('TESTING', False)
+            
+            # Validate the 'next' parameter to prevent open redirect vulnerabilities
             if not validate_request_host(next, request.host, dev_mode):
                 _return = abort(400)
+                
             _return = redirect(next or url_for('job.timetable')) # Redirect to job.timetable after successful login
         else:
             flash('Invalid email or password', 'error')
