@@ -379,7 +379,7 @@ def create_initial_properties_and_jobs(session, owner, cleaner, initial_team, al
     print("Initial jobs created and assigned for deterministic testing.")
     return property1, property_alpha
 
-def seed_test_data(Session):
+def seed_database(Session):
     """
     Seeds the database with a consistent set of deterministic test data.
     This includes users, teams, properties, and jobs.
