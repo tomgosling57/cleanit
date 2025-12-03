@@ -185,3 +185,33 @@ def test_owner_team_timetable(page, goto) -> None:
     team_column_5 = page.locator('div.team-column').nth(4)
     expect(team_column_5.get_by_role("heading", name="Delta Team")).to_be_visible()
     expect(team_column_5.locator('div.job-card')).to_have_count(1)
+
+def test_team_timetable_job_reassignment(page, goto) -> None:
+    """
+    Test that a job can be reassigned to a different team via drag-and-drop in the team timetable.
+
+    Args:
+        page: Playwright page object
+        goto: Function to navigate to a URL
+    Returns:
+        None
+    """
+    login_owner(page, goto)
+    
+    page.get_by_text('Team View').click()
+
+    # Drag and drop a job from one team to another
+    team_column_1 = page.locator('div.team-column').first
+    job_card_to_move = team_column_1.locator('div.job-card').first
+    team_column_2 = page.locator('div.team-column').nth(1)
+    # move_target = team_column_2.locator('div.job-card').first
+
+    job_id = int(job_card_to_move.get_attribute('data-job-id'))
+    # old_team_id = int(team_column_1.get_attribute('data-team-id'))
+    # new_team_id = int(team_column_2.get_attribute('data-team-id'))
+
+    job_card_to_move.drag_to(team_column_2)
+
+    # Verify that the job has been moved to the new team column
+    expect(team_column_2.locator(f'div.job-card[data-job-id="{job_id}"]')).to_be_visible()
+    expect(team_column_1.locator(f'div.job-card[data-job-id="{job_id}"]')).to_have_count(0)
