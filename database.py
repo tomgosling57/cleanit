@@ -165,21 +165,17 @@ class Assignment(Base):
                       )
 
 # Database initialization function
-def init_db(app, database_path: str, seed_data: bool = False):
+def init_db(database_path: str):
     """
-    Initializes the database, creates all tables, and optionally seeds it with test data.
+    Initializes the database and creates all tables.
 
     Args:
-        app: The Flask application instance.
         database_path (str): The path to the SQLite database file.
         seed_data (bool): If True, the database will be seeded with deterministic test data.
     """
-    engine = create_engine(f'sqlite:///{database_path}')
+    engine = create_engine(database_path)
     Base.metadata.create_all(engine)
     Session = sessionmaker(bind=engine)
-
-    if seed_data:
-        seed_test_data(Session)
 
     return Session
 
