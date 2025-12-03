@@ -11,7 +11,7 @@ from routes.teams import teams_bp
 from routes.properties import properties_bp
 from services.user_service import UserService
 
-def create_app(login_manager=LoginManager(), test_config=None):
+def create_app(login_manager=LoginManager(), config_override=dict()):
     """
     Creates and configures the Flask application.
 
@@ -25,18 +25,13 @@ def create_app(login_manager=LoginManager(), test_config=None):
         Flask: The configured Flask application instance.
     """
     app = Flask(__name__, instance_relative_config=True)
-    if test_config:
+    if config_override.get('TESTING', False):
         app.config.from_object(TestConfig)
-        app.config.update(test_config) # Apply additional test config overrides
-
-        try: # Ensure the instance directory exists
-            os.makedirs(app.instance_path)
-        except OSError:
-            pass
     else: 
         app.config.from_object(Config)
     
-    Session = init_db(app.config['DATABASE'])
+    app.config.update(config_override)
+    Session = init_db(app.config['SQLALCHEMY_DATABASE_URI'])
     app.config['SQLALCHEMY_SESSION'] = Session
     
     login_manager.login_view = 'user.login'
