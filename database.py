@@ -165,7 +165,7 @@ class Assignment(Base):
                       )
 
 # Database initialization function
-def init_db(database_path: str):
+def init_db(database_uri: str):
     """
     Initializes the database and creates all tables.
 
@@ -173,7 +173,7 @@ def init_db(database_path: str):
         database_path (str): The path to the SQLite database file.
         seed_data (bool): If True, the database will be seeded with deterministic test data.
     """
-    engine = create_engine(database_path)
+    engine = create_engine(database_uri)
     Base.metadata.create_all(engine)
     Session = sessionmaker(bind=engine)
 
