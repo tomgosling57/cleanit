@@ -10,6 +10,7 @@ from routes.jobs import job_bp
 from routes.teams import teams_bp
 from routes.properties import properties_bp
 from services.user_service import UserService
+from utils.database import populate_database
 
 def create_app(login_manager=LoginManager(), config_override=dict()):
     """
@@ -27,6 +28,7 @@ def create_app(login_manager=LoginManager(), config_override=dict()):
     app = Flask(__name__, instance_relative_config=True)
     if config_override.get('TESTING', False):
         app.config.from_object(TestConfig)
+        populate_database(app.config['SQLALCHEMY_DATABASE_URI'])
     else: 
         app.config.from_object(Config)
     
