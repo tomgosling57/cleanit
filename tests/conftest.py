@@ -31,6 +31,7 @@ def app(test_db_path):
     }
     
     app = create_app(login_manager=login_manager, config_override=test_config)
+    populate_database(app.config['SQLALCHEMY_DATABASE_URI'])
     
     yield app
 
