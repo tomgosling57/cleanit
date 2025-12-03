@@ -24,4 +24,3 @@ class TestConfig(Config):
     TESTING = True
     SEED_DATABASE_FOR_TESTING = True
     INSERT_DUMMY_DATA = True
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
