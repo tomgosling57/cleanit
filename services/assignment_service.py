@@ -109,7 +109,7 @@ class AssignmentService:
             joinedload(Job.property),
             joinedload(Job.assignments).joinedload(Assignment.team),
             joinedload(Job.assignments).joinedload(Assignment.user)
-        ).filter(Job.date == target_date).all()
+        ).filter(Job.date == target_date).order_by(Job.date, Job.time).all()
 
         jobs_by_team = defaultdict(list)
         all_teams = self.db_session.query(Team).all()

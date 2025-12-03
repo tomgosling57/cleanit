@@ -68,7 +68,7 @@ hx-swap="innerHTML"
                 </div>
                 <div class="form-field">
                     <label for="arrival_datetime">Tenant Arrival Date & Time</label>
-                    <input type="datetime-local" id="arrival_datetime" name="arrival_datetime" value="{{ job.arrival_datetime.isoformat() if job.arrival_datetime else None}}" placeholder="Select Date and Time">
+                    <input type="text" id="arrival_datetime" name="arrival_datetime" value="{{ job.arrival_datetime.strftime(DATETIME_FORMATS['DATETIME_FORMAT']) if job.arrival_datetime else '' }}" placeholder="Select Date and Time" class="flatpickr">
                 </div>
             </div>
             {% if job.property.access_notes %}
@@ -78,7 +78,7 @@ hx-swap="innerHTML"
                     <span class="card-title">Access</span>
                 </div>
                 <div class="form-field">
-                    <textarea rows="2" readonly>{{ job.property.access_notes }}</textarea>
+                    <textarea rows="2" id="access_notes" name="access_notes">{{ job.property.access_notes }}</textarea>
                 </div>
             </div>
             {% endif %}
@@ -107,7 +107,7 @@ hx-swap="innerHTML"
                 <div class="form-field">
                     <select id="assigned_cleaners" name="assigned_cleaners" multiple>
                         {% for user in users %}
-                            <option value="{{ user.id }}" {% if user in job_cleaners %}selected{% endif %}>{{ user.username }}</option>
+                            <option value="{{ user.id }}" {% if user in job_cleaners %}selected{% endif %}>{{ user.first_name }} {{ user.last_name }}</option>
                         {% endfor %}
                     </select>
                 </div>

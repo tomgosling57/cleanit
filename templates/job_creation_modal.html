@@ -60,7 +60,7 @@
                 </div>
                 <div class="form-field">
                     <label for="arrival_datetime">Tenant Arrival Date & Time</label>
-                    <input type="datetime-local" id="arrival_datetime" name="arrival_datetime" placeholder="Select Date and Time">  
+                    <input type="text" id="arrival_datetime" name="arrival_datetime" placeholder="Select Date and Time" class="flatpickr">  
                 </div>                  
             </div>
             <div class="form-card access-card">
@@ -69,7 +69,7 @@
                     <span class="card-title">Access</span>
                 </div>
                 <div class="form-field">
-                    <textarea rows="2" placeholder="Access notes will appear here" readonly></textarea>
+                    <textarea rows="2" id="access_notes" name="access_notes" placeholder="Access notes will appear here"></textarea>
                 </div>
             </div>
         </div>
@@ -97,7 +97,7 @@
                 <div class="form-field">
                     <select id="assigned_cleaners" name="assigned_cleaners" multiple>
                         {% for user in users %}
-                            <option value="{{ user.id }}">{{ user.username }}</option>
+                            <option value="{{ user.id }}">{{ user.first_name }} {{ user.last_name }}</option>
                         {% endfor %}
                     </select>
                 </div>

@@ -12,7 +12,7 @@ def get_properties_view():
     property_service = PropertyService(db)
     properties = property_service.get_all_properties()
     teardown_db()
-    return render_template('properties.html', properties=properties, view_type='property')
+    return render_template('properties.html', properties=properties, view_type='property', DATETIME_FORMATS=DATETIME_FORMATS)
 
 def get_property_by_id(property_id):
     """
@@ -48,7 +48,7 @@ def get_property_creation_form():
     """
     Renders the property creation form.
     """
-    return render_template('property_creation_modal.html')
+    return render_template('property_creation_modal.html', DATETIME_FORMATS=DATETIME_FORMATS)
 
 def create_property():
     """
@@ -89,7 +89,7 @@ def get_property_update_form(property_id):
     teardown_db()
     if not property:
         return jsonify({'error': 'Property not found'}), 404
-    return render_template('property_update_modal.html', property=property)
+    return render_template('property_update_modal.html', property=property, DATETIME_FORMATS=DATETIME_FORMATS)
 
 def update_property(property_id):
     """

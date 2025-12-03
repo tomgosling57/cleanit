@@ -13,7 +13,7 @@ from utils.job_helper import JobHelper
 from controllers.property_controller import get_property_jobs_modal_content
 
 def update_job_status(job_id):
-    if not current_user.is_authenticated or current_user.role not in ['cleaner', 'owner', 'team-leader']:
+    if not current_user.is_authenticated or current_user.role not in ['owner', 'team_leader']:
         return jsonify({'error': 'Unauthorized'}), 401
 
     is_complete = request.form.get('is_complete') == 'True'
@@ -26,7 +26,7 @@ def update_job_status(job_id):
         # Accessing job.property to eagerly load it before the session is torn down
         # This prevents DetachedInstanceError when rendering the template
         _ = job.property.address
-        response = render_template_string('{% include "job_status_fragment.html" %} {% include "job_actions_fragment.html" %}', job=job, user=current_user, is_oob_swap=True)
+        response = render_template_string('{% include "job_status_fragment.html" %} {% include "job_actions_fragment.html" %}', job=job, is_oob_swap=True)
         teardown_db()
         return response
     
@@ -85,7 +85,6 @@ def timetable(date: str = None):
     jobs = job_service.get_jobs_for_user_on_date(current_user.id, current_user.team_id, date_obj)
 
     all_teams = team_service.get_all_teams()
-    jobs_by_team = assignment_service.get_jobs_grouped_by_team_for_date(date_obj)
 
     team_back_to_back_job_ids = {}
     for team_obj in all_teams:
@@ -97,7 +96,7 @@ def timetable(date: str = None):
     team_leader_id = team.team_leader_id if team else None
     selected_date = session['selected_date'] # Use the string directly from session
     current_user.selected_date = selected_date
-    response = render_template('timetable.html', jobs=jobs, team_leader_id=team_leader_id, user_role=current_user.role,
+    response = render_template('timetable.html', jobs=jobs, team_leader_id=team_leader_id,
                            user_id=current_user.id, selected_date=selected_date, DATETIME_FORMATS=DATETIME_FORMATS,
                            back_to_back_job_ids=job_service.get_back_to_back_jobs_for_date(date_obj, threshold_minutes=BACK_TO_BACK_THRESHOLD),
                            all_teams=all_teams)
@@ -125,9 +124,6 @@ def team_timetable(date: str = None):
 
     selected_date = session['selected_date'] # Use the string directly from session
     current_user.selected_date = selected_date
-    print(f"teams: length: {len(all_teams)} first element: {all_teams[0]}")
-    print(f"jobs: num teams {len(jobs_by_team)}")
-    print(jobs_by_team)
     response = render_template('team_timetable.html', selected_date=selected_date, DATETIME_FORMATS=DATETIME_FORMATS,
                                all_teams=all_teams, jobs_by_team=jobs_by_team,
                                team_back_to_back_job_ids=team_back_to_back_job_ids)
@@ -146,13 +142,11 @@ def update_job(job_id):
         return jsonify({'error': 'Job not found'}), 404
 
     updated_job_data, assigned_teams, assigned_cleaners, error_response = JobHelper.process_job_form()
-    print("property_id:", updated_job_data.get('property_id'))
     if error_response:
         teardown_db()
         return error_response
 
     updated_job = job_service.update_job(job_id, updated_job_data)
-    print(f"{updated_job.property}")
     assignment_service = AssignmentService(db)
     assignment_service.update_assignments(updated_job.id, team_ids=assigned_teams, user_ids=assigned_cleaners)
 
@@ -162,16 +156,12 @@ def update_job(job_id):
         view_type_to_render = request.form.get('view_type')
 
         if view_type_to_render == 'team':
-            print(f"Rendering team timetable fragment for date: {date_to_render}")
             response_html = JobHelper.render_teams_timetable_fragment(db, current_user, date_to_render)
         if view_type_to_render == 'property':
-            print(f"Rendering job list fragment for property: {session['property_id']}")
             response_html = get_property_jobs_modal_content(session['property_id'])
         else:
-            print(f"Rendering job list fragment for date: {date_to_render}")
             response_html = JobHelper.render_job_list_fragment(db, current_user, date_to_render)
         
-        print(f"Response HTML length: {len(response_html) if response_html else 0}")
         teardown_db()
         return response_html
     teardown_db()
@@ -284,7 +274,7 @@ def get_job_update_form(job_id, view_type=None):
     teardown_db()
     if job:
         selected_date = session.get('selected_date', datetime.today().date())
-        return render_template('job_update_modal.html', job=job, users=users, job_users=job_users, properties=properties, teams=teams, job_teams=job_teams, DATETIME_FORMATS=DATETIME_FORMATS, selected_date=selected_date, view_type=view_type)
+        return render_template('job_update_modal.html', job=job, users=users, job_cleaners=job_users, properties=properties, teams=teams, job_teams=job_teams, DATETIME_FORMATS=DATETIME_FORMATS, selected_date=selected_date, view_type=view_type)
     return jsonify({'error': 'Job not found'}), 404
 
 def create_job():

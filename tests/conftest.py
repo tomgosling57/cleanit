@@ -1,9 +1,13 @@
 # conftest.py
+from typing import Generator
 import pytest
-from playwright.sync_api import sync_playwright
+from flask_login import LoginManager
 from app_factory import create_app
 import tempfile
 import os
+from playwright.sync_api import Page, BrowserContext
+
+from database import get_db, seed_test_data
 
 @pytest.fixture(scope='session')
 def test_db_path():
@@ -13,39 +17,49 @@ def test_db_path():
     os.close(db_fd)
     os.unlink(db_path)
 
-
 @pytest.fixture(scope='session')
 def app(test_db_path):
-    """pytest-flask will use this fixture automatically"""
-    app = create_app({
+    """
+    Configures and creates a Flask app for testing.
+    The database is configured to be seeded with deterministic data for consistent testing.
+    pytest-flask will use this fixture automatically.
+    """
+    login_manager = LoginManager()
+    
+    test_config = {
         'TESTING': True,
         'DATABASE': test_db_path,
         'SQLALCHEMY_DATABASE_URI': f'sqlite:///{test_db_path}',
-        'WTF_CSRF_ENABLED': False,
-    })
+        'DEBUG': True,
+        'SECRET_KEY': 'test-secret-key',
+        'SEED_DATABASE_FOR_TESTING': True,
+        'INSERT_DUMMY_DATA': True,
+    }
     
-    with app.app_context():
-        # Initialize database
-        # db.create_all()
-        pass
+    app = create_app(login_manager=login_manager, test_config=test_config)
     
     yield app
 
+    
+@pytest.fixture(autouse=True)
+def rollback_db_after_test(app):
+    """Rollback database changes after each test to maintain isolation."""
+    yield  # Test runs here
+    
+    # After test completes, rollback any uncommitted changes
+    with app.app_context():
+        seed_test_data(app.config['SQLALCHEMY_SESSION'])  # Reseed data to initial state
 
-# Playwright fixtures
-@pytest.fixture(scope="session")
-def browser():
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-        yield browser
-        browser.close()
+@pytest.fixture
+def goto(page, live_server):
+    """Helper fixture that navigates to a path"""
+    def _goto(path="/"):
+        return page.goto(f"{live_server.url()}{path}")
+    return _goto
 
 
-@pytest.fixture(scope="function")
-def page(browser, live_server):
-    """Use pytest-flask's live_server fixture"""
-    context = browser.new_context(base_url=live_server.url())
+@pytest.fixture
+def page(context: BrowserContext) -> Generator[Page, None, None]:
     page = context.new_page()
+    page.set_default_navigation_timeout(5000) # the timeout is in milliseconds
     yield page
-    page.close()
-    context.close()

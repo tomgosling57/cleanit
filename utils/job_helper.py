@@ -195,7 +195,6 @@ class JobHelper:
             DATETIME_FORMATS=DATETIME_FORMATS,
             current_user=current_user,
             view_type='team',
-            user_role=current_user.role,
             user_id=current_user.id,
             team_leader_id=current_user.team_id # Assuming current_user.team_id is the team leader's ID for simplicity, or needs to be fetched
         )
