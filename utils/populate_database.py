@@ -19,3 +19,6 @@ def populate_database(database_uri: str):
     Session = init_db(database_uri)
     insert_dummy_data(Session)
     print("Database populated with dummy data.")
+
+if __name__ == '__main__':
+    populate_database(Config.SQLALCHEMY_DATABASE_URI)

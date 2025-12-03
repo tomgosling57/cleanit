@@ -10,7 +10,7 @@ from routes.jobs import job_bp
 from routes.teams import teams_bp
 from routes.properties import properties_bp
 from services.user_service import UserService
-from utils.database import populate_database
+from utils.populate_database import populate_database
 
 def create_app(login_manager=LoginManager(), config_override=dict()):
     """
