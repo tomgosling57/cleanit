@@ -1,6 +1,6 @@
 import os
 from config import Config
-from database import init_db, seed_database
+from database import init_db, insert_dummy_data
 
 
 def populate_database(database_uri: str):
@@ -17,5 +17,5 @@ def populate_database(database_uri: str):
             os.makedirs(database_dir)
 
     Session = init_db(database_uri)
-    seed_database(Session)
+    insert_dummy_data(Session)
     print("Database populated with dummy data.")
