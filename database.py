@@ -379,9 +379,9 @@ def create_initial_properties_and_jobs(session, owner, cleaner, initial_team, al
     print("Initial jobs created and assigned for deterministic testing.")
     return property1, property_alpha
 
-def seed_database(Session):
+def insert_dummy_data(Session):
     """
-    Seeds the database with a consistent set of deterministic test data.
+    Populates the database with a consistent set of deterministic test data.
     This includes users, teams, properties, and jobs.
     This function clears existing data before seeding to ensure a clean state.
 
@@ -395,5 +395,3 @@ def seed_database(Session):
     create_initial_properties_and_jobs(session, owner, cleaner, initial_team, alpha_team, beta_team, charlie_team, delta_team)
     
     session.close()
-    print("Test database seeded with deterministic data.")
-
