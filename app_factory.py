@@ -3,6 +3,7 @@ import os
 import secrets
 from flask import Flask, redirect, url_for, request, Response
 from flask_login import LoginManager
+from config import Config, TestConfig
 from database import init_db, get_db, teardown_db
 from routes.users import user_bp
 from routes.jobs import job_bp
@@ -24,32 +25,23 @@ def create_app(login_manager=LoginManager(), test_config=None):
         Flask: The configured Flask application instance.
     """
     app = Flask(__name__, instance_relative_config=True)
-    secret_key = test_config.get('SECRET_KEY') if test_config and 'SECRET_KEY' in test_config else secrets.token_bytes(32)
-    app.config.from_mapping(
-        SECRET_KEY=secret_key,
-        DATABASE=os.path.join(app.instance_path, 'cleanit.db'),
-        SQLALCHEMY_DATABASE_URI=f'sqlite:///{os.path.join(app.instance_path, "cleanit.db")}',
-        SQLALCHEMY_TRACK_MODIFICATIONS=False,
-    )
-    
-    if test_config is not None:
-        app.config.update(test_config)
-    
-    try:
-        os.makedirs(app.instance_path)
-    except OSError:
-        pass
-    
-    seed_database = app.config.get('SEED_DATABASE_FOR_TESTING', False)
-    insert_dummy_data = app.config.get('INSERT_DUMMY_DATA', False)
+    if test_config:
+        app.config.from_object(TestConfig)
+        app.config.update(test_config) # Apply additional test config overrides
 
-    Session = init_db(app, app.config['DATABASE'], seed_data=seed_database and insert_dummy_data)
+        try: # Ensure the instance directory exists
+            os.makedirs(app.instance_path)
+        except OSError:
+            pass
+    else: 
+        app.config.from_object(Config)
+    
+    Session = init_db(app.config['DATABASE'])
     app.config['SQLALCHEMY_SESSION'] = Session
     
     login_manager.login_view = 'user.login'
     login_manager.init_app(app)
     
-    # MOVE THESE HERE:
     @login_manager.user_loader
     def load_user(user_id):
         _return = UserService(get_db()).get_user_by_id(user_id)
