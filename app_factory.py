@@ -1,7 +1,7 @@
 # app_factory.py
 import os
 import secrets
-from flask import Flask, redirect, url_for, request, Response
+from flask import Flask, redirect, url_for, request, Response, abort
 from flask_login import LoginManager
 from config import Config, TestConfig
 from database import init_db, get_db, teardown_db
@@ -31,6 +31,8 @@ def create_app(login_manager=LoginManager(), config_override=dict()):
         populate_database(app.config['SQLALCHEMY_DATABASE_URI'])
     else: 
         app.config.from_object(Config)
+        if not app.config.get('SECRET_KEY'):
+            abort(500, "SECRET_KEY is not set. Please set the SECRET_KEY environment variable for production.")
     
     app.config.update(config_override)
     Session = init_db(app.config['SQLALCHEMY_DATABASE_URI'])
