@@ -186,4 +186,20 @@ class UserService:
         """
         user.set_password(password)
         self.db_session.commit()
+    
+    def get_users_relative_to_team(self, team_id=None):
+        """Gets users categorized by their relation to the given team_id.
         
+        Args:
+            team_id: The ID of the team to categorize users by.
+
+        Returns:
+            A dictionary with keys 'current_members', 'other_team_members', and 'unassigned' containing lists of User objects.
+        """
+        all_users = self.get_all_users()
+        categorized_users = {
+            'current_members': [user for user in all_users if user.team_id == team_id and team_id is not None],
+            'other_team_members': [user for user in all_users if user.team_id is not None and user.team_id != team_id],
+            'unassigned': [user for user in all_users if user.team_id is None]
+        }
+        return categorized_users
