@@ -107,3 +107,16 @@ def mark_job_as_complete(job_card) -> None:
     job_card.get_by_text("Pending").click()
     job_card.get_by_role("button", name="Mark Complete").click()
     expect(job_card.get_by_text("Completed")).to_be_visible()
+
+def wait_for_modal(page, id: str):
+    """
+    Waits for the job modal to be visible on the page.
+    Args:
+        page: The page pytest-playwright fixture representing the current browser page.
+    Returns:
+        The modal locator once it is visible.
+    """
+    modal = page.locator("#job-modal")
+    modal.wait_for(state="attached")
+    modal.wait_for(state="visible")
+    return modal

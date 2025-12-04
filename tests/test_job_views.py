@@ -2,14 +2,7 @@ from flask import url_for
 from playwright.sync_api import expect
 from datetime import datetime, time, timedelta
 from config import DATETIME_FORMATS
-from tests.helpers import assert_job_card_variables, login_owner
-
-def wait_for_modal(page):
-    modal = page.locator("#job-modal")
-    modal.wait_for(state="attached")
-    modal.wait_for(state="visible")
-    return modal
-
+from tests.helpers import assert_job_card_variables, login_owner, wait_for_modal
 
 def test_job_details(page, goto) -> None:
     login_owner(page, goto)
@@ -20,7 +13,7 @@ def test_job_details(page, goto) -> None:
     with page.expect_response('**/jobs/job/1/details**'):
         job_card.get_by_role("button", name="View Details").click()
 
-    modal = wait_for_modal(page)
+    modal = wait_for_modal(page, "#job-modal")
 
     expect(modal.locator("h2")).to_have_text("Job Details")
     expect(modal.get_by_text("Start: 09:00")).to_be_visible()
@@ -47,14 +40,14 @@ def test_update_job(page, goto) -> None:
     with page.expect_response(f"**/jobs/job/{job_card.get_attribute('data-job-id')}/details**"):
         job_card.get_by_role("button", name="View Details").click()
 
-    modal = wait_for_modal(page)
+    modal = wait_for_modal(page, "#job-modal")
 
     expect(modal.get_by_text("✏️ Edit")).to_be_visible()
 
     with page.expect_response(f"**/jobs/job/{job_card.get_attribute('data-job-id')}/update**"):
         modal.get_by_text("✏️ Edit").click()
 
-    modal = wait_for_modal(page)
+    modal = wait_for_modal(page, "#job-modal")
     modal.locator("#time").wait_for(state="visible")
 
     selected_date_from_timetable = page.locator("#timetable-datepicker").input_value()
@@ -106,7 +99,7 @@ def test_create_job(page, goto) -> None:
     with page.expect_response("**/jobs/job/create**"):
         page.get_by_text("Create Job").click()
 
-    modal = wait_for_modal(page)
+    modal = wait_for_modal(page, "#job-modal")
     modal.locator("#time").wait_for(state="visible")
 
     new_start_time = datetime.today().replace(hour=8, minute=0).time().strftime(DATETIME_FORMATS["TIME_FORMAT"])
