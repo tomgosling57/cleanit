@@ -6,7 +6,11 @@
     <div class="container">
         <div class="header-with-button">
             <h1>Teams Management</h1>
-            <button id="open-create-team-modal" class="button">Create New Team</button>
+            <button id="open-create-team-modal" class="button"
+                    hx-get="/teams/create_form"
+                    hx-target="#team-modal-content"
+                    hx-swap="innerHTML"
+                    hx-on--after-request="document.getElementById('team-modal').style.display='flex'">Create New Team</button>
         </div>
 
         <div class="teams-container">

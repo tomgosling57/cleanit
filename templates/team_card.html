@@ -1,13 +1,12 @@
 <div class="team-card" id="team-card-{{ team.id }}">
     <span class="team-close-button small-icon close-button" data-team-id="{{ team.id }}" data-num-members="{{ team.members | length }}">&times;</span>
-    <div class="team-header" title="Edit Team"
-            data-team-id="{{ team.id }}"
-            data-team-name="{{ team.name }}"
-            data-team-lead-id="{{ team.team_leader_id }}"
-            data-team-description="{{ team.description | default('') }}"
-            data-team-members="{{ team.members | map(attribute='username') | join(', ') }}">
+    <div class="team-header" title="Edit Team">
         <h3 class="team-name-display">{{ team.name }}</h3>
-        <span class="material-symbols-outlined edit-team-icon">edit</span>
+        <span class="material-symbols-outlined edit-team-icon"
+            hx-get="{{ url_for('teams.get_edit_team_form', team_id=team.id) }}"
+            hx-target="#team-modal-content"
+            hx-swap="innerHTML"
+            hx-on--after-request="document.getElementById('team-modal').style.display='flex'">edit</span>
     </div>
     
     <div class="team-members">
