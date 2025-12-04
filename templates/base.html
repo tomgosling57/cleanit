@@ -16,9 +16,6 @@
     <script src="https://kit.fontawesome.com/ca3e8bf32b.js" crossorigin="anonymous"></script>
     <script>
         document.body.addEventListener('htmx:afterSwap', (event) => {
-            // Re-init dragula on updated content
-            dragula([...document.querySelectorAll('.dragula-container')]);
-
             // Re-init flatpickr on updated content
             flatpickr(".flatpickr", {
                 enableTime: true,

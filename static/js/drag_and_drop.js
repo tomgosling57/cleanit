@@ -123,3 +123,22 @@ export function initJobCardDragula() {
     const jobContainers = Array.from(document.querySelectorAll('.team-column'));
     initDragula(jobContainers, handleJobCardDrop);
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+    initTeamMemberDragula();
+
+    document.body.addEventListener('teamListUpdated', () => {
+        console.log('Team list updated, re-initializing Dragula for team members.');
+        initTeamMemberDragula();
+    });
+
+    // Listen for HTMX content swaps that might affect team member lists
+    document.body.addEventListener('htmx:afterSwap', (event) => {
+        // Re-initialize Dragula if the swapped content is part of the teams grid or a team card
+        // This covers cases where team cards or the entire list are updated
+        if (event.detail.target.closest('.teams-grid') || event.detail.target.classList.contains('team-card')) {
+            console.log('HTMX swap detected in teams area, re-initializing Dragula for team members.');
+            initTeamMemberDragula();
+        }
+    });
+});
