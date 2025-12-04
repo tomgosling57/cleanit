@@ -29,9 +29,10 @@
     {% endwith %}
 
     <script type="module" src="{{ url_for('static', filename='js/team_management.js') }}"></script>
+    <script type="module" src="{{ url_for('static', filename='js/drag_and_drop.js') }}"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            
+            initDragula();
             // Listen for HTMX content swaps on the teams grid and reinitialize Dragula
             document.body.addEventListener('htmx:afterSwap', function(event) {
                 if (event.detail.target.classList.contains('teams-grid') ||
