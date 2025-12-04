@@ -81,23 +81,16 @@ def get_create_team_form():
 
     db = get_db()
     user_service = UserService(db)
-    all_users = user_service.get_all_users()
-    teardown_db()
 
     # Categorize all users for the create form (all will be unassigned or on different teams)
-    categorized_users = {
-        'on_this_team': [], # No users on "this team" for a new team
-        'on_a_different_team': [user for user in all_users if user.team_id is not None],
-        'unassigned': [user for user in all_users if user.team_id is None]
-    }
+    categorized_users = user_service.get_users_relative_to_team(None)
 
-    return render_template_string(
-        """
-        {% include 'team_create_modal.html' with context %}
-        """,
-        categorized_users=categorized_users,
-        DATETIME_FORMATS=DATETIME_FORMATS
-    )
+    teardown_db()
+    return render_template('team_create_modal.html', current_members=categorized_users['current_members'], 
+                           other_team_members=categorized_users['other_team_members'], 
+                           non_team_members=categorized_users['unassigned'], DATETIME_FORMATS=DATETIME_FORMATS)
+
+    
 
 def get_edit_team_form(team_id):
     if current_user.role not in ['owner']:
@@ -111,14 +104,15 @@ def get_edit_team_form(team_id):
         teardown_db()
         return jsonify({'error': 'Team not found'}), 404
 
+    # Categorize all users for the create form (all will be unassigned or on different teams)
+    user_service = UserService(db)
+    categorized_users = user_service.get_users_relative_to_team(team.id)
+    print(f"categorized users: {categorized_users}")
     teardown_db()
-    return render_template_string(
-        """
-        {% include 'team_edit_modal.html' with context %}
-        """,
-        team=team,
-        DATETIME_FORMATS=DATETIME_FORMATS
-    )
+    return render_template('team_edit_modal.html', current_members=categorized_users['current_members'], 
+                           other_team_members=categorized_users['other_team_members'], 
+                           non_team_members=categorized_users['unassigned'], DATETIME_FORMATS=DATETIME_FORMATS, team=team)
+
 
 def get_categorized_team_users(team_id):
     if current_user.role not in ['owner']:
