@@ -23,3 +23,29 @@ def test_team_cards(page, goto) -> None:
     expect(team_leader_card).to_be_visible()
     expect(team_leader_card.get_by_text("Lily Hargrave")).to_be_visible()
 
+# def test_update_team(page, goto) -> None:
+#     login_owner(page, goto)
+#     _navigate_to_teams_page(page)
+
+#     # Get first team card
+#     team_card = page.locator('div.team-card').first
+
+#     # Click the Edit button
+#     with page.expect_response(f"**/teams/team/{team_card.get_attribute('data-team-id')}/update**"):
+#         team_card.get_by_text("edit").click()
+
+#     # Wait for the modal to appear
+#     modal = page.locator("#team-modal")
+#     modal.wait_for(state="attached")
+#     modal.wait_for(state="visible")
+
+#     # Assert modal title
+#     expect(modal.locator("h2")).to_have_text("Update Team")
+
+#     # Assert form fields have expected values
+#     expect(modal.locator("#name")).to_have_value("Initial Team")
+#     expect(modal.locator("#team_leader_id")).to_have_value("2")  # Assuming Lily Hargrave has ID 2
+
+#     # Close the modal
+#     modal.get_by_text("×").click()
+#     expect(modal).to_be_hidden()
