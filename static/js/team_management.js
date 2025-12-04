@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         for (const categoryKey in memberCategories) {
-            if (categorizedUsers[categoryKey] && categorizedUsers[categoryY].length > 0) {
+            if (categorizedUsers[categoryKey] && categorizedUsers[categoryKey].length > 0) {
                 const optgroup = document.createElement('optgroup');
                 optgroup.label = memberCategories[categoryKey];
                 categorizedUsers[categoryKey].forEach(user => {
