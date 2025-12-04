@@ -1,9 +1,10 @@
 <form id="edit-team-form" class="form-card" hx-post="/teams/team/{{ team.id }}/edit"
       hx-target=".teams-grid"
       hx-swap="innerHTML"
-      hx-on--after-request="if(event.detail.successful) { document.getElementById('team-modal').style.display='none'; document.getElementById('edit-team-form').reset(); }">
+      hx-on--after-request="if(event.detail.successful) { document.getElementById('team-modal').style.display='none'; document.getElementById('edit-team-form').reset(); } else { document.getElementById('errors-container').innerHTML = event.detail.xhr.response; }">
 
     <h2>Edit Team</h2>
+    <div id="errors-container"></div>
     <input type="hidden" id="edit-team-id" name="team_id" value="{{ team.id }}">
 
     <div class="form-group">
@@ -14,13 +15,54 @@
     <div class="form-group">
         <label for="edit-team-members">Add/Remove Members:</label>
         <select id="edit-team-members" name="members" multiple>
+            {% if current_members %}
+            <optgroup label="Current Members">
+                {% for member in current_members %}
+                <option value="{{ member.id }}" selected>{{ member.first_name }} {{ member.last_name }}</option>
+                {% endfor %}
+            </optgroup>
+            {% endif %}
+            {% if other_team_members %}
+            <optgroup label="On a Different Team">
+                {% for member in other_team_members %}
+                <option value="{{ member.id }}">{{ member.first_name }} {{ member.last_name }}</option>
+                {% endfor %}
+            </optgroup>
+            {% endif %}
+            {% if non_team_members %}
+            <optgroup label="Not on a Team">
+                {% for member in non_team_members %}
+                <option value="{{ member.id }}">{{ member.first_name }} {{ member.last_name }}</option>
+                {% endfor %}
+            </optgroup>
+            {% endif %}
         </select>
     </div>
-
     <div class="form-group">
         <label for="edit-team-leader">Select Team Leader:</label>
         <select id="edit-team-leader" name="team_leader_id">
-            <option value="">No Leader</option> {# Option to clear leader #}
+            <option value="">No Leader</option>
+            {% if current_members %}
+            <optgroup label="Current Members">
+                {% for member in current_members %}
+                <option value="{{ member.id }}" {% if team.team_leader_id == member.id %}selected{% endif %}>{{ member.first_name }} {{ member.last_name }}</option>
+                {% endfor %}
+            </optgroup>
+            {% endif %}
+            {% if other_team_members %}
+            <optgroup label="On a Different Team">
+                {% for member in other_team_members %}
+                <option value="{{ member.id }}" {% if team.team_leader_id == member.id %}selected{% endif %}>{{ member.first_name }} {{ member.last_name }}</option>
+                {% endfor %}
+            </optgroup>
+            {% endif %}
+            {% if non_team_members %}
+            <optgroup label="Not on a Team">
+                {% for member in non_team_members %}
+                <option value="{{ member.id }}" {% if team.team_leader_id == member.id %}selected{% endif %}>{{ member.first_name }} {{ member.last_name }}</option>
+                {% endfor %}
+            </optgroup>
+            {% endif %}
         </select>
     </div>
 
