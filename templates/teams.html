@@ -31,8 +31,6 @@
     <script type="module" src="{{ url_for('static', filename='js/team_management.js') }}"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // Initialise Dragula when the DOM is loaded
-            initDragula();
             
             // Listen for HTMX content swaps on the teams grid and reinitialize Dragula
             document.body.addEventListener('htmx:afterSwap', function(event) {
