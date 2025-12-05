@@ -22,17 +22,18 @@ class TeamService:
         self.db_session.refresh(team)
         return team
 
-    def set_team_leader(self, team_id, user_id):
+    def set_team_leader(self, team_id, user_id=None):
         team = self.get_team(team_id)
         if team:
             team.team_leader_id = user_id 
-            member_ids = [member.id for member in team.members] if team.members else []
-            if user_id not in member_ids:
-                self.add_team_member(team_id, user_id)
-            self.db_session.commit()
-            self.db_session.refresh(team)
-            if not user_id:
-                self.auto_assign_team_leader(team)
+            if user_id:
+                member_ids = [member.id for member in team.members] if team.members else []
+                if user_id not in member_ids:
+                    self.add_team_member(team_id, user_id)
+                self.db_session.commit()
+                self.db_session.refresh(team)
+                if not user_id:
+                    self.auto_assign_team_leader(team)
         return team
 
     def auto_assign_team_leader(self, team):
@@ -88,10 +89,17 @@ class TeamService:
     def add_team_member(self, team_id, user_id):
         team = self.get_team(team_id)
         user = self.user_service.get_user_by_id(user_id)
+        old_team_id = user.team_id if user else None
+        old_team = self.get_team(old_team_id) if old_team_id else None
         if team and user:
+            # Update user and new team 
             user.team_id = team.id
             team.members.append(user)
             self.auto_assign_team_leader(team)
+            # Update old team if applicable
+            if old_team:
+                self.set_team_leader(old_team.id, None) # Remove the team leader
+                self.auto_assign_team_leader(old_team) # Auto reassign new leader
             self.db_session.commit()
             self.db_session.refresh(team) # Refresh team to reflect changes
             return user
