@@ -107,7 +107,6 @@ def get_edit_team_form(team_id):
     # Categorize all users for the create form (all will be unassigned or on different teams)
     user_service = UserService(db)
     categorized_users = user_service.get_users_relative_to_team(team.id)
-    print(f"categorized users: {categorized_users}")
     teardown_db()
     return render_template('team_edit_modal.html', current_members=categorized_users['current_members'], 
                            other_team_members=categorized_users['other_team_members'], 
