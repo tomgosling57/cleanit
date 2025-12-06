@@ -1,7 +1,8 @@
 <form id="edit-team-form" class="form-card" hx-post="/teams/team/{{ team.id }}/edit"
       hx-target=".teams-grid"
       hx-swap="innerHTML"
-      hx-on--after-request="if(event.detail.successful) { document.getElementById('team-modal').style.display='none'; document.getElementById('edit-team-form').reset(); } else { document.getElementById('errors-container').innerHTML = event.detail.xhr.response; }">
+      hx-on--after-request="if(event.detail.successful) { document.getElementById('team-modal').style.display='none'; document.getElementById('edit-team-form').reset(); } else { document.getElementById('errors-container').innerHTML = event.detail.xhr.response; }"
+      data-team-leader-id="{{ team.team_leader_id }}">
 
     <h2>Edit Team</h2>
     <div id="errors-container"></div>
