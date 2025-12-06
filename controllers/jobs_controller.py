@@ -126,7 +126,7 @@ def team_timetable(date: str = None):
     current_user.selected_date = selected_date
     response = render_template('team_timetable.html', selected_date=selected_date, DATETIME_FORMATS=DATETIME_FORMATS,
                                all_teams=all_teams, jobs_by_team=jobs_by_team,
-                               team_back_to_back_job_ids=team_back_to_back_job_ids)
+                               back_to_back_job_ids=team_back_to_back_job_ids)
     teardown_db()
     return response
 

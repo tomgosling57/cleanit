@@ -179,19 +179,19 @@ class JobHelper:
         date_obj = datetime.strptime(date_str, DATETIME_FORMATS["DATE_FORMAT"]).date()
         all_teams = team_service.get_all_teams()
         jobs_by_team = assignment_service.get_jobs_grouped_by_team_for_date(date_obj)
-        team_back_to_back_job_ids = {}
+        back_to_back_job_ids = {}
         for team_obj in all_teams:
-            team_back_to_back_job_ids[team_obj.id] = job_service.get_back_to_back_jobs_for_team_on_date(
+            back_to_back_job_ids[team_obj.id] = job_service.get_back_to_back_jobs_for_team_on_date(
                 team_obj.id, date_obj, threshold_minutes=BACK_TO_BACK_THRESHOLD
             )
-        
+        print(back_to_back_job_ids)        
         # Render the entire team timetable view to ensure all columns are updated correctly
         # This will trigger the jobAssignmentsUpdated event in the frontend
         response_html = render_template_string(
             '{% include "team_timetable_fragment.html" %}',
             all_teams=all_teams,
             jobs_by_team=jobs_by_team,
-            team_back_to_back_job_ids=team_back_to_back_job_ids,
+            back_to_back_job_ids=back_to_back_job_ids,
             DATETIME_FORMATS=DATETIME_FORMATS,
             current_user=current_user,
             view_type='team',
