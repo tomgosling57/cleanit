@@ -223,7 +223,7 @@ def create_initial_users(session):
     print("Initial users created for deterministic testing.")
     return owner, team_leader, cleaner
 
-def _create_team(session, team_name, team_leader_id, members=None, team_id=None):
+def _create_team(session, team_name, team_leader_id=None, members=None, team_id=None):
     """
     Helper function to create or update a team with deterministic data.
 
@@ -271,9 +271,9 @@ def create_initial_teams(session, owner, team_leader_user, cleaner):
 
     initial_team = _create_team(session, 'Initial Team', owner.id, members=[owner, cleaner], team_id=1)
     alpha_team = _create_team(session, 'Alpha Team', team_leader_user.id, members=[team_leader_user], team_id=2)
-    beta_team = _create_team(session, 'Beta Team', team_leader_user.id, team_id=3)
-    charlie_team = _create_team(session, 'Charlie Team', team_leader_user.id, team_id=4)
-    delta_team = _create_team(session, 'Delta Team', team_leader_user.id, team_id=5)
+    beta_team = _create_team(session, 'Beta Team', team_id=3)
+    charlie_team = _create_team(session, 'Charlie Team', team_id=4)
+    delta_team = _create_team(session, 'Delta Team', team_id=5)
     
     print("Initial teams created for deterministic testing.")
     return initial_team, alpha_team, beta_team, charlie_team, delta_team
