@@ -1,4 +1,4 @@
-from tests.helpers import login_owner
+from tests.helpers import login_owner, wait_for_modal
 from playwright.sync_api import expect
 
 def _navigate_to_teams_page(page) -> None:
@@ -49,3 +49,32 @@ def test_team_cards(page, goto) -> None:
 #     # Close the modal
 #     modal.get_by_text("×").click()
 #     expect(modal).to_be_hidden()
+
+def test_team_reassignment_removes_old_team_leader(page, goto) -> None:
+    """Test that when a team leader is reassigned to a new team, the old team removes that team leader and auto reassigns.
+    
+    Args:
+        page: The Playwright page object.
+        goto: The goto fixture to navigate to the app."""
+    login_owner(page, goto)
+    _navigate_to_teams_page(page)
+
+    # Get the team cards
+    team_cards = page.locator('div.team-card')
+    old_team = team_cards.nth(1)
+    new_team = team_cards.nth(2)
+    expect(old_team).to_be_visible()
+    expect(new_team).to_be_visible()
+    # Verify initial team leader of old team
+    old_team_leader = old_team.locator('li.team-leader-member').first.get_by_text("Benjara Brown")
+    expect(old_team_leader).to_be_visible()
+    # Drag team leader to new team
+    old_team_leader.drag_to(new_team)    
+    new_team_leader = new_team.locator('li.team-leader-member').first.get_by_text("Benjara Brown")
+    expect(new_team_leader).to_be_visible()    
+    # Verify old team has removed the team leader
+    expect(old_team_leader).to_be_hidden()
+    old_team.locator(".edit-team-icon").click()
+    modal = wait_for_modal(page, "#team-modal")
+    expect(modal.locator("form")).to_have_attribute("data-team-leader-id", "None")
+
