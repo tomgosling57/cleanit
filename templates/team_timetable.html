@@ -32,7 +32,7 @@
             </button>
         </div>
 
-        <div class="team-timetable-view" id="team-timetable-view" hx-swap-oob="outerHTML:#team-timetable-view" data-job-reassign-url="{{ url_for('job.reassign_job_team', job_id=0) }}">
+        <div class="team-timetable-view" id="team-timetable-view" hx-swap-oob="outerHTML:#team-timetable-view" data-job-reassign-url="{{ url_for('job.reassign_job_team') }}">
             {% include 'team_timetable_fragment.html' %}
         </div>
     </div>

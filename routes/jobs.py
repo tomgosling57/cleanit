@@ -52,7 +52,7 @@ def create_job():
 def delete_job(job_id):
     return jobs_controller.delete_job(job_id)
 
-@job_bp.route('/job/<int:job_id>/reassign', methods=['POST'])
+@job_bp.route('/job/reassign', methods=['POST'])
 @login_required
-def reassign_job_team(job_id):
+def reassign_job_team():
     return jobs_controller.reassign_job_team()
