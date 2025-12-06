@@ -7,8 +7,8 @@
 {% endif %}" id="job-{{ job.id }}" data-job-id="{{ job.id }}">
     <span class="job-close-button small-icon close-button" data-job-id="{{ job.id }}"
     hx-delete="/jobs/job/{{ job.id }}/delete"
-    hx-target="{% if view_type == 'team' %}#team-timetable-view{% else %}#job-list{% endif %}"
-    hx-swap="innerHTML"
+    hx-target="{% if view_type == 'team' %}#team-columns-container{% else %}#job-list{% endif %}"
+    hx-swap="outerHTML"
     hx-vals='{"view_type": "{{ view_type }}"}'
     hx-confirm="Are you sure you want to delete this job? This action cannot be undone."
     style="cursor: pointer">&times;</span>
@@ -35,3 +35,4 @@
         </div>
     </div>
 </div>
+
