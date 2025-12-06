@@ -210,8 +210,8 @@ def test_team_timetable_job_reassignment(page, goto) -> None:
     # old_team_id = int(team_column_1.get_attribute('data-team-id'))
     # new_team_id = int(team_column_2.get_attribute('data-team-id'))
 
-    job_card_to_move.drag_to(team_column_2)
-
-    # Verify that the job has been moved to the new team column
-    expect(team_column_2.locator(f'div.job-card[data-job-id="{job_id}"]')).to_be_visible()
-    expect(team_column_1.locator(f'div.job-card[data-job-id="{job_id}"]')).to_have_count(0)
+    with page.expect_response(f"**/jobs/job/reassign**"):
+        job_card_to_move.drag_to(team_column_2)
+        # Verify that the job has been moved to the new team column
+        expect(team_column_2.locator(f'div.job-card[data-job-id="{job_id}"]')).to_be_visible()
+        expect(team_column_1.locator(f'div.job-card[data-job-id="{job_id}"]')).to_have_count(0)
