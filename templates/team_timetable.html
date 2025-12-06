@@ -77,17 +77,16 @@
             initJobCardDragula();
         });
 
-        // Initial call to set up Dragula for job cards if team view is already active on load
-        initJobCardDragula();
-
         document.addEventListener('DOMContentLoaded', () => {
             initTimetableScrolling();
+            initJobCardDragula();
         });
 
         htmx.on("htmx:afterSwap", (event) => {
             if (event.detail.target.id === 'team-timetable-view') {
                 console.log('team-timetable-view swapped, re-initializing timetable scrolling.');
                 initTimetableScrolling();
+                initJobCardDragula();
             }
         });
     </script>
