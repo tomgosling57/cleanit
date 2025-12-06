@@ -140,6 +140,6 @@ def test_delete_job(page, goto) -> None:
 
     page.on('dialog', lambda d: d.accept())
 
-    with page.expect_response("**/jobs/job/1/delete**"):
+    with page.expect_response(f"**/jobs/job/{job_card.get_attribute('data-job-id')}/delete**"):
         job_card.locator(".job-close-button").click()
     expect(page.locator('#job-1')).to_be_hidden()
