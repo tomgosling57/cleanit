@@ -55,4 +55,4 @@ def delete_job(job_id):
 @job_bp.route('/job/<int:job_id>/reassign', methods=['POST'])
 @login_required
 def reassign_job_team(job_id):
-    return jobs_controller.reassign_job_team(job_id)
+    return jobs_controller.reassign_job_team()

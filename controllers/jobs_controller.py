@@ -338,27 +338,28 @@ def delete_job(job_id):
     teardown_db()
     return jsonify({'error': 'Job not found'}), 404
 
-def reassign_job_team(job_id):
+def reassign_job_team():
     if not current_user.is_authenticated or current_user.role != 'owner':
         return jsonify({'success': False, 'error': 'Unauthorized'}), 403
 
-    data = request.get_json()
-    new_team_id = data.get('new_team_id')
-    old_team_id = data.get('old_team_id')
+    job_id = request.form.get('job_id')
+    new_team_id = request.form.get('new_team_id')
+    old_team_id = request.form.get('old_team_id')
+
+    if not all([job_id, new_team_id]):
+        return Response("Missing job_id or new_team_id", status=400)
 
     db = get_db()
     assignment_service = AssignmentService(db)
-    job_service = JobService(db)
-    team_service = TeamService(db)
-
+    
     try:
         assignment_service.update_job_team_assignment(job_id, old_team_id, new_team_id)
         
-        # Re-render the affected team columns
+        # Re-render the entire team timetable view
         selected_date_for_fetch = JobHelper.process_selected_date()
         response_html = JobHelper.render_teams_timetable_fragment(db, current_user, selected_date_for_fetch)
         teardown_db()
-        return jsonify({'success': True, 'html': response_html})
+        return response_html
 
     except Exception as e:
         teardown_db()
