@@ -82,34 +82,28 @@ function handleJobCardDrop(el, target, source) {
     const urlPattern = document.getElementById("team-timetable-view").dataset.jobReassignUrl;
     const apiUrl = urlPattern.replace('0', jobId);
 
-    fetch(apiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            new_team_id: newTeamId,
-            old_team_id: oldTeamId
-        })
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (!data.success) {
-            alert('Error: ' + (data.error || 'Unknown error'));
-            // Revert the drag if the server operation failed
-            source.appendChild(el);
-            return;
+htmx.ajax('POST', apiUrl, {
+    values: {
+        new_team_id: newTeamId,
+        old_team_id: oldTeamId,
+        job_id: jobId // Pass job_id explicitly for the backend
+    },
+    target: '#team-timetable-view',
+    swap: 'outerHTML',
+    // Revert the drag if the HTMX request fails
+    onLoad: function(evt) {
+        if (evt.detail.xhr.status >= 400) {
+            console.error('Error reassigning job:', evt.detail.xhr.responseText);
+            alert('Error: Failed to reassign job.');
+            source.appendChild(el); // Revert the drag
+        } else {
+            // Re-initialize Dragula for job cards after HTMX swap
+            // This is necessary because the entire #team-timetable-view is swapped
+            // and Dragula instances are lost.
+            initJobCardDragula();
         }
-        // HTMX will handle the re-rendering of the job cards and team columns
-        // No need to manually re-initialize Dragula here, as HTMX will trigger a full re-render
-        // and the main script will re-initialize Dragula for jobs.
-        console.log('Job reassigned successfully:', data);
-        // Trigger a custom event to signal that job assignments have been updated
-        document.body.dispatchEvent(new CustomEvent('jobAssignmentsUpdated'));
-    })
-    .catch(error => {
-        console.error('Error reassigning job:', error);
-        // Revert the drag if there was a network error
-        source.appendChild(el);
-    });
+    }
+});
 }
 
 // Initialization for team members
