@@ -116,7 +116,7 @@ def wait_for_modal(page, id: str):
     Returns:
         The modal locator once it is visible.
     """
-    modal = page.locator("#job-modal")
+    modal = page.locator(id)
     modal.wait_for(state="attached")
     modal.wait_for(state="visible")
     return modal
