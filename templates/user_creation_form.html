@@ -9,9 +9,9 @@
     <div class="errors-container" id="user-errors-container"></div>
     
         <div class="form-group">
-        <div class="form-card user-card">
+        <div class="form-card">
             <div class="card-header">
-                <span class="card-icon"><img src="{{ url_for('static', filename='icons/user.png') }}" alt="User Profile" class="icon"></span>
+                <span class="card-icon"><img src="{{ url_for('static', filename='icons/user.png') }}" alt="User Profile" class="user-icon icon"></span>
                 <span class="card-title">User Details</span>
             </div>
             <div class="form-field">
@@ -40,7 +40,7 @@
             </div>
             <div class="form-actions">
                 <button type="submit" class="button save-button">
-                    <img src="{{ url_for('static', filename='icons/save.svg') }}" alt="Save" class="icon"> Create User
+                    <img src="{{ url_for('static', filename='icons/save.svg') }}" alt="Save" class="save-icon icon"> Create User
                 </button>
                 <button type="button" class="button" onclick="document.getElementById('{{modal_name}}-modal').style.display='none'">Cancel</button>
             </div>

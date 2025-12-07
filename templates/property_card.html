@@ -8,7 +8,7 @@
                 hx-target="#property-modal-content"
                 hx-trigger="click"
                 hx-on--after-request="document.getElementById('property-modal').style.display='block'">
-            <img src="{{ url_for('static', filename='icons/pencil-solid-full.svg') }}" alt="Edit" class="icon"> Edit
+            <img src="{{ url_for('static', filename='icons/pencil-solid-full.svg') }}" alt="Edit" class="edit-icon icon white-icon"> Edit
         </button>
         <button class="button view-jobs-button"
                 hx-get="{{ url_for('properties.get_property_jobs_route', property_id=property.id) }}"
@@ -17,7 +17,7 @@
                 hx-on--after-request="document.getElementById('property-modal').style.display='block'">
             <img src="{{ url_for('static', filename='icons/clipboard.svg') }}" alt="View Jobs" class="icon"> View Jobs
         </button>
-        <button class="button delete-button"
+        <button class="button"
                 hx-delete="{{ url_for('properties.delete_property_route', property_id=property.id) }}"
                 hx-target="#property-list"
                 hx-swap="innerHTML"
