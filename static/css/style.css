@@ -497,15 +497,7 @@ div.job-details-group div.form-group {
 .white-icon {
     filter: invert(1) brightness(2);
 }
-.edit-button.icon.edit-icon {
-    margin-left: 10px;
-    transform: translateY(-5px);
-    filter: invert(1) brightness(0.6);
-}
-.edit-button.icon.edit-icon:hover {
-    filter: invert(1) brightness(0.3);
-    color: var(--accent-color);
-}
+
 
 .card-actions {
     display: flex;

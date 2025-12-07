@@ -287,11 +287,6 @@ input#timetable-datepicker {
     margin-top: 8px;
 }
 
-#job-modal .edit-button {
-    padding: 8px 16px;
-    font-size: 0.9rem;
-    background: linear-gradient(135deg, var(--info-color) 0%, var(--primary-color) 100%);
-}
 
 /* Compact Form Styles */
 .job-update-compact {
