@@ -320,6 +320,8 @@ textarea:focus {
     line-height: 1;
 }
 
+.delete-button:hover,
+.delete-button:focus,   
 .close-button:hover,
 .close-button:focus {
     color: var(--primary-color);
@@ -333,6 +335,10 @@ textarea:focus {
     height: 1.5em;
     width: 1.5em;
     margin-right: 8px;
+}
+.arrow-icon.icon {
+    height: 1.5em;
+    width: 1.5em;
 }
 .edit-icon.icon {
     height: 1.5em;
@@ -475,4 +481,13 @@ div.job-details-group div.form-group {
 /* Styles for white icons */
 .white-icon {
     filter: invert(1) brightness(2);
+}
+.edit-button.icon.edit-icon {
+    margin-left: 10px;
+    transform: translateY(-5px);
+    filter: invert(1) brightness(0.6);
+}
+.edit-button.icon.edit-icon:hover {
+    filter: invert(1) brightness(0.3);
+    color: var(--accent-color);
 }

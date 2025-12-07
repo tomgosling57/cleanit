@@ -2,11 +2,12 @@
     <span class="team-close-button small-icon close-button" data-team-id="{{ team.id }}" data-num-members="{{ team.members | length }}">&times;</span>
     <div class="team-header" title="Edit Team">
         <h3 class="team-name-display">{{ team.name }}</h3>
-        <span class="material-symbols-outlined edit-team-icon"
+        <img 
             hx-get="{{ url_for('teams.get_edit_team_form', team_id=team.id) }}"
             hx-target="#team-modal-content"
             hx-swap="innerHTML"
-            hx-on--after-request="document.getElementById('team-modal').style.display='flex'">edit</span>
+            hx-on--after-request="document.getElementById('team-modal').style.display='flex'" 
+            src="{{ url_for('static', filename='icons/pencil-solid-full.svg') }}" alt="Edit" class="edit-button edit-icon icon">
     </div>
     
     <div class="team-members">

@@ -7,7 +7,7 @@
         <div class="header-with-button" id="timetable-header">
             <h1>Timetable</h1>
             <div class="input-wrapper button" id="date-picker-wrapper">
-                <input type="text" id="timetable-datepicker" placeholder="Select Date"/><img src="{{ url_for('static', filename='icons/clock.svg') }}" alt="Calendar" class="icon">
+                <input type="text" id="timetable-datepicker" placeholder="Select Date"/>
             </div>
             {% if current_user.role == 'owner' %}
                 <!-- This button uses the session date stored by the job helper -->

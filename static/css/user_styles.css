@@ -41,6 +41,9 @@
     position: absolute;
     gap: 10px;
 }
+.user-card-actions .edit-button.icon.edit-icon {
+    transform: translateY(0);
+}
 .user-card .delete-button,  .edit-user-icon {
     position: relative;
     /* align-self: self-end; */
