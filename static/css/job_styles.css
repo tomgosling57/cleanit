@@ -199,13 +199,6 @@ input#timetable-datepicker {
     padding: 8px 0;
 }
 
-.item-icon {
-    font-size: 1rem;
-    width: 24px;
-    text-align: center;
-    flex-shrink: 0;
-}
-
 .item-content {
     flex: 1;
     min-width: 0;
@@ -241,13 +234,6 @@ input#timetable-datepicker {
     transform: translateY(-2px);
     box-shadow: 0 4px 16px rgba(10, 126, 164, 0.12);
     border-left-color: var(--primary-color);
-}
-
-.card-icon {
-    font-size: 1.2rem;
-    width: 32px;
-    text-align: center;
-    flex-shrink: 0;
 }
 
 .card-content {
@@ -495,11 +481,6 @@ input#timetable-datepicker {
     .info-card,
     .form-card {
         padding: 8px 10px;
-    }
-    
-    .card-icon {
-        font-size: 1rem;
-        width: 28px;
     }
     
     .primary-info {

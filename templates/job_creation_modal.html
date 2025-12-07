@@ -55,7 +55,7 @@
             </div>
             <div class="form-card tenant-card">
                 <div class="card-header">
-                    <span class="card-icon"><img src="{{ url_for('static', filename='icons/user.png') }}" alt="User Profile" class="icon"></span>
+                    <span class="card-icon"><img src="{{ url_for('static', filename='icons/user.png') }}" alt="User Profile" class="icon user-icon"></span>
                     <span class="card-title">Tenant</span>
                 </div>
                 <div class="form-field">
@@ -106,7 +106,7 @@
     
         <div class="form-actions">
             <button type="submit" class="button save-button">
-                <img src="{{ url_for('static', filename='icons/save.svg') }}" alt="Save" class="icon"> Create Job
+                <img src="{{ url_for('static', filename='icons/save.svg') }}" alt="Save" class="icon save-icon"> Create Job
             </button>
             <button type="button" class="button" onclick="document.getElementById('job-modal').style.display='none'">Cancel</button>
         </div>

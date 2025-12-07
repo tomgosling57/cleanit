@@ -10,7 +10,7 @@
                 </div>
             </div>
             <div class="group-item">
-                <span class="item-icon"><img src="{{ url_for('static', filename='icons/user.png') }}" alt="User Profile" class="icon"></span>
+                <span class="item-icon"><img src="{{ url_for('static', filename='icons/user.png') }}" alt="User Profile" class="icon user-icon"></span>
                 <div class="item-content">
                     {% if job.arrival_date %}
                     <div class="primary-info">Arrives: {{ job.arrival_date.strftime(DATETIME_FORMATS['DATE_FORMAT']) }}</div>
@@ -113,7 +113,7 @@
                 hx-swap="innerHTML"
                 hx-trigger="click"
             class="button edit-button">
-                <img src="{{ url_for('static', filename='icons/pencil-solid-full.svg') }}" alt="Edit" class="icon"> Edit
+                <img src="{{ url_for('static', filename='icons/pencil-solid-full.svg') }}" alt="Edit" class="edit-icon icon white-icon"> Edit
             </button>
         {% endif %}
     </div>

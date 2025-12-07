@@ -325,15 +325,34 @@ textarea:focus {
     color: var(--primary-color);
     transform: rotate(90deg);
 }
+.user-icon.icon {
+    height: 1.8em;
+    width: 1.5em;
+}
+.icon.save-icon {
+    height: 1.5em;
+    width: 1.5em;
+    margin-right: 8px;
+}
+.edit-icon.icon {
+    height: 1.5em;
+    width: 1.5em;
+}
 
 .icon {
     vertical-align: middle;
-    height: 1.2em; /* Adjust as needed for visual consistency */
-    width: 1.2em; /* Adjust as needed for visual consistency */
+    height: 2em; /* Adjust as needed for visual consistency */
+    width: 2em; /* Adjust as needed for visual consistency */
     fill: var(--accent-color); /* Default color for SVG icons */
     transition: all 0.3s ease;
 }
-
+.item-icon {
+    /* font-size: 1rem;
+    width: 24px;
+    text-align: center; */
+    /* flex-shrink: 0; */
+    margin-left: 6px;
+}
 .icon:hover {
     fill: var(--primary-color);
 }
