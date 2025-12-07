@@ -56,13 +56,11 @@
     <script>
         // Use htmx.on to ensure Flatpickr is initialized after HTMX swaps content
         htmx.on("htmx:afterSwap", function(event) {
-            console.log("htmx:afterSwap event triggered inside htmx.on.");
             try {
                 flatpickr("#date", {
                     dateFormat: "{{ DATETIME_FORMATS['DATE_FORMAT_FLATPICKR'] }}",
                     defaultDate: "{{ selected_date }}"
                 });
-                console.log("Flatpickr initialized successfully.");
             } catch (error) {
                 console.error("Error initializing Flatpickr:", error);
             }

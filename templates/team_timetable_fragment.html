@@ -5,7 +5,6 @@
             <h3 class="team-column-header">{{ team.name }}</h3>
             {% if jobs_by_team[team] %}
                 {% for job in jobs_by_team[team] %}
-                    <script>console.log("{{ back_to_back_job_ids[team.id] }}");</script>
                     {% set back_to_back_job_ids = back_to_back_job_ids[team.id] %}
                     {% set view_type = 'team' %}
                     {% include 'job_card.html' with context %}

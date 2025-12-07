@@ -77,8 +77,6 @@ function handleJobCardDrop(el, target, source) {
         return;
     }
 
-    console.log(`Job ${jobId} dropped from team ${oldTeamId} to team ${newTeamId}`);
-
     const urlPattern = document.getElementById("team-timetable-view").dataset.jobReassignUrl;
     const apiUrl = urlPattern.replace('0', jobId);
 
