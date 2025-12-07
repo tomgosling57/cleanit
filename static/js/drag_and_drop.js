@@ -89,7 +89,7 @@ htmx.ajax('POST', apiUrl, {
         job_id: jobId // Pass job_id explicitly for the backend
     },
     target: '#team-timetable-view',
-    swap: 'outerHTML',
+    swap: 'innerHTML',
     // Revert the drag if the HTMX request fails
     onLoad: function(evt) {
         if (evt.detail.xhr.status >= 400) {
