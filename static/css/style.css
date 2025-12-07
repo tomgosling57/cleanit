@@ -326,18 +326,16 @@ textarea:focus {
     transform: rotate(90deg);
 }
 
-.material-symbols-outlined {
-    font-variation-settings:
-    'FILL' 0,
-    'wght' 400,
-    'GRAD' 0,
-    'opsz' 24;
-    color: var(--accent-color);
+.icon {
+    vertical-align: middle;
+    height: 1.2em; /* Adjust as needed for visual consistency */
+    width: 1.2em; /* Adjust as needed for visual consistency */
+    fill: var(--accent-color); /* Default color for SVG icons */
     transition: all 0.3s ease;
 }
 
-.material-symbols-outlined:hover {
-    color: var(--primary-color);
+.icon:hover {
+    fill: var(--primary-color);
 }
 
 .small-icon {
@@ -453,4 +451,9 @@ div.job-details-group div.form-group {
 
 .errors-container {
     margin-bottom: 10px;
+}
+
+/* Styles for white icons */
+.white-icon {
+    filter: invert(1) brightness(2);
 }
