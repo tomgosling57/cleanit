@@ -488,3 +488,9 @@ div.job-details-group div.form-group {
     filter: invert(1) brightness(0.3);
     color: var(--accent-color);
 }
+
+.card-actions {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
