@@ -1,0 +1,30 @@
+{% macro render_card_actions(actions) %}
+<div class="card-actions">
+    <div class="positive-actions">
+        {% for action in actions if action.type != 'delete' %}
+            <button class="button {{ action.class | default('') }}"
+                    {% for attr, value in action.htmx_attrs.items() %}
+                        {{ attr }}="{{ value }}"
+                    {% endfor %}>
+                {% if action.icon %}
+                    <img src="{{ url_for('static', filename='icons/' + action.icon) }}" alt="{{ action.label }}" class="icon {{ action.icon_class | default('') }}">
+                {% endif %}
+                {{ action.label }}
+            </button>
+        {% endfor %}
+    </div>
+    <div class="negative-actions">
+        {% for action in actions if action.type == 'delete' %}
+            <button class="button {{ action.class | default('') }}"
+                    {% for attr, value in action.htmx_attrs.items() %}
+                        {{ attr }}="{{ value }}"
+                    {% endfor %}>
+                {% if action.icon %}
+                    <img src="{{ url_for('static', filename='icons/' + action.icon) }}" alt="{{ action.label }}" class="icon {{ action.icon_class | default('') }}">
+                {% endif %}
+                {{ action.label }}
+            </button>
+        {% endfor %}
+    </div>
+</div>
+{% endmacro %}

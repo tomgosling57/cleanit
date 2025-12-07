@@ -1,32 +1,42 @@
+{% from 'card_actions.html' import render_card_actions %}
+
 <div class="property-card" id="property-card-{{ property.id }}">
     <h3>{{ property.address }}</h3>
     <p><strong>Address:</strong> {{ property.address }}</p>
     <p><strong>Access Notes:</strong> {{ property.access_notes if property.access_notes else "N/A" }}</p>
-    <div class="card-actions">
-        <div class="positive-actions">
-            <button class="button edit-button"
-                    hx-get="{{ url_for('properties.update_property_route', property_id=property.id) }}"
-                    hx-target="#property-modal-content"
-                    hx-trigger="click"
-                    hx-on--after-request="document.getElementById('property-modal').style.display='block'">
-                <img src="{{ url_for('static', filename='icons/pencil-solid-full.svg') }}" alt="Edit" class="edit-icon icon white-icon"> Edit
-            </button>
-            <button class="button view-jobs-button"
-                    hx-get="{{ url_for('properties.get_property_jobs_route', property_id=property.id) }}"
-                    hx-target="#property-modal-content"
-                    hx-trigger="click"
-                    hx-on--after-request="document.getElementById('property-modal').style.display='block'">
-                <img src="{{ url_for('static', filename='icons/clipboard.svg') }}" alt="View Jobs" class="icon"> View Jobs
-            </button>
-        </div>
-        <div class="negative-actions">
-            <button class="button"
-                    hx-delete="{{ url_for('properties.delete_property_route', property_id=property.id) }}"
-                    hx-target="#property-list"
-                    hx-swap="innerHTML"
-                    hx-confirm="Are you sure you want to delete this property? This action cannot be undone.">
-                <img src="{{ url_for('static', filename='icons/delete.svg') }}" alt="Delete" class="icon"> Delete
-            </button>
-        </div>
-    </div>
+    {{ render_card_actions([
+        {
+            'label': 'Edit',
+            'icon': 'pencil-solid-full.svg',
+            'class': 'edit-button',
+            'htmx_attrs': {
+                'hx-get': url_for('properties.update_property_route', property_id=property.id),
+                'hx-target': '#property-modal-content',
+                'hx-trigger': 'click',
+                'hx-on--after-request': "document.getElementById('property-modal').style.display='block'"
+            }
+        },
+        {
+            'label': 'View Jobs',
+            'icon': 'clipboard.svg',
+            'class': 'view-jobs-button',
+            'htmx_attrs': {
+                'hx-get': url_for('properties.get_property_jobs_route', property_id=property.id),
+                'hx-target': '#property-modal-content',
+                'hx-trigger': 'click',
+                'hx-on--after-request': "document.getElementById('property-modal').style.display='block'"
+            }
+        },
+        {
+            'label': 'Delete',
+            'icon': 'delete.svg',
+            'type': 'delete',
+            'htmx_attrs': {
+                'hx-delete': url_for('properties.delete_property_route', property_id=property.id),
+                'hx-target': '#property-list',
+                'hx-swap': 'innerHTML',
+                'hx-confirm': 'Are you sure you want to delete this property? This action cannot be undone.'
+            }
+        }
+    ]) }}
 </div>

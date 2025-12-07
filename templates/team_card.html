@@ -1,12 +1,14 @@
+{% from 'card_actions.html' import render_card_actions %}
+
 <div class="team-card" id="team-card-{{ team.id }}">
     <!-- <span class="team-close-button small-icon close-button" data-team-id="{{ team.id }}" data-num-members="{{ team.members | length }}">&times;</span> -->
     <div class="team-header" title="Edit Team">
         <h3 class="team-name-display">{{ team.name }}</h3>
-        <!-- <img 
+        <!-- <img
             hx-get="{{ url_for('teams.get_edit_team_form', team_id=team.id) }}"
             hx-target="#team-modal-content"
             hx-swap="innerHTML"
-            hx-on--after-request="document.getElementById('team-modal').style.display='flex'" 
+            hx-on--after-request="document.getElementById('team-modal').style.display='flex'"
             src="{{ url_for('static', filename='icons/pencil-solid-full.svg') }}" alt="Edit" class="edit-button edit-icon icon"> -->
     </div>
     
@@ -21,8 +23,8 @@
                             {% endif %}
                         </span>
                         <span class="delete-button" hx-delete="/teams/team/{{ team.id }}/member/remove/{{ member.id }}"
-                                  hx-target=".teams-grid"
-                                  hx-swap="innerHTML">&times;</span>
+                                   hx-target=".teams-grid"
+                                   hx-swap="innerHTML">&times;</span>
                     </li>
                 {% endfor %}
             {% else %}
@@ -30,25 +32,29 @@
             {% endif %}
         </ul>
     </div>
-    <div class="card-actions">
-        <div class="positive-actions">
-            <button class="button edit-button"
-                    hx-get="{{ url_for('teams.get_edit_team_form', team_id=team.id) }}"
-                    hx-target="#team-modal-content"
-                    hx-swap="innerHTML"
-                    hx-trigger="click"
-                    hx-on--after-request="document.getElementById('team-modal').style.display='flex'">
-                <img src="{{ url_for('static', filename='icons/pencil-solid-full.svg') }}" alt="Edit" class="edit-icon icon white-icon"> Edit
-            </button>
-        </div>
-        <div class="negative-actions">
-            <button class="button"
-                    hx-delete="{{ url_for('teams.delete_team', team_id=team.id) }}"
-                    hx-target="#errors-container"
-                    hx-swap="innerHTML"
-                    hx-confirm="Are you sure you want to delete this team? This action cannot be undone.">
-                <img src="{{ url_for('static', filename='icons/delete.svg') }}" alt="Delete" class="icon"> Delete
-            </button>
-        </div>
-    </div>
+    {{ render_card_actions([
+        {
+            'label': 'Edit',
+            'icon': 'pencil-solid-full.svg',
+            'class': 'edit-button',
+            'htmx_attrs': {
+                'hx-get': url_for('teams.get_edit_team_form', team_id=team.id),
+                'hx-target': '#team-modal-content',
+                'hx-swap': 'innerHTML',
+                'hx-trigger': 'click',
+                'hx-on--after-request': "document.getElementById('team-modal').style.display='flex'"
+            }
+        },
+        {
+            'label': 'Delete',
+            'icon': 'delete.svg',
+            'type': 'delete',
+            'htmx_attrs': {
+                'hx-delete': url_for('teams.delete_team', team_id=team.id),
+                'hx-target': '#errors-container',
+                'hx-swap': 'innerHTML',
+                'hx-confirm': 'Are you sure you want to delete this team? This action cannot be undone.'
+            }
+        }
+    ]) }}
 </div>
