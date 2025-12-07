@@ -2,11 +2,17 @@
 <div class="card-actions">
     <div class="positive-actions">
         {% for action in actions if action.type != 'delete' %}
-            <button class="button {{ action.class | default('') }}"
+            <button class="button card-actions-button {{ action.class | default('') }}"
                     {% for attr, value in action.htmx_attrs.items() %}
                         {{ attr }}="{{ value }}"
                     {% endfor %}>
-                {% if action.icon %}
+                {#
+                    To use an SVG directly, pass the SVG HTML string in action.svg_html.
+                    Example: {'label': 'Edit', 'svg_html': '<svg>...</svg>', 'icon_class': 'my-custom-icon'}
+                #}
+                {% if action.svg_html %}
+                    <span class="icon {{ action.icon_class | default('') }}">{{ action.svg_html | safe }}</span>
+                {% elif action.icon %}
                     <img src="{{ url_for('static', filename='icons/' + action.icon) }}" alt="{{ action.label }}" class="icon {{ action.icon_class | default('') }}">
                 {% endif %}
                 {{ action.label }}
@@ -15,11 +21,17 @@
     </div>
     <div class="negative-actions">
         {% for action in actions if action.type == 'delete' %}
-            <button class="button {{ action.class | default('') }}"
+            <button class="button card-actions-button {{ action.class | default('') }}"
                     {% for attr, value in action.htmx_attrs.items() %}
                         {{ attr }}="{{ value }}"
                     {% endfor %}>
-                {% if action.icon %}
+                {#
+                    To use an SVG directly, pass the SVG HTML string in action.svg_html.
+                    Example: {'label': 'Delete', 'svg_html': '<svg>...</svg>', 'icon_class': 'my-custom-icon'}
+                #}
+                {% if action.svg_html %}
+                    <span class="icon {{ action.icon_class | default('') }}">{{ action.svg_html | safe }}</span>
+                {% elif action.icon %}
                     <img src="{{ url_for('static', filename='icons/' + action.icon) }}" alt="{{ action.label }}" class="icon {{ action.icon_class | default('') }}">
                 {% endif %}
                 {{ action.label }}
