@@ -7,7 +7,7 @@
         <div class="header-with-button" id="timetable-header">
             <h1>Team Timetable</h1>
             <div class="input-wrapper button" id="date-picker-wrapper">
-                <input type="text" id="timetable-datepicker" placeholder="Select Date"/><i class="fa-solid fa-calendar"></i>
+                <input type="text" id="timetable-datepicker" placeholder="Select Date"/><img src="{{ url_for('static', filename='icons/clock.svg') }}" alt="Calendar" class="icon">
             </div>
             {% if current_user.role == 'owner' %}
                 <button class="button" hx-get="{{ url_for('job.timetable', date=selected_date) }}" hx-push-url="true" hx-target="body" hx-swap="outerHTML">
@@ -25,10 +25,10 @@
 
         <div class="scroll-buttons-container">
             <button class="scroll-button" id="scroll-left-button" aria-label="Scroll Left">
-                <i class="fa-solid fa-chevron-left"></i>
+                <img src="{{ url_for('static', filename='icons/arrow-left.svg') }}" alt="Scroll Left" class="icon">
             </button>
             <button class="scroll-button" id="scroll-right-button" aria-label="Scroll Right">
-                <i class="fa-solid fa-chevron-right"></i>
+                <img src="{{ url_for('static', filename='icons/arrow-right.svg') }}" alt="Scroll Right" class="icon">
             </button>
         </div>
 

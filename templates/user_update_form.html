@@ -25,7 +25,7 @@ hx-swap="innerHTML"
     <div class="form-group">
         <div class="form-card user-card">
             <div class="card-header">
-                <span class="card-icon">👤</span>
+                <span class="card-icon"><img src="{{ url_for('static', filename='icons/user.png') }}" alt="User Profile" class="icon"></span>
                 <span class="card-title">User Details</span>
             </div>
             <div class="form-field">
@@ -57,7 +57,7 @@ hx-swap="innerHTML"
             {% endif %}
             <div class="form-actions">
                 <button type="submit" class="button save-button">
-                    💾 Update User
+                    <img src="{{ url_for('static', filename='icons/save.svg') }}" alt="Save" class="icon"> Update User
                 </button>
                 {% if not user_profile %}
                 <button type="button" class="button" onclick="document.getElementById('{{modal_name}}-modal').style.display='none'">Cancel</button>

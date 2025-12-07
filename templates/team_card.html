@@ -16,7 +16,7 @@
                     <li class="member-item {% if member.id == team.team_leader_id %}team-leader-member{% endif %}" data-member-id="{{ member.id }}" >
                         <span class="member-name">{{ member.first_name }} {{member.last_name}}
                             {% if member.id == team.team_leader_id %}
-                                <span class="badge leader-badge">👑</span>
+                                <span class="badge leader-badge"><img src="{{ url_for('static', filename='icons/crown.svg') }}" alt="Leader" class="icon"></span>
                             {% endif %}
                         </span>
                         <span class="delete-button" hx-delete="/teams/team/{{ team.id }}/member/remove/{{ member.id }}"

@@ -17,7 +17,7 @@ hx-swap="innerHTML"
         <div class="form-group">
             <div class="form-card time-card">
                 <div class="card-header">
-                    <span class="card-icon">🕐</span>
+                    <span class="card-icon"><img src="{{ url_for('static', filename='icons/clock.svg') }}" alt="Time" class="icon"></span>
                     <span class="card-title">Date & Time</span>
                 </div>
                 <div class="form-row">
@@ -37,7 +37,7 @@ hx-swap="innerHTML"
             </div>
             <div class="form-card description-card">
                 <div class="card-header">
-                    <span class="card-icon">📝</span>
+                    <span class="card-icon"><img src="{{ url_for('static', filename='icons/notes.svg') }}" alt="Description" class="icon"></span>
                     <span class="card-title">Description</span>
                 </div>
                 <div class="form-field">
@@ -50,7 +50,7 @@ hx-swap="innerHTML"
         <div class="form-group">
             <div class="form-card address-card">
                 <div class="card-header">
-                    <span class="card-icon">📍</span>
+                    <span class="card-icon"><img src="{{ url_for('static', filename='icons/location-pin.svg') }}" alt="Location Pin" class="icon"></span>
                     <span class="card-title">Property</span>
                 </div>
                 <div class="form-field">
@@ -63,7 +63,7 @@ hx-swap="innerHTML"
             </div>
             <div class="form-card tenant-card">
                 <div class="card-header">
-                    <span class="card-icon">👤</span>
+                    <span class="card-icon"><img src="{{ url_for('static', filename='icons/user.png') }}" alt="User Profile" class="icon"></span>
                     <span class="card-title">Tenant</span>
                 </div>
                 <div class="form-field">
@@ -74,7 +74,7 @@ hx-swap="innerHTML"
             {% if job.property.access_notes %}
             <div class="form-card access-card">
                 <div class="card-header">
-                    <span class="card-icon">🔑</span>
+                    <span class="card-icon"><img src="{{ url_for('static', filename='icons/key.svg') }}" alt="Access Key" class="icon"></span>
                     <span class="card-title">Access</span>
                 </div>
                 <div class="form-field">
@@ -88,7 +88,7 @@ hx-swap="innerHTML"
         <div class="form-group">
             <div class="form-card teams-card">
                 <div class="card-header">
-                    <span class="card-icon">👥</span>
+                    <span class="card-icon"><img src="{{ url_for('static', filename='icons/team.svg') }}" alt="Teams" class="icon"></span>
                     <span class="card-title">Teams</span>
                 </div>
                 <div class="form-field">
@@ -101,7 +101,7 @@ hx-swap="innerHTML"
             </div>
             <div class="form-card cleaners-card">
                 <div class="card-header">
-                    <span class="card-icon">🧹</span>
+                    <span class="card-icon"><img src="{{ url_for('static', filename='icons/broom.svg') }}" alt="Cleaners" class="icon"></span>
                     <span class="card-title">Cleaners</span>
                 </div>
                 <div class="form-field">
@@ -116,7 +116,7 @@ hx-swap="innerHTML"
     
         <div class="form-actions">
             <button type="submit" class="button save-button">
-                💾 Save Changes
+                <img src="{{ url_for('static', filename='icons/save.svg') }}" alt="Save" class="icon"> Save Changes
             </button>
         </div>
     </div>

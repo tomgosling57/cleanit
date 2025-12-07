@@ -8,7 +8,7 @@
         <div class="form-group">
             <div class="form-card address-card">
                 <div class="card-header">
-                    <span class="card-icon">📍</span>
+                    <span class="card-icon"><img src="{{ url_for('static', filename='icons/location-pin.svg') }}" alt="Location Pin" class="icon"></span>
                     <span class="card-title">Property Details</span>
                 </div>
                 <div class="form-field">
@@ -23,7 +23,7 @@
         </div>
         <div class="form-actions">
             <button type="submit" class="button save-button">
-                💾 Create Property
+                <img src="{{ url_for('static', filename='icons/save.svg') }}" alt="Save" class="icon"> Create Property
             </button>
             <button type="button" class="button" onclick="document.getElementById('property-modal').style.display='none'">Cancel</button>
         </div>

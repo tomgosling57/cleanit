@@ -4,13 +4,13 @@
     <div class="group-card property-group-card">
         <div class="group-content">
             <div class="group-item">
-                <span class="item-icon">📍</span>
+                <span class="item-icon"><img src="{{ url_for('static', filename='icons/location-pin.svg') }}" alt="Location Pin" class="icon"></span>
                 <div class="item-content">
                     <div class="primary-info">{{ job.property.address }}</div>
                 </div>
             </div>
             <div class="group-item">
-                <span class="item-icon">👤</span>
+                <span class="item-icon"><img src="{{ url_for('static', filename='icons/user.png') }}" alt="User Profile" class="icon"></span>
                 <div class="item-content">
                     {% if job.arrival_date %}
                     <div class="primary-info">Arrives: {{ job.arrival_date.strftime(DATETIME_FORMATS['DATE_FORMAT']) }}</div>
@@ -26,7 +26,7 @@
             </div>
             {% if job.property.access_notes %}
             <div class="group-item">
-                <span class="item-icon">🔑</span>
+                <span class="item-icon"><img src="{{ url_for('static', filename='icons/key.svg') }}" alt="Access Key" class="icon"></span>
                 <div class="item-content">
                     <div class="primary-info">{{ job.property.access_notes }}</div>
                 </div>
@@ -39,7 +39,7 @@
     <div class="group-card schedule-group-card">
         <div class="group-content">
             <div class="group-item">
-                <span class="item-icon">🕐</span>
+                <span class="item-icon"><img src="{{ url_for('static', filename='icons/clock.svg') }}" alt="Time" class="icon"></span>
                 <div class="item-content">
                     <div class="primary-info">Start: {{ job.time.strftime(DATETIME_FORMATS['TIME_FORMAT']) }}</div>
                     <div class="secondary-info">End: {{ job.end_time.strftime(DATETIME_FORMATS['TIME_FORMAT']) }} ({{ job.duration }})</div>
@@ -48,7 +48,7 @@
             {% if job.arrival_datetime %}
             {% endif %}
             <div class="group-item">
-                <span class="item-icon">📝</span>
+                <span class="item-icon"><img src="{{ url_for('static', filename='icons/notes.svg') }}" alt="Description" class="icon"></span>
                 <div class="item-content">
                     <div class="primary-info">{{ job.description }}</div>
                 </div>
@@ -60,7 +60,7 @@
     <div class="group-card assignment-group-card">
         <div class="group-content">
             <div class="group-item">
-                <span class="item-icon">👥</span>
+                <span class="item-icon"><img src="{{ url_for('static', filename='icons/team.svg') }}" alt="Teams" class="icon"></span>
                 <div class="item-content">
                     <div class="primary-info">
                         {% if job_teams %}
@@ -76,7 +76,7 @@
                 </div>
             </div>
             <div class="group-item">
-                <span class="item-icon">🧹</span>
+                <span class="item-icon"><img src="{{ url_for('static', filename='icons/broom.svg') }}" alt="Cleaners" class="icon"></span>
                 <div class="item-content">
                     <div class="primary-info">
                         {% if job_cleaners %}
@@ -113,7 +113,7 @@
                 hx-swap="innerHTML"
                 hx-trigger="click"
             class="button edit-button">
-                ✏️ Edit
+                <img src="{{ url_for('static', filename='icons/pencil-solid-full.svg') }}" alt="Edit" class="icon"> Edit
             </button>
         {% endif %}
     </div>
