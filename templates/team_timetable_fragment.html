@@ -1,17 +1,19 @@
 <!-- templates/team_timetable_fragment.html -->
 <div class="team-columns-container" id="team-columns-container">
     {% for team in all_teams %}
-        <div class="team-column" data-team-id="{{ team.id }}">
+        <div class="column-container">
             <h3 class="team-column-header">{{ team.name }}</h3>
-            {% if jobs_by_team[team] %}
-                {% for job in jobs_by_team[team] %}
-                    {% set back_to_back_job_ids = back_to_back_job_ids[team.id] %}
-                    {% set view_type = 'team' %}
-                    {% include 'job_card.html' with context %}
-                {% endfor %}
-            {% else %}
-                <p class="no-jobs-message">No jobs for this team.</p>
-            {% endif %}
+            <div class="team-column" data-team-id="{{ team.id }}">
+                {% if jobs_by_team[team] %}
+                    {% for job in jobs_by_team[team] %}
+                        {% set back_to_back_job_ids = back_to_back_job_ids[team.id] %}
+                        {% set view_type = 'team' %}
+                        {% include 'job_card.html' with context %}
+                    {% endfor %}
+                {% else %}
+                    <p class="no-jobs-message">No jobs for this team.</p>
+                {% endif %}
+            </div>
         </div>
     {% endfor %}
 </div>
