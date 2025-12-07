@@ -11,7 +11,8 @@ def test_job_details(page, goto) -> None:
     job_card = page.locator('div.job-card').first
 
     with page.expect_response('**/jobs/job/1/details**'):
-        job_card.get_by_role("button", name="View Details").click()
+        page.wait_for_load_state('networkidle')
+        job_card.get_by_text("View Details").click()
 
     modal = wait_for_modal(page, "#job-modal")
 
@@ -38,14 +39,16 @@ def test_update_job(page, goto) -> None:
     job_card = page.locator('div.job-card').first
 
     with page.expect_response(f"**/jobs/job/{job_card.get_attribute('data-job-id')}/details**"):
-        job_card.get_by_role("button", name="View Details").click()
+        page.wait_for_load_state('networkidle')
+        job_card.get_by_text("View Details").click()
 
     modal = wait_for_modal(page, "#job-modal")
 
-    expect(modal.get_by_text("✏️ Edit")).to_be_visible()
+    expect(modal.get_by_text("Edit")).to_be_visible()
 
     with page.expect_response(f"**/jobs/job/{job_card.get_attribute('data-job-id')}/update**"):
-        modal.get_by_text("✏️ Edit").click()
+        page.wait_for_load_state('networkidle')
+        modal.get_by_role("button", name="Edit").click()
 
     modal = wait_for_modal(page, "#job-modal")
     modal.locator("#time").wait_for(state="visible")
@@ -77,7 +80,7 @@ def test_update_job(page, goto) -> None:
     modal.locator("#assigned_cleaners").select_option(["1", "3"])
 
     with page.expect_response(f"**/jobs/job/{job_card.get_attribute('data-job-id')}/update**"):
-        modal.get_by_role("button", name="💾 Save Changes").click()
+        modal.get_by_role("button", name="Save Changes").click()
 
     expect(modal).to_be_hidden()
 
@@ -97,6 +100,7 @@ def test_create_job(page, goto) -> None:
     expect(page.get_by_text("Create Job")).to_be_enabled()
 
     with page.expect_response("**/jobs/job/create**"):
+        page.wait_for_load_state('networkidle')
         page.get_by_text("Create Job").click()
 
     modal = wait_for_modal(page, "#job-modal")
@@ -117,7 +121,8 @@ def test_create_job(page, goto) -> None:
     modal.locator("#assigned_cleaners").select_option(["1", "3"])
 
     with page.expect_response("**/jobs/job/create**"):
-        modal.get_by_role("button", name="💾 Create Job").click()
+        page.wait_for_load_state('networkidle')
+        modal.get_by_role("button", name="Create Job").click()
 
     expect(modal).to_be_hidden()
     assert_job_card_variables(
@@ -141,5 +146,6 @@ def test_delete_job(page, goto) -> None:
     page.on('dialog', lambda d: d.accept())
 
     with page.expect_response(f"**/jobs/job/{job_card.get_attribute('data-job-id')}/delete**"):
+        page.wait_for_load_state('networkidle')
         job_card.locator(".job-close-button").click()
     expect(page.locator('#job-1')).to_be_hidden()

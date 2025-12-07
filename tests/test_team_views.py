@@ -74,7 +74,7 @@ def test_team_reassignment_removes_old_team_leader(page, goto) -> None:
     expect(new_team_leader).to_be_visible()    
     # Verify old team has removed the team leader
     expect(old_team_leader).to_be_hidden()
-    old_team.locator(".edit-team-icon").click()
+    old_team.get_by_role("button", name="Edit").click()
     modal = wait_for_modal(page, "#team-modal")
     expect(modal.locator("form")).to_have_attribute("data-team-leader-id", "None")
 
