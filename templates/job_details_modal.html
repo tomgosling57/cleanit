@@ -113,7 +113,7 @@
                 hx-swap="innerHTML"
                 hx-trigger="click"
             class="button edit-button">
-                <img src="{{ url_for('static', filename='icons/pencil-solid-full.svg') }}" alt="Edit" class="edit-icon icon white-icon"> Edit
+                <span class="icon">{{ svg_icons['pencil-solid-full'] | safe }}</span>Edit
             </button>
         {% endif %}
     </div>
