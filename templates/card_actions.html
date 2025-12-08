@@ -15,7 +15,7 @@
                 {% elif action.icon %}
                     <img src="{{ url_for('static', filename='icons/' + action.icon) }}" alt="{{ action.label }}" class="icon {{ action.icon_class | default('') }}">
                 {% endif %}
-                {{ action.label }}
+                <span class="button-text">{{ action.label }}</span>
             </button>
         {% endfor %}
     </div>
@@ -34,7 +34,7 @@
                 {% elif action.icon %}
                     <img src="{{ url_for('static', filename='icons/' + action.icon) }}" alt="{{ action.label }}" class="icon {{ action.icon_class | default('') }}">
                 {% endif %}
-                {{ action.label }}
+                <span class="button-text">{{ action.label }}</span>
             </button>
         {% endfor %}
     </div>

@@ -158,6 +158,11 @@ h2 {
     transform: translateY(0);
 }
 
+.button .icon {
+    height: 1.7em;
+    width: 1.7em;
+    margin-right: 5px;
+}
 .card-actions-button {
     position: relative;
     background: white;
@@ -189,7 +194,7 @@ h2 {
     right: 0;
     bottom: 0;
     border-radius: 8px;
-    padding: 3px; /* This controls border width */
+    padding: 2px; /* This controls border width */
     background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
     -webkit-mask: linear-gradient(var(--card-background) 0 0) content-box, linear-gradient(var(--card-background) 0 0);
     mask: linear-gradient(var(--card-background) 0 0) content-box, linear-gradient(var(--card-background) 0 0);
@@ -295,11 +300,27 @@ textarea:focus {
 }
 
 @media (max-width: 600px) {
-    .button {
-        padding: 6px 6px;
+    .button .icon {
+        margin-right: 0px;
+    }
+    .button .button-text {
+        display: none;
     }
     .card-actions-button::before {
-        padding: 2px;
+        padding: 0;
+        background: none;
+        background-color: var(--card-background);
+    }
+    .card-actions-button{
+        background-color: var(--card-background);
+        box-shadow: none;
+        border: none;
+        margin: 0 10px 0 10px;
+        padding: 6px;
+    }
+    .card-actions-button .icon {
+        height: 2em;
+        width: 2em;
     }
     .container {
         margin: 10px;
