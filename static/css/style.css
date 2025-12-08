@@ -136,7 +136,7 @@ h2 {
     color: var(--card-background);
     fill: var(--card-background);
     stroke: var(--card-background);
-    padding: 12px 28px;
+    padding: 12px 15px;
     border-radius: 8px;
     text-decoration: none;
     margin: 15px 0 5px 5px;
