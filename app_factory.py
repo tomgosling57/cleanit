@@ -11,6 +11,7 @@ from routes.teams import teams_bp
 from routes.properties import properties_bp
 from services.user_service import UserService
 from utils.populate_database import populate_database
+from utils.svg_helper import load_svg_icons
 
 def create_app(login_manager=LoginManager(), config_override=dict()):
     """
@@ -68,5 +69,8 @@ def create_app(login_manager=LoginManager(), config_override=dict()):
     app.register_blueprint(job_bp)
     app.register_blueprint(teams_bp)
     app.register_blueprint(properties_bp)
+
+    with app.app_context():
+        load_svg_icons(app)
     
     return app
