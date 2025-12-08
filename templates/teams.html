@@ -17,7 +17,7 @@
         </div>
 
         <div class="teams-container">
-            <div class="errors-container" id="errors-container"></div>
+            <div class="errors-container" id="errors-container" hx-swap-oob="innerHTML"></div>
             {% if teams %}
                 <div class="teams-grid" id="teams-list-container">
                     {% include 'team_list.html' %}
