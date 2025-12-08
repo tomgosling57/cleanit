@@ -1,3 +1,4 @@
+# tests/test_team_views.py
 from tests.helpers import login_owner, wait_for_modal
 from playwright.sync_api import expect
 
@@ -77,4 +78,58 @@ def test_team_reassignment_removes_old_team_leader(page, goto) -> None:
     old_team.get_by_role("button", name="Edit").click()
     modal = wait_for_modal(page, "#team-modal")
     expect(modal.locator("form")).to_have_attribute("data-team-leader-id", "None")
+
+
+def test_delete_team_error_handling(page, goto, server_url) -> None:
+    """Test deleting a team and handling errors when trying to delete a non-existent team.
+    
+    Args:
+        page: The Playwright page object.
+        goto: The goto fixture to navigate to the app.
+        base_url: The base URL of the live server.
+        """
+    login_owner(page, goto)
+    _navigate_to_teams_page(page)
+
+    # Get all team cards
+    team_cards = page.locator('div.team-card')
+    initial_team_count = team_cards.count()
+    assert initial_team_count > 0, "There should be at least one team to delete."
+
+    # Get the last team card and its delete button
+    last_team_card = team_cards.last
+    last_team_id = last_team_card.get_attribute('data-team-id')
+    delete_button = last_team_card.get_by_role("button", name="Delete")
+
+    # Handle the confirmation dialog
+    page.on('dialog', lambda d: d.accept())
+
+    # 1. Delete the last team in the grid
+    with page.expect_response(f"**/teams/team/{last_team_id}/delete**"):
+        page.wait_for_load_state("networkidle")
+        delete_button.click()
+    
+    # Wait for the HTMX swap to complete and the team to be removed from the grid
+    page.locator(".teams-grid").wait_for()
+    expect(page.locator(f'div.team-card[data-team-id="{last_team_id}"]')).not_to_be_attached()
+    expect(team_cards).to_have_count(initial_team_count - 1)
+
+    # 2. Attempt to delete the same team again (should show error messages)
+    # Simulate the delete request again
+    with page.expect_response(f"**/teams/team/{last_team_id}/delete**") as response_info:
+        page.evaluate(f"""
+            htmx.ajax('DELETE', '{server_url}/teams/team/{last_team_id}/delete', {{
+                target: '#errors-container',
+                swap: 'innerHTML'
+            }})
+        """)
+
+    response = response_info.value
+    assert response.status == 200, f"Expected 200 but got {response.status}"
+
+    # 3. Assert that the error message appears in the errors container
+    errors_container = page.locator("#errors-container")
+    assert errors_container.count() == 1, "Expected errors container to be present"
+    expect(errors_container).to_be_visible()
+    expect(errors_container).to_contain_text("Team not found")
 
