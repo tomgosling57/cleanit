@@ -30,7 +30,7 @@ def get_team(team_id):
         return jsonify(team_data)
 
     teardown_db()
-    return jsonify({'error': 'Team not found'}), 404
+    return render_template('_form_response.html', errors={'Get Failed': 'Team not found'}), 404
 
 def delete_team(team_id):
     if current_user.role not in ['owner']:
@@ -44,12 +44,12 @@ def delete_team(team_id):
         team_service.delete_team(team)
         all_teams = team_service.get_all_teams()
         teardown_db()
-        response = Response(render_template_string(''))
+        response = Response(render_template('team_list.html', teams=all_teams, DATETIME_FORMATS=DATETIME_FORMATS))
         response.headers['HX-Trigger'] = 'teamListUpdated'
         return response
 
     teardown_db()
-    return jsonify({'error': 'Team not found'}), 404
+    return render_template('_form_response.html', errors={'Delete Failed': 'Team not found'}), 404
 
 def create_team():
     if current_user.role not in ['owner']:
@@ -146,7 +146,7 @@ def edit_team(team_id):
 
     if not updated_team:
         teardown_db()
-        return jsonify({'error': 'Team not found or update failed'}), 404
+        return render_template('_form_response.html', errors={'Update Failed': 'Team not found or update failed'}), 404
 
     all_teams = team_service.get_all_teams()
     teardown_db()
@@ -190,7 +190,7 @@ def add_team_member(team_id, user_id, old_team_id):
         return jsonify({'success': True}), 200
 
     teardown_db()
-    return jsonify({'error': 'Team or User not found'}), 404
+    return render_template('_form_response.html', errors={'Delete Failed': 'Team or User not found'}), 404
 
 def remove_team_member(team_id, user_id):
     if current_user.role not in ['owner']:
@@ -203,9 +203,9 @@ def remove_team_member(team_id, user_id):
     if user:
         all_teams = team_service.get_all_teams()
         teardown_db()
-        response = Response(render_template('team_list.html', teams=all_teams))
+        response = Response(render_template('team_list.html', teams=all_teams, DATETIME_FORMATS=DATETIME_FORMATS))
         response.headers['HX-Trigger'] = 'teamListUpdated'
         return response
 
     teardown_db()
-    return jsonify({'error': 'Team or User not found'}), 404
+    return render_template('_form_response.html', errors={'Delete Failed': 'Team or User not found'}), 404
