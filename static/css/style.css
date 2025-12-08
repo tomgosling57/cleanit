@@ -160,7 +160,7 @@ h2 {
 .card-actions-button {
     position: relative;
     background: white;
-    border: 2px solid transparent;
+    border: 3px solid transparent; /* Change the styles in the ::before pseudo element instead of this one */
     background-clip: padding-box; /* Important: keeps the white background inside */
     
     /* Gradient text */
@@ -171,7 +171,6 @@ h2 {
     color: transparent;
     
     /* Existing button styles - preserve these */
-    border-radius: 8px;
     padding: 10px 20px;
     font-weight: 600;
     font-size: 0.95rem;
@@ -190,7 +189,7 @@ h2 {
     right: 0;
     bottom: 0;
     border-radius: 8px;
-    padding: 2px; /* This controls border width */
+    padding: 3px; /* This controls border width */
     background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
@@ -288,6 +287,9 @@ textarea:focus {
 @media (max-width: 600px) {
     .button {
         padding: 6px 6px;
+    }
+    .card-actions-button::before {
+        padding: 2px;
     }
     .container {
         margin: 10px;
