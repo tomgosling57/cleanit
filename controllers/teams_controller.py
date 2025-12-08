@@ -44,12 +44,21 @@ def delete_team(team_id):
         team_service.delete_team(team)
         all_teams = team_service.get_all_teams()
         teardown_db()
-        response = Response(render_template('team_list.html', teams=all_teams, DATETIME_FORMATS=DATETIME_FORMATS))
-        response.headers['HX-Trigger'] = 'teamListUpdated'
-        return response
-
+        return render_template('team_list.html', teams=all_teams, DATETIME_FORMATS=DATETIME_FORMATS)
+        
+    # Use render_template_string to combine both templates
+    all_teams = team_service.get_all_teams()
     teardown_db()
-    return render_template('_form_response.html', errors={'Delete Failed': 'Team not found'}), 404
+    
+    return render_template_string(
+        """
+        {% include 'team_list.html' %}
+        {% include '_form_response.html' %}
+        """,
+        teams=all_teams,
+        errors={'Delete Failed': 'Team not found'},
+        DATETIME_FORMATS=DATETIME_FORMATS
+    ), 200
 
 def create_team():
     if current_user.role not in ['owner']:
