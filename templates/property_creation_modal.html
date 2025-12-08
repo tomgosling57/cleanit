@@ -1,9 +1,9 @@
 <form id="property-creation-form" hx-post="{{ url_for('properties.create_property_route') }}"
       hx-target="#property-list"
       hx-swap="innerHTML"
-      hx-on--after-request="if(event.detail.successful) { document.getElementById('property-modal').style.display='none'; document.getElementById('property-creation-form').reset(); } else { document.getElementById('errors-container').innerHTML = event.detail.xhr.response; }">
+      hx-on--after-request="if(event.detail.successful) { document.getElementById('property-modal').style.display='none'; document.getElementById('property-creation-form').reset(); } else { document.getElementById('errors-container').outerHTML = event.detail.xhr.response; }">
     <h2>Create New Property</h2>
-    <div id="errors-container"></div>
+    {% include '_form_response.html' %}
     <div class="job-update-compact"> {# Reusing job-update-compact for consistent styling #}
         <div class="form-group">
             <div class="form-card address-card">

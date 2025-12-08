@@ -1,9 +1,9 @@
 <form id="job-form" hx-post="{{ url_for('job.create_job') }}"
       hx-target="#job-list"
       hx-swap="innerHTML"
-      hx-on--after-request="if(event.detail.successful) { document.getElementById('job-modal').style.display='none'; document.getElementById('job-form').reset(); } else { document.getElementById('errors-container').innerHTML = event.detail.xhr.response; }">
+      hx-on--after-request="if(event.detail.successful) { document.getElementById('job-modal').style.display='none'; document.getElementById('job-form').reset(); } else { document.getElementById('errors-container').outerHTML = event.detail.xhr.response; }">
    <h2>Create New Job</h2>
-   <div id="errors-container"></div>
+   {% include '_form_response.html' %}
    <div class="job-update-compact">
         <!-- Group 1: Time, Duration & Description (TOP) -->
         <div class="form-group">

@@ -3,11 +3,11 @@
       hx-target="#property-card-{{ property.id }}"
       hx-swap="outerHTML"
       hx-on--after-request="if(!event.detail.successful) {
-          document.getElementById('errors-container-update').innerHTML = event.detail.xhr.response;
+          document.getElementById('errors-container').outerHTML = event.detail.xhr.response;
       } else {
           document.getElementById('property-modal').style.display='none'; }">
     <h2>Edit Property</h2>
-    <div id="errors-container-update"></div>
+    {% include '_form_response.html' %}
     <div class="job-update-compact"> {# Reusing job-update-compact for consistent styling #}
         <div class="form-group">
             <div class="form-card address-card">

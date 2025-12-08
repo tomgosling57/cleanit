@@ -5,16 +5,14 @@ hx-put="{{ url_for('user.update_user_profile') }}"
 hx-swap="outerHTML"
 {% else %}
 hx-put="{{ url_for('user.update_user', user_id=user.id) }}"
-hx-on--after-request="if(event.detail.successful) { document.getElementById('user-modal').style.display='none'; document.getElementById('user-update-form').reset(); } else { document.getElementById('errors-container').innerHTML = event.detail.xhr.response; }"
+hx-on--after-request="if(event.detail.successful) { document.getElementById('user-modal').style.display='none'; document.getElementById('user-update-form').reset(); } else { document.getElementById('errors-container').outerHTML = event.detail.xhr.response; }"
 hx-target="#errors-container"
-hx-swap="innerHTML"
+hx-swap="outerHTML"
 {% endif %}
 >
-    <div class="errors-container" id="errors-container">
-        {% if user_profile %}
-        {% include '_form_response.html' %}
-        {% endif %}
-    </div>
+    {% if user_profile %}
+    {% include '_form_response.html' %}
+    {% endif %}
     <p>Need to <a 
         hx-get="{{ url_for('user.get_user_update_password_form', user_id=user.id)}}"
         hx-target="#profile-modal-content"

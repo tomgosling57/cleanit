@@ -2,7 +2,7 @@
 hx-put="{{ url_for('job.update_job', job_id=job.id) }}"
 hx-include="#edit-job-form"
 hx-on--after-request="if(!event.detail.successful) { 
-    document.getElementById('errors-container-update').innerHTML = event.detail.xhr.response; 
+    document.getElementById('errors-container').outerHTML = event.detail.xhr.response; 
 } else { 
     document.getElementById('job-modal').style.display='none'; }"
 hx-target="{% if view_type == 'team' %}#team-timetable-view{% else %}.job-list{% endif %}"
@@ -11,7 +11,7 @@ hx-swap="innerHTML"
 >
     <input type="hidden" name="view_type" value="{{ view_type }}">
     <h2>Edit Job</h2>
-    <div id="errors-container-update"></div>
+    {% include '_form_response.html' %}
     <div class="job-update-compact">
         <!-- Group 1: Time, Duration & Description (TOP) -->
         <div class="form-group">

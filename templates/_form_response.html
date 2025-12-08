@@ -1,21 +1,23 @@
-{% if errors %}
-<div id="errors" class="error-messages">
-    <ul>
-        {% for field, message in errors.items() %}
-            <li>{{ message }}</li>
-        {% endfor %}
-    </ul>
-    <script>console.log('{{errors}}');</script>
+<div class="errors-container" hx-swap-oob="outerHTML">
+    {% if errors %}
+    <div id="errors" class="error-messages">
+        <ul>
+            {% for field, message in errors.items() %}
+                <li>{{ message }}</li>
+            {% endfor %}
+        </ul>
+        <script>console.log('{{errors}}');</script>
+    </div>
+    {% endif %}
+    {% if message %}
+    <script>
+        alert('{{ message | safe }}');
+    </script>
+    {% endif %}
+    {% if copy_content %}
+    <script>
+        navigator.clipboard.writeText('{{ copy_content }}');
+        alert('Copied {{ copy_content_name | safe }} to clipboard: {{ copy_content }}');
+    </script>
+    {% endif %}
 </div>
-{% endif %}
-{% if message %}
-<script>
-    alert('{{ message | safe }}');
-</script>
-{% endif %}
-{% if copy_content %}
-<script>
-    navigator.clipboard.writeText('{{ copy_content }}');
-    alert('Copied {{ copy_content_name | safe }} to clipboard: {{ copy_content }}');
-</script>
-{% endif %}

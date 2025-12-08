@@ -16,7 +16,7 @@
                 <span class="button-text">Create User</span>
             </button>
         {% endif %}
-        <div class="errors-container" id="errors-container"></div>
+        {% include '_form_response.html' %}
         {% include 'user_list_fragment.html' %}
     </div>
     {% with modal_name="user" %}
