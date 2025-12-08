@@ -10,7 +10,10 @@
                     hx-get="/teams/create_form"
                     hx-target="#team-modal-content"
                     hx-swap="innerHTML"
-                    hx-on--after-request="document.getElementById('team-modal').style.display='flex'">Create New Team</button>
+                    hx-on--after-request="document.getElementById('team-modal').style.display='flex'">
+                <span class="icon">{{ svg_icons['plus-solid-full'] | safe }}</span>
+                <span class="button-text">Create Team</span>
+            </button>
         </div>
 
         <div class="teams-container">

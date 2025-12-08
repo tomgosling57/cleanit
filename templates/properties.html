@@ -11,7 +11,8 @@
                     hx-target="#property-modal-content"
                     hx-trigger="click"
                     hx-on--after-request="document.getElementById('property-modal').style.display='block'">
-                Create Property
+                <span class="icon">{{ svg_icons['plus-solid-full'] | safe }}</span>
+                <span class="button-text">Create Property</span>
             </button>
         </div>
         <div class="property-list" id="property-list">

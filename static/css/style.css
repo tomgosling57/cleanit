@@ -133,7 +133,9 @@ h2 {
 .button {
     display: inline-block;
     background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-    color: white;
+    color: var(--card-background);
+    fill: var(--card-background);
+    stroke: var(--card-background);
     padding: 12px 28px;
     border-radius: 8px;
     text-decoration: none;

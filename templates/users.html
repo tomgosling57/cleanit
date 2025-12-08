@@ -12,7 +12,8 @@
                     hx-swap="innerHTML"
                     hx-trigger="click"
                     hx-on--after-request="document.getElementById('user-modal').style.display='block'">
-                Create User
+                <span class="icon">{{ svg_icons['user-plus-solid-full'] | safe }}</span>
+                <span class="button-text">Create User</span>
             </button>
         {% endif %}
         <div class="errors-container" id="errors-container"></div>

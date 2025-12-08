@@ -19,7 +19,8 @@
                         hx-target="#job-modal-content"
                         hx-trigger="click"
                         hx-on--after-request="document.getElementById('job-modal').style.display='block'">
-                    Create Job
+                    <span class="icon">{{ svg_icons['plus-solid-full'] | safe }}</span>
+                    <span class="button-text">Create Job</span>
                 </button>
             {% endif %}
         </div>
