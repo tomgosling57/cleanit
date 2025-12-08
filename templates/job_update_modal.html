@@ -5,8 +5,13 @@ hx-on--after-request="if(!event.detail.successful) {
     document.getElementById('errors-container').outerHTML = event.detail.xhr.response; 
 } else { 
     document.getElementById('job-modal').style.display='none'; }"
-hx-target="{% if view_type == 'team' %}#team-timetable-view{% else %}.job-list{% endif %}"
+{% if view_type == 'team' %}
+hx-target="#team-timetable-view"
 hx-swap="innerHTML"
+{% else %}
+hx-target="#job-list"
+hx-swap="outerHTML"
+{% endif %}
 
 >
     <input type="hidden" name="view_type" value="{{ view_type }}">
