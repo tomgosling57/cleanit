@@ -148,6 +148,7 @@ h2 {
 }
 
 .button:hover {
+    transition: all 0.3s ease;
     transform: translateY(-2px);
     box-shadow: 0 4px 16px rgba(10, 126, 164, 0.3);
     background: linear-gradient(135deg, var(--hover-color) 0%, var(--primary-color) 100%);
@@ -175,7 +176,6 @@ h2 {
     font-weight: 600;
     font-size: 0.95rem;
     letter-spacing: 0.3px;
-    transition: all 0.3s ease;
     cursor: pointer;
     box-shadow: 0 2px 8px rgba(10, 126, 164, 0.06);
 }
@@ -191,8 +191,8 @@ h2 {
     border-radius: 8px;
     padding: 3px; /* This controls border width */
     background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask: linear-gradient(var(--card-background) 0 0) content-box, linear-gradient(var(--card-background) 0 0);
+    mask: linear-gradient(var(--card-background) 0 0) content-box, linear-gradient(var(--card-background) 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
     pointer-events: none; /* Allows clicks to pass through */
@@ -200,8 +200,18 @@ h2 {
 
 .card-actions-button:hover {
     background: var(--primary-color);
-    -webkit-text-fill-color: white;
-    color: white;
+    -webkit-text-fill-color: var(--card-background);
+    color: var(--card-background);
+    background-image: none; /* Remove gradient */
+    -webkit-background-clip: border-box; /* Reset background-clip */
+    background-clip: border-box; /* Reset background-clip */
+}
+.card-actions-button .icon svg {
+    fill: url(#buttonGradient);
+}
+.card-actions-button:hover .icon svg {
+    fill: var(--card-background);
+    stroke: var(--card-background);
 }
 form {
     margin-top: 20px;
@@ -417,10 +427,6 @@ textarea:focus {
 }
 .icon:hover {
     fill: var(--primary-color);
-}
-
-.card-actions-button .icon svg path {
-    fill: url(#buttonGradient) !important;
 }
 
 .small-icon {
