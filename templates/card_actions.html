@@ -10,8 +10,8 @@
                     To use an SVG directly, pass the SVG HTML string in action.svg_html.
                     Example: {'label': 'Edit', 'svg_html': '<svg>...</svg>', 'icon_class': 'my-custom-icon'}
                 #}
-                {% if action.svg_html %}
-                    <span class="icon {{ action.icon_class | default('') }}">{{ action.svg_html | safe }}</span>
+                {% if action.icon_name %}
+                    <span class="icon {{ action.icon_class | default('') }}">{{ svg_icons[action.icon_name] | safe }}</span>
                 {% elif action.icon %}
                     <img src="{{ url_for('static', filename='icons/' + action.icon) }}" alt="{{ action.label }}" class="icon {{ action.icon_class | default('') }}">
                 {% endif %}
@@ -29,8 +29,8 @@
                     To use an SVG directly, pass the SVG HTML string in action.svg_html.
                     Example: {'label': 'Delete', 'svg_html': '<svg>...</svg>', 'icon_class': 'my-custom-icon'}
                 #}
-                {% if action.svg_html %}
-                    <span class="icon {{ action.icon_class | default('') }}">{{ action.svg_html | safe }}</span>
+                {% if action.icon_name %}
+                    <span class="icon {{ action.icon_class | default('') }}">{{ svg_icons[action.icon_name] | safe }}</span>
                 {% elif action.icon %}
                     <img src="{{ url_for('static', filename='icons/' + action.icon) }}" alt="{{ action.label }}" class="icon {{ action.icon_class | default('') }}">
                 {% endif %}
