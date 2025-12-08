@@ -58,3 +58,8 @@ def page(context: BrowserContext) -> Generator[Page, None, None]:
     page = context.new_page()
     page.set_default_navigation_timeout(5000) # the timeout is in milliseconds
     yield page
+
+@pytest.fixture
+def server_url(live_server):
+    """Get the base URL from the live server"""
+    return live_server.url()
