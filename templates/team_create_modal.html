@@ -12,40 +12,46 @@
     </div>
 
     <div class="form-group">
-        <label for="create-team-members">Add Members:</label>
-        <select id="create-team-members" name="members" multiple>
-            {% if categorized_users.unassigned %}
-            <optgroup label="Unassigned">
-                {% for user in categorized_users.unassigned %}
-                <option value="{{ user.id }}">{{ user.username }}</option>
+        <label for="edit-team-members">Add/Remove Members:</label>
+        <select id="edit-team-members" name="members" multiple>
+            {% if other_team_members %}
+            <optgroup label="On a Different Team">
+                {% for member in other_team_members %}
+                <option value="{{ member.id }}">{{ member.first_name }} {{ member.last_name }}</option>
                 {% endfor %}
             </optgroup>
             {% endif %}
-            {% if categorized_users.on_a_different_team %}
-            <optgroup label="On a Different Team">
-                {% for user in categorized_users.on_a_different_team %}
-                <option value="{{ user.id }}">{{ user.username }}</option>
+            {% if non_team_members %}
+            <optgroup label="Not on a Team">
+                {% for member in non_team_members %}
+                <option value="{{ member.id }}">{{ member.first_name }} {{ member.last_name }}</option>
                 {% endfor %}
             </optgroup>
             {% endif %}
         </select>
     </div>
-
     <div class="form-group">
-        <label for="create-team-leader">Select Team Leader:</label>
-        <select id="create-team-leader" name="team_leader_id">
-            <option value="">No Leader</option> {# Keep this for explicit "no leader" option #}
-            {% if categorized_users.unassigned %}
-            <optgroup label="Unassigned">
-                {% for user in categorized_users.unassigned %}
-                <option value="{{ user.id }}">{{ user.username }}</option>
+        <label for="edit-team-leader">Select Team Leader:</label>
+        <select id="edit-team-leader" name="team_leader_id">
+            <option value="">No Leader</option>
+            {% if current_members %}
+            <optgroup label="Current Members">
+                {% for member in current_members %}
+                <option value="{{ member.id }}">{{ member.first_name }} {{ member.last_name }}</option>
                 {% endfor %}
             </optgroup>
             {% endif %}
-            {% if categorized_users.on_a_different_team %}
+            {% if other_team_members %}
             <optgroup label="On a Different Team">
-                {% for user in categorized_users.on_a_different_team %}
-                <option value="{{ user.id }}">{{ user.username }}</option>
+                {% for member in other_team_members %}
+                <option value="{{ member.id }}">{{ member.first_name }} {{ member.last_name }}</option>
+                {% endfor %}
+            </optgroup>
+            {% endif %}
+            {% if non_team_members %}
+            <optgroup label="Not on a Team">
+                {% for member in non_team_members %}
+                <option value="{{ member.id }}">{{ member.first_name }} {{ member.last_name }}</option>
                 {% endfor %}
             </optgroup>
             {% endif %}
