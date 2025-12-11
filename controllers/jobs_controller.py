@@ -29,9 +29,27 @@ def update_job_status(job_id):
         response = render_template_string('{% include "job_status_fragment.html" %} {% include "job_actions_fragment.html" %}', job=job, is_oob_swap=True)
         teardown_db()
         return response
-    
+
+    # If the job is not found re render the job list
+    date = request.args.get('date')
+    date = JobHelper.process_selected_date(date)
+    # Convert the session date string to a date object for service calls
+    date_obj = datetime.strptime(date, DATETIME_FORMATS["DATE_FORMAT"]).date()
+    jobs = job_service.get_jobs_for_user_on_date(current_user.id, current_user.team_id, date_obj)
     teardown_db()
-    return jsonify({'error': 'Job not found'}), 404
+
+    # Swapped the job list fragment and the errors out of band
+    return render_template_string(
+        """
+        {% include 'job_list_fragment.html' %}
+        {% include '_form_response.html' %}
+        """,
+        errors={'Job Not Found': 'Something went wrong! That job no longer exists.'},
+        DATETIME_FORMATS=DATETIME_FORMATS,
+        is_oob_swap=True,
+        jobs=jobs
+    ), 200
+
 
 def get_job_details(job_id, view_type=None):
     if current_user.role not in ['cleaner', 'team_leader', 'owner']:
