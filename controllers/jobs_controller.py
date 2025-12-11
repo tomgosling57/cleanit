@@ -15,10 +15,18 @@ from controllers.property_controller import get_property_jobs_modal_content
 ERRORS = {'Job Not Found': 'Something went wrong! That job no longer exists.',
           'Missing Reassignment Details': "Missing job_id or new_team_id"}
 
-def _handle_errors(errors=None, view_type=None):
+def _handle_errors(errors=None):
     db = get_db()
     date = request.args.get('date')
     date_to_render = JobHelper.process_selected_date(date)
+
+    # Retrieve view_type from request.form or request.args, defaulting to 'normal'
+    view_type = request.form.get('view_type')
+    if view_type is None:
+        view_type = 'normal'
+        if errors is None:
+            errors = {}
+        errors['view_type'] = 'View type not provided, defaulting to normal.'
 
     if view_type == 'team':
         main_fragment_html = JobHelper.render_teams_timetable_fragment(db, current_user, date_to_render)
@@ -56,10 +64,10 @@ def update_job_status(job_id):
         teardown_db()
         return response
 
-    return _handle_errors({'Job Not Found': ERRORS['Job Not Found']}, view_type=None)  
+    return _handle_errors({'Job Not Found': ERRORS['Job Not Found']})
 
 
-def get_job_details(job_id, view_type=None):
+def get_job_details(job_id):
     if current_user.role not in ['cleaner', 'team_leader', 'owner']:
         return jsonify({'error': 'Unauthorized'}), 403
 
@@ -78,7 +86,7 @@ def get_job_details(job_id, view_type=None):
         selected_date = session.get('selected_date', datetime.today().date())
         return render_template('job_details_modal.html', job=job, job_cleaners=cleaners, job_teams=teams, back_to_back_job_ids=back_to_back_job_ids, DATETIME_FORMATS=DATETIME_FORMATS, selected_date=selected_date, view_type=view_type)
 
-    return _handle_errors({'Job Not Found': ERRORS['Job Not Found']}, view_type=view_type)
+    return _handle_errors({'Job Not Found': ERRORS['Job Not Found']})
 
 def get_job_creation_form():
     if current_user.role != 'owner':
@@ -163,7 +171,7 @@ def update_job(job_id):
     job_service = JobService(db)
     job = job_service.get_job_details(job_id)
     if not job:
-        return _handle_errors({'Job Not Found': ERRORS['Job Not Found']}, view_type=request.form.get('view_type'))
+        return _handle_errors({'Job Not Found': ERRORS['Job Not Found']})
 
     updated_job_data, assigned_teams, assigned_cleaners, error_response = JobHelper.process_job_form()
     if error_response:
@@ -189,7 +197,7 @@ def update_job(job_id):
         teardown_db()
         return response_html
     
-    return _handle_errors({'Job Not Found': ERRORS['Job Not Found']}, view_type=request.form.get('view_type'))
+    return _handle_errors({'Job Not Found': ERRORS['Job Not Found']})
 
 def get_job_assignments_categorized(job_date_str=None):
     """Get categorized teams and users for job assignment based on current workload"""
@@ -359,7 +367,7 @@ def delete_job(job_id):
         teardown_db()
         return response_html
         
-    return _handle_errors({'Job Not Found': ERRORS['Job Not Found']}, view_type=request.form.get('view_type'))
+    return _handle_errors({'Job Not Found': ERRORS['Job Not Found']})
 
 def reassign_job_team():
     if not current_user.is_authenticated or current_user.role != 'owner':
@@ -371,12 +379,12 @@ def reassign_job_team():
     team_service = TeamService(db)    
     job = job_service.get_job_details(request.form.get('job_id'))
     if not job:
-        return _handle_errors({'Job Not Found': ERRORS['Job Not Found']}, view_type='team')
+        return _handle_errors({'Job Not Found': ERRORS['Job Not Found']})
     
     new_team = team_service.get_team(request.form.get('new_team_id'))
     old_team = team_service.get_team(request.form.get('old_team_id'))
     if not all([job, new_team]):
-        return _handle_errors({'Missing Reassignment Details': ERRORS['Missing Reassignment Details']}, view_type='team')
+        return _handle_errors({'Missing Reassignment Details': ERRORS['Missing Reassignment Details']})
 
     assignment_service.update_job_team_assignment(job, new_team, old_team)
     
