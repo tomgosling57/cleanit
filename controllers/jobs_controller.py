@@ -15,24 +15,28 @@ from controllers.property_controller import get_property_jobs_modal_content
 ERRORS = {'Job Not Found': 'Something went wrong! That job no longer exists.',
           'Missing Reassignment Details': "Missing job_id or new_team_id"}
 
-def _handle_errors(errors=None):
-    date = request.args.get('date')
-    date = JobHelper.process_selected_date(date)
-    date_obj = datetime.strptime(date, DATETIME_FORMATS["DATE_FORMAT"]).date()
+def _handle_errors(errors=None, view_type=None):
     db = get_db()
-    job_service = JobService(db)
-    jobs = job_service.get_jobs_for_user_on_date(current_user.id, current_user.team_id, date_obj)
-    teardown_db()
-    return render_template_string(
+    date = request.args.get('date')
+    date_to_render = JobHelper.process_selected_date(date)
+
+    if view_type == 'team':
+        main_fragment_html = JobHelper.render_teams_timetable_fragment(db, current_user, date_to_render)
+    else:
+        main_fragment_html = JobHelper.render_job_list_fragment(db, current_user, date_to_render)
+    
+    response_html = render_template_string(
         """
-        {% include 'job_list_fragment.html' %}
+        {{ main_fragment_html | safe }}
         {% include '_form_response.html' %}
         """,
         errors=errors,
         DATETIME_FORMATS=DATETIME_FORMATS,
         is_oob_swap=True,
-        jobs=jobs
-    ), 200
+        main_fragment_html=main_fragment_html
+    )
+    teardown_db()
+    return response_html, 200
 
 def update_job_status(job_id):
     if not current_user.is_authenticated or current_user.role not in ['owner', 'team_leader']:
@@ -52,7 +56,7 @@ def update_job_status(job_id):
         teardown_db()
         return response
 
-    return _handle_errors({'Job Not Found': ERRORS['Job Not Found']})
+    return _handle_errors({'Job Not Found': ERRORS['Job Not Found']}, view_type=None)  
 
 
 def get_job_details(job_id, view_type=None):
@@ -74,7 +78,7 @@ def get_job_details(job_id, view_type=None):
         selected_date = session.get('selected_date', datetime.today().date())
         return render_template('job_details_modal.html', job=job, job_cleaners=cleaners, job_teams=teams, back_to_back_job_ids=back_to_back_job_ids, DATETIME_FORMATS=DATETIME_FORMATS, selected_date=selected_date, view_type=view_type)
 
-    return _handle_errors({'Job Not Found': ERRORS['Job Not Found']})
+    return _handle_errors({'Job Not Found': ERRORS['Job Not Found']}, view_type=view_type)
 
 def get_job_creation_form():
     if current_user.role != 'owner':
@@ -159,7 +163,7 @@ def update_job(job_id):
     job_service = JobService(db)
     job = job_service.get_job_details(job_id)
     if not job:
-        return _handle_errors({'Job Not Found': ERRORS['Job Not Found']})
+        return _handle_errors({'Job Not Found': ERRORS['Job Not Found']}, view_type=request.form.get('view_type'))
 
     updated_job_data, assigned_teams, assigned_cleaners, error_response = JobHelper.process_job_form()
     if error_response:
@@ -185,7 +189,7 @@ def update_job(job_id):
         teardown_db()
         return response_html
     
-    return _handle_errors({'Job Not Found': ERRORS['Job Not Found']})
+    return _handle_errors({'Job Not Found': ERRORS['Job Not Found']}, view_type=request.form.get('view_type'))
 
 def get_job_assignments_categorized(job_date_str=None):
     """Get categorized teams and users for job assignment based on current workload"""
@@ -295,7 +299,7 @@ def get_job_update_form(job_id, view_type=None):
     if job:
         selected_date = session.get('selected_date', datetime.today().date())
         return render_template('job_update_modal.html', job=job, users=users, job_cleaners=job_users, properties=properties, teams=teams, job_teams=job_teams, DATETIME_FORMATS=DATETIME_FORMATS, selected_date=selected_date, view_type=view_type)
-    return _handle_errors({'Job Not Found': ERRORS['Job Not Found']})
+    return _handle_errors({'Job Not Found': ERRORS['Job Not Found']}, view_type=view_type)
 
 def create_job():
     if current_user.role != 'owner':
@@ -355,7 +359,7 @@ def delete_job(job_id):
         teardown_db()
         return response_html
         
-    return _handle_errors({'Job Not Found': ERRORS['Job Not Found']})
+    return _handle_errors({'Job Not Found': ERRORS['Job Not Found']}, view_type=request.form.get('view_type'))
 
 def reassign_job_team():
     if not current_user.is_authenticated or current_user.role != 'owner':
@@ -367,12 +371,12 @@ def reassign_job_team():
     team_service = TeamService(db)    
     job = job_service.get_job_details(request.form.get('job_id'))
     if not job:
-        return _handle_errors({'Job Not Found': ERRORS['Job Not Found']})
+        return _handle_errors({'Job Not Found': ERRORS['Job Not Found']}, view_type='team')
     
     new_team = team_service.get_team(request.form.get('new_team_id'))
     old_team = team_service.get_team(request.form.get('old_team_id'))
     if not all([job, new_team]):
-        return _handle_errors(ERRORS['Missing Reassignment Details'])
+        return _handle_errors({'Missing Reassignment Details': ERRORS['Missing Reassignment Details']}, view_type='team')
 
     assignment_service.update_job_team_assignment(job, new_team, old_team)
     
