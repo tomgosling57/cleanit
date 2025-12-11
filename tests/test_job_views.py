@@ -133,19 +133,3 @@ def test_create_job(page, goto) -> None:
         },
         expected_indicators=["Same Day Arrival"]
     )
-
-
-def test_delete_job(page, goto) -> None:
-    login_owner(page, goto)
-
-    expect(page.locator('div.job-card').first).to_be_visible()
-    job_card = page.locator('div.job-card').first
-
-    expect(job_card.locator(".job-close-button")).to_be_visible()
-
-    page.on('dialog', lambda d: d.accept())
-
-    with page.expect_response(f"**/jobs/job/{job_card.get_attribute('data-job-id')}/delete**"):
-        page.wait_for_load_state('networkidle')
-        job_card.locator(".job-close-button").click()
-    expect(page.locator('#job-1')).to_be_hidden()

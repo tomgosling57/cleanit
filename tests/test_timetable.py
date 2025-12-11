@@ -216,3 +216,18 @@ def test_team_timetable_job_reassignment(page, goto) -> None:
         # Verify that the job has been moved to the new team column
         expect(team_column_2.locator(f'div.job-card[data-job-id="{job_id}"]')).to_be_visible()
         expect(team_column_1.locator(f'div.job-card[data-job-id="{job_id}"]')).to_have_count(0)
+
+def test_delete_job(page, goto) -> None:
+    login_owner(page, goto)
+
+    expect(page.locator('div.job-card').first).to_be_visible()
+    job_card = page.locator('div.job-card').first
+
+    expect(job_card.locator(".job-close-button")).to_be_visible()
+
+    page.on('dialog', lambda d: d.accept())
+
+    with page.expect_response(f"**/jobs/job/{job_card.get_attribute('data-job-id')}/delete**"):
+        page.wait_for_load_state('networkidle')
+        job_card.locator(".job-close-button").click()
+    expect(page.locator('#job-1')).to_be_hidden()
