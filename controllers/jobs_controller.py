@@ -12,6 +12,25 @@ from collections import defaultdict
 from utils.job_helper import JobHelper
 from controllers.property_controller import get_property_jobs_modal_content
 
+def _handle_job_not_found_error():
+    date = request.args.get('date')
+    date = JobHelper.process_selected_date(date)
+    date_obj = datetime.strptime(date, DATETIME_FORMATS["DATE_FORMAT"]).date()
+    db = get_db()
+    job_service = JobService(db)
+    jobs = job_service.get_jobs_for_user_on_date(current_user.id, current_user.team_id, date_obj)
+    teardown_db()
+    return render_template_string(
+        """
+        {% include 'job_list_fragment.html' %}
+        {% include '_form_response.html' %}
+        """,
+        errors={'Job Not Found': 'Something went wrong! That job no longer exists.'},
+        DATETIME_FORMATS=DATETIME_FORMATS,
+        is_oob_swap=True,
+        jobs=jobs
+    ), 200
+
 def update_job_status(job_id):
     if not current_user.is_authenticated or current_user.role not in ['owner', 'team_leader']:
         return jsonify({'error': 'Unauthorized'}), 401
@@ -30,25 +49,7 @@ def update_job_status(job_id):
         teardown_db()
         return response
 
-    # If the job is not found re render the job list
-    date = request.args.get('date')
-    date = JobHelper.process_selected_date(date)
-    # Convert the session date string to a date object for service calls
-    date_obj = datetime.strptime(date, DATETIME_FORMATS["DATE_FORMAT"]).date()
-    jobs = job_service.get_jobs_for_user_on_date(current_user.id, current_user.team_id, date_obj)
-    teardown_db()
-
-    # Swapped the job list fragment and the errors out of band
-    return render_template_string(
-        """
-        {% include 'job_list_fragment.html' %}
-        {% include '_form_response.html' %}
-        """,
-        errors={'Job Not Found': 'Something went wrong! That job no longer exists.'},
-        DATETIME_FORMATS=DATETIME_FORMATS,
-        is_oob_swap=True,
-        jobs=jobs
-    ), 200
+    return _handle_job_not_found_error()
 
 
 def get_job_details(job_id, view_type=None):
@@ -70,25 +71,7 @@ def get_job_details(job_id, view_type=None):
         selected_date = session.get('selected_date', datetime.today().date())
         return render_template('job_details_modal.html', job=job, job_cleaners=cleaners, job_teams=teams, back_to_back_job_ids=back_to_back_job_ids, DATETIME_FORMATS=DATETIME_FORMATS, selected_date=selected_date, view_type=view_type)
 
-    # If the job is not found re render the job list
-    date = request.args.get('date')
-    date = JobHelper.process_selected_date(date)
-    # Convert the session date string to a date object for service calls
-    date_obj = datetime.strptime(date, DATETIME_FORMATS["DATE_FORMAT"]).date()
-    jobs = job_service.get_jobs_for_user_on_date(current_user.id, current_user.team_id, date_obj)
-    teardown_db()
-
-    # Swapped the job list fragment and the errors out of band
-    return render_template_string(
-        """
-        {% include 'job_list_fragment.html' %}
-        {% include '_form_response.html' %}
-        """,
-        errors={'Job Not Found': 'Something went wrong! That job no longer exists.'},
-        DATETIME_FORMATS=DATETIME_FORMATS,
-        is_oob_swap=True,
-        jobs=jobs
-    ), 200
+    return _handle_job_not_found_error()
 
 def get_job_creation_form():
     if current_user.role != 'owner':
@@ -173,8 +156,7 @@ def update_job(job_id):
     job_service = JobService(db)
     job = job_service.get_job_details(job_id)
     if not job:
-        teardown_db()
-        return jsonify({'error': 'Job not found'}), 404
+        return _handle_job_not_found_error()
 
     updated_job_data, assigned_teams, assigned_cleaners, error_response = JobHelper.process_job_form()
     if error_response:
@@ -200,7 +182,7 @@ def update_job(job_id):
         teardown_db()
         return response_html
     teardown_db()
-    return jsonify({'error': 'Failed to update job'}), 500
+    return _handle_job_not_found_error()
 
 def get_job_assignments_categorized(job_date_str=None):
     """Get categorized teams and users for job assignment based on current workload"""
@@ -310,7 +292,7 @@ def get_job_update_form(job_id, view_type=None):
     if job:
         selected_date = session.get('selected_date', datetime.today().date())
         return render_template('job_update_modal.html', job=job, users=users, job_cleaners=job_users, properties=properties, teams=teams, job_teams=job_teams, DATETIME_FORMATS=DATETIME_FORMATS, selected_date=selected_date, view_type=view_type)
-    return jsonify({'error': 'Job not found'}), 404
+    return _handle_job_not_found_error()
 
 def create_job():
     if current_user.role != 'owner':
@@ -371,7 +353,7 @@ def delete_job(job_id):
         return response_html
         
     teardown_db()
-    return jsonify({'error': 'Job not found'}), 404
+    return _handle_job_not_found_error()
 
 def reassign_job_team():
     if not current_user.is_authenticated or current_user.role != 'owner':
