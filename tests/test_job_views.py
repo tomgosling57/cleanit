@@ -108,12 +108,14 @@ def test_create_job(page, goto) -> None:
 
     new_start_time = datetime.today().replace(hour=8, minute=0).time().strftime(DATETIME_FORMATS["TIME_FORMAT"])
     new_end_time = datetime.today().replace(hour=9, minute=0).time().strftime(DATETIME_FORMATS["TIME_FORMAT"])
+    new_date = datetime.today().date().strftime(DATETIME_FORMATS["DATE_FORMAT"])
     new_arrival_datetime = datetime.combine(
         datetime.today().date(), time(10, 0)
     ).strftime(DATETIME_FORMATS["DATETIME_FORMAT_JOBS_PY"])
 
     modal.get_by_role("textbox", name="Start Time").fill(new_start_time)
     modal.get_by_role("textbox", name="End Time").fill(new_end_time)
+    modal.locator("#date").fill(new_date)
     modal.locator("#access_notes").fill("test")
     modal.locator("#property_id").select_option("2")
     modal.locator('input[type="text"].flatpickr').fill(new_arrival_datetime)

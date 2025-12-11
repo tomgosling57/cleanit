@@ -28,7 +28,7 @@ hx-on--after-request="if(event.detail.successful) { document.getElementById('job
                     </div>
                     <div class="form-field">
                         <label for="date">Date</label>
-                        <input type="date" id="date" name="date" value="{{ today.isoformat() }}" placeholder="Select Date">
+                        <input type="date-local" id="date" name="date" placeholder="Select Date" pattern="^\d{2}-\d{2}-\d{4}$" title="Please enter date in YYYY-MM-DD format">
                     </div>
                 </div>
             </div>
