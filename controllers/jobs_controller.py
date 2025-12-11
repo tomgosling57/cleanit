@@ -84,7 +84,7 @@ def get_job_details(job_id):
         teardown_db()
 
         selected_date = session.get('selected_date', datetime.today().date())
-        return render_template('job_details_modal.html', job=job, job_cleaners=cleaners, job_teams=teams, back_to_back_job_ids=back_to_back_job_ids, DATETIME_FORMATS=DATETIME_FORMATS, selected_date=selected_date, view_type=view_type)
+        return render_template('job_details_modal.html', job=job, job_cleaners=cleaners, job_teams=teams, back_to_back_job_ids=back_to_back_job_ids, DATETIME_FORMATS=DATETIME_FORMATS, selected_date=selected_date)
 
     return _handle_errors({'Job Not Found': ERRORS['Job Not Found']})
 
@@ -287,7 +287,7 @@ def get_job_assignments_categorized(job_date_str=None):
     
     return jsonify(categorized_assignments)
 
-def get_job_update_form(job_id, view_type=None):
+def get_job_update_form(job_id):
     if current_user.role != 'owner':
         return jsonify({'error': 'Unauthorized'}), 403
 
@@ -306,8 +306,8 @@ def get_job_update_form(job_id, view_type=None):
     teardown_db()
     if job:
         selected_date = session.get('selected_date', datetime.today().date())
-        return render_template('job_update_modal.html', job=job, users=users, job_cleaners=job_users, properties=properties, teams=teams, job_teams=job_teams, DATETIME_FORMATS=DATETIME_FORMATS, selected_date=selected_date, view_type=view_type)
-    return _handle_errors({'Job Not Found': ERRORS['Job Not Found']}, view_type=view_type)
+        return render_template('job_update_modal.html', job=job, users=users, job_cleaners=job_users, properties=properties, teams=teams, job_teams=job_teams, DATETIME_FORMATS=DATETIME_FORMATS, selected_date=selected_date)
+    return _handle_errors({'Job Not Found': ERRORS['Job Not Found']})
 
 def create_job():
     if current_user.role != 'owner':
