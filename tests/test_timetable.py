@@ -252,6 +252,7 @@ def test_job_not_found_handling_for_update_status(page, goto, server_url) -> Non
         """)
 
     expect(page.get_by_text("Something went wrong! That job no longer exists.")).to_be_visible()
+    expect(page.locator('#job-list')).to_be_visible() # Assert job list fragment is rendered
 
 def test_job_not_found_handling_for_get_job_details(page, goto, server_url) -> None:
     """Test that the job not found message is displayed when trying to get details of a non-existent job.
@@ -273,6 +274,7 @@ def test_job_not_found_handling_for_get_job_details(page, goto, server_url) -> N
         """)
 
     expect(page.get_by_text("Something went wrong! That job no longer exists.")).to_be_visible()
+    expect(page.locator('#job-list')).to_be_visible() # Assert job list fragment is rendered
 
 def test_job_not_found_handling_for_update_job(page, goto, server_url) -> None:
     """Test that the job not found message is displayed when trying to update a non-existent job.
@@ -294,6 +296,7 @@ def test_job_not_found_handling_for_update_job(page, goto, server_url) -> None:
         """)
 
     expect(page.get_by_text("Something went wrong! That job no longer exists.")).to_be_visible()
+    expect(page.locator('#job-list')).to_be_visible() # Assert job list fragment is rendered
 
 def test_job_not_found_handling_for_delete_job(page, goto, server_url) -> None:
     """Test that the job not found message is displayed when trying to delete a non-existent job.
@@ -315,3 +318,56 @@ def test_job_not_found_handling_for_delete_job(page, goto, server_url) -> None:
         """)
 
     expect(page.get_by_text("Something went wrong! That job no longer exists.")).to_be_visible()
+    expect(page.locator('#job-list')).to_be_visible() # Assert job list fragment is rendered
+
+def test_job_not_found_handling_for_get_update_job_form(page, goto, server_url) -> None:
+    """Test that the job not found message is displayed when trying to get update form of a non-existent job.
+    
+    Args:
+        page: Playwright page object
+        goto: Function to navigate to a URL"""
+    login_owner(page, goto)
+
+    expect(page.locator('div.job-card').first).to_be_visible()
+
+    with page.expect_response(f"**/jobs/job/999/update**") as response_info:
+        page.wait_for_function("() => window.htmx !== undefined")
+        page.evaluate(f"""
+            htmx.ajax('GET', '{server_url}/jobs/job/999/update', {{
+                target: '#errors-container',
+                swap: 'innerHTML'
+            }})
+        """)
+
+    expect(page.get_by_text("Something went wrong! That job no longer exists.")).to_be_visible()
+    expect(page.locator('#job-list')).to_be_visible() # Assert job list fragment is rendered
+
+def test_job_not_found_handling_for_reassign_job_team(page, goto, server_url) -> None:
+    """Test that the job not found message is displayed when trying to reassign team for a non-existent job.
+    
+    Args:
+        page: Playwright page object
+        goto: Function to navigate to a URL"""
+    login_owner(page, goto)
+
+    page.get_by_text('Team View').click()
+    
+    expect(page.locator('div.job-card').first).to_be_visible()
+
+    with page.expect_response(f"**/jobs/job/reassign**") as response_info:
+        page.wait_for_function("() => window.htmx !== undefined")
+        page.evaluate(f"""
+            htmx.ajax('POST', '{server_url}/jobs/job/reassign', {{
+                target: '#errors-container',
+                swap: 'innerHTML',
+                values: {{
+                    job_id: 999,
+                    new_team_id: 1,
+                    date: '{datetime.today().strftime(DATETIME_FORMATS["DATE_FORMAT"])}',
+                    view_type: 'team'
+                }}
+            }})
+        """)
+
+    expect(page.get_by_text("Something went wrong! That job no longer exists.")).to_be_visible()
+    expect(page.locator('#team-timetable-view')).to_be_visible() # Assert team timetable fragment is rendered

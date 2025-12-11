@@ -83,6 +83,7 @@ def test_update_job(page, goto) -> None:
         modal.get_by_role("button", name="Save Changes").click()
 
     expect(modal).to_be_hidden()
+    expect(page.locator('#job-list')).to_be_visible() # Assert job list fragment is rendered
 
     assert_job_card_variables(
         job_card,
@@ -127,6 +128,7 @@ def test_create_job(page, goto) -> None:
         modal.get_by_role("button", name="Create Job").click()
 
     expect(modal).to_be_hidden()
+    expect(page.locator('#job-list')).to_be_visible() # Assert job list fragment is rendered
     assert_job_card_variables(
         page.locator('.job-card').first,
         {
