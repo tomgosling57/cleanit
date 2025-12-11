@@ -231,3 +231,24 @@ def test_delete_job(page, goto) -> None:
         page.wait_for_load_state('networkidle')
         job_card.locator(".job-close-button").click()
     expect(page.locator('#job-1')).to_be_hidden()
+
+def test_job_not_found_handling(page, goto, server_url) -> None:
+    """Test that the job not found message is displayed when trying to interact with non-existent job.
+    
+    Args:
+        page: Playwright page object
+        goto: Function to navigate to a URL"""
+    login_owner(page, goto)
+
+    expect(page.locator('div.job-card').first).to_be_visible()
+
+    with page.expect_response(f"**/jobs/job/999/update_status**") as response_info:
+        page.wait_for_function("() => window.htmx !== undefined")
+        page.evaluate(f"""
+            htmx.ajax('POST', '{server_url}/jobs/job/999/update_status', {{
+                target: '#errors-container',
+                swap: 'innerHTML'
+            }})
+        """)
+
+    expect(page.get_by_text("Something went wrong! That job no longer exists.")).to_be_visible()
