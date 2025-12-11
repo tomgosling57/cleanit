@@ -1,6 +1,6 @@
 {% set back_to_back_job_ids = back_to_back_job_ids if back_to_back_job_ids is defined else [] %}
 <div class="job-card 
-{% if job.id in back_to_back_job_ids %}back-to-back-job
+{% if job.description %}red-outline
 {% endif %} 
 {% if job.arrival_datetime and job.arrival_datetime.date() == job.date %}arrival-same-day
 {% elif job.arrival_datetime and (job.arrival_datetime.date() - job.date).days == 1 %}arrival-next-day
@@ -33,8 +33,8 @@
                 {% elif job.arrival_datetime and (job.arrival_datetime.date() - job.date).days == 1 %}
                 <div class="job-status-badge yellow">Next Day Arrival</div>
                 {% endif %}
-                {% if job.id in back_to_back_job_ids %}
-                <div class="job-status-badge red">Back to Back</div>
+                {% if job.description %}
+                <div class="job-status-badge red">See Notes</div>
                 {% endif %}
             </div>
         </div>
