@@ -38,7 +38,6 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/job_styles.css') }}">
 
-    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <script>
         flatpickr("#timetable-datepicker", {
             dateFormat: "{{ DATETIME_FORMATS['DATE_FORMAT_FLATPICKR'] }}",
