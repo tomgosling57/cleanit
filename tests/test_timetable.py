@@ -158,8 +158,8 @@ def test_owner_team_timetable(page, goto) -> None:
 
     # Initial Team
     # Assert the jobs loaded and the job holds have all of the necessary details rendered
-    team_column_1 = page.locator('div.team-column').first
-    expect(team_column_1.get_by_role("heading", name="Initial Team")).to_be_visible()
+    team_column_1 = page.locator('div.column-container').first
+    expect(team_column_1.get_by_text("Initial Team")).to_be_visible()
     expect(team_column_1.locator('div.job-card')).to_have_count(3)
     team_1_job_card_2 = team_column_1.locator('div.job-card').nth(1)
     assert_job_card_variables(team_1_job_card_2, {
@@ -173,16 +173,16 @@ def test_owner_team_timetable(page, goto) -> None:
     }, expected_indicators=["Back to Back", "Same Day Arrival"])    
 
     # Assert the jobs loaded for the other team columns
-    team_column_2 = page.locator('div.team-column').nth(1)
+    team_column_2 = page.locator('div.column-container').nth(1)
     expect(team_column_2.get_by_role("heading", name="Alpha Team")).to_be_visible()
     expect(team_column_2.locator('div.job-card')).to_have_count(4)
-    team_column_3 = page.locator('div.team-column').nth(2)
+    team_column_3 = page.locator('div.column-container').nth(2)
     expect(team_column_3.get_by_role("heading", name="Beta Team")).to_be_visible()
     expect(team_column_3.locator('div.job-card')).to_have_count(1)
-    team_column_4 = page.locator('div.team-column').nth(3)
+    team_column_4 = page.locator('div.column-container').nth(3)
     expect(team_column_4.get_by_role("heading", name="Charlie Team")).to_be_visible()
     expect(team_column_4.locator('div.job-card')).to_have_count(1)
-    team_column_5 = page.locator('div.team-column').nth(4)
+    team_column_5 = page.locator('div.column-container').nth(4)
     expect(team_column_5.get_by_role("heading", name="Delta Team")).to_be_visible()
     expect(team_column_5.locator('div.job-card')).to_have_count(1)
 
