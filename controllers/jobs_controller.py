@@ -59,19 +59,36 @@ def get_job_details(job_id, view_type=None):
     job_service = JobService(db)
     job = job_service.get_job_details(job_id)
     
-    if not job:
+    if job:
+        back_to_back_job_ids = job_service.get_back_to_back_jobs_for_date(job.date, threshold_minutes=15)
+        
+        assignment_service = AssignmentService(db)
+        cleaners = assignment_service.get_users_for_job(job_id)
+        teams = assignment_service.get_teams_for_job(job_id)
         teardown_db()
-        return jsonify({'error': 'Job not found'}), 404
 
-    back_to_back_job_ids = job_service.get_back_to_back_jobs_for_date(job.date, threshold_minutes=15)
-    
-    assignment_service = AssignmentService(db)
-    cleaners = assignment_service.get_users_for_job(job_id)
-    teams = assignment_service.get_teams_for_job(job_id)
+        selected_date = session.get('selected_date', datetime.today().date())
+        return render_template('job_details_modal.html', job=job, job_cleaners=cleaners, job_teams=teams, back_to_back_job_ids=back_to_back_job_ids, DATETIME_FORMATS=DATETIME_FORMATS, selected_date=selected_date, view_type=view_type)
+
+    # If the job is not found re render the job list
+    date = request.args.get('date')
+    date = JobHelper.process_selected_date(date)
+    # Convert the session date string to a date object for service calls
+    date_obj = datetime.strptime(date, DATETIME_FORMATS["DATE_FORMAT"]).date()
+    jobs = job_service.get_jobs_for_user_on_date(current_user.id, current_user.team_id, date_obj)
     teardown_db()
 
-    selected_date = session.get('selected_date', datetime.today().date())
-    return render_template('job_details_modal.html', job=job, job_cleaners=cleaners, job_teams=teams, back_to_back_job_ids=back_to_back_job_ids, DATETIME_FORMATS=DATETIME_FORMATS, selected_date=selected_date, view_type=view_type)
+    # Swapped the job list fragment and the errors out of band
+    return render_template_string(
+        """
+        {% include 'job_list_fragment.html' %}
+        {% include '_form_response.html' %}
+        """,
+        errors={'Job Not Found': 'Something went wrong! That job no longer exists.'},
+        DATETIME_FORMATS=DATETIME_FORMATS,
+        is_oob_swap=True,
+        jobs=jobs
+    ), 200
 
 def get_job_creation_form():
     if current_user.role != 'owner':
