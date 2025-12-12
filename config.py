@@ -11,7 +11,6 @@ DATETIME_FORMATS = {
     "TIME_FORMAT": "%H:%M",
     "TIME_FORMAT_FLATPICKR": "H:i"
 }
-BACK_TO_BACK_THRESHOLD = 15 # MINUTES
 
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or secrets.token_bytes(32)
