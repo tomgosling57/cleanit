@@ -1,5 +1,4 @@
-{% set back_to_back_job_ids = back_to_back_job_ids if back_to_back_job_ids is defined else [] %}
-<div class="job-card 
+<div class="job-card
 {% if job.description %}red-outline
 {% endif %} 
 {% if job.arrival_datetime and job.arrival_datetime.date() == job.date %}arrival-same-day
