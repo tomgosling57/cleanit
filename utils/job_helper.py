@@ -1,6 +1,6 @@
 from flask import request, render_template_string, session
 from datetime import datetime, date
-from config import DATETIME_FORMATS, BACK_TO_BACK_THRESHOLD
+from config import DATETIME_FORMATS
 from services.job_service import JobService
 from services.assignment_service import AssignmentService
 from flask_login import current_user
@@ -164,8 +164,7 @@ class JobHelper:
         print(f"Fetching jobs for User ID: {current_user.id}, Team ID: {current_user.team_id}, Date: {date_str}")
         assigned_jobs = job_service.get_jobs_for_user_on_date(current_user.id, current_user.team_id, date_obj)
         print(f"Number of Jobs: {len(assigned_jobs)}")
-        back_to_back_job_ids = job_service.get_back_to_back_jobs_for_date(date_obj, threshold_minutes=BACK_TO_BACK_THRESHOLD)
-        return render_template_string('{% include "job_list_fragment.html" %}', jobs=assigned_jobs, DATETIME_FORMATS=DATETIME_FORMATS, back_to_back_job_ids=back_to_back_job_ids, view_type='normal', current_user=current_user)
+        return render_template_string('{% include "job_list_fragment.html" %}', jobs=assigned_jobs, DATETIME_FORMATS=DATETIME_FORMATS, view_type='normal', current_user=current_user)
 
     @staticmethod
     def render_teams_timetable_fragment(db, current_user, date_str):
@@ -179,19 +178,12 @@ class JobHelper:
         date_obj = datetime.strptime(date_str, DATETIME_FORMATS["DATE_FORMAT"]).date()
         all_teams = team_service.get_all_teams()
         jobs_by_team = assignment_service.get_jobs_grouped_by_team_for_date(date_obj)
-        back_to_back_job_ids = {}
-        for team_obj in all_teams:
-            back_to_back_job_ids[team_obj.id] = job_service.get_back_to_back_jobs_for_team_on_date(
-                team_obj.id, date_obj, threshold_minutes=BACK_TO_BACK_THRESHOLD
-            )
-        print(back_to_back_job_ids)        
         # Render the entire team timetable view to ensure all columns are updated correctly
         # This will trigger the jobAssignmentsUpdated event in the frontend
         response_html = render_template_string(
             '{% include "team_timetable_fragment.html" %}',
             all_teams=all_teams,
             jobs_by_team=jobs_by_team,
-            back_to_back_job_ids=back_to_back_job_ids,
             DATETIME_FORMATS=DATETIME_FORMATS,
             current_user=current_user,
             view_type='team',
