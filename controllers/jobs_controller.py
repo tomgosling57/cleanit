@@ -1,6 +1,6 @@
 from flask import render_template, render_template_string, redirect, url_for, flash, request, jsonify, Response, session
 from flask_login import current_user
-from config import DATETIME_FORMATS, BACK_TO_BACK_THRESHOLD
+from config import DATETIME_FORMATS
 from services.job_service import JobService
 from services.team_service import TeamService
 from services.user_service import UserService
@@ -76,15 +76,13 @@ def get_job_details(job_id):
     job = job_service.get_job_details(job_id)
     
     if job:
-        back_to_back_job_ids = job_service.get_back_to_back_jobs_for_date(job.date, threshold_minutes=15)
-        
         assignment_service = AssignmentService(db)
         cleaners = assignment_service.get_users_for_job(job_id)
         teams = assignment_service.get_teams_for_job(job_id)
         teardown_db()
 
         selected_date = session.get('selected_date', datetime.today().date())
-        return render_template('job_details_modal.html', job=job, job_cleaners=cleaners, job_teams=teams, back_to_back_job_ids=back_to_back_job_ids, DATETIME_FORMATS=DATETIME_FORMATS, selected_date=selected_date)
+        return render_template('job_details_modal.html', job=job, job_cleaners=cleaners, job_teams=teams, DATETIME_FORMATS=DATETIME_FORMATS, selected_date=selected_date)
 
     return _handle_errors({'Job Not Found': ERRORS['Job Not Found']})
 
@@ -119,19 +117,12 @@ def timetable(date: str = None):
 
     all_teams = team_service.get_all_teams()
 
-    team_back_to_back_job_ids = {}
-    for team_obj in all_teams:
-        team_back_to_back_job_ids[team_obj.id] = job_service.get_back_to_back_jobs_for_team_on_date(
-            team_obj.id, date_obj, threshold_minutes=BACK_TO_BACK_THRESHOLD
-        )
-
     team = team_service.get_team(current_user.team_id)
     team_leader_id = team.team_leader_id if team else None
     selected_date = session['selected_date'] # Use the string directly from session
     current_user.selected_date = selected_date
     response = render_template('timetable.html', jobs=jobs, team_leader_id=team_leader_id,
                            user_id=current_user.id, selected_date=selected_date, DATETIME_FORMATS=DATETIME_FORMATS,
-                           back_to_back_job_ids=job_service.get_back_to_back_jobs_for_date(date_obj, threshold_minutes=BACK_TO_BACK_THRESHOLD),
                            all_teams=all_teams)
     teardown_db()
     return response
@@ -149,17 +140,10 @@ def team_timetable(date: str = None):
     all_teams = team_service.get_all_teams()
     jobs_by_team = assignment_service.get_jobs_grouped_by_team_for_date(date_obj)
 
-    team_back_to_back_job_ids = {}
-    for team_obj in all_teams:
-        team_back_to_back_job_ids[team_obj.id] = job_service.get_back_to_back_jobs_for_team_on_date(
-            team_obj.id, date_obj, threshold_minutes=BACK_TO_BACK_THRESHOLD
-        )
-
     selected_date = session['selected_date'] # Use the string directly from session
     current_user.selected_date = selected_date
     response = render_template('team_timetable.html', selected_date=selected_date, DATETIME_FORMATS=DATETIME_FORMATS,
-                               all_teams=all_teams, jobs_by_team=jobs_by_team,
-                               back_to_back_job_ids=team_back_to_back_job_ids)
+                               all_teams=all_teams, jobs_by_team=jobs_by_team)
     teardown_db()
     return response
 
