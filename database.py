@@ -358,14 +358,14 @@ def create_initial_properties_and_jobs(session, owner, cleaner, initial_team, al
 
     # Initial jobs
     _create_job(session, today, time(9, 0), time(11, 0), 'Full house clean, focus on kitchen and bathrooms.', property1, team_obj=initial_team, user_obj=owner, job_id=1, arrival_date_offset=2)
-    _create_job(session, today, time(12, 0), time(14, 0), 'Back-to-back job 1: Kitchen deep clean.', property1, team_obj=initial_team, job_id=2, arrival_date_offset=1)
-    _create_job(session, today, time(14, 0), time(16, 0), 'Back-to-back job 2: Bathroom deep clean.', property1, team_obj=initial_team, job_id=3, arrival_date_offset=0)
+    _create_job(session, today, time(12, 0), time(14, 0), '', property1, team_obj=initial_team, job_id=2, arrival_date_offset=1)
+    _create_job(session, today, time(14, 0), time(16, 0), '', property1, team_obj=initial_team, job_id=3, arrival_date_offset=0)
     
     # Alpha Team job
-    _create_job(session, today, time(10, 0), time(12, 0), 'Alpha Team Job: Exterior window clean.', property_alpha, team_obj=alpha_team, job_id=4)
-    _create_job(session, today, time(12, 30), time(14, 30), 'Alpha Team Job : Interior window clean.', property_alpha, team_obj=alpha_team, job_id=8, arrival_date_offset=1)
-    _create_job(session, today, time(9, 0), time(10, 30), 'Alpha Team Morning Job: Carpet cleaning.', property1, team_obj=alpha_team, job_id=9, arrival_date_offset=2)
-    _create_job(session, today, time(18, 30), time(20, 30), 'Evening job: Living room and bedrooms.', property1, team_obj=alpha_team, user_obj=cleaner, job_id=10, arrival_date_offset=1)
+    _create_job(session, today, time(10, 0), time(12, 0), '', property_alpha, team_obj=alpha_team, job_id=4)
+    _create_job(session, today, time(12, 30), time(14, 30), '', property_alpha, team_obj=alpha_team, job_id=8, arrival_date_offset=1)
+    _create_job(session, today, time(9, 0), time(10, 30), "Don't let the cat outside", property1, team_obj=alpha_team, job_id=9, arrival_date_offset=2)
+    _create_job(session, today, time(18, 30), time(20, 30), '', property1, team_obj=alpha_team, user_obj=cleaner, job_id=10, arrival_date_offset=1)
 
 
     # Beta Team job

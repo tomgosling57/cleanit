@@ -1,7 +1,9 @@
 # tests/test_timetable.py
 from datetime import datetime, time, timedelta
+import re
 from playwright.sync_api import expect
 from config import DATETIME_FORMATS
+from tests.conftest import page
 from tests.helpers import login_cleaner, login_owner, login_team_leader, assert_job_card_variables, mark_job_as_complete
 
 
@@ -25,7 +27,8 @@ def test_team_leaders_timetable(page, goto) -> None:
         "time": "Time: 09:00",
         "address": "Property Address: 123 Main St, Anytown",
         "ends": "Ends: 10:30 (1h 30m)"
-    }, expected_indicators=["Back to Back"])
+    }, expected_indicators=["See Notes"])
+    expect(job_card_1).to_have_class(re.compile(r"red-outline"))
     job_card_1.get_by_text("Property Address: 123 Main St, Anytown").click()
     
     # Check that team leader can mark job as complete
@@ -40,14 +43,18 @@ def test_team_leaders_timetable(page, goto) -> None:
     assert_job_card_variables(job_card_2, {
         "time": "Time: 10:00",
         "address": "Property Address: 456 Oak Ave, Teamville"
-    }, expected_indicators=["Back to Back", "Same Day Arrival"])
+    }, expected_indicators=["Same Day Arrival"])
+    expect( job_card_2.get_by_text("See Notes")).to_be_hidden()
+    expect(job_card_2).not_to_have_class(re.compile(r"red-outline"))
 
     job_card_3 = page.locator('div.job-card').nth(2)
     # Assert that jobs are listed in chronological order
     assert_job_card_variables(job_card_3, {
         "time": "Time: 12:30",
         "address": "Property Address: 456 Oak Ave, Teamville"
-    }, expected_indicators=["Back to Back", "Next Day Arrival"])
+    }, expected_indicators=["Next Day Arrival"])
+    expect( job_card_3.get_by_text("See Notes")).to_be_hidden()
+    expect(job_card_3).not_to_have_class(re.compile(r"red-outline"))
 
     job_card_4 = page.locator('div.job-card').last
     # Assert that jobs are listed in chronological order
@@ -55,7 +62,8 @@ def test_team_leaders_timetable(page, goto) -> None:
         "time": "Time: 18:30",
         "address": "Property Address: 123 Main St, Anytown"
     }, expected_indicators=["Next Day Arrival"])
-    expect(job_card_4.get_by_text("Back to Back")).to_be_hidden()
+    expect( job_card_4.get_by_text("See Notes")).to_be_hidden()
+    expect(job_card_4).not_to_have_class(re.compile(r"red-outline"))
 
 def test_owner_timetable(page, goto) -> None:
     """
@@ -76,7 +84,8 @@ def test_owner_timetable(page, goto) -> None:
         "time": "Time: 09:00",
         "address": "Property Address: 123 Main St, Anytown",
         "ends": "Ends: 11:00 (2h)"
-    }, expected_indicators=["Back to Back"])
+    }, expected_indicators=["See Notes"])
+    expect(job_card_1).to_have_class(re.compile(r"red-outline"))
     job_card_1.get_by_text("Property Address: 123 Main St, Anytown").click()
     
     # Check that team leader can mark job as complete
@@ -87,14 +96,18 @@ def test_owner_timetable(page, goto) -> None:
     assert_job_card_variables(job_card_2, {
         "time": "Time: 12:00",
         "address": "Property Address: 123 Main St, Anytown"
-    }, expected_indicators=["Back to Back", "Next Day Arrival"])
+    }, expected_indicators=["Next Day Arrival"])
+    expect( job_card_2.get_by_text("See Notes")).to_be_hidden()
+    expect(job_card_2).not_to_have_class(re.compile(r"red-outline"))
 
     job_card_3 = page.locator('div.job-card').nth(2)
     # Assert that jobs are listed in chronological order
     assert_job_card_variables(job_card_3, {
         "time": "Time: 14:00",
         "address": "Property Address: 123 Main St, Anytown"
-    }, expected_indicators=["Back to Back", "Same Day Arrival"])
+    }, expected_indicators=["Same Day Arrival"])
+    expect( job_card_3.get_by_text("See Notes")).to_be_hidden()
+    expect(job_card_3).not_to_have_class(re.compile(r"red-outline"))
 
 def test_cleaner_timetable(page, goto) -> None:
     """
@@ -115,22 +128,26 @@ def test_cleaner_timetable(page, goto) -> None:
         "time": "Time: 09:00",
         "address": "Property Address: 123 Main St, Anytown",
         "ends": "Ends: 11:00 (2h)"
-    }, expected_indicators=["Back to Back"])
-    job_card_1.get_by_text("Property Address: 123 Main St, Anytown").click()
+    }, expected_indicators=["See Notes"])
+    expect(job_card_1).to_have_class(re.compile(r"red-outline"))
 
     job_card_2 = page.locator('div.job-card').nth(1)
     # Assert that jobs are listed in chronological order
     assert_job_card_variables(job_card_2, {
         "time": "Time: 12:00",
         "address": "Property Address: 123 Main St, Anytown"
-    }, expected_indicators=["Back to Back", "Next Day Arrival"])
-
+    }, expected_indicators=["Next Day Arrival"])
+    expect(job_card_2.get_by_text("See Notes")).to_be_hidden()
+    expect(job_card_2).not_to_have_class(re.compile(r"red-outline"))
+    
     job_card_3 = page.locator('div.job-card').nth(2)
     # Assert that jobs are listed in chronological order
     assert_job_card_variables(job_card_3, {
         "time": "Time: 14:00",
         "address": "Property Address: 123 Main St, Anytown"
-    }, expected_indicators=["Back to Back", "Same Day Arrival"])
+    }, expected_indicators=["Same Day Arrival"])
+    expect(job_card_3.get_by_text("See Notes")).to_be_hidden()
+    expect(job_card_3).not_to_have_class(re.compile(r"red-outline"))
 
     # Assert user job assignment
     job_card_4 = page.locator('div.job-card').last
@@ -139,8 +156,8 @@ def test_cleaner_timetable(page, goto) -> None:
         "time": "Time: 18:30",
         "address": "Property Address: 123 Main St, Anytown"
     }, expected_indicators=["Next Day Arrival"])
-    expect(job_card_4.get_by_text("Back to Back")).to_be_hidden()
-
+    expect(job_card_4.get_by_text("See Notes")).to_be_hidden()
+    expect(job_card_4  ).not_to_have_class(re.compile(r"red-outline"))
 
 def test_owner_team_timetable(page, goto) -> None:
     """
@@ -161,16 +178,29 @@ def test_owner_team_timetable(page, goto) -> None:
     team_column_1 = page.locator('div.column-container').first
     expect(team_column_1.get_by_text("Initial Team")).to_be_visible()
     expect(team_column_1.locator('div.job-card')).to_have_count(3)
+    
+    team_1_job_card_1 = team_column_1.locator('div.job-card').first
+    assert_job_card_variables(team_1_job_card_1, {
+        "time": "Time: 09:00",
+        "address": "Property Address: 123 Main St, Anytown",
+        "ends": "Ends: 11:00 (2h)"
+    }, expected_indicators=["See Notes"])
+    expect(team_1_job_card_1).to_have_class(re.compile(r"red-outline"))
     team_1_job_card_2 = team_column_1.locator('div.job-card').nth(1)
     assert_job_card_variables(team_1_job_card_2, {
         "time": "Time: 12:00",
         "address": "Property Address: 123 Main St, Anytown"
-    }, expected_indicators=["Back to Back", "Next Day Arrival"])
+    }, expected_indicators=["Next Day Arrival"])
+    expect(team_1_job_card_2.get_by_text("See Notes")).to_be_hidden()
+    expect(team_1_job_card_2).not_to_have_class(re.compile(r"red-outline"))
+    
     team_1_job_card_3 = team_column_1.locator('div.job-card').nth(2)
     assert_job_card_variables(team_1_job_card_3, {
         "time": "Time: 14:00",
         "address": "Property Address: 123 Main St, Anytown"
-    }, expected_indicators=["Back to Back", "Same Day Arrival"])    
+    }, expected_indicators=["Same Day Arrival"])    
+    expect(team_1_job_card_3.get_by_text("See Notes")).to_be_hidden()
+    expect(team_1_job_card_3).not_to_have_class(re.compile(r"red-outline"))
 
     # Assert the jobs loaded for the other team columns
     team_column_2 = page.locator('div.column-container').nth(1)
@@ -252,7 +282,9 @@ def test_job_not_found_handling_for_update_status(page, goto, server_url) -> Non
         """)
 
     expect(page.get_by_text("Something went wrong! That job no longer exists.")).to_be_visible()
+    expect(page.get_by_text("View type not provided, defaulting to normal.")).to_be_hidden()
     expect(page.locator('#job-list')).to_be_visible() # Assert job list fragment is rendered
+    
 
 def test_job_not_found_handling_for_get_job_details(page, goto, server_url) -> None:
     """Test that the job not found message is displayed when trying to get details of a non-existent job.
@@ -274,7 +306,9 @@ def test_job_not_found_handling_for_get_job_details(page, goto, server_url) -> N
         """)
 
     expect(page.get_by_text("Something went wrong! That job no longer exists.")).to_be_visible()
+    expect(page.get_by_text("View type not provided, defaulting to normal.")).to_be_hidden()
     expect(page.locator('#job-list')).to_be_visible() # Assert job list fragment is rendered
+    
 
 def test_job_not_found_handling_for_update_job(page, goto, server_url) -> None:
     """Test that the job not found message is displayed when trying to update a non-existent job.
@@ -296,6 +330,7 @@ def test_job_not_found_handling_for_update_job(page, goto, server_url) -> None:
         """)
 
     expect(page.get_by_text("Something went wrong! That job no longer exists.")).to_be_visible()
+    expect(page.get_by_text("View type not provided, defaulting to normal.")).to_be_hidden()
     expect(page.locator('#job-list')).to_be_visible() # Assert job list fragment is rendered
 
 def test_job_not_found_handling_for_delete_job(page, goto, server_url) -> None:
@@ -318,7 +353,9 @@ def test_job_not_found_handling_for_delete_job(page, goto, server_url) -> None:
         """)
 
     expect(page.get_by_text("Something went wrong! That job no longer exists.")).to_be_visible()
+    expect(page.get_by_text("View type not provided, defaulting to normal.")).to_be_hidden()
     expect(page.locator('#job-list')).to_be_visible() # Assert job list fragment is rendered
+    
 
 def test_job_not_found_handling_for_get_update_job_form(page, goto, server_url) -> None:
     """Test that the job not found message is displayed when trying to get update form of a non-existent job.
@@ -340,7 +377,9 @@ def test_job_not_found_handling_for_get_update_job_form(page, goto, server_url) 
         """)
 
     expect(page.get_by_text("Something went wrong! That job no longer exists.")).to_be_visible()
+    expect(page.get_by_text("View type not provided, defaulting to normal.")).to_be_hidden()
     expect(page.locator('#job-list')).to_be_visible() # Assert job list fragment is rendered
+    
 
 def test_job_not_found_handling_for_reassign_job_team(page, goto, server_url) -> None:
     """Test that the job not found message is displayed when trying to reassign team for a non-existent job.
@@ -370,4 +409,6 @@ def test_job_not_found_handling_for_reassign_job_team(page, goto, server_url) ->
         """)
 
     expect(page.get_by_text("Something went wrong! That job no longer exists.")).to_be_visible()
+    expect(page.get_by_text("View type not provided, defaulting to normal.")).to_be_hidden()
     expect(page.locator('#team-timetable-view')).to_be_visible() # Assert team timetable fragment is rendered
+    
