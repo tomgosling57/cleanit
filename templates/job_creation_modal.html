@@ -9,6 +9,7 @@ hx-swap="outerHTML"
 hx-on--after-request="if(event.detail.successful) { document.getElementById('job-modal').style.display='none'; document.getElementById('job-form').reset(); } else { document.getElementById('errors-container').outerHTML = event.detail.xhr.response; }">
    <h2>Create New Job</h2>
    {% include '_form_response.html' %}
+   <input type="hidden" name="view_type" value="{{ view_type }}">
    <div class="job-update-compact">
         <!-- Group 1: Time, Duration & Description (TOP) -->
         <div class="form-group">
