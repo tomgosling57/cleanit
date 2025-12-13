@@ -178,6 +178,13 @@ class JobHelper:
         date_obj = datetime.strptime(date_str, DATETIME_FORMATS["DATE_FORMAT"]).date()
         all_teams = team_service.get_all_teams()
         jobs_by_team = assignment_service.get_jobs_grouped_by_team_for_date(date_obj)
+        
+        team_leader_id = None
+        if current_user.team_id:
+            current_user_team = team_service.get_team_by_id(current_user.team_id)
+            if current_user_team:
+                team_leader_id = current_user_team.assigned_leader_id
+
         # Render the entire team timetable view to ensure all columns are updated correctly
         # This will trigger the jobAssignmentsUpdated event in the frontend
         response_html = render_template_string(
@@ -188,7 +195,7 @@ class JobHelper:
             current_user=current_user,
             view_type='team',
             user_id=current_user.id,
-            team_leader_id=current_user.team_id # Assuming current_user.team_id is the team leader's ID for simplicity, or needs to be fetched
+            team_leader_id=team_leader_id
         )
         return response_html
 
