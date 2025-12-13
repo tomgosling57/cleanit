@@ -87,6 +87,7 @@ def test_owner_timetable(page, goto) -> None:
     }, expected_indicators=["See Notes"])
     expect(job_card_1).to_have_class(re.compile(r"red-outline"))
     job_card_1.get_by_text("Property Address: 123 Main St, Anytown").click()
+    expect(job_card_1).to_have_attribute("data-view-type", "normal")
     
     # Check that team leader can mark job as complete
     mark_job_as_complete(job_card_1)
@@ -186,6 +187,8 @@ def test_owner_team_timetable(page, goto) -> None:
         "ends": "Ends: 11:00 (2h)"
     }, expected_indicators=["See Notes"])
     expect(team_1_job_card_1).to_have_class(re.compile(r"red-outline"))
+    expect(team_1_job_card_1).to_have_attribute("data-view-type", "team")
+    
     team_1_job_card_2 = team_column_1.locator('div.job-card').nth(1)
     assert_job_card_variables(team_1_job_card_2, {
         "time": "Time: 12:00",
