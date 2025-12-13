@@ -328,7 +328,7 @@ def create_job():
     return _handle_errors({'Failed to create job': 'Failed to create job'}, view_type=view_type_to_render)
 
 
-def delete_job(job_id):
+def delete_job(job_id, view_type):
     if current_user.role != 'owner':
         return jsonify({'error': 'Unauthorized'}), 403
 
@@ -338,9 +338,8 @@ def delete_job(job_id):
     if success:
         # Determine selected_date and view_type for rendering
         date_to_render = JobHelper.process_selected_date()
-        view_type_to_render = request.form.get('view_type')
 
-        if view_type_to_render == 'team':
+        if view_type == 'team':
             response_html = JobHelper.render_teams_timetable_fragment(db, current_user, date_to_render)
         else:
             # Default to normal job list if view_type is not 'team' or not provided
@@ -350,7 +349,7 @@ def delete_job(job_id):
         teardown_db()
         return response_html
         
-    return _handle_errors({'Job Not Found': ERRORS['Job Not Found']}, view_type=view_type_to_render)
+    return _handle_errors({'Job Not Found': ERRORS['Job Not Found']}, view_type=view_type)
 
 def reassign_job_team():
     if not current_user.is_authenticated or current_user.role != 'owner':

@@ -50,7 +50,8 @@ def create_job():
 @job_bp.route('/job/<int:job_id>/delete', methods=['DELETE'])
 @login_required
 def delete_job(job_id):
-    return jobs_controller.delete_job(job_id)
+    view_type = request.args.get('view_type', None)
+    return jobs_controller.delete_job(job_id, view_type)
 
 @job_bp.route('/job/reassign', methods=['POST'])
 @login_required
