@@ -6,8 +6,9 @@
             <div class="team-column" data-team-id="{{ team.id }}">
                 {% if jobs_by_team[team] %}
                     {% for job in jobs_by_team[team] %}
-                        {% set view_type = 'team' %}
-                        {% include 'job_card.html' with context %}
+                        {% with view_type=view_type %}
+                        {% include 'job_card.html' %}
+                        {% endwith %}
                     {% endfor %}
                 {% else %}
                     <p class="no-jobs-message">No jobs for this team.</p>

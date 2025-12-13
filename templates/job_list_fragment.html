@@ -1,8 +1,9 @@
 <div class="job-list" id="job-list" {% if is_oob_swap %}hx-swap-oob="outerHTML"{% endif %}>
     {% if jobs %}
         {% for job in jobs %}
-            {% set view_type = 'normal' %}
-            {% include 'job_card.html' with context %}
+            {% with view_type=view_type %}
+            {% include 'job_card.html' %}
+            {% endwith %}
         {% endfor %}
     {% else %}
         <p>No jobs assigned for today. Enjoy your day!</p>
