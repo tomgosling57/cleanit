@@ -2,10 +2,10 @@ from flask import url_for
 from playwright.sync_api import expect
 from datetime import datetime, time, timedelta
 from config import DATETIME_FORMATS
-from tests.helpers import assert_job_card_variables, login_owner, wait_for_modal
+from tests.helpers import assert_job_card_variables, login_admin, wait_for_modal
 
 def test_job_details(page, goto) -> None:
-    login_owner(page, goto)
+    login_admin(page, goto)
 
     expect(page.locator('div.job-card').first).to_be_visible()
     job_card = page.locator('div.job-card').first
@@ -33,7 +33,7 @@ def test_job_details(page, goto) -> None:
 
 
 def test_update_job(page, goto) -> None:
-    login_owner(page, goto)
+    login_admin(page, goto)
 
     expect(page.locator('div.job-card').first).to_be_visible()
     job_card = page.locator('div.job-card').first
@@ -95,7 +95,7 @@ def test_update_job(page, goto) -> None:
     )
 
 def test_create_job(page, goto) -> None:
-    login_owner(page, goto)
+    login_admin(page, goto)
 
     expect(page.locator('div.job-card').first).to_be_visible()
     expect(page.get_by_text("Create Job")).to_be_enabled()
