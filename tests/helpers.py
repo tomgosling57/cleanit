@@ -1,9 +1,9 @@
 # tests/helpers.py
 from playwright.sync_api import expect
 
-def login_owner(page, goto) -> None:
+def login_admin(page, goto) -> None:
     """
-    Executes the login flow for the owner.
+    Executes the login flow for the admin.
 
     Args:
         page: The page pytest-playwright fixture representing the current browser page.
@@ -14,14 +14,14 @@ def login_owner(page, goto) -> None:
     """
     goto("/")                               
     page.get_by_role("textbox", name="email").click()
-    page.get_by_role("textbox", name="email").fill("owner@example.com")
+    page.get_by_role("textbox", name="email").fill("admin@example.com")
     page.get_by_role("textbox", name="password").click()
-    page.get_by_role("textbox", name="password").fill("owner_password")
+    page.get_by_role("textbox", name="password").fill("admin_password")
     page.get_by_role("button", name="Login").click()
 
-def login_team_leader(page, goto) -> None:
+def login_supervisor(page, goto) -> None:
     """
-    Executes the login flow for the team leader.
+    Executes the login flow for the supervisor.
 
     Args:
         page: The page pytest-playwright fixture representing the current browser page.
@@ -32,14 +32,14 @@ def login_team_leader(page, goto) -> None:
     """
     goto("/")                               
     page.get_by_role("textbox", name="email").click()
-    page.get_by_role("textbox", name="email").fill("team_leader@example.com")
+    page.get_by_role("textbox", name="email").fill("supervisor@example.com")
     page.get_by_role("textbox", name="password").click()
-    page.get_by_role("textbox", name="password").fill("team_leader_password")
+    page.get_by_role("textbox", name="password").fill("supervisor_password")
     page.get_by_role("button", name="Login").click()
 
-def login_cleaner(page, goto) -> None:
+def login_user(page, goto) -> None:
     """
-    Executes the login flow for the cleaner.
+    Executes the login flow for the user.
 
     Args:
         page: The page pytest-playwright fixture representing the current browser page.
@@ -50,9 +50,9 @@ def login_cleaner(page, goto) -> None:
     """
     goto("/")                               
     page.get_by_role("textbox", name="email").click()
-    page.get_by_role("textbox", name="email").fill("cleaner@example.com")
+    page.get_by_role("textbox", name="email").fill("user@example.com")
     page.get_by_role("textbox", name="password").click()
-    page.get_by_role("textbox", name="password").fill("cleaner_password")
+    page.get_by_role("textbox", name="password").fill("user_password")
     page.get_by_role("button", name="Login").click()
 
 def login_invalid_credentials(page, goto) -> None:
