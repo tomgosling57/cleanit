@@ -43,7 +43,7 @@ def _handle_errors(errors=None, view_type=None):
     return response_html, 200
 
 def update_job_status(job_id):
-    if not current_user.is_authenticated or current_user.role not in ['owner', 'team_leader']:
+    if not current_user.is_authenticated or current_user.role not in ['admin', 'supervisor']:
         return jsonify({'error': 'Unauthorized'}), 401
 
     is_complete = request.form.get('is_complete') == 'True'
@@ -65,7 +65,7 @@ def update_job_status(job_id):
 
 
 def get_job_details(job_id):
-    if current_user.role not in ['cleaner', 'team_leader', 'owner']:
+    if current_user.role not in ['user', 'supervisor', 'admin']:
         return jsonify({'error': 'Unauthorized'}), 403
 
     db = get_db()
@@ -85,7 +85,7 @@ def get_job_details(job_id):
     return _handle_errors({'Job Not Found': ERRORS['Job Not Found']})
 
 def get_job_creation_form():
-    if current_user.role != 'owner':
+    if current_user.role != 'admin':
         return jsonify({'error': 'Unauthorized'}), 403
 
     db = get_db()
@@ -146,7 +146,7 @@ def team_timetable(date: str = None):
     return response
 
 def update_job(job_id):
-    if current_user.role != 'owner':
+    if current_user.role != 'admin':
         return jsonify({'error': 'Unauthorized'}), 403
 
     db = get_db()
@@ -183,7 +183,7 @@ def update_job(job_id):
 
 def get_job_assignments_categorized(job_date_str=None):
     """Get categorized teams and users for job assignment based on current workload"""
-    if current_user.role != 'owner':
+    if current_user.role != 'admin':
         return jsonify({'error': 'Unauthorized'}), 403
 
     if not job_date_str:
@@ -240,7 +240,7 @@ def get_job_assignments_categorized(job_date_str=None):
     
     for team in all_teams:
         for member in team.members:
-            if member.role == 'cleaner':
+            if member.role == 'user':
                 user_dict = member.to_dict()
                 user_dict['current_job_count'] = user_job_counts[member.id]
                 user_dict['team_name'] = team.name
@@ -260,7 +260,7 @@ def get_job_assignments_categorized(job_date_str=None):
             'partially_booked': partially_booked_teams,
             'fully_booked': fully_booked_teams
         },
-        'cleaners': {
+        'users': {
             'available': available_cleaners,
             'partially_booked': partially_booked_cleaners,
             'fully_booked': fully_booked_cleaners
@@ -270,7 +270,7 @@ def get_job_assignments_categorized(job_date_str=None):
     return jsonify(categorized_assignments)
 
 def get_job_update_form(job_id):
-    if current_user.role != 'owner':
+    if current_user.role != 'admin':
         return jsonify({'error': 'Unauthorized'}), 403
 
     db = get_db()
@@ -292,7 +292,7 @@ def get_job_update_form(job_id):
     return _handle_errors({'Job Not Found': ERRORS['Job Not Found']})
 
 def create_job():
-    if current_user.role != 'owner':
+    if current_user.role != 'admin':
         flash('Unauthorized access', 'error')
         return redirect(url_for('index'))
 
@@ -329,7 +329,7 @@ def create_job():
 
 
 def delete_job(job_id, view_type):
-    if current_user.role != 'owner':
+    if current_user.role != 'admin':
         return jsonify({'error': 'Unauthorized'}), 403
 
     db = get_db()
@@ -352,7 +352,7 @@ def delete_job(job_id, view_type):
     return _handle_errors({'Job Not Found': ERRORS['Job Not Found']}, view_type=view_type)
 
 def reassign_job_team():
-    if not current_user.is_authenticated or current_user.role != 'owner':
+    if not current_user.is_authenticated or current_user.role != 'admin':
         return jsonify({'success': False, 'error': 'Unauthorized'}), 403
 
     db = get_db()
