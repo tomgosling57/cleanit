@@ -160,11 +160,19 @@ class JobHelper:
         Returns the HTML for the job list.
         """
         job_service = JobService(db)
+        team_service = TeamService(db) # Added team_service
         date_obj = datetime.strptime(date_str, DATETIME_FORMATS["DATE_FORMAT"]).date()
         print(f"Fetching jobs for User ID: {current_user.id}, Team ID: {current_user.team_id}, Date: {date_str}")
         assigned_jobs = job_service.get_jobs_for_user_on_date(current_user.id, current_user.team_id, date_obj)
         print(f"Number of Jobs: {len(assigned_jobs)}")
-        return render_template_string('{% include "job_list_fragment.html" %}', jobs=assigned_jobs, DATETIME_FORMATS=DATETIME_FORMATS, view_type='normal', current_user=current_user)
+
+        team_leader_id = None
+        if current_user.team_id:
+            current_user_team = team_service.get_team_by_id(current_user.team_id)
+            if current_user_team:
+                team_leader_id = current_user_team.assigned_leader_id
+
+        return render_template_string('{% include "job_list_fragment.html" %}', jobs=assigned_jobs, DATETIME_FORMATS=DATETIME_FORMATS, view_type='normal', current_user=current_user, team_leader_id=team_leader_id)
 
     @staticmethod
     def render_teams_timetable_fragment(db, current_user, date_str):
