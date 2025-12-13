@@ -43,7 +43,7 @@ hx-swap="outerHTML"
                 <input type="text" id="phone" name="phone" value="{{user.phone}}">
             </div>
 
-            {% if current_user.role == 'owner' %}
+            {% if current_user.role == 'admin' %}
             <div class="form-field">
                 <label for="role">Staff Role</label>
                 <select name="role" id="role">
