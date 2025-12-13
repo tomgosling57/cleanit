@@ -11,16 +11,16 @@ from flask_login import login_user, current_user, fresh_login_required
 from utils.user_helper import UserHelper
 
 def list_all_users_view():
-    """Renders the user management page for owners.
+    """Renders the user management page for admins.
 
     This function retrieves all users from the database and renders the 'users.html' template.
-    Access is restricted to authenticated users with the 'owner' role.
+    Access is restricted to authenticated users with the 'admin' role.
 
     Returns:
         flask.Response: A rendered HTML component displaying all users and their details,
                         or a JSON error if unauthorized.
     """
-    if not current_user.is_authenticated or current_user.role != 'owner':
+    if not current_user.is_authenticated or current_user.role != 'admin':
         return jsonify({'error': 'Unauthorized'}), 403
 
     db = get_db()
@@ -80,8 +80,8 @@ def update_user_password(user_id):
         return jsonify({'error': 'User not found'}), 404
     else:
         authenticated_user =  user_service.authenticate_user(user.email, old_password)
-    if current_user.role == 'owner':
-        # Owners can change password without old password
+    if current_user.role == 'admin':
+        # admins can change password without old password
         authenticated_user = user        
     if authenticated_user and new_password and new_password_confirmation and new_password == new_password_confirmation:
         user_service.change_user_password(authenticated_user, new_password)
@@ -161,12 +161,12 @@ def get_all_categorized_users():
     """Retrieves all users categorized by their team assignment.
 
     This function fetches all users and categorizes them into 'on_this_team' (empty for new teams),
-    'on_a_different_team', and 'unassigned'. Access is restricted to authenticated users with the 'owner' role.
+    'on_a_different_team', and 'unassigned'. Access is restricted to authenticated users with the 'admin' role.
 
     Returns:
         flask.Response: A JSON object containing categorized user lists, or a JSON error if unauthorized.
     """
-    if current_user.role not in ['owner']:
+    if current_user.role not in ['admin']:
         return jsonify({'error': 'Unauthorized'}), 403
 
     db = get_db()
