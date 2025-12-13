@@ -15,18 +15,14 @@ from controllers.property_controller import get_property_jobs_modal_content
 ERRORS = {'Job Not Found': 'Something went wrong! That job no longer exists.',
           'Missing Reassignment Details': "Missing job_id or new_team_id"}
 
-def _handle_errors(errors=None):
+def _handle_errors(errors=None, view_type=None):
     db = get_db()
     date = request.args.get('date')
     date_to_render = JobHelper.process_selected_date(date)
 
-    # Retrieve view_type from request.form or request.args, defaulting to 'normal'
-    view_type = request.form.get('view_type')
-    if view_type is None:
-        view_type = 'normal'
-        if errors is None:
-            errors = {}
-        errors['view_type'] = 'View type not provided, defaulting to normal.'
+    if not view_type:
+        # Retrieve view_type from request.form or request.args, defaulting to 'normal'
+        view_type = request.form.get('view_type') or request.args.get('view_type', 'normal')
 
     if view_type == 'team':
         main_fragment_html = JobHelper.render_teams_timetable_fragment(db, current_user, date_to_render)
@@ -51,6 +47,7 @@ def update_job_status(job_id):
         return jsonify({'error': 'Unauthorized'}), 401
 
     is_complete = request.form.get('is_complete') == 'True'
+    view_type = request.form.get('view_type') or request.args.get('view_type', 'normal')
 
     db = get_db()
     job_service = JobService(db)
@@ -60,11 +57,11 @@ def update_job_status(job_id):
         # Accessing job.property to eagerly load it before the session is torn down
         # This prevents DetachedInstanceError when rendering the template
         _ = job.property.address
-        response = render_template_string('{% include "job_status_fragment.html" %} {% include "job_actions_fragment.html" %}', job=job, is_oob_swap=True)
+        response = render_template_string('{% include "job_status_fragment.html" %} {% include "job_actions_fragment.html" %}', job=job, is_oob_swap=True, view_type=view_type)
         teardown_db()
         return response
 
-    return _handle_errors({'Job Not Found': ERRORS['Job Not Found']})
+    return _handle_errors({'Job Not Found': ERRORS['Job Not Found']}, view_type=view_type)
 
 
 def get_job_details(job_id):
@@ -82,7 +79,8 @@ def get_job_details(job_id):
         teardown_db()
 
         selected_date = session.get('selected_date', datetime.today().date())
-        return render_template('job_details_modal.html', job=job, job_cleaners=cleaners, job_teams=teams, DATETIME_FORMATS=DATETIME_FORMATS, selected_date=selected_date)
+        view_type = request.args.get('view_type', 'normal')
+        return render_template('job_details_modal.html', job=job, job_cleaners=cleaners, job_teams=teams, DATETIME_FORMATS=DATETIME_FORMATS, selected_date=selected_date, view_type=view_type)
 
     return _handle_errors({'Job Not Found': ERRORS['Job Not Found']})
 
@@ -181,7 +179,7 @@ def update_job(job_id):
         teardown_db()
         return response_html
     
-    return _handle_errors({'Job Not Found': ERRORS['Job Not Found']})
+    return _handle_errors({'Job Not Found': ERRORS['Job Not Found']}, view_type=view_type_to_render)
 
 def get_job_assignments_categorized(job_date_str=None):
     """Get categorized teams and users for job assignment based on current workload"""
@@ -326,7 +324,8 @@ def create_job():
         teardown_db()
         return response_html
     teardown_db()
-    return jsonify({'error': 'Failed to create job'}), 500
+    view_type_to_render = request.form.get('view_type') or request.args.get('view_type', 'normal')
+    return _handle_errors({'Failed to create job': 'Failed to create job'}, view_type=view_type_to_render)
 
 
 def delete_job(job_id):
@@ -351,7 +350,7 @@ def delete_job(job_id):
         teardown_db()
         return response_html
         
-    return _handle_errors({'Job Not Found': ERRORS['Job Not Found']})
+    return _handle_errors({'Job Not Found': ERRORS['Job Not Found']}, view_type=view_type_to_render)
 
 def reassign_job_team():
     if not current_user.is_authenticated or current_user.role != 'owner':
@@ -360,15 +359,16 @@ def reassign_job_team():
     db = get_db()
     assignment_service = AssignmentService(db)
     job_service = JobService(db)
-    team_service = TeamService(db)    
+    team_service = TeamService(db)
     job = job_service.get_job_details(request.form.get('job_id'))
+    view_type = request.form.get('view_type') or request.args.get('view_type', 'normal')
     if not job:
-        return _handle_errors({'Job Not Found': ERRORS['Job Not Found']})
+        return _handle_errors({'Job Not Found': ERRORS['Job Not Found']}, view_type=view_type)
     
     new_team = team_service.get_team(request.form.get('new_team_id'))
     old_team = team_service.get_team(request.form.get('old_team_id'))
     if not all([job, new_team]):
-        return _handle_errors({'Missing Reassignment Details': ERRORS['Missing Reassignment Details']})
+        return _handle_errors({'Missing Reassignment Details': ERRORS['Missing Reassignment Details']}, view_type=view_type)
 
     assignment_service.update_job_team_assignment(job, new_team, old_team)
     
