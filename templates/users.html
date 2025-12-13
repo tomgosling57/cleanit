@@ -5,7 +5,7 @@
 {% block content %}
     <div class="container">
         <h1>All Users</h1>
-        {% if current_user.role == 'owner' %}    
+        {% if current_user.role == 'admin' %}
                 <button class="button"
                     hx-get="{{ url_for('user.create_user', view_type='normal') }}"
                     hx-target="#user-modal-content"
