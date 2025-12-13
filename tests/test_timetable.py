@@ -4,12 +4,12 @@ import re
 from playwright.sync_api import expect
 from config import DATETIME_FORMATS
 from tests.conftest import page
-from tests.helpers import login_cleaner, login_owner, login_team_leader, assert_job_card_variables, mark_job_as_complete
+from tests.helpers import login_user, login_admin, login_supervisor, assert_job_card_variables, mark_job_as_complete
 
 
-def test_team_leaders_timetable(page, goto) -> None:
+def test_supervisors_timetable(page, goto) -> None:
     """
-    Test that the timetable is displayed correctly after logging in as a team leader.
+    Test that the timetable is displayed correctly after logging in as a supervisor.
 
     Args:
         page: Playwright page object
@@ -17,7 +17,7 @@ def test_team_leaders_timetable(page, goto) -> None:
     Returns:
         None
     """
-    login_team_leader(page, goto)
+    login_supervisor(page, goto)
     
 
     # Check jobs in expected order    
@@ -31,7 +31,7 @@ def test_team_leaders_timetable(page, goto) -> None:
     expect(job_card_1).to_have_class(re.compile(r"red-outline"))
     job_card_1.get_by_text("Property Address: 123 Main St, Anytown").click()
     
-    # Check that team leader can mark job as complete
+    # Check that supervisor can mark job as complete
     mark_job_as_complete(job_card_1)
 
     # View job details modal
@@ -65,9 +65,9 @@ def test_team_leaders_timetable(page, goto) -> None:
     expect( job_card_4.get_by_text("See Notes")).to_be_hidden()
     expect(job_card_4).not_to_have_class(re.compile(r"red-outline"))
 
-def test_owner_timetable(page, goto) -> None:
+def test_admin_timetable(page, goto) -> None:
     """
-    Test that the timetable is displayed correctly after logging in as an owner.
+    Test that the timetable is displayed correctly after logging in as an admin.
 
     Args:
         page: Playwright page object
@@ -75,7 +75,7 @@ def test_owner_timetable(page, goto) -> None:
     Returns:
         None
     """
-    login_owner(page, goto)
+    login_admin(page, goto)
 
     # Check jobs in expected order    
     job_card_1 = page.locator('div.job-card').first
@@ -89,7 +89,7 @@ def test_owner_timetable(page, goto) -> None:
     job_card_1.get_by_text("Property Address: 123 Main St, Anytown").click()
     expect(job_card_1).to_have_attribute("data-view-type", "normal")
     
-    # Check that team leader can mark job as complete
+    # Check that supervisor can mark job as complete
     mark_job_as_complete(job_card_1)
 
     job_card_2 = page.locator('div.job-card').nth(1)
@@ -110,9 +110,9 @@ def test_owner_timetable(page, goto) -> None:
     expect( job_card_3.get_by_text("See Notes")).to_be_hidden()
     expect(job_card_3).not_to_have_class(re.compile(r"red-outline"))
 
-def test_cleaner_timetable(page, goto) -> None:
+def test_user_timetable(page, goto) -> None:
     """
-    Test that the timetable is displayed correctly after logging in as a cleaner.
+    Test that the timetable is displayed correctly after logging in as a user.
 
     Args:
         page: Playwright page object
@@ -120,7 +120,7 @@ def test_cleaner_timetable(page, goto) -> None:
     Returns:
         None
     """
-    login_cleaner(page, goto)
+    login_user(page, goto)
 
     # Check jobs in expected order    
     job_card_1 = page.locator('div.job-card').first
@@ -160,9 +160,9 @@ def test_cleaner_timetable(page, goto) -> None:
     expect(job_card_4.get_by_text("See Notes")).to_be_hidden()
     expect(job_card_4  ).not_to_have_class(re.compile(r"red-outline"))
 
-def test_owner_team_timetable(page, goto) -> None:
+def test_admin_team_timetable(page, goto) -> None:
     """
-    Test that the timetable is displayed correctly after logging in as an owner with team assignments.
+    Test that the timetable is displayed correctly after logging in as an admin with team assignments.
 
     Args:
         page: Playwright page object
@@ -170,7 +170,7 @@ def test_owner_team_timetable(page, goto) -> None:
     Returns:
         None
     """
-    login_owner(page, goto)
+    login_admin(page, goto)
     
     page.get_by_text('Team View').click()
 
@@ -229,7 +229,7 @@ def test_team_timetable_job_reassignment(page, goto) -> None:
     Returns:
         None
     """
-    login_owner(page, goto)
+    login_admin(page, goto)
     
     page.get_by_text('Team View').click()
 
@@ -251,7 +251,7 @@ def test_team_timetable_job_reassignment(page, goto) -> None:
         expect(team_column_1.locator(f'div.job-card[data-job-id="{job_id}"]')).to_have_count(0)
 
 def test_delete_job(page, goto) -> None:
-    login_owner(page, goto)
+    login_admin(page, goto)
 
     expect(page.locator('div.job-card').first).to_be_visible()
     job_card = page.locator('div.job-card').first
@@ -271,7 +271,7 @@ def test_job_not_found_handling_for_update_status(page, goto, server_url) -> Non
     Args:
         page: Playwright page object
         goto: Function to navigate to a URL"""
-    login_owner(page, goto)
+    login_admin(page, goto)
 
     expect(page.locator('div.job-card').first).to_be_visible()
 
@@ -295,7 +295,7 @@ def test_job_not_found_handling_for_get_job_details(page, goto, server_url) -> N
     Args:
         page: Playwright page object
         goto: Function to navigate to a URL"""
-    login_owner(page, goto)
+    login_admin(page, goto)
 
     expect(page.locator('div.job-card').first).to_be_visible()
 
@@ -319,7 +319,7 @@ def test_job_not_found_handling_for_update_job(page, goto, server_url) -> None:
     Args:
         page: Playwright page object
         goto: Function to navigate to a URL"""
-    login_owner(page, goto)
+    login_admin(page, goto)
 
     expect(page.locator('div.job-card').first).to_be_visible()
 
@@ -342,7 +342,7 @@ def test_job_not_found_handling_for_delete_job(page, goto, server_url) -> None:
     Args:
         page: Playwright page object
         goto: Function to navigate to a URL"""
-    login_owner(page, goto)
+    login_admin(page, goto)
 
     expect(page.locator('div.job-card').first).to_be_visible()
 
@@ -366,7 +366,7 @@ def test_job_not_found_handling_for_get_update_job_form(page, goto, server_url) 
     Args:
         page: Playwright page object
         goto: Function to navigate to a URL"""
-    login_owner(page, goto)
+    login_admin(page, goto)
 
     expect(page.locator('div.job-card').first).to_be_visible()
 
@@ -390,7 +390,7 @@ def test_job_not_found_handling_for_reassign_job_team(page, goto, server_url) ->
     Args:
         page: Playwright page object
         goto: Function to navigate to a URL"""
-    login_owner(page, goto)
+    login_admin(page, goto)
 
     page.get_by_text('Team View').click()
     
