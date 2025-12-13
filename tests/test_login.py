@@ -1,11 +1,11 @@
 # tests/test_login.py
 from playwright.sync_api import expect
 
-from tests.helpers import login_invalid_credentials, login_owner, login_team_leader
+from tests.helpers import login_invalid_credentials, login_admin, login_supervisor
 
-def test_login_owner(page, goto) -> None:
+def test_login_admin(page, goto) -> None:
     """
-    Tests the login functionality for the owner.
+    Tests the login functionality for the admin.
 
     Args:
         page: The page pytest-playwright fixture representing the current browser page.
@@ -14,13 +14,13 @@ def test_login_owner(page, goto) -> None:
     Returns:
         None
     """
-    login_owner(page, goto)
+    login_admin(page, goto)
     expect(page).to_have_title("Timetable") # Assert login was successful
-    expect(page.get_by_text("Create Job")).to_be_visible() # Assert owner-specific element is visible
+    expect(page.get_by_text("Create Job")).to_be_visible() # Assert admin-specific element is visible
 
-def test_login_team_leader(page, goto) -> None:
+def test_login_supervisor(page, goto) -> None:
     """
-    Tests the login functionality for the team leader.
+    Tests the login functionality for the supervisor.
 
     Args:
         page: The page pytest-playwright fixture representing the current browser page.
@@ -29,9 +29,9 @@ def test_login_team_leader(page, goto) -> None:
     Returns:
         None
     """
-    login_team_leader(page, goto)
+    login_supervisor(page, goto)
     expect(page).to_have_title("Timetable") # Assert login was successful
-    expect(page.get_by_text("Create Job")).to_be_hidden() # Assert owner-specific element is hidden
+    expect(page.get_by_text("Create Job")).to_be_hidden() # Assert admin-specific element is hidden
     
 def test_login_invalid_credentials(page, goto) -> None:
     """
