@@ -9,7 +9,7 @@
             <div class="input-wrapper button" id="date-picker-wrapper">
                 <input type="text" id="timetable-datepicker" placeholder="Select Date"/>
             </div>
-            {% if current_user.role == 'owner' %}
+            {% if current_user.role == 'admin' %}
                 <!-- This button uses the session date stored by the job helper -->
                 <button class="button" onclick="window.location.assign('{{ url_for('job.team_timetable')}}')">
                     Team View
