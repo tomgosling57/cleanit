@@ -107,7 +107,7 @@
             <div class="job-status-badge red">See Notes</div>
             {% endif %}
         </div>
-        {% if current_user.role == 'owner' %}
+        {% if current_user.role == 'admin' %}
             <button hx-get="{{ url_for('job.update_job', job_id=job.id, view_type=view_type) }}"
                 hx-target="#job-modal-content"
                 hx-swap="innerHTML"
