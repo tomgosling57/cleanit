@@ -21,7 +21,7 @@ class User(Base, UserMixin):
     email = Column(String, nullable=False, unique=True)
     phone = Column(String, nullable=True)
     password_hash = Column(String, nullable=False)
-    role = Column(String, nullable=False, default='cleaner') # 'cleaner', 'team_leader', 'owner'
+    role = Column(String, nullable=False, default='user') # 'user', 'supervisor', 'admin'
     team_id = Column(Integer, ForeignKey('teams.id'), nullable=True)
     team = relationship("Team", back_populates="members", foreign_keys=[team_id])
     
@@ -87,7 +87,7 @@ class Job(Base):
     description = Column(String)
     is_complete = Column(Boolean, default=False)
     job_type = Column(String)
-    report = Column(String) # Sensitive, only for Team Leader/Owner
+    report = Column(String) # Sensitive, only for Supervisor/admin
 
     property_id = Column(Integer, ForeignKey('properties.id'))
     property = relationship("Property", back_populates="jobs")
@@ -153,7 +153,7 @@ class Assignment(Base):
     __tablename__ = 'assignments'
     id = Column(Integer, primary_key=True)
     job_id = Column(Integer, ForeignKey('jobs.id'), nullable=False)
-    user_id = Column(Integer, ForeignKey('users.id'), nullable=True) # For individual cleaners
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=True) # For individual users
     team_id = Column(Integer, ForeignKey('teams.id'), nullable=True) # For assigned teams
 
     job = relationship("Job", back_populates="assignments")
@@ -195,33 +195,33 @@ def teardown_db(exception=None):
 
 def create_initial_users(session):
     """
-    Creates a set of deterministic initial users (owner, team leader, cleaner)
+    Creates a set of deterministic initial users (admin, supervisor, user)
     and clears any existing users to ensure a clean state.
 
     Args:
         session: The SQLAlchemy session.
 
     Returns:
-        tuple: A tuple containing the created owner, team_leader, and cleaner User objects.
+        tuple: A tuple containing the created admin, supervisor, and user User objects.
     """
     session.query(User).delete()
     session.commit()
 
-    owner = User(id=1, first_name='Lily', last_name='Hargrave', email='owner@example.com', phone='12345678', role='owner')
-    owner.set_password('owner_password')
-    session.add(owner)
+    admin = User(id=1, first_name='Lily', last_name='Hargrave', email='admin@example.com', phone='12345678', role='admin')
+    admin.set_password('admin_password')
+    session.add(admin)
 
-    team_leader = User(id=2, first_name='Benjara', last_name="Brown", email='team_leader@example.com', role='team_leader')
-    team_leader.set_password('team_leader_password')
-    session.add(team_leader)
+    supervisor = User(id=2, first_name='Benjara', last_name="Brown", email='supervisor@example.com', role='supervisor')
+    supervisor.set_password('supervisor_password')
+    session.add(supervisor)
 
-    cleaner = User(id=3, first_name='Tom', last_name='Gosling', email='cleaner@example.com', role='cleaner')
-    cleaner.set_password('cleaner_password')
-    session.add(cleaner)
+    user = User(id=3, first_name='Tom', last_name='Gosling', email='user@example.com', role='user')
+    user.set_password('user_password')
+    session.add(user)
     
     session.commit()
     print("Initial users created for deterministic testing.")
-    return owner, team_leader, cleaner
+    return admin, supervisor, user
 
 def _create_team(session, team_name, team_leader_id=None, members=None, team_id=None):
     """
@@ -251,16 +251,16 @@ def _create_team(session, team_name, team_leader_id=None, members=None, team_id=
         session.commit()
     return team
 
-def create_initial_teams(session, owner, team_leader_user, cleaner):
+def create_initial_teams(session, admin, supervisor_user, user):
     """
     Creates a set of deterministic initial teams and clears any existing teams
     to ensure a clean state.
 
     Args:
         session: The SQLAlchemy session.
-        owner (User): The owner User object.
-        team_leader_user (User): The team leader User object.
-        cleaner (User): The cleaner User object.
+        admin (User): The admin User object.
+        supervisor_user (User): The supervisor User object.
+        user (User): The user User object.
 
     Returns:
         tuple: A tuple containing the created initial_team, alpha_team, beta_team,
@@ -269,8 +269,8 @@ def create_initial_teams(session, owner, team_leader_user, cleaner):
     session.query(Team).delete()
     session.commit()
 
-    initial_team = _create_team(session, 'Initial Team', owner.id, members=[owner, cleaner], team_id=1)
-    alpha_team = _create_team(session, 'Alpha Team', team_leader_user.id, members=[team_leader_user], team_id=2)
+    initial_team = _create_team(session, 'Initial Team', admin.id, members=[admin, user], team_id=1)
+    alpha_team = _create_team(session, 'Alpha Team', supervisor_user.id, members=[supervisor_user], team_id=2)
     beta_team = _create_team(session, 'Beta Team', team_id=3)
     charlie_team = _create_team(session, 'Charlie Team', team_id=4)
     delta_team = _create_team(session, 'Delta Team', team_id=5)
@@ -323,15 +323,15 @@ def _create_job(session, date, time, end_time, description, property_obj, team_o
         session.commit()
     return job
 
-def create_initial_properties_and_jobs(session, owner, cleaner, initial_team, alpha_team, beta_team, charlie_team, delta_team):
+def create_initial_properties_and_jobs(session, admin, user, initial_team, alpha_team, beta_team, charlie_team, delta_team):
     """
     Creates a set of deterministic initial properties and jobs, and clears any existing
     properties, jobs, and assignments to ensure a clean state.
 
     Args:
         session: The SQLAlchemy session.
-        owner (User): The owner User object.
-        cleaner (User): The cleaner User object.
+        admin (User): The admin User object.
+        user (User): The user User object.
         initial_team (Team): The 'Initial Team' object.
         alpha_team (Team): The 'Alpha Team' object.
         beta_team (Team): The 'Beta Team' object.
@@ -357,7 +357,7 @@ def create_initial_properties_and_jobs(session, owner, cleaner, initial_team, al
     today = date.today()
 
     # Initial jobs
-    _create_job(session, today, time(9, 0), time(11, 0), 'Full house clean, focus on kitchen and bathrooms.', property1, team_obj=initial_team, user_obj=owner, job_id=1, arrival_date_offset=2)
+    _create_job(session, today, time(9, 0), time(11, 0), 'Full house clean, focus on kitchen and bathrooms.', property1, team_obj=initial_team, user_obj=admin, job_id=1, arrival_date_offset=2)
     _create_job(session, today, time(12, 0), time(14, 0), '', property1, team_obj=initial_team, job_id=2, arrival_date_offset=1)
     _create_job(session, today, time(14, 0), time(16, 0), '', property1, team_obj=initial_team, job_id=3, arrival_date_offset=0)
     
@@ -365,7 +365,7 @@ def create_initial_properties_and_jobs(session, owner, cleaner, initial_team, al
     _create_job(session, today, time(10, 0), time(12, 0), '', property_alpha, team_obj=alpha_team, job_id=4)
     _create_job(session, today, time(12, 30), time(14, 30), '', property_alpha, team_obj=alpha_team, job_id=8, arrival_date_offset=1)
     _create_job(session, today, time(9, 0), time(10, 30), "Don't let the cat outside", property1, team_obj=alpha_team, job_id=9, arrival_date_offset=2)
-    _create_job(session, today, time(18, 30), time(20, 30), '', property1, team_obj=alpha_team, user_obj=cleaner, job_id=10, arrival_date_offset=1)
+    _create_job(session, today, time(18, 30), time(20, 30), '', property1, team_obj=alpha_team, user_obj=user, job_id=10, arrival_date_offset=1)
 
 
     # Beta Team job
@@ -390,8 +390,8 @@ def insert_dummy_data(Session):
     """
     session = Session()
     
-    owner, team_leader_user, cleaner = create_initial_users(session)
-    initial_team, alpha_team, beta_team, charlie_team, delta_team = create_initial_teams(session, owner, team_leader_user, cleaner)
-    create_initial_properties_and_jobs(session, owner, cleaner, initial_team, alpha_team, beta_team, charlie_team, delta_team)
+    admin, supervisor_user, user = create_initial_users(session)
+    initial_team, alpha_team, beta_team, charlie_team, delta_team = create_initial_teams(session, admin, supervisor_user, user)
+    create_initial_properties_and_jobs(session, admin, user, initial_team, alpha_team, beta_team, charlie_team, delta_team)
     
     session.close()
