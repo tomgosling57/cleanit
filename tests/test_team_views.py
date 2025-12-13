@@ -1,5 +1,5 @@
 # tests/test_team_views.py
-from tests.helpers import login_owner, wait_for_modal
+from tests.helpers import login_admin, wait_for_modal
 from playwright.sync_api import expect
 
 def _navigate_to_teams_page(page) -> None:
@@ -10,7 +10,7 @@ def _navigate_to_teams_page(page) -> None:
     expect(teams_grid).to_be_visible()
 
 def test_team_cards(page, goto) -> None:
-    login_owner(page, goto)
+    login_admin(page, goto)
     _navigate_to_teams_page(page)
 
     # Get all of the team cards
@@ -25,7 +25,7 @@ def test_team_cards(page, goto) -> None:
     expect(team_leader_card.get_by_text("Lily Hargrave")).to_be_visible()
 
 # def test_update_team(page, goto) -> None:
-#     login_owner(page, goto)
+#     login_admin(page, goto)
 #     _navigate_to_teams_page(page)
 
 #     # Get first team card
@@ -57,7 +57,7 @@ def test_team_reassignment_removes_old_team_leader(page, goto) -> None:
     Args:
         page: The Playwright page object.
         goto: The goto fixture to navigate to the app."""
-    login_owner(page, goto)
+    login_admin(page, goto)
     _navigate_to_teams_page(page)
 
     # Get the team cards
@@ -88,7 +88,7 @@ def test_delete_team_error_handling(page, goto, server_url) -> None:
         goto: The goto fixture to navigate to the app.
         base_url: The base URL of the live server.
         """
-    login_owner(page, goto)
+    login_admin(page, goto)
     _navigate_to_teams_page(page)
 
     # Get all team cards
