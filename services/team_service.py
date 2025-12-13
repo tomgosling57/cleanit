@@ -52,7 +52,7 @@ class TeamService:
 
         if not team.team_leader_id: # Now check if a leader needs to be assigned
             for member in team.members:
-                if member.role in ['team_leader', 'owner']:
+                if member.role in ['supervisor', 'admin']:
                     team.team_leader_id = member.id
                     self.db_session.commit()
                     self.db_session.refresh(team)
