@@ -6,7 +6,7 @@ from database import get_db, teardown_db
 from config import DATETIME_FORMATS
 
 def get_teams():
-    if current_user.role not in ['owner']:
+    if current_user.role not in ['admin']:
         return render_template('unauthorized.html'), 403
 
     db = get_db()
@@ -17,7 +17,7 @@ def get_teams():
     return render_template('teams.html', teams=teams, DATETIME_FORMATS=DATETIME_FORMATS)
 
 def get_team(team_id):
-    if current_user.role not in ['owner']:
+    if current_user.role not in ['admin']:
         return jsonify({'error': 'Unauthorized'}), 403
 
     db = get_db()
@@ -33,7 +33,7 @@ def get_team(team_id):
     return render_template('_form_response.html', errors={'Get Failed': 'Team not found'}), 404
 
 def delete_team(team_id):
-    if current_user.role not in ['owner']:
+    if current_user.role not in ['admin']:
         return jsonify({'error': 'Unauthorized'}), 403
 
     db = get_db()
@@ -61,7 +61,7 @@ def delete_team(team_id):
     ), 200
 
 def create_team():
-    if current_user.role not in ['owner']:
+    if current_user.role not in ['admin']:
         return jsonify({'error': 'Unauthorized'}), 403
 
     team_name = request.form.get('team_name')
@@ -85,7 +85,7 @@ def create_team():
     return response
 
 def get_create_team_form():
-    if current_user.role not in ['owner']:
+    if current_user.role not in ['admin']:
         return jsonify({'error': 'Unauthorized'}), 403
 
     db = get_db()
@@ -102,7 +102,7 @@ def get_create_team_form():
     
 
 def get_edit_team_form(team_id):
-    if current_user.role not in ['owner']:
+    if current_user.role not in ['admin']:
         return jsonify({'error': 'Unauthorized'}), 403
 
     db = get_db()
@@ -123,7 +123,7 @@ def get_edit_team_form(team_id):
 
 
 def get_categorized_team_users(team_id):
-    if current_user.role not in ['owner']:
+    if current_user.role not in ['admin']:
         return jsonify({'error': 'Unauthorized'}), 403
 
     db = get_db()
@@ -140,7 +140,7 @@ def get_categorized_team_users(team_id):
 
 
 def edit_team(team_id):
-    if current_user.role not in ['owner']:
+    if current_user.role not in ['admin']:
         return jsonify({'error': 'Unauthorized'}), 403
 
     team_name = request.form.get('team_name')
@@ -164,7 +164,7 @@ def edit_team(team_id):
     return response
 
 def add_team_member(team_id, user_id, old_team_id):
-    if current_user.role not in ['owner']:
+    if current_user.role not in ['admin']:
         return jsonify({'error': 'Unauthorized'}), 403
 
     db = get_db()
@@ -202,7 +202,7 @@ def add_team_member(team_id, user_id, old_team_id):
     return render_template('_form_response.html', errors={'Delete Failed': 'Team or User not found'}), 404
 
 def remove_team_member(team_id, user_id):
-    if current_user.role not in ['owner']:
+    if current_user.role not in ['admin']:
         return jsonify({'error': 'Unauthorized'}), 403
 
     db = get_db()
