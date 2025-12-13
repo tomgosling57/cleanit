@@ -9,7 +9,7 @@
             <div class="input-wrapper button" id="date-picker-wrapper">
                 <input type="text" id="timetable-datepicker" placeholder="Select Date"/>
             </div>
-            {% if current_user.role == 'owner' %}
+            {% if current_user.role == 'admin' %}
                 <button class="button" hx-get="{{ url_for('job.timetable', date=selected_date) }}" hx-push-url="true" hx-target="body" hx-swap="outerHTML">
                     Default View
                 </button>
