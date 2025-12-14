@@ -168,9 +168,9 @@ class JobHelper:
 
         team_leader_id = None
         if current_user.team_id:
-            current_user_team = team_service.get_team_by_id(current_user.team_id)
+            current_user_team = team_service.get_team(current_user.team_id)
             if current_user_team:
-                team_leader_id = current_user_team.assigned_leader_id
+                team_leader_id = current_user_team.team_leader_id
 
         return render_template_string('{% include "job_list_fragment.html" %}', jobs=assigned_jobs, DATETIME_FORMATS=DATETIME_FORMATS, view_type='normal', current_user=current_user, team_leader_id=team_leader_id)
 
@@ -189,9 +189,9 @@ class JobHelper:
         
         team_leader_id = None
         if current_user.team_id:
-            current_user_team = team_service.get_team_by_id(current_user.team_id)
+            current_user_team = team_service.get_team(current_user.team_id)
             if current_user_team:
-                team_leader_id = current_user_team.assigned_leader_id
+                team_leader_id = current_user_team.team_leader_id
 
         # Render the entire team timetable view to ensure all columns are updated correctly
         # This will trigger the jobAssignmentsUpdated event in the frontend
