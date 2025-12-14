@@ -69,8 +69,12 @@ def test_team_reassignment_removes_old_team_leader(page, goto) -> None:
     # Verify initial team leader of old team
     old_team_leader = old_team.locator('li.team-leader-member').first.get_by_text("Benjara Brown")
     expect(old_team_leader).to_be_visible()
+    new_team_id = new_team.get_attribute('data-team-id')
     # Drag team leader to new team
-    old_team_leader.drag_to(new_team)    
+    with page.expect_response(f"**/teams/team/{new_team_id}/member/add**"):
+        page.wait_for_load_state("networkidle")
+        old_team_leader.drag_to(new_team)    
+    
     new_team_leader = new_team.locator('li.team-leader-member').first.get_by_text("Benjara Brown")
     expect(new_team_leader).to_be_visible()    
     # Verify old team has removed the team leader
