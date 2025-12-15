@@ -111,6 +111,7 @@ def timetable(date: str = None):
     # Convert the session date string to a date object for service calls
     date_obj = datetime.strptime(date, DATETIME_FORMATS["DATE_FORMAT"]).date()
 
+    job_service.push_uncompleted_jobs_to_next_day()
     jobs = job_service.get_jobs_for_user_on_date(current_user.id, current_user.team_id, date_obj)
 
     all_teams = team_service.get_all_teams()
@@ -135,6 +136,7 @@ def team_timetable(date: str = None):
     # Convert the session date string to a date object for service calls
     date_obj = datetime.strptime(date, DATETIME_FORMATS["DATE_FORMAT"]).date()
 
+    job_service.push_uncompleted_jobs_to_next_day()
     all_teams = team_service.get_all_teams()
     jobs_by_team = assignment_service.get_jobs_grouped_by_team_for_date(date_obj)
 
