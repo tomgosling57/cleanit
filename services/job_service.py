@@ -105,3 +105,18 @@ class JobService:
             self.db_session.commit()
             return True
         return False
+    
+    def push_uncompleted_jobs_to_next_day(self):
+        """Push all uncompleted jobs with a date before today to the next day."""
+        today = date.today()
+        uncompleted_jobs = self.db_session.query(Job).filter(
+            and_(
+                Job.date < today,
+                Job.is_complete == False
+            )
+        ).all()
+        
+        for job in uncompleted_jobs:
+            job.date += timedelta(days=1)
+        
+        self.db_session.commit()    
