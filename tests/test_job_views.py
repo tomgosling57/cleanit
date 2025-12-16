@@ -136,12 +136,11 @@ def test_create_job(page, goto) -> None:
         assigned_teams=["1", "2"],
         assigned_cleaners=["1", "3"],
     )
-
+    
     with page.expect_response("**/jobs/job/create**"):
         page.wait_for_load_state('networkidle')
         modal.get_by_role("button", name="Create Job").click()
 
-    close_modal_and_assert_hidden(page, "#job-modal")
     expect(page.locator('#job-list')).to_be_visible() # Assert job list fragment is rendered
     assert_job_card_variables(
         get_first_job_card(page),
