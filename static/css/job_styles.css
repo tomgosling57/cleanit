@@ -611,3 +611,30 @@ input#timetable-datepicker {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(62, 168, 114, 0.3);
 }
+
+/* Styles for completed job cards */
+.job-card.completed {
+    opacity: 0.6; /* Reduce overall opacity */
+    filter: grayscale(70%); /* Apply a grayscale filter */
+    transition: opacity 0.3s ease, filter 0.3s ease; /* Smooth transition for effects */
+}
+
+.job-card.completed .job-actions button,
+.job-card.completed .job-close-button {
+    opacity: 0.6; /* Gray out buttons within a completed card */
+    filter: grayscale(70%);
+    pointer-events: none; /* Disable interaction with buttons */
+    transition: opacity 0.3s ease, filter 0.3s ease;
+}
+
+.job-card.completed:hover {
+    opacity: 1; /* Restore full opacity on hover */
+    filter: grayscale(0%); /* Remove grayscale filter on hover */
+}
+
+.job-card.completed:hover .job-actions button,
+.job-card.completed:hover .job-close-button {
+    opacity: 1; /* Restore button opacity on hover */
+    filter: grayscale(0%); /* Remove button grayscale filter on hover */
+    pointer-events: auto; /* Re-enable interaction with buttons on hover */
+}
