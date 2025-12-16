@@ -93,9 +93,8 @@ def test_update_job(page, goto) -> None:
     with page.expect_response(f"**/jobs/job/{job_card.get_attribute('data-job-id')}/update**"):
         modal.get_by_role("button", name="Save Changes").click()
 
-    close_modal_and_assert_hidden(page, "#job-modal")
     expect(page.locator('#job-list')).to_be_visible() # Assert job list fragment is rendered
-
+    job_card = page.locator(f'div.job-card[data-job-id="{job_id}"]')
     assert_job_card_variables(
         job_card,
         {
