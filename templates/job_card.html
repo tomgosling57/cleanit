@@ -25,7 +25,6 @@
         <div class="job-status-actions">
             {% include "job_actions_fragment.html" with context %}
             <div class="job-statuses">
-                {% include 'job_status_fragment.html' %}
                 {% if job.arrival_datetime and job.arrival_datetime.date() == job.date %}
                 <div class="job-status-badge red">Same Day Arrival</div>
                 {% elif job.arrival_datetime and (job.arrival_datetime.date() - job.date).days == 1 %}
