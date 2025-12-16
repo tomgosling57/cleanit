@@ -211,7 +211,7 @@ def test_admin_team_timetable(page, goto) -> None:
     expect(team_column_2.locator('div.job-card')).to_have_count(4)
     team_column_3 = page.locator('div.column-container').nth(2)
     expect(team_column_3.get_by_role("heading", name="Beta Team")).to_be_visible()
-    expect(team_column_3.locator('div.job-card')).to_have_count(1)
+    expect(team_column_3.locator('div.job-card')).to_have_count(2)
     team_column_4 = page.locator('div.column-container').nth(3)
     expect(team_column_4.get_by_role("heading", name="Charlie Team")).to_be_visible()
     expect(team_column_4.locator('div.job-card')).to_have_count(1)
@@ -415,3 +415,21 @@ def test_job_not_found_handling_for_reassign_job_team(page, goto, server_url) ->
     expect(page.get_by_text("View type not provided, defaulting to normal.")).to_be_hidden()
     expect(page.locator('#team-timetable-view')).to_be_visible() # Assert team timetable fragment is rendered
     
+def test_auto_push_for_uncompleted_jobs(page, goto) -> None:
+    """
+    Test that uncompleted jobs from previous days are pushed to the next day upon accessing the timetable.
+
+    Checks for the presence of the second beta team job which has yesterday's date.
+
+    Args:
+        page: Playwright page object
+        goto: Function to navigate to a URL
+    """
+    login_admin(page, goto)
+
+    page.get_by_text('Team View').click()
+
+    team_column_3 = page.locator('div.column-container').nth(2)
+    # Check that the job from previous day is now present in today's timetable
+    yesterday_job = team_column_3.locator('div.job-card').nth(1)
+    expect(yesterday_job).to_be_visible()
