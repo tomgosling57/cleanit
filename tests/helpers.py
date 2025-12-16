@@ -197,14 +197,14 @@ def get_first_job_card(page: Page) -> Locator:
 
 def open_job_details_modal(page: Page, job_card: Locator, url_pattern: str) -> None:
     with page.expect_response(url_pattern):
-        job_card.get_by_role("button", name="View Details").click()
         page.wait_for_load_state('networkidle')
+        job_card.get_by_role("button", name="View Details").click()
     expect(page.locator("#job-modal")).to_be_visible()
 
 def open_job_update_modal(page: Page, job_card: Locator, url_pattern: str) -> None:
     with page.expect_response(url_pattern):
-        job_card.get_by_role("button", name="Edit").click()
         page.wait_for_load_state('networkidle')
+        job_card.get_by_role("button", name="Edit").click()
     expect(page.locator("#job-modal")).to_be_visible()
 
 def fill_job_modal_form(
