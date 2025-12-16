@@ -112,6 +112,21 @@ def mark_job_as_complete(page, job_card) -> None:
     expect(job_card.get_by_text("Mark Pending")).to_be_visible()
     expect(job_card).to_have_class(re.compile(r"completed"))
 
+def delete_job_and_confirm(page: Page, job_card: Locator) -> None:
+    """
+    Deletes a job and confirms the deletion through a dialog.
+
+    Args:
+        page: Playwright Page object.
+        job_card: Playwright Locator for the job card to be deleted.
+    Returns:
+        None
+    """
+    page.on('dialog', lambda d: d.accept())
+    with page.expect_response(f"**/jobs/job/{job_card.get_attribute('data-job-id')}/delete**"):
+        job_card.locator(".job-close-button").click()
+    expect(job_card).to_be_hidden()
+
 def wait_for_modal(page, id: str):
     """
     Waits for the job modal to be visible on the page.
@@ -122,7 +137,6 @@ def wait_for_modal(page, id: str):
     """
     modal = page.locator(id)
     modal.wait_for(state="attached")
-    modal.wait_for(state="visible")
     return modal
 
 
@@ -147,10 +161,10 @@ def assert_job_not_found_htmx_error(
 
     if team_view:
         page.get_by_text('Team View').click()
-        page.locator("#team-timetable-fragment").wait_for()
+        expect(page.locator("#team-timetable-fragment")).to_be_visible()
     else:
         page.goto(server_url + "/timetable")
-        page.locator("#timetable-fragment").wait_for()
+        expect(page.locator("#timetable-fragment")).to_be_visible()
 
     page.evaluate(
         """
@@ -185,13 +199,13 @@ def open_job_details_modal(page: Page, job_card: Locator, url_pattern: str) -> N
     with page.expect_response(url_pattern):
         job_card.get_by_role("button", name="View Details").click()
         page.wait_for_load_state('networkidle')
-    page.locator("#job-modal").wait_for(state="visible")
+    expect(page.locator("#job-modal")).to_be_visible()
 
 def open_job_update_modal(page: Page, job_card: Locator, url_pattern: str) -> None:
     with page.expect_response(url_pattern):
         job_card.get_by_role("button", name="Edit").click()
         page.wait_for_load_state('networkidle')
-    page.locator("#job-modal").wait_for("visible")
+    expect(page.locator("#job-modal")).to_be_visible()
 
 def fill_job_modal_form(
     page: Page,
@@ -279,3 +293,16 @@ def drag_to_and_wait_for_response(page: Page, source_locator: Locator, target_lo
     with page.expect_response(url_pattern):
         source_locator.drag_to(target_locator)
     page.wait_for_load_state('networkidle')
+
+def simulate_htmx_delete_and_expect_response(page: Page, server_url: str, endpoint: str, target_id: str) -> Page.expect_response:
+    """
+    Simulates an HTMX DELETE request and waits for the corresponding network response.
+    """
+    with page.expect_response(f"**{endpoint}**") as response_info:
+        page.evaluate(f"""
+            htmx.ajax('DELETE', '{server_url}{endpoint}', {{
+                target: '{target_id}',
+                swap: 'innerHTML'
+            }})
+        """)
+    return response_info
