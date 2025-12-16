@@ -628,11 +628,11 @@ input#timetable-datepicker {
 }
 
 .job-card.completed:hover {
-    opacity: 1; /* Restore full opacity on hover */
+    opacity: 0.8; /* Restore full opacity on hover */
     filter: grayscale(0%); /* Remove grayscale filter on hover */
 }
 .job-card.red-outline.completed {
-    border: 2px solid var(--text-light);
+    border: 2px solid var(--info-color);
 }
 
 .job-card.completed:hover .job-actions button,
