@@ -117,12 +117,12 @@ def test_create_job(page, goto) -> None:
     modal = wait_for_modal(page, "#job-modal")
     expect(modal.locator("#time")).to_be_visible()
 
-    new_start_time = get_future_time(hours=-1) # 8:00 AM
-    new_end_time = get_future_time(hours=0) # 9:00 AM
+    new_start_time = "07:00"
+    new_end_time = "08:00"
     new_date = get_future_date(days=0)
     new_arrival_datetime = datetime.combine(
         datetime.strptime(get_future_date(days=0), DATETIME_FORMATS["DATE_FORMAT"]).date(), time(10, 0)
-    ).strftime(DATETIME_FORMATS["DATETIME_FORMAT"])
+    ).strftime(DATETIME_FORMATS["DATETIME_FORMAT_JOBS_PY"])
 
     fill_job_modal_form(
         page,
