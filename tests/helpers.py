@@ -96,7 +96,7 @@ def assert_job_card_variables(job_card, expected_variables: dict, expected_indic
                 expect(job_card).to_have_css('box-shadow', 'rgba(255, 0, 0, 0.5) 0px 0px 10px 0px')
                 
 
-def mark_job_as_complete(job_card) -> None:
+def mark_job_as_complete(page, job_card) -> None:
     """
     Marks a job as complete from its job card.
 
@@ -105,8 +105,9 @@ def mark_job_as_complete(job_card) -> None:
     Returns:
         None
     """
-    
-    job_card.get_by_role("button", name="Mark Complete").click()
+    with page.expect_response(f"**/jobs/job/{job_card.get_attribute('data-job-id')}/update_status**"):    
+        job_card.get_by_role("button", name="Mark Complete").click()
+        
     expect(job_card.get_by_text("Mark Pending")).to_be_visible()
     expect(job_card).to_have_class(re.compile(r"completed"))
 

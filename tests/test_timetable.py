@@ -32,7 +32,7 @@ def test_supervisors_timetable(page, goto) -> None:
     job_card_1.get_by_text("Property Address: 123 Main St, Anytown").click()
     
     # Check that supervisor can mark job as complete
-    mark_job_as_complete(job_card_1)
+    mark_job_as_complete(page, job_card_1)
 
     # View job details modal
     job_card_1.get_by_role("button", name="View Details").click()
@@ -90,7 +90,7 @@ def test_admin_timetable(page, goto) -> None:
     expect(job_card_1).to_have_attribute("data-view-type", "normal")
     
     # Check that supervisor can mark job as complete
-    mark_job_as_complete(job_card_1)
+    mark_job_as_complete(page, job_card_1)
 
     job_card_2 = page.locator('div.job-card').nth(1)
     # Assert that jobs are listed in chronological order
