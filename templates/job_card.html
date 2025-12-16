@@ -1,8 +1,10 @@
 <div data-view-type="{{ view_type }}" class="job-card
 {% if job.description %}red-outline
-{% endif %} 
+{% endif %}
 {% if job.arrival_datetime and job.arrival_datetime.date() == job.date %}arrival-same-day
 {% elif job.arrival_datetime and (job.arrival_datetime.date() - job.date).days == 1 %}arrival-next-day
+{% endif %}
+{% if job.is_complete %}completed
 {% endif %}" id="job-{{ job.id }}" data-job-id="{{ job.id }}">
     <span class="job-close-button small-icon close-button" data-job-id="{{ job.id }}"
     hx-delete="{{ url_for('job.delete_job', job_id=job.id, view_type=view_type) }}"
