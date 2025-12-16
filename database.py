@@ -370,6 +370,7 @@ def create_initial_properties_and_jobs(session, admin, user, initial_team, alpha
 
     # Beta Team job
     _create_job(session, today, time(13, 0), time(15, 0), 'Beta Team Job: Garden maintenance.', property1, team_obj=beta_team, job_id=5)
+    _create_job(session, today - timedelta(days=1), time(8, 0), time(10, 0), 'Beta Team Job: Pool cleaning.', property1, team_obj=beta_team, job_id=11)
 
     # Charlie Team job
     _create_job(session, today, time(9, 30), time(11, 30), 'Charlie Team Job: Roof and gutter clean.', property_alpha, team_obj=charlie_team, job_id=6)
