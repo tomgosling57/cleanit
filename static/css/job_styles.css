@@ -631,6 +631,9 @@ input#timetable-datepicker {
     opacity: 1; /* Restore full opacity on hover */
     filter: grayscale(0%); /* Remove grayscale filter on hover */
 }
+.job-card.red-outline.completed {
+    border: 2px solid var(--text-light);
+}
 
 .job-card.completed:hover .job-actions button,
 .job-card.completed:hover .job-close-button {
