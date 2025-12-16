@@ -162,10 +162,9 @@ def assert_job_not_found_htmx_error(
 
     if team_view:
         page.get_by_text('Team View').click()
-        expect(page.locator("#team-timetable-fragment")).to_be_visible()
+        expect(page.locator("#team-columns-container")).to_be_visible()
     else:
-        page.goto(server_url + "/timetable")
-        expect(page.locator("#timetable-fragment")).to_be_visible()
+        expect(page.locator("#job-list")).to_be_visible()
 
     page.evaluate(
         """
