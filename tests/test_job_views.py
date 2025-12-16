@@ -5,7 +5,7 @@ from config import DATETIME_FORMATS
 from tests.helpers import (
     assert_job_card_variables, login_admin,
     get_first_job_card, open_job_details_modal, open_job_update_modal,
-    fill_job_modal_form, assert_job_details_modal_content, close_modal_and_assert_hidden
+    fill_job_modal_form, assert_job_details_modal_content, close_modal_and_assert_hidden, wait_for_modal
 )
 from tests.test_utils import get_future_date, get_future_time
 
@@ -56,7 +56,7 @@ def test_update_job(page, goto) -> None:
     with page.expect_response(f"**/jobs/job/{job_id}/update**"):
         open_job_update_modal(page, modal, f"**/jobs/job/{job_id}/update**")
     modal = page.locator("#job-modal")
-    modal.locator("#time").wait_for(state="visible")
+    expect(modal.locator("#time")).to_be_visible()
 
     selected_date_from_timetable = page.locator("#timetable-datepicker").input_value()
 
@@ -116,7 +116,7 @@ def test_create_job(page, goto) -> None:
         page.get_by_text("Create Job").click()
 
     modal = wait_for_modal(page, "#job-modal")
-    modal.locator("#time").wait_for(state="visible")
+    expect(modal.locator("#time")).to_be_visible()
 
     new_start_time = get_future_time(hours=-1) # 8:00 AM
     new_end_time = get_future_time(hours=0) # 9:00 AM
