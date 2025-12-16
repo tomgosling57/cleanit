@@ -262,7 +262,7 @@ def assert_team_column_content(team_column_locator: Locator, team_name: str, exp
     expect(team_column_locator.get_by_text(team_name)).to_be_visible()
     expect(team_column_locator.locator('div.job-card')).to_have_count(expected_job_count)
 
-def setup_team_page(page: Page, goto, server_url: str) -> None:
+def setup_team_page(page: Page) -> None:
     page.get_by_text("Teams").click()
     page.locator(".teams-grid").wait_for()
 
