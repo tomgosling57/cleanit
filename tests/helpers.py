@@ -1,4 +1,5 @@
 # tests/helpers.py
+import re
 from playwright.sync_api import expect
 
 def login_admin(page, goto) -> None:
@@ -104,9 +105,10 @@ def mark_job_as_complete(job_card) -> None:
     Returns:
         None
     """
-    job_card.get_by_text("Pending").click()
+    
     job_card.get_by_role("button", name="Mark Complete").click()
-    expect(job_card.get_by_text("Completed")).to_be_visible()
+    expect(job_card.get_by_text("Mark Pending")).to_be_visible()
+    expect(job_card).to_have_class(re.compile(r"completed"))
 
 def wait_for_modal(page, id: str):
     """
