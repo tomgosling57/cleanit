@@ -224,7 +224,7 @@ def fill_job_modal_form(
     page.locator("#date").fill(date)
     page.locator("#description").fill(description)
     page.locator("#property_id").select_option(property_id)
-    page.locator("#arrival_datetime").fill(arrival_datetime)
+    page.locator('input[type="text"].flatpickr').fill(arrival_datetime)
     page.locator("#access_notes").fill(access_notes)
     page.locator("#assigned_teams").select_option(assigned_teams)
     page.locator("#assigned_cleaners").select_option(assigned_cleaners)
