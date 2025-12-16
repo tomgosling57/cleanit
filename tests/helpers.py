@@ -124,6 +124,7 @@ def delete_job_and_confirm(page: Page, job_card: Locator) -> None:
     """
     page.on('dialog', lambda d: d.accept())
     with page.expect_response(f"**/jobs/job/{job_card.get_attribute('data-job-id')}/delete**"):
+        page.wait_for_load_state('networkidle')
         job_card.locator(".job-close-button").click()
     expect(job_card).to_be_hidden()
 
@@ -283,16 +284,17 @@ def click_and_wait_for_response(page: Page, locator: Locator, url_pattern: str) 
     Clicks a locator and waits for a specific network response and network idle state.
     """
     with page.expect_response(url_pattern):
+        page.wait_for_load_state('networkidle')
         locator.click()
-    page.wait_for_load_state('networkidle')
 
 def drag_to_and_wait_for_response(page: Page, source_locator: Locator, target_locator: Locator, url_pattern: str) -> None:
     """
     Drags a source locator to a target locator and waits for a specific network response and network idle state.
     """
     with page.expect_response(url_pattern):
+        page.wait_for_load_state('networkidle')
         source_locator.drag_to(target_locator)
-    page.wait_for_load_state('networkidle')
+    
 
 def simulate_htmx_delete_and_expect_response(page: Page, server_url: str, endpoint: str, target_id: str) -> Page.expect_response:
     """
