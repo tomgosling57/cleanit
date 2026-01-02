@@ -1,5 +1,4 @@
 <form id="job-form" hx-post="{{ url_for('job.create_job') }}"
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
 {% if view_type == 'team' %}
 hx-target="#team-timetable-view"
 hx-swap="innerHTML"
@@ -10,6 +9,7 @@ hx-swap="outerHTML"
 hx-on--after-request="if(event.detail.successful) { document.getElementById('job-modal').style.display='none'; document.getElementById('job-form').reset(); } else { document.getElementById('errors-container').outerHTML = event.detail.xhr.response; }">
    <h2>Create New Job</h2>
    {% include '_form_response.html' %}
+   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
    <input type="hidden" name="view_type" value="{{ view_type }}">
    <div class="job-update-compact">
         <!-- Group 1: Time, Duration & Description (TOP) -->

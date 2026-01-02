@@ -1,12 +1,11 @@
 <form id="user-creation-form"
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
       hx-post="{{ url_for('user.create_user') }}"
       hx-target="#errors-container"
       hx-swap="outerHTML"
       hx-on--after-request="if(event.detail.successful) { document.getElementById('user-modal').style.display='none'; document.getElementById('user-creation-form').reset(); } else { document.getElementById('errors-container').outerHTML = event.detail.xhr.response; }">
     
     <h2>Create New User</h2>
-    
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>    
     {% include '_form_response.html' %}
     
         <div class="form-group">

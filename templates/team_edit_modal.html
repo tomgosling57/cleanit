@@ -1,5 +1,4 @@
 <form id="edit-team-form" class="form-card" hx-post="/teams/team/{{ team.id }}/edit"
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
       hx-target=".teams-grid"
       hx-swap="innerHTML"
       hx-on--after-request="if(event.detail.successful) { document.getElementById('team-modal').style.display='none'; document.getElementById('edit-team-form').reset(); } else { document.getElementById('errors-container').outerHTML = event.detail.xhr.response; }"
@@ -8,7 +7,7 @@
     <h2>Edit Team</h2>
     {% include '_form_response.html' %}
     <input type="hidden" id="edit-team-id" name="team_id" value="{{ team.id }}">
-
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
     <div class="form-group">
         <label for="edit-team-name">Team Name:</label>
         <input type="text" id="edit-team-name" name="team_name" value="{{ team.name }}">

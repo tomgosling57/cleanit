@@ -1,5 +1,4 @@
 <form id="edit-job-form"
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
 hx-put="{{ url_for('job.update_job', job_id=job.id) }}"
 hx-include="#edit-job-form"
 hx-on--after-request="if(!event.detail.successful) { 
@@ -13,8 +12,8 @@ hx-swap="innerHTML"
 hx-target="#job-list"
 hx-swap="outerHTML"
 {% endif %}
-
 >
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
     <input type="hidden" name="view_type" value="{{ view_type }}">
     <h2>Edit Job</h2>
     {% include '_form_response.html' %}

@@ -1,5 +1,4 @@
 <form id="edit-property-form"
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
       hx-put="{{ url_for('properties.update_property_route', property_id=property.id) }}"
       hx-target="#property-card-{{ property.id }}"
       hx-swap="outerHTML"
@@ -9,6 +8,7 @@
           document.getElementById('property-modal').style.display='none'; }">
     <h2>Edit Property</h2>
     {% include '_form_response.html' %}
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
     <div class="job-update-compact"> {# Reusing job-update-compact for consistent styling #}
         <div class="form-group">
             <div class="form-card address-card">
