@@ -19,7 +19,10 @@ def login_admin(page, goto) -> None:
     page.get_by_role("textbox", name="email").fill("admin@example.com")
     page.get_by_role("textbox", name="password").click()
     page.get_by_role("textbox", name="password").fill("admin_password")
-    page.get_by_role("button", name="Login").click()
+
+    with page.expect_response(f"**/user/login**"):
+        page.wait_for_load_state('networkidle')
+        page.get_by_role("button", name="Login").click()
 
 def login_supervisor(page, goto) -> None:
     """
@@ -37,7 +40,9 @@ def login_supervisor(page, goto) -> None:
     page.get_by_role("textbox", name="email").fill("supervisor@example.com")
     page.get_by_role("textbox", name="password").click()
     page.get_by_role("textbox", name="password").fill("supervisor_password")
-    page.get_by_role("button", name="Login").click()
+    with page.expect_response(f"**/user/login**"):
+        page.wait_for_load_state('networkidle')
+        page.get_by_role("button", name="Login").click()
 
 def login_user(page, goto) -> None:
     """
@@ -55,7 +60,9 @@ def login_user(page, goto) -> None:
     page.get_by_role("textbox", name="email").fill("user@example.com")
     page.get_by_role("textbox", name="password").click()
     page.get_by_role("textbox", name="password").fill("user_password")
-    page.get_by_role("button", name="Login").click()
+    with page.expect_response(f"**/user/login**"):
+        page.wait_for_load_state('networkidle')
+        page.get_by_role("button", name="Login").click()
 
 def login_invalid_credentials(page, goto) -> None:
     """
