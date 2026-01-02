@@ -1,5 +1,7 @@
 // drag_and_drop.js
 
+const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
 // Generic Dragula initialization function
 function initDragula(containers, dropHandler) {
     // If there's an existing instance, clean it up
@@ -32,7 +34,10 @@ function handleTeamMemberDrop(el, target, source) {
 
     fetch(apiUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+        },
         body: JSON.stringify({
             user_id: memberId,
             old_team_id: oldTeamIdNumber
@@ -81,6 +86,9 @@ function handleJobCardDrop(el, target, source) {
     const apiUrl = urlPattern.replace('0', jobId);
 
 htmx.ajax('POST', apiUrl, {
+    headers: {
+        'X-CSRFToken': csrfToken
+    },
     values: {
         new_team_id: newTeamId,
         old_team_id: oldTeamId,
