@@ -269,12 +269,14 @@ def test_job_not_found_handling_for_get_job_details(page, goto, server_url) -> N
         page: Playwright page object
         goto: Function to navigate to a URL"""
     login_admin(page, goto)
+    csrf_token = get_csrf_token(page)
     assert_job_not_found_htmx_error(
         page,
         server_url,
         'GET',
         f"{server_url}/jobs/job/999/details",
-        'errors-container'
+        'errors-container',
+        csrf_token=csrf_token
     )
 
 def test_job_not_found_handling_for_update_job(page, goto, server_url) -> None:
@@ -284,12 +286,14 @@ def test_job_not_found_handling_for_update_job(page, goto, server_url) -> None:
         page: Playwright page object
         goto: Function to navigate to a URL"""
     login_admin(page, goto)
+    csrf_token = get_csrf_token(page)
     assert_job_not_found_htmx_error(
         page,
         server_url,
         'PUT',
         f"{server_url}/jobs/job/999/update",
-        'errors-container'
+        'errors-container',
+        csrf_token=csrf_token
     )
 
 def test_job_not_found_handling_for_delete_job(page, goto, server_url) -> None:
@@ -299,12 +303,14 @@ def test_job_not_found_handling_for_delete_job(page, goto, server_url) -> None:
         page: Playwright page object
         goto: Function to navigate to a URL"""
     login_admin(page, goto)
+    csrf_token = get_csrf_token(page)
     assert_job_not_found_htmx_error(
         page,
         server_url,
         'DELETE',
         f"{server_url}/jobs/job/999/delete",
-        'errors-container'
+        'errors-container',
+        csrf_token=csrf_token
     )
 
 def test_job_not_found_handling_for_get_update_job_form(page, goto, server_url) -> None:
@@ -314,12 +320,14 @@ def test_job_not_found_handling_for_get_update_job_form(page, goto, server_url) 
         page: Playwright page object
         goto: Function to navigate to a URL"""
     login_admin(page, goto)
+    csrf_token = get_csrf_token(page)
     assert_job_not_found_htmx_error(
         page,
         server_url,
         'GET',
         f"{server_url}/jobs/job/999/update",
-        'errors-container'
+        'errors-container',
+        csrf_token=csrf_token
     )
 
 def test_job_not_found_handling_for_reassign_job_team(page, goto, server_url) -> None:
@@ -329,12 +337,14 @@ def test_job_not_found_handling_for_reassign_job_team(page, goto, server_url) ->
         page: Playwright page object
         goto: Function to navigate to a URL"""
     login_admin(page, goto)
+    csrf_token = get_csrf_token(page)
     assert_job_not_found_htmx_error(
         page,
         server_url,
         'POST',
         f"{server_url}/jobs/job/reassign",
         'errors-container',
+        csrf_token=csrf_token,
         htmx_values={
             'job_id': 999,
             'new_team_id': 1,
