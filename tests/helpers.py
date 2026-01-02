@@ -155,6 +155,7 @@ def assert_job_not_found_htmx_error(
     method: str,
     endpoint: str,
     expected_fragment_locator: str,
+    csrf_token: str,
     htmx_values: Optional[dict] = None,
     team_view: bool = False
 ) -> None:
@@ -168,25 +169,26 @@ def assert_job_not_found_htmx_error(
         expect(page.locator("#job-list")).to_be_visible()
 
     page.evaluate(
-        """
-        async ([method, endpoint, htmx_values, expected_fragment_locator]) => {
-            const headers = {
+        f"""
+        async ([method, endpoint, htmx_values, expected_fragment_locator]) => {{
+            const headers = {{
                 'HX-Request': 'true',
-                'HX-Trigger': 'test-trigger'
-            };
-            for (const key in htmx_values) {
+                'HX-Trigger': 'test-trigger',
+                'HX-CSRF-Token': '{csrf_token}'
+            }};
+            for (const key in htmx_values) {{
                 headers[`HX-Current-URL`] = htmx_values[key];
-            }
+            }}
 
-            const options = {
+            const options = {{
                 method: method,
                 headers: headers
-            };
+            }};
 
             const response = await fetch(endpoint, options);
             const html = await response.text();
             document.getElementById(expected_fragment_locator).innerHTML = html;
-        }
+        }}
         """,
         [method, endpoint, htmx_values, expected_fragment_locator]
     )
