@@ -175,32 +175,33 @@ def assert_job_not_found_htmx_error(
     else:
         expect(page.locator("#job-list")).to_be_visible()
 
-    page.evaluate(
-        f"""
-        async ([method, endpoint, htmx_values, expected_fragment_locator]) => {{
-            const headers = {{
-                'HX-Request': 'true',
-                'HX-Trigger': 'test-trigger',
-                'X-CSRFToken': '{csrf_token}'
-            }};
-            for (const key in htmx_values) {{
-                headers[`HX-Current-URL`] = htmx_values[key];
+    with page.expect_response(endpoint):
+        page.wait_for_load_state('networkidle')
+        page.evaluate(
+            f"""
+            async ([method, endpoint, htmx_values, expected_fragment_locator]) => {{
+                const headers = {{
+                    'HX-Request': 'true',
+                    'HX-Trigger': 'test-trigger',
+                    'X-CSRFToken': '{csrf_token}'
+                }};
+                for (const key in htmx_values) {{
+                    headers[`HX-Current-URL`] = htmx_values[key];
+                }}
+
+                const options = {{
+                    method: method,
+                    headers: headers
+                }};
+
+                const response = await fetch(endpoint, options);
+                const html = await response.text();
+                document.getElementById(expected_fragment_locator).innerHTML = html;
             }}
-
-            const options = {{
-                method: method,
-                headers: headers
-            }};
-
-            const response = await fetch(endpoint, options);
-            const html = await response.text();
-            document.getElementById(expected_fragment_locator).innerHTML = html;
-        }}
-        """,
-        [method, endpoint, htmx_values, expected_fragment_locator]
-    )
-    page.wait_for_load_state('networkidle')
-    expect(page.get_by_text("Something went wrong! That job no longer exists.")).to_be_visible()
+            """,
+            [method, endpoint, htmx_values, expected_fragment_locator]
+        )
+        expect(page.get_by_text("Something went wrong! That job no longer exists.")).to_be_visible()
 
 def get_csrf_token(page: Page) -> str:
     """Gets the CSRF token from the page's body data attribute."""
