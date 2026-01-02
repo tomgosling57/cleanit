@@ -107,6 +107,7 @@ def mark_job_as_complete(page, job_card) -> None:
         None
     """
     with page.expect_response(f"**/jobs/job/{job_card.get_attribute('data-job-id')}/update_status**"):    
+        page.wait_for_load_state('networkidle')
         job_card.get_by_role("button", name="Mark Complete").click()
         
     expect(job_card.get_by_text("Mark Pending")).to_be_visible()
