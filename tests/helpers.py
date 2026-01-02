@@ -195,6 +195,10 @@ def assert_job_not_found_htmx_error(
     page.wait_for_load_state('networkidle')
     expect(page.get_by_text("Something went wrong! That job no longer exists.")).to_be_visible()
 
+def get_csrf_token(page: Page) -> str:
+    """Gets the CSRF token from the page's body data attribute."""
+    return page.locator('body').get_attribute('data-csrf-token')
+
 def get_first_job_card(page: Page) -> Locator:
     return page.locator(".job-card").first
 
