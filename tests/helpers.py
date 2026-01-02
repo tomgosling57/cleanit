@@ -174,7 +174,7 @@ def assert_job_not_found_htmx_error(
             const headers = {{
                 'HX-Request': 'true',
                 'HX-Trigger': 'test-trigger',
-                'HX-CSRF-Token': '{csrf_token}'
+                'X-CSRFToken': '{csrf_token}'
             }};
             for (const key in htmx_values) {{
                 headers[`HX-Current-URL`] = htmx_values[key];
