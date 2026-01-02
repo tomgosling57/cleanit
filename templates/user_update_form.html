@@ -1,5 +1,5 @@
 <form id="user-update-form"
-      {{ csrf_token() }}
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
 {% if user_profile %}
 class="user-profile"
 hx-put="{{ url_for('user.update_user_profile') }}"

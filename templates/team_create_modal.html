@@ -1,5 +1,5 @@
 <form id="create-team-form" class="form-card" hx-post="/teams/create"
-      {{ csrf_token() }}
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
       hx-target=".teams-grid"
       hx-swap="innerHTML"
       hx-on--after-request="if(event.detail.successful) { document.getElementById('team-modal').style.display='none'; document.getElementById('create-team-form').reset(); document.body.dispatchEvent(new Event('teamListUpdated')); } else { document.getElementById('errors-container').outerHTML = event.detail.xhr.response; }">

@@ -1,5 +1,5 @@
 <form id="job-form" hx-post="{{ url_for('job.create_job') }}"
-    {{ csrf_token() }}
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
 {% if view_type == 'team' %}
 hx-target="#team-timetable-view"
 hx-swap="innerHTML"

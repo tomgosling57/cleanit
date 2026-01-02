@@ -65,7 +65,7 @@
     {% endwith %}
     
     <form action="{{url_for('user.login')}}" method="POST">
-        {{ csrf_token() }}
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         <div class="form-group">
             <label for="email">email:</label>
             <input type="text" id="email" name="email" required placeholder="email">
