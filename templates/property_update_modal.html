@@ -1,4 +1,5 @@
 <form id="edit-property-form"
+      {{ csrf_token() }}
       hx-put="{{ url_for('properties.update_property_route', property_id=property.id) }}"
       hx-target="#property-card-{{ property.id }}"
       hx-swap="outerHTML"

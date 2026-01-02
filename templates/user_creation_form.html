@@ -1,4 +1,5 @@
-<form id="user-creation-form" 
+<form id="user-creation-form"
+      {{ csrf_token() }}
       hx-post="{{ url_for('user.create_user') }}"
       hx-target="#errors-container"
       hx-swap="outerHTML"

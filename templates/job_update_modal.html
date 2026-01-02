@@ -1,4 +1,5 @@
 <form id="edit-job-form"
+    {{ csrf_token() }}
 hx-put="{{ url_for('job.update_job', job_id=job.id) }}"
 hx-include="#edit-job-form"
 hx-on--after-request="if(!event.detail.successful) { 
