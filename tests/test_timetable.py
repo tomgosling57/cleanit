@@ -4,7 +4,7 @@ import re
 from playwright.sync_api import expect
 from config import DATETIME_FORMATS
 from tests.conftest import page
-from tests.helpers import login_user, login_admin, login_supervisor, assert_job_card_variables, mark_job_as_complete, assert_job_card_default_state, assert_job_not_found_htmx_error, assert_team_column_content, drag_to_and_wait_for_response, delete_job_and_confirm
+from tests.helpers import get_csrf_token, login_user, login_admin, login_supervisor, assert_job_card_variables, mark_job_as_complete, assert_job_card_default_state, assert_job_not_found_htmx_error, assert_team_column_content, drag_to_and_wait_for_response, delete_job_and_confirm
 from tests.test_utils import get_future_date, get_future_time
 
 
@@ -252,12 +252,14 @@ def test_job_not_found_handling_for_update_status(page, goto, server_url) -> Non
         page: Playwright page object
         goto: Function to navigate to a URL"""
     login_admin(page, goto)
+    
     assert_job_not_found_htmx_error(
         page,
         server_url,
         'POST',
         f"{server_url}/jobs/job/999/update_status",
-        'errors-container'
+        'errors-container',
+        csrf_token=get_csrf_token(page)
     )
 
 def test_job_not_found_handling_for_get_job_details(page, goto, server_url) -> None:
