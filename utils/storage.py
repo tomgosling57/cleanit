@@ -1,76 +1,123 @@
 import os
-from flask import url_for
+import uuid
+from datetime import datetime
+from flask import url_for, current_app
+from werkzeug.utils import secure_filename
 from libcloud.common.types import ObjectDoesNotExistError
 from libcloud.storage.base import StorageDriver
 
 CHUNK_SIZE = 8192
 
-def upload_flask_file(file_storage_object, container, object_name):
-    """
-    Uploads a file from a werkzeug.FileStorage object to a Libcloud container.
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'pdf', 'mp4'}
+MAX_FILE_SIZE = 16 * 1024 * 1024  # 16MB
 
-    :param file_storage_object: werkzeug.FileStorage object
-    :param container: Libcloud container object
-    :param object_name: Desired object name
-    :return: Uploaded object
-    """
-    def file_iterator(file_storage):
-        while True:
-            chunk = file_storage.read(CHUNK_SIZE)
-            if not chunk:
-                break
-            yield chunk
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-    uploaded_object = container.upload_object_via_stream(
-        iterator=file_iterator(file_storage_object),
-        object_name=object_name
+def upload_flask_file(flask_file, filename=None):
+    """
+    Upload a Flask FileStorage object via Libcloud with a unique filename.
+
+    Args:
+        flask_file: werkzeug.FileStorage object from request.files
+        filename: Optional custom filename (defaults to original filename)
+
+    Returns:
+        str: The unique filename that was uploaded
+    """
+    original_filename = filename or flask_file.filename
+    name, ext = os.path.splitext(secure_filename(original_filename))
+
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    unique_id = str(uuid.uuid4())[:8]
+    unique_filename = f"{name}_{timestamp}_{unique_id}{ext}"
+
+    driver = current_app.config['STORAGE_DRIVER']
+    container = current_app.config['STORAGE_CONTAINER']
+
+    container.upload_object_via_stream(
+        iterator=flask_file.stream,
+        object_name=unique_filename
     )
-    return uploaded_object
 
-def get_file_url(app, container, object_name):
-    """
-    Generates a URL for the given object.
+    return unique_filename
 
-    :param app: Flask app instance
-    :param container: Libcloud container object
-    :param object_name: Object name
-    :return: URL for the object or None if the object does not exist
-    """
-    storage_provider = app.config.get('STORAGE_PROVIDER')
-    if storage_provider == 'local':
-        return url_for('uploads', filename=object_name)
-    elif storage_provider == 's3':
-        try:
-            obj = container.get_object(object_name)
-            return obj.get_cdn_url()
-        except ObjectDoesNotExistError:
-            return None
-    return None
 
-def delete_file(container, object_name):
+def get_file_url(filename):
     """
-    Deletes a file from the container.
+    Get URL to access a file. Handles local vs S3 automatically.
 
-    :param container: Libcloud container object
-    :param object_name: Object name
-    :return: True if the object was deleted, False if it did not exist
+    Args:
+        filename: The filename to get URL for
+
+    Returns:
+        str: URL to access the file
     """
+    driver = current_app.config['STORAGE_DRIVER']
+    container = current_app.config['STORAGE_CONTAINER']
+    storage_provider = os.getenv('STORAGE_PROVIDER')
+
+    if storage_provider == 's3':
+        obj = container.get_object(filename)
+        return driver.get_object_cdn_url(obj)
+    else:
+        return url_for('serve_file', filename=filename, _external=True)
+
+
+def delete_file(filename):
+    """
+    Delete a file from storage.
+
+    Args:
+        filename: The filename to delete
+
+    Returns:
+        bool: True if deleted, False if not found
+    """
+    driver = current_app.config['STORAGE_DRIVER']
+    container = current_app.config['STORAGE_CONTAINER']
     try:
-        container.delete_object(object_name)
+        obj = container.get_object(filename)
+        driver.delete_object(obj)
         return True
     except ObjectDoesNotExistError:
         return False
 
-def file_exists(container, object_name):
-    """
-    Checks if a file exists in the container.
+def validate_and_upload(flask_file, filename=None):
+    """Validate file before uploading"""
 
-    :param container: Libcloud container object
-    :param object_name: Object name
-    :return: True if the object exists, False otherwise
+    if not flask_file:
+        raise ValueError('No file provided')
+
+    if not allowed_file(flask_file.filename):
+        raise ValueError('File type not allowed')
+
+    # Check file size (requires reading/seeking)
+    flask_file.seek(0, 2)  # Seek to end
+    size = flask_file.tell()
+    flask_file.seek(0)  # Reset to beginning
+
+    if size > MAX_FILE_SIZE:
+        raise ValueError('File too large')
+
+    # Upload if validation passes
+    return upload_flask_file(flask_file, filename)
+
+
+def file_exists(filename):
     """
+    Check if a file exists in storage.
+
+    Args:
+        filename: The filename to check
+
+    Returns:
+        bool: True if exists, False otherwise
+    """
+    container = current_app.config['STORAGE_CONTAINER']
     try:
-        container.get_object(object_name)
+        container.get_object(filename)
         return True
     except ObjectDoesNotExistError:
         return False
