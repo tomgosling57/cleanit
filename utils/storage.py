@@ -56,7 +56,7 @@ def get_file_url(filename):
     """
     driver = current_app.config['STORAGE_DRIVER']
     container = current_app.config['STORAGE_CONTAINER']
-    storage_provider = os.getenv('STORAGE_PROVIDER')
+    storage_provider = current_app.config.get('STORAGE_PROVIDER', 'local')
 
     if storage_provider == 's3':
         obj = container.get_object(filename)
