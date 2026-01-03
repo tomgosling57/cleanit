@@ -62,7 +62,7 @@ def get_file_url(filename):
         obj = container.get_object(filename)
         return driver.get_object_cdn_url(obj)
     else:
-        return url_for('serve_file', filename=filename, _external=True)
+        return url_for('storage.serve_file', filename=filename, _external=True)
 
 
 def delete_file(filename):
