@@ -10,6 +10,7 @@ from routes.users import user_bp
 from routes.jobs import job_bp
 from routes.teams import teams_bp
 from routes.properties import properties_bp
+from routes.storage import storage_bp
 from services.user_service import UserService
 from utils.populate_database import populate_database
 from utils.svg_helper import load_svg_icons
@@ -103,6 +104,7 @@ def create_app(login_manager=LoginManager(), config_override=dict()):
     app.register_blueprint(job_bp)
     app.register_blueprint(teams_bp)
     app.register_blueprint(properties_bp)
+    app.register_blueprint(storage_bp)
 
     with app.app_context():
         load_svg_icons(app)
