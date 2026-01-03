@@ -5,7 +5,9 @@ from flask_login import LoginManager
 from app_factory import create_app
 import tempfile
 import os
+import shutil
 from playwright.sync_api import Page, BrowserContext
+from unittest.mock import MagicMock, patch
 
 from utils.populate_database import populate_database
 
@@ -16,6 +18,36 @@ def test_db_path():
     yield db_path
     os.close(db_fd)
     os.unlink(db_path)
+
+@pytest.fixture(scope='function')
+def local_storage_app():
+    """
+    Configures and creates a Flask app for testing local storage.
+    Uses a temporary upload directory and sets STORAGE_PROVIDER to 'local'.
+    """
+    login_manager = LoginManager()
+    tmpdir = tempfile.mkdtemp()
+    upload_folder = os.path.join(tmpdir, 'uploads')
+    os.makedirs(upload_folder, exist_ok=True)
+    
+    # Ensure UPLOAD_FOLDER is an absolute path for send_from_directory
+    absolute_upload_folder = os.path.abspath(upload_folder)
+
+    test_config = {
+        'TESTING': True,
+        'STORAGE_PROVIDER': 'local',
+        'UPLOAD_FOLDER': absolute_upload_folder,
+        'SECRET_KEY': 'testsecret',
+        'DATABASE_URL': 'sqlite:///:memory:',
+    }
+
+    app = create_app(login_manager=login_manager, config_override=test_config)
+    
+    with app.app_context():
+        yield app
+
+    # Clean up the temporary directory after the test
+    shutil.rmtree(tmpdir, ignore_errors=True)
 
 @pytest.fixture(scope='session')
 def app(test_db_path):
