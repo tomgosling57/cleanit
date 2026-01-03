@@ -1,5 +1,6 @@
 import os
 from flask import Blueprint, send_from_directory, current_app, jsonify
+from werkzeug.exceptions import NotFound
 
 storage_bp = Blueprint('storage', __name__)
 
@@ -11,7 +12,7 @@ def serve_file(filename):
     upload_folder = current_app.config.get('UPLOAD_FOLDER', './uploads')
     try:
         return send_from_directory(upload_folder, filename)
-    except FileNotFoundError:
+    except (FileNotFoundError, NotFound):
         return jsonify({"error": "File not found"}), 404
     except Exception as e:
         return jsonify({"error": str(e)}), 500
