@@ -78,3 +78,31 @@ def create_app(login_manager=LoginManager(), config_override=dict()):
         load_svg_icons(app)
     
     return app
+
+def init_storage():
+    """Initialize Libcloud storage driver based on environment"""
+    from libcloud.storage.types import Provider
+    from libcloud.storage.providers import get_driver
+    import os
+
+    if os.getenv('STORAGE_PROVIDER') == 's3':
+        # Production: S3 Storage
+        cls = get_driver(Provider.S3)
+        driver = cls(
+            os.getenv('AWS_ACCESS_KEY_ID'),
+            os.getenv('AWS_SECRET_ACCESS_KEY'),
+            region=os.getenv('AWS_REGION', 'us-east-1')
+        )
+        container = driver.get_container(os.getenv('S3_BUCKET'))
+    else:
+        # Development: Local Filesystem
+        upload_dir = os.getenv('UPLOAD_FOLDER', './uploads')
+
+        # IMPORTANT: Create directory if it doesn't exist
+        os.makedirs(upload_dir, exist_ok=True)
+
+        cls = get_driver(Provider.LOCAL)
+        driver = cls(upload_dir)
+        container = driver.get_container('uploads')
+
+    return driver, container
