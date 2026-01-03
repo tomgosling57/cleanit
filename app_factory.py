@@ -42,6 +42,36 @@ def create_app(login_manager=LoginManager(), config_override=dict()):
     app.config.update(config_override)
     Session = init_db(app.config['SQLALCHEMY_DATABASE_URI'])
     app.config['SQLALCHEMY_SESSION'] = Session
+
+    # Initialize Libcloud storage driver
+    from libcloud.storage.types import Provider
+    from libcloud.storage.providers import get_driver
+    import os
+
+    storage_provider = app.config.get('STORAGE_PROVIDER')
+
+    if storage_provider == 's3':
+        # Production: S3 Storage
+        cls = get_driver(Provider.S3)
+        driver = cls(
+            app.config.get('AWS_ACCESS_KEY_ID'),
+            app.config.get('AWS_SECRET_ACCESS_KEY'),
+            region=app.config.get('AWS_REGION', 'us-east-1')
+        )
+        container = driver.get_container(app.config.get('S3_BUCKET'))
+    else:
+        # Development: Local Filesystem
+        upload_dir = app.config.get('UPLOAD_FOLDER', './uploads')
+
+        # IMPORTANT: Create directory if it doesn't exist
+        os.makedirs(upload_dir, exist_ok=True)
+
+        cls = get_driver(Provider.LOCAL)
+        driver = cls(upload_dir)
+        container = driver.get_container('uploads')
+
+    app.config['STORAGE_DRIVER'] = driver
+    app.config['STORAGE_CONTAINER'] = container
     
     login_manager.login_view = 'user.login'
     login_manager.init_app(app)
@@ -79,30 +109,3 @@ def create_app(login_manager=LoginManager(), config_override=dict()):
     
     return app
 
-def init_storage():
-    """Initialize Libcloud storage driver based on environment"""
-    from libcloud.storage.types import Provider
-    from libcloud.storage.providers import get_driver
-    import os
-
-    if os.getenv('STORAGE_PROVIDER') == 's3':
-        # Production: S3 Storage
-        cls = get_driver(Provider.S3)
-        driver = cls(
-            os.getenv('AWS_ACCESS_KEY_ID'),
-            os.getenv('AWS_SECRET_ACCESS_KEY'),
-            region=os.getenv('AWS_REGION', 'us-east-1')
-        )
-        container = driver.get_container(os.getenv('S3_BUCKET'))
-    else:
-        # Development: Local Filesystem
-        upload_dir = os.getenv('UPLOAD_FOLDER', './uploads')
-
-        # IMPORTANT: Create directory if it doesn't exist
-        os.makedirs(upload_dir, exist_ok=True)
-
-        cls = get_driver(Provider.LOCAL)
-        driver = cls(upload_dir)
-        container = driver.get_container('uploads')
-
-    return driver, container
