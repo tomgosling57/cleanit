@@ -3,7 +3,7 @@ import uuid
 from datetime import datetime
 from flask import url_for, current_app
 from werkzeug.utils import secure_filename
-from libcloud.common.types import ObjectDoesNotExistError
+from libcloud.storage.types import ObjectDoesNotExistError
 from libcloud.storage.base import StorageDriver
 
 CHUNK_SIZE = 8192
