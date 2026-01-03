@@ -6,7 +6,7 @@ from werkzeug.utils import secure_filename
 from libcloud.storage.types import ObjectDoesNotExistError
 from libcloud.storage.base import StorageDriver
 
-CHUNK_SIZE = 8192
+CHUNK_SIZE = 8192 # 8KB Practical Limit
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'pdf', 'mp4'}
 MAX_FILE_SIZE = 16 * 1024 * 1024  # 16MB
