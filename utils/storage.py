@@ -40,7 +40,13 @@ def upload_flask_file(flask_file, filename=None):
         iterator=flask_file.stream,
         object_name=unique_filename
     )
+    
+    # Log the full path where the file is expected to be saved
+    if current_app.config.get('STORAGE_PROVIDER') == 'local':
+        full_path = os.path.join(current_app.config['UPLOAD_FOLDER'], unique_filename)
+        current_app.logger.debug(f"File '{unique_filename}' uploaded to local path: {full_path}")
 
+    current_app.logger.debug(f"UPLOAD_FOLDER in storage.py: {current_app.config['UPLOAD_FOLDER']}")
     return unique_filename
 
 
@@ -86,19 +92,24 @@ def delete_file(filename):
 
 def validate_and_upload(flask_file, filename=None):
     """Validate file before uploading"""
+    current_app.logger.debug(f"validate_and_upload called for filename: {flask_file.filename if flask_file else 'None'}")
 
     if not flask_file:
+        current_app.logger.debug("validate_and_upload: No file provided")
         raise ValueError('No file provided')
 
     if not allowed_file(flask_file.filename):
+        current_app.logger.debug(f"validate_and_upload: File type not allowed for {flask_file.filename}")
         raise ValueError('File type not allowed')
 
     # Check file size (requires reading/seeking)
     flask_file.seek(0, 2)  # Seek to end
     size = flask_file.tell()
     flask_file.seek(0)  # Reset to beginning
+    current_app.logger.debug(f"validate_and_upload: File size for {flask_file.filename}: {size} bytes")
 
     if size > MAX_FILE_SIZE:
+        current_app.logger.debug(f"validate_and_upload: File too large for {flask_file.filename}")
         raise ValueError('File too large')
 
     # Upload if validation passes
