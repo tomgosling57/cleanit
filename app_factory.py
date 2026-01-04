@@ -81,8 +81,8 @@ def create_app(login_manager=LoginManager(), config_override=dict()):
         os.makedirs(upload_dir, exist_ok=True)
 
         cls = get_driver(Provider.LOCAL)
-        driver = cls(os.path.dirname(upload_dir))
-        container = driver.get_container(os.path.basename(upload_dir))
+        driver = cls(upload_dir)
+        container = driver.get_container('') # Use an empty string for the container name, making upload_dir the container  
 
     app.config['STORAGE_DRIVER'] = driver
     app.config['STORAGE_CONTAINER'] = container
