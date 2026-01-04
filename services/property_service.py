@@ -32,7 +32,8 @@ class PropertyService:
         
         new_property = Property(
             address=property_data.get('address'),
-            access_notes=property_data.get('access_notes')
+            access_notes=property_data.get('access_notes'),
+            notes=property_data.get('notes')
         )
         self.db_session.add(new_property)
         self.db_session.commit()
@@ -50,6 +51,7 @@ class PropertyService:
 
         property.address = property_data.get('address', property.address)
         property.access_notes = property_data.get('access_notes', property.access_notes)
+        property.notes = property_data.get('notes', property.notes)
 
         self.db_session.commit()
         self.db_session.refresh(property)
