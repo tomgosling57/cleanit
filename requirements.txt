@@ -12,3 +12,4 @@ Flask-WTF==1.2.1
 apache-libcloud>=3.8.0
 boto3>=1.26.0
 fasteners>=0.20
+Pillow==10.2.0
