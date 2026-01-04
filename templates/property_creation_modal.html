@@ -5,32 +5,28 @@
     <h2>Create New Property</h2>
     {% include '_form_response.html' %}
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-    <div class="job-update-compact"> {# Reusing job-update-compact for consistent styling #}
-        <div class="form-group">
-            <div class="form-card address-card">
-                <div class="card-header">
-                    <span class="card-icon"><img src="{{ url_for('static', filename='icons/location-pin.svg') }}" alt="Location Pin" class="icon"></span>
-                    <span class="card-title">Property Details</span>
-                </div>
-                <div class="form-field">
-                    <label for="address">Address</label>
-                    <input type="text" id="address" name="address" required placeholder="Enter property address">
-                </div>
-                <div class="form-field">
-                    <label for="access_notes">Access Notes</label>
-                    <textarea id="access_notes" name="access_notes" rows="3" placeholder="Any specific access instructions"></textarea>
-                </div>
-                <div class="form-field">
-                    <label for="notes">Additional Notes</label>
-                    <textarea id="notes" name="notes" rows="3" placeholder="Any additional notes about the property"></textarea>
-                </div>
-            </div>
+    <div class="form-card address-card">
+        <div class="card-header">
+            <span class="card-icon"><img src="{{ url_for('static', filename='icons/location-pin.svg') }}" alt="Location Pin" class="icon"></span>
+            <span class="card-title">Property Details</span>
         </div>
-        <div class="form-actions">
-            <button type="submit" class="button save-button">
-                <img src="{{ url_for('static', filename='icons/save.svg') }}" alt="Save" class="save-icon icon"> Create Property
-            </button>
-            <button type="button" class="button" onclick="document.getElementById('property-modal').style.display='none'">Cancel</button>
+        <div class="form-field">
+            <label for="address">Address</label>
+            <input type="text" id="address" name="address" required placeholder="Enter property address">
         </div>
+        <div class="form-field">
+            <label for="access_notes">Access Notes</label>
+            <textarea id="access_notes" name="access_notes" rows="3" placeholder="Any specific access instructions"></textarea>
+        </div>
+        <div class="form-field">
+            <label for="notes">Additional Notes</label>
+            <textarea id="notes" name="notes" rows="3" placeholder="Any additional notes about the property"></textarea>
+        </div>
+    </div>
+    <div class="form-actions">
+        <button type="submit" class="button save-button">
+            <img src="{{ url_for('static', filename='icons/save.svg') }}" alt="Save" class="save-icon icon"> Create Property
+        </button>
+        <button type="button" class="button" onclick="document.getElementById('property-modal').style.display='none'">Cancel</button>
     </div>
 </form>
