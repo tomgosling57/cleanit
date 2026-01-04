@@ -32,15 +32,28 @@ def create_app(login_manager=LoginManager(), config_override=dict()):
     if config_override.get('TESTING', False):
         app.config.from_object(TestConfig)
         populate_database(app.config['SQLALCHEMY_DATABASE_URI'])
-    else: 
+    else:
         app.config.from_object(Config)
         if not app.config.get('SECRET_KEY'):
             abort(500, "SECRET_KEY is not set. Please set the SECRET_KEY environment variable for production.")
+    
+    if app.config.get('TESTING', False):
+        import logging
+        import sys
+        app.logger.setLevel(logging.DEBUG)
+        # Remove existing handlers to prevent duplicate logs in tests
+        for handler in list(app.logger.handlers):
+            app.logger.removeHandler(handler)
+        # Add a StreamHandler to direct logs to stderr, which pytest captures
+        handler = logging.StreamHandler(sys.stderr)
+        handler.setLevel(logging.DEBUG)
+        app.logger.addHandler(handler)
+        app.logger.propagate = True
+
+    app.config.update(config_override)
 
     # Initialize CSRF protection, the token will be available in jinja templates via {{ csrf_token() }}
     csrf = CSRFProtect(app)
-    
-    app.config.update(config_override)
     Session = init_db(app.config['SQLALCHEMY_DATABASE_URI'])
     app.config['SQLALCHEMY_SESSION'] = Session
 
