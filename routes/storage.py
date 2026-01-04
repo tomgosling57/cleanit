@@ -1,6 +1,7 @@
 import os
-from flask import Blueprint, send_from_directory, current_app, jsonify
+from flask import Blueprint, send_from_directory, current_app, jsonify, request
 from werkzeug.exceptions import NotFound
+from controllers.storage_controller import upload_file_view
 
 storage_bp = Blueprint('storage', __name__)
 
@@ -16,3 +17,7 @@ def serve_file(filename):
         return jsonify({"error": "File not found"}), 404
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@storage_bp.route('/upload', methods=['POST'])
+def upload():
+    return upload_file_view()
