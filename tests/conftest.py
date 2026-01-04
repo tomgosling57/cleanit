@@ -6,6 +6,7 @@ from app_factory import create_app
 import tempfile
 import os
 import shutil
+import glob
 from playwright.sync_api import Page, BrowserContext
 from unittest.mock import MagicMock, patch
 
@@ -26,17 +27,17 @@ def local_storage_app():
     Uses a temporary upload directory and sets STORAGE_PROVIDER to 'local'.
     """
     login_manager = LoginManager()
-    tmpdir = tempfile.mkdtemp()
-    upload_folder = os.path.join(tmpdir, 'uploads')
+    upload_folder = './uploads'
+    # Ensure the uploads directory exists
     os.makedirs(upload_folder, exist_ok=True)
     
-    # Ensure UPLOAD_FOLDER is an absolute path for send_from_directory
-    absolute_upload_folder = os.path.abspath(upload_folder)
+    # Track files in the upload directory before the test
+    files_before_test = set(glob.glob(os.path.join(upload_folder, '*')))
 
     test_config = {
         'TESTING': True,
         'STORAGE_PROVIDER': 'local',
-        'UPLOAD_FOLDER': absolute_upload_folder,
+        'UPLOAD_FOLDER': os.path.abspath(upload_folder), # Ensure UPLOAD_FOLDER is an absolute path
         'SECRET_KEY': 'testsecret',
         'DATABASE_URL': 'sqlite:///:memory:',
     }
@@ -46,8 +47,14 @@ def local_storage_app():
     with app.app_context():
         yield app
 
-    # Clean up the temporary directory after the test
-    shutil.rmtree(tmpdir, ignore_errors=True)
+    # Clean up only files created by the test
+    files_after_test = set(glob.glob(os.path.join(upload_folder, '*')))
+    new_files = files_after_test - files_before_test
+    for file_path in new_files:
+        try:
+            os.remove(file_path)
+        except OSError as e:
+            print(f"Error removing file {file_path}: {e}")
 
 @pytest.fixture(scope='session')
 def app(test_db_path):
