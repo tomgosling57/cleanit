@@ -99,7 +99,6 @@ def update_property(property_id):
     property_service = PropertyService(db)
 
     address = request.form.get('address')
-    access_notes = request.form.get('access_notes')
 
     if not address:
         teardown_db()
@@ -107,7 +106,8 @@ def update_property(property_id):
 
     property_data = {
         'address': address,
-        'access_notes': access_notes
+        'access_notes': request.form.get('access_notes'),
+        'notes': request.form.get('notes')
     }
 
     updated_property = property_service.update_property(property_id, property_data)
