@@ -322,3 +322,22 @@ def simulate_htmx_delete_and_expect_response(page: Page, server_url: str, endpoi
             }})
         """)
     return response_info
+
+def open_address_book(page: Page) -> None:
+    """Navigate to the address book page"""
+    with page.expect_response("**/address-book**"):
+        page.wait_for_load_state('networkidle')
+        page.get_by_text("Address Book").click()
+    expect(page.locator("#property-list")).to_be_visible()
+
+def get_first_property_card(page: Page) -> Locator:
+    return page.locator(".property-card").first
+
+def open_property_details(page: Page, property_card) -> None:
+    """Open the details of a property from the address book"""
+    property_id = property_card.get_attribute("data-id")
+    with page.expect_response(f"**/property/{property_id}/update**"):
+        page.wait_for_load_state('networkidle')
+        property_card.locator(f".edit-button").click()
+
+    expect(page.locator("#property-details-modal")).to_be_visible()
