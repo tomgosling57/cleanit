@@ -196,6 +196,9 @@ def get_user(user_id):
         flask.Response: A JSON object containing the user's data if found,
                         or a JSON error if the user is not found or an internal server error occurs.
     """
+    if current_user.id != user_id and current_user.role != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 403
+    
     db = get_db()
     user_service = UserService(db)
     try:
