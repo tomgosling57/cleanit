@@ -15,6 +15,7 @@ from services.job_service import JobService
 from services.property_service import PropertyService
 from services.user_service import UserService
 from utils.populate_database import populate_database
+from database import Team, get_db, teardown_db, User, Property, Job, Assignment
 
 @pytest.fixture(scope='session')
 def test_db_path():
@@ -106,6 +107,47 @@ def page(context: BrowserContext) -> Generator[Page, None, None]:
 def server_url(live_server):
     """Get the base URL from the live server"""
     return live_server.url()
+
+@pytest.fixture(scope='function')
+def seeded_test_data(app):
+    """
+    Fixture that provides easy access to seeded test data (users, properties, jobs, assignments).
+    Depends on 'app' to ensure the database is populated with deterministic data.
+    """
+    with app.app_context():
+        db_session = get_db()
+        try:
+            users = db_session.query(User).all()
+            properties = db_session.query(Property).all()
+            jobs = db_session.query(Job).all()
+            teams = db_session.query(Team).all()
+            assignments = db_session.query(Assignment).all()
+            
+            
+            seeded_users = {user.email: user for user in users}
+            seeded_properties = {prop.address: prop for prop in properties}
+            seeded_jobs = {job.id: job for job in jobs}
+            seeded_teams = {team.name: team for team in teams}
+            seeded_assignments = {}
+            for assignment in assignments:
+                job_key = f"{assignment.job.property.address} {assignment.job.date.strftime('%Y-%m-%d')} {assignment.job.time.strftime('%H:%M')}"
+                if assignment.user:
+                    assignment_key = f"Job: {job_key} | User: {assignment.user.email}"
+                elif assignment.team:
+                    assignment_key = f"Job: {job_key} | Team: {assignment.team.name}"
+                else:
+                    continue # Should not happen in seeded data
+                seeded_assignments[assignment_key] = assignment
+            
+            return {
+                'users': seeded_users,
+                'properties': seeded_properties,
+                'jobs': seeded_jobs,
+                'teams': seeded_teams,
+                'assignments': seeded_assignments,
+            }
+        finally:
+            teardown_db()
 
 # Database Service Fixtures
 @pytest.fixture
