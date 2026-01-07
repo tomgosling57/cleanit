@@ -417,6 +417,8 @@ def delete_user(user_id):
     Returns:
         flask.Response: A rendered HTML fragment displaying the updated user list and any error messages.
     """
+    if current_user.role != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 403
     db = get_db()
     user_service = UserService(db)
     success = user_service.delete_user(user_id)
