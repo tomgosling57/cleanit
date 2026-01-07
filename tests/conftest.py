@@ -10,6 +10,10 @@ import glob
 from playwright.sync_api import Page, BrowserContext
 from unittest.mock import MagicMock, patch
 
+from services.assignment_service import AssignmentService
+from services.job_service import JobService
+from services.property_service import PropertyService
+from services.user_service import UserService
 from utils.populate_database import populate_database
 
 @pytest.fixture(scope='session')
@@ -102,3 +106,27 @@ def page(context: BrowserContext) -> Generator[Page, None, None]:
 def server_url(live_server):
     """Get the base URL from the live server"""
     return live_server.url()
+
+# Database Service Fixtures
+@pytest.fixture
+def job_service(app):
+    with app.app_context():
+        yield JobService(app.config['SQLALCHEMY_SESSION']())
+
+@pytest.fixture
+def assignment_service(app):
+    with app.app_context():
+        yield AssignmentService(app.config['SQLALCHEMY_SESSION']())
+
+@pytest.fixture
+def user_service(app):
+    with app.app_context():
+        yield UserService(app.config['SQLALCHEMY_SESSION']())
+
+@pytest.fixture
+def property_service(app):
+    with app.app_context():
+        yield PropertyService(app.config['SQLALCHEMY_SESSION']())
+
+
+
