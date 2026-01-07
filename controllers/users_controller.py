@@ -70,7 +70,9 @@ def update_user_password(user_id):
     """
     if not current_user.is_authenticated:
         return jsonify({'error': 'Unauthorized'}), 403
-
+    if current_user.id != user_id and current_user.role != 'admin':
+            return jsonify({'error': 'Unauthorized'}), 403
+        
     old_password = request.form.get('old_password')
     new_password = request.form.get('new_password')
     new_password_confirmation = request.form.get('new_password_confirmation')
