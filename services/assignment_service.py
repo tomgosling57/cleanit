@@ -1,4 +1,4 @@
-
+# services/assignment_service.py
 from collections import defaultdict
 from database import Assignment, User, Job, Team
 from sqlalchemy import and_
@@ -85,7 +85,7 @@ class AssignmentService:
         ).first()
         return assignment is not None
 
-    def team_assigned_two_job(self, team_id, job_id):
+    def team_assigned_to_job(self, team_id, job_id):
         assignment = self.db_session.query(Assignment).filter(
             and_(
                 Assignment.job_id == job_id,
