@@ -75,7 +75,24 @@ class AssignmentService:
             self.create_assignment(job_id=job.id, team_id=new_team.id)
         else:
             return {"Job already assigned": f"Job {job.id} is already assigned to team {new_team.id}. No new assignment created."}
-    
+
+    def user_assigned_to_job(self, user_id, job_id):
+        assignment = self.db_session.query(Assignment).filter(
+            and_(
+                Assignment.job_id == job_id,
+                Assignment.user_id == user_id
+            )
+        ).first()
+        return assignment is not None
+
+    def team_assigned_two_job(self, team_id, job_id):
+        assignment = self.db_session.query(Assignment).filter(
+            and_(
+                Assignment.job_id == job_id,
+                Assignment.team_id == team_id
+            )
+        ).first()
+        return assignment is not None    
 
     def get_users_for_job(self, job_id):
         assignments = self.db_session.query(Assignment).filter(
