@@ -321,7 +321,9 @@ def update_user(user_id):
     """
     if not current_user.is_authenticated:
         return jsonify({'error': 'Unauthorized'}), 403
-
+    if current_user.id != user_id and current_user.role != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 403
+    
     db = get_db()    
     user, errors = _update_user(user_id, db)
     # Render errors to the UI
