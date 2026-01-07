@@ -374,7 +374,8 @@ def create_user():
     """
     if not current_user.is_authenticated:
         return jsonify({'error': 'Unauthorized'}), 403
-    
+    if current_user.role != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 403    
     data = request.form.to_dict()
     if not data:
         # Return failure a HTTP status to prevent the javascript from closing the modal
