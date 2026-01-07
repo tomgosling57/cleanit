@@ -144,27 +144,25 @@ class JobHelper:
 
 
     @staticmethod
-    def render_job_details_fragment(db, job_id):
+    def render_job_details_fragment(db_session, job_id):
         """
         Fetches job details and renders the job details modal fragment.
         Returns the HTML for the job details modal.
         """
-        job_service = JobService(db)
+        job_service = JobService(db_session)
         job = job_service.get_job_details(job_id)
         return render_template_string('{% include "job_details_modal.html" %}', job=job, DATETIME_FORMATS=DATETIME_FORMATS)
 
     @staticmethod
-    def render_job_list_fragment(db, current_user, date_str):
+    def render_job_list_fragment(db_session, current_user, date_str):
         """
         Fetches the list of jobs for the current user/team on a specific date and renders the job list fragment.
         Returns the HTML for the job list.
         """
-        job_service = JobService(db)
-        team_service = TeamService(db) # Added team_service
+        job_service = JobService(db_session)
+        team_service = TeamService(db_session)
         date_obj = datetime.strptime(date_str, DATETIME_FORMATS["DATE_FORMAT"]).date()
-        print(f"Fetching jobs for User ID: {current_user.id}, Team ID: {current_user.team_id}, Date: {date_str}")
         assigned_jobs = job_service.get_jobs_for_user_on_date(current_user.id, current_user.team_id, date_obj)
-        print(f"Number of Jobs: {len(assigned_jobs)}")
 
         team_leader_id = None
         if current_user.team_id:
@@ -175,14 +173,14 @@ class JobHelper:
         return render_template_string('{% include "job_list_fragment.html" %}', jobs=assigned_jobs, DATETIME_FORMATS=DATETIME_FORMATS, view_type='normal', current_user=current_user, team_leader_id=team_leader_id)
 
     @staticmethod
-    def render_teams_timetable_fragment(db, current_user, date_str):
+    def render_teams_timetable_fragment(db_session, current_user, date_str):
         """
         Fetches the table of jobs categorized by their team assignments for a specific date.
         Returns the HTML of the Teams Timetable.
         """
-        assignment_service = AssignmentService(db)
-        job_service = JobService(db)
-        team_service = TeamService(db)
+        assignment_service = AssignmentService(db_session)
+        job_service = JobService(db_session)
+        team_service = TeamService(db_session)
         date_obj = datetime.strptime(date_str, DATETIME_FORMATS["DATE_FORMAT"]).date()
         all_teams = team_service.get_all_teams()
         jobs_by_team = assignment_service.get_jobs_grouped_by_team_for_date(date_obj)
@@ -208,11 +206,11 @@ class JobHelper:
         return response_html
 
     @staticmethod
-    def render_job_updates(db, job_id, current_user, selected_date_for_fetch):
+    def render_job_updates(db_session, job_id, current_user, selected_date_for_fetch):
         """
         Fetches updated job details and renders the job details and job list fragments.
         Returns a tuple: (job_details_html, job_list_html)
         """
-        job_details_html = JobHelper.render_job_details_fragment(db, job_id)
-        job_list_html = JobHelper.render_job_list_fragment(db, current_user, selected_date_for_fetch)
+        job_details_html = JobHelper.render_job_details_fragment(db_session, job_id)
+        job_list_html = JobHelper.render_job_list_fragment(db_session, current_user, selected_date_for_fetch)
         return job_details_html, job_list_html
