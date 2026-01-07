@@ -353,7 +353,8 @@ def get_user_creation_form():
     """
     if not current_user.is_authenticated:
         return jsonify({'error': 'Unauthorized'}), 403
-    
+    if current_user.role != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 403
     db = get_db()
     user_service = UserService(db)
     roles = user_service.get_roles()
