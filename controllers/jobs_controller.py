@@ -21,7 +21,7 @@ class JobController:
     
     def __init__(self, job_service: JobService, team_service: TeamService,
                  user_service: UserService, property_service: PropertyService,
-                 assignment_service: AssignmentService):
+                 assignment_service: AssignmentService, job_helper: JobHelper):
         """
         Initialize the controller with injected service dependencies.
         
@@ -31,26 +31,28 @@ class JobController:
             user_service: Service for user operations
             property_service: Service for property operations
             assignment_service: Service for assignment operations
+            job_helper: Helper class for job-related operations
         """
         self.job_service = job_service
         self.team_service = team_service
         self.user_service = user_service
         self.property_service = property_service
         self.assignment_service = assignment_service
+        self.job_helper = job_helper
 
     def _handle_errors(self, errors=None, view_type=None):
         db = get_db()
         date = request.args.get('date')
-        date_to_render = JobHelper.process_selected_date(date)
+        date_to_render = self.job_helper.process_selected_date(date)
 
         if not view_type:
             # Retrieve view_type from request.form or request.args, defaulting to 'normal'
             view_type = request.form.get('view_type') or request.args.get('view_type', 'normal')
 
         if view_type == 'team':
-            main_fragment_html = JobHelper.render_teams_timetable_fragment(db, current_user, date_to_render)
+            main_fragment_html = self.job_helper.render_teams_timetable_fragment(current_user, date_to_render)
         else:
-            main_fragment_html = JobHelper.render_job_list_fragment(db, current_user, date_to_render)
+            main_fragment_html = self.job_helper.render_job_list_fragment(current_user, date_to_render)
         
         response_html = render_template_string(
             """
@@ -122,7 +124,7 @@ class JobController:
             
     def timetable(self, date: str = None):
         db = get_db()
-        date = JobHelper.process_selected_date(date)
+        date = self.job_helper.process_selected_date(date)
         # Convert the session date string to a date object for service calls
         date_obj = datetime.strptime(date, DATETIME_FORMATS["DATE_FORMAT"]).date()
 
@@ -143,7 +145,7 @@ class JobController:
 
     def team_timetable(self, date: str = None):
         db = get_db()
-        date = JobHelper.process_selected_date(date)
+        date = self.job_helper.process_selected_date(date)
         # Convert the session date string to a date object for service calls
         date_obj = datetime.strptime(date, DATETIME_FORMATS["DATE_FORMAT"]).date()
 
@@ -167,7 +169,7 @@ class JobController:
         if not job:
             return self._handle_errors({'Job Not Found': ERRORS['Job Not Found']})
 
-        updated_job_data, assigned_teams, assigned_cleaners, error_response = JobHelper.process_job_form()
+        updated_job_data, assigned_teams, assigned_cleaners, error_response = self.job_helper.process_job_form()
         if error_response:
             teardown_db()
             return error_response
@@ -177,15 +179,15 @@ class JobController:
 
         if updated_job:
             # Determine selected_date and view_type for rendering
-            date_to_render = JobHelper.process_selected_date()
+            date_to_render = self.job_helper.process_selected_date()
             view_type_to_render = request.form.get('view_type')
 
             if view_type_to_render == 'team':
-                response_html = JobHelper.render_teams_timetable_fragment(db, current_user, date_to_render)
-            if view_type_to_render == 'property':
+                response_html = self.job_helper.render_teams_timetable_fragment(current_user, date_to_render)
+            elif view_type_to_render == 'property':
                 response_html = get_property_jobs_modal_content(session['property_id'])
             else:
-                response_html = JobHelper.render_job_list_fragment(db, current_user, date_to_render)
+                response_html = self.job_helper.render_job_list_fragment(current_user, date_to_render)
             
             teardown_db()
             return response_html
@@ -301,7 +303,7 @@ class JobController:
             return redirect(url_for('index'))
 
         db = get_db()
-        new_job_data, assigned_teams, assigned_cleaners, error_response = JobHelper.process_job_form()
+        new_job_data, assigned_teams, assigned_cleaners, error_response = self.job_helper.process_job_form()
 
         if error_response:
             teardown_db()
@@ -313,13 +315,13 @@ class JobController:
 
         if new_job:
             # Determine selected_date and view_type for rendering
-            date_to_render = JobHelper.process_selected_date()
+            date_to_render = self.job_helper.process_selected_date()
             view_type_to_render = request.form.get('view_type')
 
             if view_type_to_render == 'team':
-                response_html = JobHelper.render_teams_timetable_fragment(db, current_user, date_to_render)
+                response_html = self.job_helper.render_teams_timetable_fragment(current_user, date_to_render)
             else:
-                response_html = JobHelper.render_job_list_fragment(db, current_user, date_to_render)
+                response_html = self.job_helper.render_job_list_fragment(current_user, date_to_render)
             
             teardown_db()
             return response_html
@@ -336,14 +338,14 @@ class JobController:
         success = self.job_service.delete_job(job_id)
         if success:
             # Determine selected_date and view_type for rendering
-            date_to_render = JobHelper.process_selected_date()
+            date_to_render = self.job_helper.process_selected_date()
 
             if view_type == 'team':
-                response_html = JobHelper.render_teams_timetable_fragment(db, current_user, date_to_render)
+                response_html = self.job_helper.render_teams_timetable_fragment(current_user, date_to_render)
             else:
                 # Default to normal job list if view_type is not 'team' or not provided
-                response_html = JobHelper.render_job_list_fragment(
-                    db, current_user, date_to_render
+                response_html = self.job_helper.render_job_list_fragment(
+                    current_user, date_to_render
                 )
             teardown_db()
             return response_html
@@ -368,7 +370,7 @@ class JobController:
         self.assignment_service.update_job_team_assignment(job, new_team, old_team)
         
         # Re-render the entire team timetable view
-        selected_date_for_fetch = JobHelper.process_selected_date()
-        response_html = JobHelper.render_teams_timetable_fragment(db, current_user, selected_date_for_fetch)
+        selected_date_for_fetch = self.job_helper.process_selected_date()
+        response_html = self.job_helper.render_teams_timetable_fragment(current_user, selected_date_for_fetch)
         teardown_db()
         return response_html
