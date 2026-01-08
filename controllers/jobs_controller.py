@@ -6,7 +6,6 @@ from services.team_service import TeamService
 from services.user_service import UserService
 from services.property_service import PropertyService
 from services.assignment_service import AssignmentService
-from database import get_db, teardown_db
 from datetime import date, datetime
 from collections import defaultdict
 from utils.job_helper import JobHelper
@@ -41,7 +40,6 @@ class JobController:
         self.job_helper = job_helper
 
     def _handle_errors(self, errors=None, view_type=None):
-        db = get_db()
         date = request.args.get('date')
         date_to_render = self.job_helper.process_selected_date(date)
 
@@ -64,7 +62,6 @@ class JobController:
             is_oob_swap=True,
             main_fragment_html=main_fragment_html
         )
-        teardown_db()
         return response_html, 200
 
     def update_job_status(self, job_id):
@@ -74,7 +71,6 @@ class JobController:
         is_complete = request.form.get('is_complete') == 'True'
         view_type = request.form.get('view_type') or request.args.get('view_type', 'normal')
 
-        db = get_db()
         job = self.job_service.update_job_completion_status(job_id, is_complete)
         
         if job:
@@ -82,7 +78,6 @@ class JobController:
             # This prevents DetachedInstanceError when rendering the template
             _ = job.property.address
             response = render_template_string('{% include "job_status_fragment.html" %} {% include "job_card.html" %}', job=job, is_oob_swap=True, view_type=view_type, DATETIME_FORMATS=DATETIME_FORMATS)
-            teardown_db()
             return response
 
         return self._handle_errors({'Job Not Found': ERRORS['Job Not Found']}, view_type=view_type)
@@ -94,13 +89,11 @@ class JobController:
         if current_user.role not in ['admin', 'supervisor'] and (current_user.role == 'user' and not (job_is_assigned_to_current_user or job_is_assigned_to_current_user_team)):
             return jsonify({'error': 'Unauthorized'}), 403
 
-        db = get_db()
         job = self.job_service.get_job_details(job_id)
         
         if job:
             cleaners = self.assignment_service.get_users_for_job(job_id)
             teams = self.assignment_service.get_teams_for_job(job_id)
-            teardown_db()
 
             selected_date = session.get('selected_date', datetime.today().date())
             view_type = request.args.get('view_type', 'normal')
@@ -112,18 +105,15 @@ class JobController:
         if current_user.role != 'admin':
             return jsonify({'error': 'Unauthorized'}), 403
 
-        db = get_db()
         users = self.user_service.get_all_users()
         teams = self.team_service.get_all_teams()
         properties = self.property_service.get_all_properties()
         
         selected_date_obj = session.get('selected_date', datetime.today().date())
         
-        teardown_db()
         return render_template('job_creation_modal.html', users=users, teams=teams, properties=properties, DATETIME_FORMATS=DATETIME_FORMATS, today=datetime.today(), selected_date=selected_date_obj)
             
     def timetable(self, date: str = None):
-        db = get_db()
         date = self.job_helper.process_selected_date(date)
         # Convert the session date string to a date object for service calls
         date_obj = datetime.strptime(date, DATETIME_FORMATS["DATE_FORMAT"]).date()
@@ -140,11 +130,9 @@ class JobController:
         response = render_template('timetable.html', jobs=jobs, team_leader_id=team_leader_id,
                                user_id=current_user.id, selected_date=selected_date, DATETIME_FORMATS=DATETIME_FORMATS,
                                all_teams=all_teams)
-        teardown_db()
         return response
 
     def team_timetable(self, date: str = None):
-        db = get_db()
         date = self.job_helper.process_selected_date(date)
         # Convert the session date string to a date object for service calls
         date_obj = datetime.strptime(date, DATETIME_FORMATS["DATE_FORMAT"]).date()
@@ -157,21 +145,18 @@ class JobController:
         current_user.selected_date = selected_date
         response = render_template('team_timetable.html', selected_date=selected_date, DATETIME_FORMATS=DATETIME_FORMATS,
                                    all_teams=all_teams, jobs_by_team=jobs_by_team)
-        teardown_db()
         return response
 
     def update_job(self, job_id):
         if current_user.role != 'admin':
             return jsonify({'error': 'Unauthorized'}), 403
 
-        db = get_db()
         job = self.job_service.get_job_details(job_id)
         if not job:
             return self._handle_errors({'Job Not Found': ERRORS['Job Not Found']})
 
         updated_job_data, assigned_teams, assigned_cleaners, error_response = self.job_helper.process_job_form()
         if error_response:
-            teardown_db()
             return error_response
 
         updated_job = self.job_service.update_job(job_id, updated_job_data)
@@ -189,7 +174,6 @@ class JobController:
             else:
                 response_html = self.job_helper.render_job_list_fragment(current_user, date_to_render)
             
-            teardown_db()
             return response_html
         
         return self._handle_errors({'Job Not Found': ERRORS['Job Not Found']}, view_type=view_type_to_render)
@@ -207,8 +191,6 @@ class JobController:
         except ValueError:
             return jsonify({'error': 'Invalid date format'}), 400
 
-        db = get_db()
-        
         # Get all teams and users
         all_teams = self.team_service.get_all_teams()
         
@@ -263,8 +245,6 @@ class JobController:
                     else:
                         fully_booked_cleaners.append(user_dict)
         
-        teardown_db()
-        
         categorized_assignments = {
             'teams': {
                 'available': available_teams,
@@ -284,14 +264,12 @@ class JobController:
         if current_user.role != 'admin':
             return jsonify({'error': 'Unauthorized'}), 403
 
-        db = get_db()
         job = self.job_service.get_job_details(job_id)
         teams = self.team_service.get_all_teams()
         users = self.user_service.get_all_users()
         job_users = self.assignment_service.get_users_for_job(job_id)
         job_teams = self.assignment_service.get_teams_for_job(job_id)
         properties = self.property_service.get_all_properties()
-        teardown_db()
         if job:
             selected_date = session.get('selected_date', datetime.today().date())
             return render_template('job_update_modal.html', job=job, users=users, job_cleaners=job_users, properties=properties, teams=teams, job_teams=job_teams, DATETIME_FORMATS=DATETIME_FORMATS, selected_date=selected_date)
@@ -302,11 +280,9 @@ class JobController:
             flash('Unauthorized access', 'error')
             return redirect(url_for('index'))
 
-        db = get_db()
         new_job_data, assigned_teams, assigned_cleaners, error_response = self.job_helper.process_job_form()
 
         if error_response:
-            teardown_db()
             return error_response
         
         new_job_data['is_complete'] = False # New jobs are not complete by default
@@ -323,9 +299,7 @@ class JobController:
             else:
                 response_html = self.job_helper.render_job_list_fragment(current_user, date_to_render)
             
-            teardown_db()
             return response_html
-        teardown_db()
         view_type_to_render = request.form.get('view_type') or request.args.get('view_type', 'normal')
         return self._handle_errors({'Failed to create job': 'Failed to create job'}, view_type=view_type_to_render)
 
@@ -334,7 +308,6 @@ class JobController:
         if current_user.role != 'admin':
             return jsonify({'error': 'Unauthorized'}), 403
 
-        db = get_db()
         success = self.job_service.delete_job(job_id)
         if success:
             # Determine selected_date and view_type for rendering
@@ -347,7 +320,6 @@ class JobController:
                 response_html = self.job_helper.render_job_list_fragment(
                     current_user, date_to_render
                 )
-            teardown_db()
             return response_html
             
         return self._handle_errors({'Job Not Found': ERRORS['Job Not Found']}, view_type=view_type)
@@ -356,7 +328,6 @@ class JobController:
         if not current_user.is_authenticated or current_user.role != 'admin':
             return jsonify({'success': False, 'error': 'Unauthorized'}), 403
 
-        db = get_db()
         job = self.job_service.get_job_details(request.form.get('job_id'))
         view_type = request.form.get('view_type') or request.args.get('view_type', 'normal')
         if not job:
@@ -372,5 +343,4 @@ class JobController:
         # Re-render the entire team timetable view
         selected_date_for_fetch = self.job_helper.process_selected_date()
         response_html = self.job_helper.render_teams_timetable_fragment(current_user, selected_date_for_fetch)
-        teardown_db()
         return response_html
