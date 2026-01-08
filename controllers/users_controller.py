@@ -45,6 +45,9 @@ def get_user_update_password_form(user_id):
     """
     if not current_user.is_authenticated:
         return jsonify({'error': 'Unauthorized'}), 403
+    if current_user.id != user_id and current_user.role != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 403
+    
     db = get_db()
     user_service = UserService(db)
     user = user_service.get_user_by_id(user_id)
@@ -67,7 +70,9 @@ def update_user_password(user_id):
     """
     if not current_user.is_authenticated:
         return jsonify({'error': 'Unauthorized'}), 403
-
+    if current_user.id != user_id and current_user.role != 'admin':
+            return jsonify({'error': 'Unauthorized'}), 403
+        
     old_password = request.form.get('old_password')
     new_password = request.form.get('new_password')
     new_password_confirmation = request.form.get('new_password_confirmation')
@@ -191,6 +196,9 @@ def get_user(user_id):
         flask.Response: A JSON object containing the user's data if found,
                         or a JSON error if the user is not found or an internal server error occurs.
     """
+    if current_user.id != user_id and current_user.role != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 403
+    
     db = get_db()
     user_service = UserService(db)
     try:
@@ -313,7 +321,9 @@ def update_user(user_id):
     """
     if not current_user.is_authenticated:
         return jsonify({'error': 'Unauthorized'}), 403
-
+    if current_user.id != user_id and current_user.role != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 403
+    
     db = get_db()    
     user, errors = _update_user(user_id, db)
     # Render errors to the UI
@@ -343,7 +353,8 @@ def get_user_creation_form():
     """
     if not current_user.is_authenticated:
         return jsonify({'error': 'Unauthorized'}), 403
-    
+    if current_user.role != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 403
     db = get_db()
     user_service = UserService(db)
     roles = user_service.get_roles()
@@ -363,7 +374,8 @@ def create_user():
     """
     if not current_user.is_authenticated:
         return jsonify({'error': 'Unauthorized'}), 403
-    
+    if current_user.role != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 403    
     data = request.form.to_dict()
     if not data:
         # Return failure a HTTP status to prevent the javascript from closing the modal
@@ -405,6 +417,8 @@ def delete_user(user_id):
     Returns:
         flask.Response: A rendered HTML fragment displaying the updated user list and any error messages.
     """
+    if current_user.role != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 403
     db = get_db()
     user_service = UserService(db)
     success = user_service.delete_user(user_id)
