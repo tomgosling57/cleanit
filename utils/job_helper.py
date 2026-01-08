@@ -7,9 +7,22 @@ from flask_login import current_user
 
 from services.team_service import TeamService
 
+
 class JobHelper:
-    @staticmethod
-    def extract_job_form_data():
+    def __init__(self, job_service: JobService, team_service: TeamService, assignment_service: AssignmentService):
+        """
+        Initialize JobHelper with injected service dependencies.
+        
+        Args:
+            job_service: Service for job operations
+            team_service: Service for team operations  
+            assignment_service: Service for assignment operations
+        """
+        self.job_service = job_service
+        self.team_service = team_service
+        self.assignment_service = assignment_service
+
+    def extract_job_form_data(self):
         """Extracts job-related data from the request form."""
         return {
             'property_id': request.form.get('property_id'),
@@ -23,8 +36,7 @@ class JobHelper:
             'notes': request.form.get('notes')
         }
 
-    @staticmethod
-    def validate_job_form_data(form_data):
+    def validate_job_form_data(self, form_data):
         """Validates job form data and returns an errors dictionary."""
         errors = {}
         if not form_data['property_id']:
@@ -37,8 +49,7 @@ class JobHelper:
             errors['end_time'] = 'End time is required.'
         return errors
 
-    @staticmethod
-    def parse_job_datetime(date_str, time_str, end_time_str, arrival_datetime_str):
+    def parse_job_datetime(self, date_str, time_str, end_time_str, arrival_datetime_str):
         """Parses date and time strings into datetime objects."""
         errors = {}
         job_date = None
@@ -70,8 +81,7 @@ class JobHelper:
         
         return job_date, job_time, job_end_time, job_arrival_datetime, errors
 
-    @staticmethod
-    def prepare_job_data(parsed_data, notes, job_type, property_id):
+    def prepare_job_data(self, parsed_data, notes, job_type, property_id):
         """Prepares a dictionary of job data for service calls."""
         return {
             'date': parsed_data['job_date'],
@@ -83,31 +93,29 @@ class JobHelper:
             'property_id': property_id
         }
 
-    @staticmethod
-    def render_response(errors):
+    def render_response(self, errors):
         """Renders form errors using the _form_response.html template."""
         return render_template_string('{% include "_form_response.html" %}', errors=errors), 400
 
-    @staticmethod
-    def process_job_form():
+    def process_job_form(self):
         """
         Orchestrates the extraction, validation, and parsing of job form data.
         Returns a tuple: (job_data, assigned_teams, assigned_cleaners, error_response)
         If an error occurs, job_data, assigned_teams, assigned_cleaners will be None,
         and error_response will contain the Flask response.
         """
-        form_data = JobHelper.extract_job_form_data()
+        form_data = self.extract_job_form_data()
         
-        errors = JobHelper.validate_job_form_data(form_data)
+        errors = self.validate_job_form_data(form_data)
         if errors:
-            return None, None, None, JobHelper.render_response(errors)
+            return None, None, None, self.render_response(errors)
 
-        job_date, job_time, job_end_time, job_arrival_datetime, datetime_response = JobHelper.parse_job_datetime(
+        job_date, job_time, job_end_time, job_arrival_datetime, datetime_response = self.parse_job_datetime(
             form_data['date_str'], form_data['time_str'], form_data['end_time_str'], form_data['arrival_datetime_str']
         )
 
         if datetime_response:
-            return None, None, None, JobHelper.render_response(datetime_response)
+            return None, None, None, self.render_response(datetime_response)
 
         parsed_data = {
             'job_date': job_date,
@@ -116,7 +124,7 @@ class JobHelper:
             'job_arrival_datetime': job_arrival_datetime
         }
 
-        job_data = JobHelper.prepare_job_data(
+        job_data = self.prepare_job_data(
             parsed_data,
             form_data['notes'],
             form_data['job_type'],
@@ -125,8 +133,7 @@ class JobHelper:
         
         return job_data, form_data['assigned_teams'], form_data['assigned_cleaners'], None
 
-    @staticmethod
-    def process_selected_date(date: str = None):
+    def process_selected_date(self, date: str = None):
         """Chooses the right date value for the timetable views. If the given date is not none it will 
         return the given date otherwise it will use the date value stored in this session or else today's date.
         
@@ -140,54 +147,43 @@ class JobHelper:
             date = session['selected_date']
         
         return date
-        
 
-
-    @staticmethod
-    def render_job_details_fragment(db_session, job_id):
+    def render_job_details_fragment(self, job_id):
         """
         Fetches job details and renders the job details modal fragment.
         Returns the HTML for the job details modal.
         """
-        job_service = JobService(db_session)
-        job = job_service.get_job_details(job_id)
+        job = self.job_service.get_job_details(job_id)
         return render_template_string('{% include "job_details_modal.html" %}', job=job, DATETIME_FORMATS=DATETIME_FORMATS)
 
-    @staticmethod
-    def render_job_list_fragment(db_session, current_user, date_str):
+    def render_job_list_fragment(self, current_user, date_str):
         """
         Fetches the list of jobs for the current user/team on a specific date and renders the job list fragment.
         Returns the HTML for the job list.
         """
-        job_service = JobService(db_session)
-        team_service = TeamService(db_session)
         date_obj = datetime.strptime(date_str, DATETIME_FORMATS["DATE_FORMAT"]).date()
-        assigned_jobs = job_service.get_jobs_for_user_on_date(current_user.id, current_user.team_id, date_obj)
+        assigned_jobs = self.job_service.get_jobs_for_user_on_date(current_user.id, current_user.team_id, date_obj)
 
         team_leader_id = None
         if current_user.team_id:
-            current_user_team = team_service.get_team(current_user.team_id)
+            current_user_team = self.team_service.get_team(current_user.team_id)
             if current_user_team:
                 team_leader_id = current_user_team.team_leader_id
 
         return render_template_string('{% include "job_list_fragment.html" %}', jobs=assigned_jobs, DATETIME_FORMATS=DATETIME_FORMATS, view_type='normal', current_user=current_user, team_leader_id=team_leader_id)
 
-    @staticmethod
-    def render_teams_timetable_fragment(db_session, current_user, date_str):
+    def render_teams_timetable_fragment(self, current_user, date_str):
         """
         Fetches the table of jobs categorized by their team assignments for a specific date.
         Returns the HTML of the Teams Timetable.
         """
-        assignment_service = AssignmentService(db_session)
-        job_service = JobService(db_session)
-        team_service = TeamService(db_session)
         date_obj = datetime.strptime(date_str, DATETIME_FORMATS["DATE_FORMAT"]).date()
-        all_teams = team_service.get_all_teams()
-        jobs_by_team = assignment_service.get_jobs_grouped_by_team_for_date(date_obj)
+        all_teams = self.team_service.get_all_teams()
+        jobs_by_team = self.assignment_service.get_jobs_grouped_by_team_for_date(date_obj)
         
         team_leader_id = None
         if current_user.team_id:
-            current_user_team = team_service.get_team(current_user.team_id)
+            current_user_team = self.team_service.get_team(current_user.team_id)
             if current_user_team:
                 team_leader_id = current_user_team.team_leader_id
 
@@ -205,12 +201,11 @@ class JobHelper:
         )
         return response_html
 
-    @staticmethod
-    def render_job_updates(db_session, job_id, current_user, selected_date_for_fetch):
+    def render_job_updates(self, job_id, current_user, selected_date_for_fetch):
         """
         Fetches updated job details and renders the job details and job list fragments.
         Returns a tuple: (job_details_html, job_list_html)
         """
-        job_details_html = JobHelper.render_job_details_fragment(db_session, job_id)
-        job_list_html = JobHelper.render_job_list_fragment(db_session, current_user, selected_date_for_fetch)
+        job_details_html = self.render_job_details_fragment(job_id)
+        job_list_html = self.render_job_list_fragment(current_user, selected_date_for_fetch)
         return job_details_html, job_list_html
