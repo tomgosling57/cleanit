@@ -9,7 +9,6 @@ from services.assignment_service import AssignmentService
 from datetime import date, datetime
 from collections import defaultdict
 from utils.job_helper import JobHelper
-from controllers.property_controller import get_property_jobs_modal_content
 
 ERRORS = {'Job Not Found': 'Something went wrong! That job no longer exists.',
           'Missing Reassignment Details': "Missing job_id or new_team_id"}
@@ -170,7 +169,17 @@ class JobController:
             if view_type_to_render == 'team':
                 response_html = self.job_helper.render_teams_timetable_fragment(current_user, date_to_render)
             elif view_type_to_render == 'property':
-                response_html = get_property_jobs_modal_content(session['property_id'])
+                # Render property jobs modal directly (replacing get_property_jobs_modal_content)
+                property_id = session.get('property_id')
+                if property_id:
+                    property = self.property_service.get_property_by_id(property_id)
+                    if property:
+                        jobs = self.job_service.get_jobs_by_property_id(property_id)
+                        response_html = render_template('property_jobs_modal.html', property=property, jobs=jobs, DATETIME_FORMATS=DATETIME_FORMATS)
+                    else:
+                        response_html = jsonify({'error': 'Property not found'}), 404
+                else:
+                    response_html = jsonify({'error': 'Property ID not found in session'}), 400
             else:
                 response_html = self.job_helper.render_job_list_fragment(current_user, date_to_render)
             
