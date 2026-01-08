@@ -1,7 +1,13 @@
-from flask import Blueprint, request
+from flask import Blueprint, request, g
 from flask_login import login_required
-from controllers import jobs_controller
-from database import teardown_db
+from database import get_db, teardown_db
+from services.job_service import JobService
+from services.team_service import TeamService
+from services.user_service import UserService
+from services.property_service import PropertyService
+from services.assignment_service import AssignmentService
+from utils.job_helper import JobHelper
+from controllers.jobs_controller import JobController
 
 job_bp = Blueprint('job', __name__, url_prefix='/jobs')
 
@@ -9,51 +15,78 @@ job_bp = Blueprint('job', __name__, url_prefix='/jobs')
 def teardown_job_db(exception=None):
     teardown_db(exception)
 
+def get_job_controller():
+    """Create and return a JobController instance with request-level database session."""
+    db_session = get_db()
+    job_service = JobService(db_session)
+    team_service = TeamService(db_session)
+    user_service = UserService(db_session)
+    property_service = PropertyService(db_session)
+    assignment_service = AssignmentService(db_session)
+    job_helper = JobHelper(job_service, team_service, assignment_service)
+    controller = JobController(
+        job_service=job_service,
+        team_service=team_service,
+        user_service=user_service,
+        property_service=property_service,
+        assignment_service=assignment_service,
+        job_helper=job_helper
+    )
+    return controller
+
 @job_bp.route('/', methods=['GET'])
 @login_required
 def timetable():
     date = request.args.get('date')
-    return jobs_controller.timetable(date)
+    controller = get_job_controller()
+    return controller.timetable(date)
 
 @job_bp.route('/teams/', methods=['GET'])
 @login_required
 def team_timetable():
     date = request.args.get('date')
-    return jobs_controller.team_timetable(date)
+    controller = get_job_controller()
+    return controller.team_timetable(date)
 
 @job_bp.route('/job/<int:job_id>/update_status', methods=['POST'])
 def update_job_status(job_id):
-    return jobs_controller.update_job_status(job_id)
+    controller = get_job_controller()
+    return controller.update_job_status(job_id)
 
 @job_bp.route('/job/<int:job_id>/update', methods=['GET', 'PUT'])
 @login_required
 def update_job(job_id):
+    controller = get_job_controller()
     if request.method == 'PUT':
-        return jobs_controller.update_job(job_id)
+        return controller.update_job(job_id)
     else:
-        return jobs_controller.get_job_update_form(job_id)
+        return controller.get_job_update_form(job_id)
 
 @job_bp.route('/job/<int:job_id>/details', methods=['GET'])
 @login_required
 def get_job_details(job_id):
-    return jobs_controller.get_job_details(job_id)
+    controller = get_job_controller()
+    return controller.get_job_details(job_id)
 
 @job_bp.route('/job/create', methods=['GET', 'POST'])
 @login_required
 def create_job():
+    controller = get_job_controller()
     if request.method == 'POST':
-        _return = jobs_controller.create_job()
+        _return = controller.create_job()
     else:
-        _return = jobs_controller.get_job_creation_form()
+        _return = controller.get_job_creation_form()
     return _return
 
 @job_bp.route('/job/<int:job_id>/delete', methods=['DELETE'])
 @login_required
 def delete_job(job_id):
     view_type = request.args.get('view_type', None)
-    return jobs_controller.delete_job(job_id, view_type)
+    controller = get_job_controller()
+    return controller.delete_job(job_id, view_type)
 
 @job_bp.route('/job/reassign', methods=['POST'])
 @login_required
 def reassign_job_team():
-    return jobs_controller.reassign_job_team()
+    controller = get_job_controller()
+    return controller.reassign_job_team()
