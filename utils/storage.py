@@ -3,7 +3,7 @@ import uuid
 from datetime import datetime
 from flask import url_for, current_app
 from werkzeug.utils import secure_filename
-from libcloud.storage.types import ObjectDoesNotExistError
+from libcloud.storage.types import ObjectDoesNotExistError, ContainerDoesNotExistError
 from libcloud.storage.base import StorageDriver
 
 CHUNK_SIZE = 8192 # 8KB Practical Limit
@@ -87,7 +87,7 @@ def delete_file(filename):
         obj = container.get_object(filename)
         driver.delete_object(obj)
         return True
-    except ObjectDoesNotExistError:
+    except (ObjectDoesNotExistError, ContainerDoesNotExistError):
         return False
 
 def validate_and_upload(flask_file, filename=None):
@@ -130,5 +130,5 @@ def file_exists(filename):
     try:
         container.get_object(filename)
         return True
-    except ObjectDoesNotExistError:
+    except (ObjectDoesNotExistError, ContainerDoesNotExistError):
         return False
