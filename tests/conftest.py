@@ -1,7 +1,7 @@
 # conftest.py
 from typing import Generator
 import pytest
-from flask_login import LoginManager
+from flask_login import LoginManager, login_user
 from app_factory import create_app
 import tempfile
 import os
@@ -82,6 +82,25 @@ def app(test_db_path):
     
     yield app
 
+@pytest.fixture(scope='session')
+def app_no_csrf(test_db_path):
+    """
+    Configures and creates a Flask app for testing with CSRF protection disabled.
+    Useful for API testing where CSRF tokens are not needed.
+    """
+    login_manager = LoginManager()
+    
+    test_config = {
+        'TESTING': True,
+        'STORAGE_PROVIDER': 'temp',
+        'WTF_CSRF_ENABLED': False,  # Disable CSRF protection
+    }
+    
+    app = create_app(login_manager=login_manager, config_override=test_config)
+    populate_database(app.config['SQLALCHEMY_DATABASE_URI'])
+    
+    yield app
+
     
 @pytest.fixture(autouse=True)
 def rollback_db_after_test(app):
@@ -121,6 +140,138 @@ def page(context: BrowserContext) -> Generator[Page, None, None]:
 def server_url(live_server):
     """Get the base URL from the live server"""
     return live_server.url()
+
+# User fixtures for authentication testing
+@pytest.fixture
+def admin_user():
+    """
+    A mock admin user object for testing.
+    """
+    user = User(
+        id=999,
+        email="admin@example.com",
+        first_name="Admin",
+        last_name="User",
+        role="admin",
+        is_active=True,
+        is_authenticated=True,
+        is_anonymous=False
+    )
+    return user
+
+@pytest.fixture
+def regular_user():
+    """
+    A mock regular user object for testing.
+    """
+    user = User(
+        id=998,
+        email="user@example.com",
+        first_name="Regular",
+        last_name="User",
+        role="user",
+        is_active=True,
+        is_authenticated=True,
+        is_anonymous=False
+    )
+    return user
+
+@pytest.fixture
+def authenticated_client(app, admin_user):
+    """
+    Provides a Flask test client with a mocked admin user logged in.
+    Uses unittest.mock.patch to replace flask_login.current_user.
+    """
+    with app.test_client() as client:
+        with patch('flask_login.current_user', new=admin_user):
+            yield client
+
+@pytest.fixture
+def regular_authenticated_client(app, regular_user):
+    """
+    Provides a Flask test client with a mocked regular user logged in.
+    Uses unittest.mock.patch to replace flask_login.current_user.
+    """
+    with app.test_client() as client:
+        with patch('flask_login.current_user', new=regular_user):
+            yield client
+
+# Integration testing helpers
+def login_user_for_test(client, email, password):
+    """
+    Helper function to log in a user via the application's login endpoint.
+    Returns the client with an authenticated session.
+    """
+    response = client.post('/login', data={
+        'email': email,
+        'password': password
+    }, follow_redirects=True)
+    return client
+
+def login_admin_for_test(client):
+    """Helper to log in as admin with correct password."""
+    return login_user_for_test(client, "admin@example.com", "admin_password")
+
+def login_regular_for_test(client):
+    """Helper to log in as regular user with correct password."""
+    return login_user_for_test(client, "user@example.com", "user_password")
+
+@pytest.fixture
+def admin_client(app):
+    """
+    Provides a Flask test client with a real admin user logged in.
+    Uses the seeded database to find an admin user and logs in via the login endpoint.
+    """
+    with app.test_client() as client:
+        login_admin_for_test(client)
+        yield client
+
+@pytest.fixture
+def regular_client(app):
+    """
+    Provides a Flask test client with a real regular user logged in.
+    Uses the seeded database to find a regular user and logs in via the login endpoint.
+    """
+    with app.test_client() as client:
+        login_regular_for_test(client)
+        yield client
+
+# Client fixtures with CSRF disabled for API testing
+@pytest.fixture
+def admin_client_no_csrf(app_no_csrf):
+    """
+    Provides a Flask test client with a real admin user logged in and CSRF disabled.
+    """
+    with app_no_csrf.test_client() as client:
+        login_admin_for_test(client)
+        yield client
+
+@pytest.fixture
+def regular_client_no_csrf(app_no_csrf):
+    """
+    Provides a Flask test client with a real regular user logged in and CSRF disabled.
+    """
+    with app_no_csrf.test_client() as client:
+        login_regular_for_test(client)
+        yield client
+
+@pytest.fixture
+def authenticated_client_no_csrf(app_no_csrf, admin_user):
+    """
+    Provides a Flask test client with a mocked admin user logged in and CSRF disabled.
+    """
+    with app_no_csrf.test_client() as client:
+        with patch('flask_login.current_user', new=admin_user):
+            yield client
+
+@pytest.fixture
+def regular_authenticated_client_no_csrf(app_no_csrf, regular_user):
+    """
+    Provides a Flask test client with a mocked regular user logged in and CSRF disabled.
+    """
+    with app_no_csrf.test_client() as client:
+        with patch('flask_login.current_user', new=regular_user):
+            yield client
 
 @pytest.fixture(scope='function')
 def seeded_test_data(app):
