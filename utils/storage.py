@@ -77,7 +77,7 @@ def get_file_url(filename):
         return driver.get_object_cdn_url(obj)
     else:
         # For 'local' and 'temp' providers, use the Flask route to serve files
-        return url_for('storage.serve_file', filename=filename, _external=True)
+        return url_for('media.serve_media', filename=filename, _external=True)
 
 
 def delete_file(filename):
