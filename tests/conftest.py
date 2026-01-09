@@ -28,8 +28,8 @@ def test_db_path():
 @pytest.fixture(scope='function')
 def local_storage_app():
     """
-    Configures and creates a Flask app for testing local storage.
-    Uses a temporary upload directory and sets STORAGE_PROVIDER to 'local'.
+    Configures and creates a Flask app for testing temporary storage.
+    Uses a temporary upload directory and sets STORAGE_PROVIDER to 'temp'.
     """
     import tempfile
     import os
@@ -43,7 +43,7 @@ def local_storage_app():
     
     test_config = {
         'TESTING': True,
-        'STORAGE_PROVIDER': 'local',
+        'STORAGE_PROVIDER': 'temp',
         'UPLOAD_FOLDER': temp_upload_dir,
         'SECRET_KEY': 'testsecret',
         'DATABASE_URL': 'sqlite:///:memory:',
@@ -66,12 +66,14 @@ def app(test_db_path):
     """
     Configures and creates a Flask app for testing.
     The database is configured to be seeded with deterministic data for consistent testing.
+    Uses temporary storage for file uploads.
     pytest-flask will use this fixture automatically.
     """
     login_manager = LoginManager()
     
     test_config = {
         'TESTING': True,
+        'STORAGE_PROVIDER': 'temp',  # Use temporary storage for all tests
     }
     
     app = create_app(login_manager=login_manager, config_override=test_config)

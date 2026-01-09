@@ -41,18 +41,21 @@ def upload_flask_file(flask_file, filename=None):
         object_name=unique_filename
     )
     
-    # Log the full path where the file is expected to be saved
-    if current_app.config.get('STORAGE_PROVIDER') == 'local':
-        full_path = os.path.join(current_app.config['UPLOAD_FOLDER'], unique_filename)
-        current_app.logger.debug(f"File '{unique_filename}' uploaded to local path: {full_path}")
+    # Log upload information based on storage provider
+    storage_provider = current_app.config.get('STORAGE_PROVIDER', 's3')
+    if storage_provider == 'local' or storage_provider == 'temp':
+        upload_folder = current_app.config.get('UPLOAD_FOLDER', './uploads')
+        full_path = os.path.join(upload_folder, unique_filename)
+        current_app.logger.debug(f"File '{unique_filename}' uploaded to {storage_provider} storage at: {full_path}")
+    else:
+        current_app.logger.debug(f"File '{unique_filename}' uploaded to S3 bucket: {current_app.config.get('S3_BUCKET')}")
 
-    current_app.logger.debug(f"UPLOAD_FOLDER in storage.py: {current_app.config['UPLOAD_FOLDER']}")
     return unique_filename
 
 
 def get_file_url(filename):
     """
-    Get URL to access a file. Handles local vs S3 automatically.
+    Get URL to access a file. Handles S3, local, and temp storage automatically.
 
     Args:
         filename: The filename to get URL for
@@ -62,12 +65,13 @@ def get_file_url(filename):
     """
     driver = current_app.config['STORAGE_DRIVER']
     container = current_app.config['STORAGE_CONTAINER']
-    storage_provider = current_app.config.get('STORAGE_PROVIDER', 'local')
+    storage_provider = current_app.config.get('STORAGE_PROVIDER', 's3')
 
     if storage_provider == 's3':
         obj = container.get_object(filename)
         return driver.get_object_cdn_url(obj)
     else:
+        # For 'local' and 'temp' providers, use the Flask route to serve files
         return url_for('storage.serve_file', filename=filename, _external=True)
 
 

@@ -7,8 +7,14 @@ storage_bp = Blueprint('storage', __name__)
 
 @storage_bp.route('/uploads/<path:filename>')
 def serve_file(filename):
-    if os.environ.get('STORAGE_PROVIDER') == 's3':
-        return jsonify({"error": "File serving not available when STORAGE_PROVIDER is 's3'"}), 404
+    storage_provider = current_app.config.get('STORAGE_PROVIDER', 's3')
+    
+    # Only serve files for local and temp storage providers
+    if storage_provider == 's3':
+        return jsonify({
+            "error": "File serving not available when STORAGE_PROVIDER is 's3'",
+            "message": "Files are stored in S3 and should be accessed via S3 URLs"
+        }), 404
 
     upload_folder = current_app.config.get('UPLOAD_FOLDER', './uploads')
     try:
