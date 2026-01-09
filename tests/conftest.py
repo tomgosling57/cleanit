@@ -14,8 +14,9 @@ from services.assignment_service import AssignmentService
 from services.job_service import JobService
 from services.property_service import PropertyService
 from services.user_service import UserService
+from services.image_service import ImageService
 from utils.populate_database import populate_database
-from database import Team, get_db, teardown_db, User, Property, Job, Assignment
+from database import Team, get_db, teardown_db, User, Property, Job, Assignment, Image, PropertyImage, JobImage
 
 @pytest.fixture(scope='session')
 def test_db_path():
@@ -89,7 +90,18 @@ def rollback_db_after_test(app):
     
     # After test completes, rollback any uncommitted changes
     with app.app_context():
-        populate_database(app.config['SQLALCHEMY_DATABASE_URI'])  # Reseed data to initial state
+        # Delete any images and their associations to ensure clean state
+        db_session = get_db()
+        try:
+            db_session.query(PropertyImage).delete()
+            db_session.query(JobImage).delete()
+            db_session.query(Image).delete()
+            db_session.commit()
+        finally:
+            teardown_db()
+        
+        # Reseed data to initial state
+        populate_database(app.config['SQLALCHEMY_DATABASE_URI'])
 
 @pytest.fixture
 def goto(page, live_server):
