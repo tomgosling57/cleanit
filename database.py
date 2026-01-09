@@ -51,6 +51,7 @@ class Property(Base):
     notes = Column(String)
 
     jobs = relationship("Job", back_populates="property")
+    property_images = relationship("PropertyImage", back_populates="property")
 
     def __repr__(self):
         return f"<Property(id={self.id}, address='{self.address}')>"
@@ -94,6 +95,7 @@ class Job(Base):
     property = relationship("Property", back_populates="jobs")
 
     assignments = relationship("Assignment", back_populates="job")
+    job_images = relationship("JobImage", back_populates="job")
  
     @hybrid_property
     def arrival_date(self):
@@ -164,6 +166,49 @@ class Assignment(Base):
     __table_args__ = (UniqueConstraint('job_id', 'user_id', name='_job_user_uc'),
                       UniqueConstraint('job_id', 'team_id', name='_job_team_uc'),
                       )
+
+class Image(Base):
+    __tablename__ = 'images'
+    
+    id = Column(Integer, primary_key=True)
+    file_name = Column(String, nullable=False, unique=True)
+    description = Column(String, nullable=True)
+    
+    property_images = relationship("PropertyImage", back_populates="image")
+    job_images = relationship("JobImage", back_populates="image")
+    
+    def __repr__(self):
+        return f"<Image(id={self.id}, file_name='{self.file_name}')>"
+
+class PropertyImage(Base):
+    __tablename__ = 'property_images'
+    
+    id = Column(Integer, primary_key=True)
+    property_id = Column(Integer, ForeignKey('properties.id'), nullable=False)
+    image_id = Column(Integer, ForeignKey('images.id'), nullable=False)
+    
+    property = relationship("Property", back_populates="property_images")
+    image = relationship("Image", back_populates="property_images")
+    
+    __table_args__ = (UniqueConstraint('property_id', 'image_id', name='_property_image_uc'),)
+    
+    def __repr__(self):
+        return f"<PropertyImage(id={self.id}, property_id={self.property_id}, image_id={self.image_id})>"
+
+class JobImage(Base):
+    __tablename__ = 'job_images'
+    
+    id = Column(Integer, primary_key=True)
+    job_id = Column(Integer, ForeignKey('jobs.id'), nullable=False)
+    image_id = Column(Integer, ForeignKey('images.id'), nullable=False)
+    
+    job = relationship("Job", back_populates="job_images")
+    image = relationship("Image", back_populates="job_images")
+    
+    __table_args__ = (UniqueConstraint('job_id', 'image_id', name='_job_image_uc'),)
+    
+    def __repr__(self):
+        return f"<JobImage(id={self.id}, job_id={self.job_id}, image_id={self.image_id})>"
 
 # Database initialization function
 def init_db(database_uri: str):
