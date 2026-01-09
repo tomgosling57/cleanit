@@ -90,8 +90,9 @@ def test_delete_file_local(client_local, local_storage_app):
         assert os.path.exists(test_filepath)
         delete_file(test_filename)
         assert not os.path.exists(test_filepath)
-        # Assert that the upload folder is empty
-        assert len(os.listdir(upload_folder)) == 0
+        # Assert that the upload folder is empty or doesn't exist (libcloud may delete empty container)
+        if os.path.exists(upload_folder):
+            assert len(os.listdir(upload_folder)) == 0
         assert delete_file("non_existent_file_to_delete.txt") is False # Deleting non-existent file
 
 # --- Test validate_and_upload function (local storage) ---
