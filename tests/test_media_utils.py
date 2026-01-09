@@ -1,10 +1,10 @@
 """
-Tests for the image_utils module.
+Tests for the media_utils module.
 """
 
 import pytest
 from unittest.mock import Mock, patch
-from utils.image_utils import resolve_image_url, get_placeholder_url
+from utils.media_utils import resolve_image_url, get_placeholder_url, resolve_media_url, MEDIA_TYPE_IMAGE
 
 
 class MockImage:
@@ -48,7 +48,7 @@ def test_resolve_image_url_with_image_object(app):
         mock_image = MockImage("test.jpg")
         
         # Mock get_file_url to return a predictable value
-        with patch('utils.image_utils.get_file_url') as mock_get_file_url:
+        with patch('utils.media_utils.get_file_url') as mock_get_file_url:
             mock_get_file_url.return_value = '/storage/files/test.jpg'
             url = resolve_image_url(mock_image)
             
@@ -59,7 +59,7 @@ def test_resolve_image_url_with_image_object(app):
 def test_resolve_image_url_with_filename_string(app):
     """Test resolve_image_url with filename string."""
     with app.app_context():
-        with patch('utils.image_utils.get_file_url') as mock_get_file_url:
+        with patch('utils.media_utils.get_file_url') as mock_get_file_url:
             mock_get_file_url.return_value = '/storage/files/photo.png'
             url = resolve_image_url("photo.png")
             
@@ -91,9 +91,29 @@ def test_resolve_image_url_integration_with_storage(app):
         # Don't mock get_file_url to test actual integration
         # This will use the real get_file_url which requires storage setup
         # Since we're in a test context, we should mock it
-        with patch('utils.image_utils.get_file_url') as mock_get_file_url:
+        with patch('utils.media_utils.get_file_url') as mock_get_file_url:
             mock_get_file_url.return_value = 'https://example.com/files/integration_test.jpg'
             url = resolve_image_url(mock_image)
             
             assert url == 'https://example.com/files/integration_test.jpg'
             mock_get_file_url.assert_called_once_with("integration_test.jpg")
+
+
+# Additional tests for new media_utils functions
+def test_resolve_media_url_with_video_type(app):
+    """Test resolve_media_url with video media type."""
+    with app.app_context():
+        mock_media = MockImage("video.mp4")
+        with patch('utils.media_utils.get_file_url') as mock_get_file_url:
+            mock_get_file_url.return_value = '/storage/files/video.mp4'
+            url = resolve_media_url(mock_media, MEDIA_TYPE_IMAGE)  # default image type
+            mock_get_file_url.assert_called_once_with("video.mp4")
+            assert url == '/storage/files/video.mp4'
+
+
+def test_get_placeholder_media_url_video(app):
+    """Test get_placeholder_media_url for video type."""
+    with app.app_context():
+        # Assuming placeholder exists for video
+        url = resolve_media_url(None, MEDIA_TYPE_IMAGE)
+        assert url == '/static/images/placeholders/image-not-found.png'
