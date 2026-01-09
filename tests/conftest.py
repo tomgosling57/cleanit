@@ -14,9 +14,9 @@ from services.assignment_service import AssignmentService
 from services.job_service import JobService
 from services.property_service import PropertyService
 from services.user_service import UserService
-from services.image_service import ImageService
+from services.media_service import MediaService
 from utils.populate_database import populate_database
-from database import Team, get_db, teardown_db, User, Property, Job, Assignment, Image, PropertyImage, JobImage
+from database import Team, get_db, teardown_db, User, Property, Job, Assignment, Media, PropertyMedia, JobMedia
 
 @pytest.fixture(scope='session')
 def test_db_path():
@@ -90,12 +90,12 @@ def rollback_db_after_test(app):
     
     # After test completes, rollback any uncommitted changes
     with app.app_context():
-        # Delete any images and their associations to ensure clean state
+        # Delete any media and their associations to ensure clean state
         db_session = get_db()
         try:
-            db_session.query(PropertyImage).delete()
-            db_session.query(JobImage).delete()
-            db_session.query(Image).delete()
+            db_session.query(PropertyMedia).delete()
+            db_session.query(JobMedia).delete()
+            db_session.query(Media).delete()
             db_session.commit()
         finally:
             teardown_db()
@@ -185,9 +185,9 @@ def property_service(app):
         yield PropertyService(app.config['SQLALCHEMY_SESSION']())
 
 @pytest.fixture
-def image_service(app):
+def media_service(app):
     with app.app_context():
-        yield ImageService(app.config['SQLALCHEMY_SESSION']())
+        yield MediaService(app.config['SQLALCHEMY_SESSION']())
 
 
 
