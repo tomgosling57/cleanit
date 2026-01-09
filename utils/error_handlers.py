@@ -32,8 +32,8 @@ def register_media_error_handlers(app):
         is_image_request = False
         image_extensions = {'.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.svg'}
         
-        # Check if request path matches uploads route and has image extension
-        if request.path.startswith('/uploads/'):
+        # Check if request path matches media serve route and has image extension
+        if request.path.startswith('/media/serve/'):
             # Extract filename and check extension
             filename = os.path.basename(request.path)
             _, ext = os.path.splitext(filename.lower())
