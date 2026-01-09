@@ -1,7 +1,7 @@
 # app_factory.py
 import os
 import secrets
-from flask import Flask, redirect, url_for, request, Response, abort
+from flask import Flask, redirect, url_for, request, Response, abort, jsonify
 from flask_wtf.csrf import CSRFProtect
 from flask_login import LoginManager
 from config import Config, TestConfig
@@ -10,7 +10,7 @@ from routes.users import user_bp
 from routes.jobs import job_bp
 from routes.teams import teams_bp
 from routes.properties import properties_bp
-from routes.storage import storage_bp
+from routes.media import media_bp
 from services.user_service import UserService
 from utils.populate_database import populate_database
 from utils.svg_helper import load_svg_icons
@@ -121,7 +121,9 @@ def create_app(login_manager=LoginManager(), config_override=dict()):
     
     @login_manager.unauthorized_handler
     def unauthorized():
-        if request.headers.get('HX-Request') == 'true':
+        if request.accept_mimetypes.accept_json:
+            return jsonify({"error": "Unauthorized"}), 401
+        elif request.headers.get('HX-Request') == 'true':
             response = Response("Unauthorized", 401)
             response.headers['HX-Redirect'] = url_for('user.login')
             return response
@@ -140,7 +142,7 @@ def create_app(login_manager=LoginManager(), config_override=dict()):
     app.register_blueprint(job_bp)
     app.register_blueprint(teams_bp)
     app.register_blueprint(properties_bp)
-    app.register_blueprint(storage_bp)
+    app.register_blueprint(media_bp)
 
     # Register global error handlers
     register_media_error_handlers(app)
