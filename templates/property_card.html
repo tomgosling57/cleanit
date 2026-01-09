@@ -1,9 +1,10 @@
 {% from 'card_actions.html' import render_card_actions %}
 
-<div class="property-card" id="property-card-{{ property.id }}">
+<div class="property-card" id="property-card-{{ property.id }}" data-id="{{ property.id }}">
     <h3>{{ property.address }}</h3>
     <p><strong>Address:</strong> {{ property.address }}</p>
     <p><strong>Access Notes:</strong> {{ property.access_notes if property.access_notes else "N/A" }}</p>
+    <p><strong>Additional Notes:</strong> {{ property.notes if property.notes else "N/A" }}</p>
     {{ render_card_actions([
         {
             'label': 'Edit',

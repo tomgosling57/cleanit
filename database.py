@@ -48,6 +48,7 @@ class Property(Base):
     id = Column(Integer, primary_key=True)
     address = Column(String, nullable=False)
     access_notes = Column(String)
+    notes = Column(String)
 
     jobs = relationship("Job", back_populates="property")
 
