@@ -184,5 +184,10 @@ def property_service(app):
     with app.app_context():
         yield PropertyService(app.config['SQLALCHEMY_SESSION']())
 
+@pytest.fixture
+def image_service(app):
+    with app.app_context():
+        yield ImageService(app.config['SQLALCHEMY_SESSION']())
+
 
 
