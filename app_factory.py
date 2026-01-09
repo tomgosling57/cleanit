@@ -14,6 +14,7 @@ from routes.storage import storage_bp
 from services.user_service import UserService
 from utils.populate_database import populate_database
 from utils.svg_helper import load_svg_icons
+from utils.error_handlers import register_media_error_handlers
 
 def create_app(login_manager=LoginManager(), config_override=dict()):
     """
@@ -140,6 +141,9 @@ def create_app(login_manager=LoginManager(), config_override=dict()):
     app.register_blueprint(teams_bp)
     app.register_blueprint(properties_bp)
     app.register_blueprint(storage_bp)
+
+    # Register global error handlers
+    register_media_error_handlers(app)
 
     with app.app_context():
         load_svg_icons(app)
