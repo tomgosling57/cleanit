@@ -285,9 +285,10 @@ def admin_client(app):
     Provides a Flask test client with a real admin user logged in.
     Uses the seeded database to find an admin user and logs in via the login endpoint.
     """
-    with app.test_client() as client:
-        login_admin_for_test(client)
-        yield client
+    # Create client without context manager to avoid context nesting issues
+    client = app.test_client()
+    login_admin_for_test(client)
+    yield client
 
 @pytest.fixture
 def regular_client(app):
@@ -295,9 +296,10 @@ def regular_client(app):
     Provides a Flask test client with a real regular user logged in.
     Uses the seeded database to find a regular user and logs in via the login endpoint.
     """
-    with app.test_client() as client:
-        login_regular_for_test(client)
-        yield client
+    # Create client without context manager to avoid context nesting issues
+    client = app.test_client()
+    login_regular_for_test(client)
+    yield client
 
 @pytest.fixture
 def regular_client_secure(app):
@@ -305,13 +307,14 @@ def regular_client_secure(app):
     Provides a Flask test client with a real regular user logged in using proper CSRF handling.
     Includes debug output to verify authentication.
     """
-    with app.test_client() as client:
-        login_regular_for_test(client, debug=True)
-        # Verify login succeeded
-        with client.session_transaction() as session:
-            if '_user_id' not in session:
-                print("WARNING: regular_client_secure login may have failed")
-        yield client
+    # Create client without context manager to avoid context nesting issues
+    client = app.test_client()
+    login_regular_for_test(client, debug=True)
+    # Verify login succeeded
+    with client.session_transaction() as session:
+        if '_user_id' not in session:
+            print("WARNING: regular_client_secure login may have failed")
+    yield client
 
 @pytest.fixture
 def admin_client_secure(app):
@@ -319,13 +322,14 @@ def admin_client_secure(app):
     Provides a Flask test client with a real admin user logged in using proper CSRF handling.
     Includes debug output to verify authentication.
     """
-    with app.test_client() as client:
-        login_admin_for_test(client, debug=True)
-        # Verify login succeeded
-        with client.session_transaction() as session:
-            if '_user_id' not in session:
-                print("WARNING: admin_client_secure login may have failed")
-        yield client
+    # Create client without context manager to avoid context nesting issues
+    client = app.test_client()
+    login_admin_for_test(client, debug=True)
+    # Verify login succeeded
+    with client.session_transaction() as session:
+        if '_user_id' not in session:
+            print("WARNING: admin_client_secure login may have failed")
+    yield client
 
 @pytest.fixture
 def debug_regular_client(app):
@@ -333,13 +337,14 @@ def debug_regular_client(app):
     Provides a Flask test client with a real regular user logged in and verbose debugging.
     Useful for troubleshooting authentication issues.
     """
-    with app.test_client() as client:
-        print("=== DEBUG REGULAR CLIENT LOGIN ===")
-        login_regular_for_test(client, debug=True)
-        print("=== DEBUG SESSION CONTENTS ===")
-        debug_session(client)
-        print("=== END DEBUG ===")
-        yield client
+    # Create client without context manager to avoid context nesting issues
+    client = app.test_client()
+    print("=== DEBUG REGULAR CLIENT LOGIN ===")
+    login_regular_for_test(client, debug=True)
+    print("=== DEBUG SESSION CONTENTS ===")
+    debug_session(client)
+    print("=== END DEBUG ===")
+    yield client
 
 # Client fixtures with CSRF disabled for API testing
 @pytest.fixture
@@ -347,18 +352,20 @@ def admin_client_no_csrf(app_no_csrf):
     """
     Provides a Flask test client with a real admin user logged in and CSRF disabled.
     """
-    with app_no_csrf.test_client() as client:
-        login_admin_for_test(client)
-        yield client
+    # Create client without context manager to avoid context nesting issues
+    client = app_no_csrf.test_client()
+    login_admin_for_test(client)
+    yield client
 
 @pytest.fixture
 def regular_client_no_csrf(app_no_csrf):
     """
     Provides a Flask test client with a real regular user logged in and CSRF disabled.
     """
-    with app_no_csrf.test_client() as client:
-        login_regular_for_test(client)
-        yield client
+    # Create client without context manager to avoid context nesting issues
+    client = app_no_csrf.test_client()
+    login_regular_for_test(client)
+    yield client
 
 @pytest.fixture
 def authenticated_client_no_csrf(app_no_csrf, admin_user):
