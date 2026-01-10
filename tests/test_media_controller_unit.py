@@ -87,9 +87,8 @@ class TestMediaControllerUnit:
         mock_file.filename = 'test.jpg'
         mock_file.seek = Mock()
         mock_file.tell = Mock(return_value=100)
-        # Mock request.files
-        mock_files = MagicMock()
-        mock_files.get.return_value = mock_file
+        # Mock request.files as a dict that supports 'in' operator and .get() method
+        mock_files = {'file': mock_file}
         mock_request.files = mock_files
         mock_request.form = {'description': 'Test'}
         
