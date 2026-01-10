@@ -69,8 +69,10 @@ class TestMediaControllerIntegration:
             content_type='multipart/form-data',
             headers={'Accept': 'application/json'}
         )
-        
-        assert response.status_code == 403
+
+        logger = regular_client_no_csrf.application.logger
+        logger.debug(f"Response data: {response.data}")
+        assert response.status_code == 403, f"Expected 403 Forbidden but got {response.status_code}. Response: {response.data.decode('utf-8') if response.data else 'No data'}"
         data = json.loads(response.data)
         assert 'error' in data
         assert 'Unauthorized: Admin access required' in data['error']

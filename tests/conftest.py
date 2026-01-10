@@ -197,24 +197,87 @@ def regular_authenticated_client(app, regular_user):
             yield client
 
 # Integration testing helpers
-def login_user_for_test(client, email, password):
+def login_user_for_test(client, email, password, debug=False):
     """
-    Helper function to log in a user via the application's login endpoint.
+    Enhanced login helper with debugging and CSRF support.
     Returns the client with an authenticated session.
     """
-    response = client.post('/login', data={
+    import re
+    
+    # Get the correct login URL using the app's url_for
+    # The login endpoint is 'user.login' which maps to '/users/user/login'
+    login_url = '/users/user/login'
+    
+    # First, get the login page to extract CSRF token
+    login_page_response = client.get(login_url)
+    if debug:
+        print(f"Login page status: {login_page_response.status_code}")
+        print(f"Login page content length: {len(login_page_response.data)}")
+        if login_page_response.status_code != 200:
+            print(f"Login page response: {login_page_response.data.decode('utf-8')[:200]}")
+    
+    # Extract CSRF token from the HTML
+    csrf_token = None
+    if login_page_response.status_code == 200:
+        html = login_page_response.data.decode('utf-8')
+        # Look for <input type="hidden" name="csrf_token" value="..."/>
+        match = re.search(r'name="csrf_token"\s+value="([^"]+)"', html)
+        if match:
+            csrf_token = match.group(1)
+            if debug:
+                print(f"Extracted CSRF token: {csrf_token[:20]}...")
+        else:
+            if debug:
+                print("WARNING: No CSRF token found in login page")
+                # Try alternative pattern
+                match = re.search(r'csrf_token.*?value="([^"]+)"', html)
+                if match:
+                    csrf_token = match.group(1)
+                    print(f"Alternative CSRF token: {csrf_token[:20]}...")
+    else:
+        if debug:
+            print("ERROR: Could not load login page")
+    
+    # Prepare login data with CSRF token if found
+    login_data = {
         'email': email,
         'password': password
-    }, follow_redirects=True)
+    }
+    if csrf_token:
+        login_data['csrf_token'] = csrf_token
+    
+    # Perform login
+    response = client.post(login_url, data=login_data, follow_redirects=True)
+    
+    if debug:
+        print(f"Login POST status: {response.status_code}")
+        print(f"Login POST redirected to: {response.request.path if hasattr(response, 'request') else 'unknown'}")
+        
+        # Debug session
+        with client.session_transaction() as session:
+            session_dict = dict(session)
+            print(f"Session after login: {session_dict}")
+            if '_user_id' in session_dict:
+                print(f"User ID in session: {session_dict['_user_id']}")
+            else:
+                print("WARNING: No _user_id in session - login may have failed")
+    
     return client
 
-def login_admin_for_test(client):
+def login_admin_for_test(client, debug=False):
     """Helper to log in as admin with correct password."""
-    return login_user_for_test(client, "admin@example.com", "admin_password")
+    return login_user_for_test(client, "admin@example.com", "admin_password", debug=debug)
 
-def login_regular_for_test(client):
+def login_regular_for_test(client, debug=False):
     """Helper to log in as regular user with correct password."""
-    return login_user_for_test(client, "user@example.com", "user_password")
+    return login_user_for_test(client, "user@example.com", "user_password", debug=debug)
+
+def debug_session(client):
+    """
+    Print session contents for debugging.
+    """
+    with client.session_transaction() as session:
+        print(f"Session: {dict(session)}")
 
 @pytest.fixture
 def admin_client(app):
@@ -234,6 +297,48 @@ def regular_client(app):
     """
     with app.test_client() as client:
         login_regular_for_test(client)
+        yield client
+
+@pytest.fixture
+def regular_client_secure(app):
+    """
+    Provides a Flask test client with a real regular user logged in using proper CSRF handling.
+    Includes debug output to verify authentication.
+    """
+    with app.test_client() as client:
+        login_regular_for_test(client, debug=True)
+        # Verify login succeeded
+        with client.session_transaction() as session:
+            if '_user_id' not in session:
+                print("WARNING: regular_client_secure login may have failed")
+        yield client
+
+@pytest.fixture
+def admin_client_secure(app):
+    """
+    Provides a Flask test client with a real admin user logged in using proper CSRF handling.
+    Includes debug output to verify authentication.
+    """
+    with app.test_client() as client:
+        login_admin_for_test(client, debug=True)
+        # Verify login succeeded
+        with client.session_transaction() as session:
+            if '_user_id' not in session:
+                print("WARNING: admin_client_secure login may have failed")
+        yield client
+
+@pytest.fixture
+def debug_regular_client(app):
+    """
+    Provides a Flask test client with a real regular user logged in and verbose debugging.
+    Useful for troubleshooting authentication issues.
+    """
+    with app.test_client() as client:
+        print("=== DEBUG REGULAR CLIENT LOGIN ===")
+        login_regular_for_test(client, debug=True)
+        print("=== DEBUG SESSION CONTENTS ===")
+        debug_session(client)
+        print("=== END DEBUG ===")
         yield client
 
 # Client fixtures with CSRF disabled for API testing
