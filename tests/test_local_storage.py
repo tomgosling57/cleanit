@@ -90,8 +90,9 @@ def test_delete_file_local(client_local, local_storage_app):
         assert os.path.exists(test_filepath)
         delete_file(test_filename)
         assert not os.path.exists(test_filepath)
-        # Assert that the upload folder is empty
-        assert len(os.listdir(upload_folder)) == 0
+        # Assert that the upload folder is empty or doesn't exist (libcloud may delete empty container)
+        if os.path.exists(upload_folder):
+            assert len(os.listdir(upload_folder)) == 0
         assert delete_file("non_existent_file_to_delete.txt") is False # Deleting non-existent file
 
 # --- Test validate_and_upload function (local storage) ---
@@ -144,7 +145,12 @@ def test_serve_file_route_local(client_local, local_storage_app):
         assert b"File not found" in response.data
 
         # Test with STORAGE_PROVIDER set to s3 (should return 404 with error message)
-        with patch.dict(os.environ, {'STORAGE_PROVIDER': 's3'}):
+        # Patch the app config instead of os.environ since routes/storage.py now uses current_app.config
+        original_provider = local_storage_app.config.get('STORAGE_PROVIDER')
+        local_storage_app.config['STORAGE_PROVIDER'] = 's3'
+        try:
             response = client_local.get(f'/uploads/{test_filename}')
             assert response.status_code == 404
             assert b"File serving not available when STORAGE_PROVIDER is 's3'" in response.data
+        finally:
+            local_storage_app.config['STORAGE_PROVIDER'] = original_provider

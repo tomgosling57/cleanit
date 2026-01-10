@@ -28,21 +28,23 @@ def test_db_path():
 @pytest.fixture(scope='function')
 def local_storage_app():
     """
-    Configures and creates a Flask app for testing local storage.
-    Uses a temporary upload directory and sets STORAGE_PROVIDER to 'local'.
+    Configures and creates a Flask app for testing temporary storage.
+    Uses a temporary upload directory and sets STORAGE_PROVIDER to 'temp'.
     """
-    login_manager = LoginManager()
-    upload_folder = './uploads'
-    # Ensure the uploads directory exists
-    os.makedirs(upload_folder, exist_ok=True)
+    import tempfile
+    import os
     
-    # Track files in the upload directory before the test
-    files_before_test = set(glob.glob(os.path.join(upload_folder, '*')))
-
+    login_manager = LoginManager()
+    
+    # Create a temporary directory for uploads in the current directory
+    # instead of /tmp to avoid permission issues with libcloud trying to delete parent directories
+    cwd = os.getcwd()
+    temp_upload_dir = tempfile.mkdtemp(prefix='test_uploads_', dir=cwd)
+    
     test_config = {
         'TESTING': True,
-        'STORAGE_PROVIDER': 'local',
-        'UPLOAD_FOLDER': os.path.abspath(upload_folder), # Ensure UPLOAD_FOLDER is an absolute path
+        'STORAGE_PROVIDER': 'temp',
+        'UPLOAD_FOLDER': temp_upload_dir,
         'SECRET_KEY': 'testsecret',
         'DATABASE_URL': 'sqlite:///:memory:',
     }
@@ -52,26 +54,26 @@ def local_storage_app():
     with app.app_context():
         yield app
 
-    # Clean up only files created by the test
-    files_after_test = set(glob.glob(os.path.join(upload_folder, '*')))
-    new_files = files_after_test - files_before_test
-    for file_path in new_files:
-        try:
-            os.remove(file_path)
-        except OSError as e:
-            print(f"Error removing file {file_path}: {e}")
+    # Clean up the temporary directory after the test
+    try:
+        import shutil
+        shutil.rmtree(temp_upload_dir, ignore_errors=True)
+    except Exception as e:
+        print(f"Error cleaning up temporary upload directory {temp_upload_dir}: {e}")
 
 @pytest.fixture(scope='session')
 def app(test_db_path):
     """
     Configures and creates a Flask app for testing.
     The database is configured to be seeded with deterministic data for consistent testing.
+    Uses temporary storage for file uploads.
     pytest-flask will use this fixture automatically.
     """
     login_manager = LoginManager()
     
     test_config = {
         'TESTING': True,
+        'STORAGE_PROVIDER': 'temp',  # Use temporary storage for all tests
     }
     
     app = create_app(login_manager=login_manager, config_override=test_config)

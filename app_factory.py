@@ -61,8 +61,9 @@ def create_app(login_manager=LoginManager(), config_override=dict()):
     from libcloud.storage.types import Provider
     from libcloud.storage.providers import get_driver
     import os
+    import tempfile
 
-    storage_provider = app.config.get('STORAGE_PROVIDER')
+    storage_provider = app.config.get('STORAGE_PROVIDER', 's3')
 
     if storage_provider == 's3':
         # Production: S3 Storage
@@ -73,8 +74,28 @@ def create_app(login_manager=LoginManager(), config_override=dict()):
             region=app.config.get('AWS_REGION', 'us-east-1')
         )
         container = driver.get_container(app.config.get('S3_BUCKET'))
+        app.logger.info(f"Using S3 storage with bucket: {app.config.get('S3_BUCKET')}")
+    
+    elif storage_provider == 'temp':
+        # Testing: Temporary storage (auto-cleaned)
+        import tempfile
+        upload_dir = app.config.get('UPLOAD_FOLDER')
+        if not upload_dir or upload_dir == './uploads':
+            # Create a temporary directory that will be cleaned up
+            upload_dir = tempfile.mkdtemp(prefix='temp_uploads_')
+            app.config['UPLOAD_FOLDER'] = upload_dir
+            app.logger.info(f"Created temporary upload directory: {upload_dir}")
+        
+        # IMPORTANT: Create directory if it doesn't exist
+        os.makedirs(upload_dir, exist_ok=True)
+
+        cls = get_driver(Provider.LOCAL)
+        driver = cls(upload_dir)
+        container = driver.get_container('') # Use an empty string for the container name, making upload_dir the container
+        app.logger.info(f"Using temporary storage at: {upload_dir}")
+    
     else:
-        # Development: Local Filesystem
+        # Development: Local Filesystem (explicit 'local' provider)
         upload_dir = app.config.get('UPLOAD_FOLDER', './uploads')
 
         # IMPORTANT: Create directory if it doesn't exist
@@ -82,7 +103,8 @@ def create_app(login_manager=LoginManager(), config_override=dict()):
 
         cls = get_driver(Provider.LOCAL)
         driver = cls(upload_dir)
-        container = driver.get_container('') # Use an empty string for the container name, making upload_dir the container  
+        container = driver.get_container('') # Use an empty string for the container name, making upload_dir the container
+        app.logger.info(f"Using local storage at: {upload_dir}")
 
     app.config['STORAGE_DRIVER'] = driver
     app.config['STORAGE_CONTAINER'] = container
