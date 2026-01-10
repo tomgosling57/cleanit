@@ -341,7 +341,7 @@ class TestMediaControllerErrorHandling:
     
     def test_delete_nonexistent_media_returns_404(self, admin_client_no_csrf):
         """DELETE /media/<non-existent-id> should return 404."""
-        response = admin_client_no_csrf.delete('/media/999999')
+        response = admin_client_no_csrf.delete('/media/999999', headers={'Accept': 'application/json'})
         assert response.status_code == 404
         data = json.loads(response.data)
         assert 'error' in data
@@ -354,7 +354,7 @@ class TestMediaControllerErrorHandling:
             pytest.skip("No properties in seeded data")
         
         property_id = list(properties.values())[0].id
-        response = admin_client_no_csrf.post(f'/media/properties/{property_id}/media/999999')
+        response = admin_client_no_csrf.post(f'/media/properties/{property_id}/media/999999', headers={'Accept': 'application/json'})
         assert response.status_code == 404
         data = json.loads(response.data)
         assert 'error' in data
