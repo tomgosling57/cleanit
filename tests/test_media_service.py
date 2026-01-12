@@ -250,3 +250,230 @@ def test_get_all_media(media_service):
     ids = {m.id for m in all_media}
     assert media1.id in ids
     assert media2.id in ids
+
+
+# ========== BATCH OPERATION TESTS ==========
+
+def test_associate_media_batch_with_property(media_service, seeded_test_data):
+    """Test batch association of media with a property."""
+    property_obj = list(seeded_test_data['properties'].values())[0]
+    
+    # Create multiple media items
+    media1 = media_service.add_media("batch1.jpg", "/uploads/batch1.jpg", "image", "image/jpeg", 1024, "Batch 1")
+    media2 = media_service.add_media("batch2.jpg", "/uploads/batch2.jpg", "image", "image/jpeg", 2048, "Batch 2")
+    media3 = media_service.add_media("batch3.jpg", "/uploads/batch3.jpg", "image", "image/jpeg", 3072, "Batch 3")
+    
+    media_ids = [media1.id, media2.id, media3.id]
+    
+    # Batch associate
+    associations = media_service.associate_media_batch_with_property(property_obj.id, media_ids)
+    
+    assert len(associations) == 3
+    for assoc in associations:
+        assert assoc.property_id == property_obj.id
+        assert assoc.media_id in media_ids
+    
+    # Verify associations exist
+    media_list = media_service.get_media_for_property(property_obj.id)
+    assert len(media_list) == 3
+    associated_ids = {m.id for m in media_list}
+    assert media1.id in associated_ids
+    assert media2.id in associated_ids
+    assert media3.id in associated_ids
+    
+    # Test duplicate association (should return existing)
+    associations2 = media_service.associate_media_batch_with_property(property_obj.id, [media1.id])
+    assert len(associations2) == 1
+    assert associations2[0].media_id == media1.id
+
+
+def test_associate_media_batch_with_job(media_service, seeded_test_data):
+    """Test batch association of media with a job."""
+    job = list(seeded_test_data['jobs'].values())[0]
+    
+    # Create multiple media items
+    media1 = media_service.add_media("job_batch1.jpg", "/uploads/job_batch1.jpg", "image", "image/jpeg", 1024, "Job Batch 1")
+    media2 = media_service.add_media("job_batch2.jpg", "/uploads/job_batch2.jpg", "image", "image/jpeg", 2048, "Job Batch 2")
+    
+    media_ids = [media1.id, media2.id]
+    
+    # Batch associate
+    associations = media_service.associate_media_batch_with_job(job.id, media_ids)
+    
+    assert len(associations) == 2
+    for assoc in associations:
+        assert assoc.job_id == job.id
+        assert assoc.media_id in media_ids
+    
+    # Verify associations exist
+    media_list = media_service.get_media_for_job(job.id)
+    assert len(media_list) == 2
+    associated_ids = {m.id for m in media_list}
+    assert media1.id in associated_ids
+    assert media2.id in associated_ids
+
+
+def test_disassociate_media_batch_from_property(media_service, seeded_test_data):
+    """Test batch disassociation of media from a property."""
+    property_obj = list(seeded_test_data['properties'].values())[0]
+    
+    # Create and associate multiple media items
+    media1 = media_service.add_media("dis1.jpg", "/uploads/dis1.jpg", "image", "image/jpeg", 1024, "Dis 1")
+    media2 = media_service.add_media("dis2.jpg", "/uploads/dis2.jpg", "image", "image/jpeg", 2048, "Dis 2")
+    media3 = media_service.add_media("dis3.jpg", "/uploads/dis3.jpg", "image", "image/jpeg", 3072, "Dis 3")
+    
+    media_service.associate_media_batch_with_property(property_obj.id, [media1.id, media2.id, media3.id])
+    
+    # Verify initial associations
+    media_list = media_service.get_media_for_property(property_obj.id)
+    assert len(media_list) == 3
+    
+    # Batch disassociate two items
+    result = media_service.disassociate_media_batch_from_property(property_obj.id, [media1.id, media2.id])
+    
+    assert result["success"] is True
+    assert result["successful_items"] == [media1.id, media2.id]
+    assert result["failed_items"] == []
+    assert result["total_processed"] == 2
+    
+    # Verify remaining associations
+    media_list = media_service.get_media_for_property(property_obj.id)
+    assert len(media_list) == 1
+    assert media_list[0].id == media3.id
+    
+    # Test disassociating non-existent association
+    result = media_service.disassociate_media_batch_from_property(property_obj.id, [9999])
+    assert result["success"] is False
+    assert result["failed_items"][0]["id"] == 9999
+    assert result["failed_items"][0]["error"] == "Association not found"
+
+
+def test_disassociate_media_batch_from_job(media_service, seeded_test_data):
+    """Test batch disassociation of media from a job."""
+    job = list(seeded_test_data['jobs'].values())[0]
+    
+    # Create and associate multiple media items
+    media1 = media_service.add_media("job_dis1.jpg", "/uploads/job_dis1.jpg", "image", "image/jpeg", 1024, "Job Dis 1")
+    media2 = media_service.add_media("job_dis2.jpg", "/uploads/job_dis2.jpg", "image", "image/jpeg", 2048, "Job Dis 2")
+    
+    media_service.associate_media_batch_with_job(job.id, [media1.id, media2.id])
+    
+    # Verify initial associations
+    media_list = media_service.get_media_for_job(job.id)
+    assert len(media_list) == 2
+    
+    # Batch disassociate
+    result = media_service.disassociate_media_batch_from_job(job.id, [media1.id])
+    
+    assert result["success"] is True
+    assert result["successful_items"] == [media1.id]
+    assert result["failed_items"] == []
+    assert result["total_processed"] == 1
+    
+    # Verify remaining associations
+    media_list = media_service.get_media_for_job(job.id)
+    assert len(media_list) == 1
+    assert media_list[0].id == media2.id
+
+
+def test_upload_and_associate_with_property(media_service, seeded_test_data):
+    """Test uploading and associating multiple files with a property."""
+    property_obj = list(seeded_test_data['properties'].values())[0]
+    
+    # Prepare file data
+    files_data = [
+        {
+            'file_name': 'upload1.jpg',
+            'file_path': '/uploads/upload1.jpg',
+            'media_type': 'image',
+            'mimetype': 'image/jpeg',
+            'size_bytes': 1024,
+            'description': 'First upload',
+            'metadata': {'width': 800, 'height': 600}
+        },
+        {
+            'file_name': 'upload2.png',
+            'file_path': '/uploads/upload2.png',
+            'media_type': 'image',
+            'mimetype': 'image/png',
+            'size_bytes': 2048,
+            'description': 'Second upload',
+            'metadata': {'width': 1024, 'height': 768}
+        }
+    ]
+    
+    # Upload and associate
+    media_items = media_service.upload_and_associate_with_property(property_obj.id, files_data)
+    
+    assert len(media_items) == 2
+    assert media_items[0].filename == 'upload1.jpg'
+    assert media_items[1].filename == 'upload2.png'
+    assert media_items[0].description == 'First upload'
+    assert media_items[1].description == 'Second upload'
+    
+    # Verify associations
+    media_list = media_service.get_media_for_property(property_obj.id)
+    assert len(media_list) == 2
+    media_ids = {m.id for m in media_list}
+    assert media_items[0].id in media_ids
+    assert media_items[1].id in media_ids
+
+
+def test_upload_and_associate_with_job(media_service, seeded_test_data):
+    """Test uploading and associating multiple files with a job."""
+    job = list(seeded_test_data['jobs'].values())[0]
+    
+    # Prepare file data
+    files_data = [
+        {
+            'file_name': 'job_upload1.jpg',
+            'file_path': '/uploads/job_upload1.jpg',
+            'media_type': 'image',
+            'mimetype': 'image/jpeg',
+            'size_bytes': 1024,
+            'description': 'Job upload 1'
+        },
+        {
+            'file_name': 'job_upload2.jpg',
+            'file_path': '/uploads/job_upload2.jpg',
+            'media_type': 'image',
+            'mimetype': 'image/jpeg',
+            'size_bytes': 2048,
+            'description': 'Job upload 2'
+        }
+    ]
+    
+    # Upload and associate
+    media_items = media_service.upload_and_associate_with_job(job.id, files_data)
+    
+    assert len(media_items) == 2
+    assert media_items[0].filename == 'job_upload1.jpg'
+    assert media_items[1].filename == 'job_upload2.jpg'
+    
+    # Verify associations
+    media_list = media_service.get_media_for_job(job.id)
+    assert len(media_list) == 2
+    media_ids = {m.id for m in media_list}
+    assert media_items[0].id in media_ids
+    assert media_items[1].id in media_ids
+
+
+def test_empty_batch_operations(media_service, seeded_test_data):
+    """Test batch operations with empty lists."""
+    property_obj = list(seeded_test_data['properties'].values())[0]
+    job = list(seeded_test_data['jobs'].values())[0]
+    
+    # Empty association
+    associations = media_service.associate_media_batch_with_property(property_obj.id, [])
+    assert associations == []
+    
+    # Empty disassociation
+    result = media_service.disassociate_media_batch_from_job(job.id, [])
+    assert result["success"] is True
+    assert result["successful_items"] == []
+    assert result["failed_items"] == []
+    assert result["total_processed"] == 0
+    
+    # Empty upload and associate
+    media_items = media_service.upload_and_associate_with_property(property_obj.id, [])
+    assert media_items == []
