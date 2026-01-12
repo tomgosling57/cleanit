@@ -51,33 +51,3 @@ def delete_media(media_id):
     """Handle DELETE /media/<media_id> - delete media."""
     controller = get_media_controller()
     return controller.delete_media(media_id)
-
-# Property-media association routes
-@media_bp.route('/properties/<int:property_id>/media/<int:media_id>', methods=['POST'])
-@login_required
-def associate_media_with_property(property_id, media_id):
-    """Handle POST /properties/<property_id>/media/<media_id> - associate media with property."""
-    controller = get_media_controller()
-    return controller.associate_media_with_property(property_id, media_id)
-
-@media_bp.route('/properties/<int:property_id>/media/<int:media_id>', methods=['DELETE'])
-@login_required
-def disassociate_media_from_property(property_id, media_id):
-    """Handle DELETE /properties/<property_id>/media/<media_id> - disassociate media from property."""
-    controller = get_media_controller()
-    return controller.disassociate_media_from_property(property_id, media_id)
-
-# Job-media association routes
-@media_bp.route('/jobs/<int:job_id>/media/<int:media_id>', methods=['POST'])
-@login_required
-def associate_media_with_job(job_id, media_id):
-    """Handle POST /jobs/<job_id>/media/<media_id> - associate media with job."""
-    controller = get_media_controller()
-    return controller.associate_media_with_job(job_id, media_id)
-
-@media_bp.route('/jobs/<int:job_id>/media/<int:media_id>', methods=['DELETE'])
-@login_required
-def disassociate_media_from_job(job_id, media_id):
-    """Handle DELETE /jobs/<job_id>/media/<media_id> - disassociate media from job."""
-    controller = get_media_controller()
-    return controller.disassociate_media_from_job(job_id, media_id)
