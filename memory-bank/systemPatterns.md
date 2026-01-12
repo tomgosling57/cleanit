@@ -119,10 +119,23 @@ Job (many) ──── (1) Property                    │
 4. **Unified Interface**: Libcloud abstraction layer
 
 ### Media Management Patterns
+- **Single Service Responsibility**: Media Service handles both storage AND collection management
+- **Entity-Scoped Operations**: Media operations scoped within Job/Property contexts (not separate Media Controller)
+- **Batch Operations**: Efficient batch upload/delete for gallery management
 - **Unique Filename Generation**: Prevent collisions and ensure security
 - **Path Resolution**: Abstract storage location from application logic
 - **URL Generation**: Dynamic URL construction for frontend access
-- **Collection Management**: Entity-media relationship management
+- **Collection Management**: Entity-media relationship management within single service
+
+#### Media Architecture Pattern
+```
+Client → Job/Property Controller → Media Service → Storage
+         (entity context)         (storage + collections)
+         
+Instead of:
+Client → Media Controller → Media Service → Storage
+         (wrong scope)     (storage only)
+```
 
 ## Frontend Architecture Patterns
 
