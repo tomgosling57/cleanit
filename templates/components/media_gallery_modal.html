@@ -11,8 +11,14 @@
         
         <div class="gallery-header">
             <h2 id="gallery-modal-title">Media Gallery</h2>
-            <div class="media-counter" aria-live="polite" aria-atomic="true">
-                <span id="current-index">1</span> / <span id="total-count">0</span>
+            <div class="gallery-header-controls">
+                <div class="media-counter" aria-live="polite" aria-atomic="true">
+                    <span id="current-index">1</span> / <span id="total-count">0</span>
+                </div>
+                <div class="gallery-mode-controls">
+                    <button class="button small" id="gallery-edit-toggle">Edit Mode</button>
+                    <span class="selected-count" id="selected-count" style="display: none;">0 selected</span>
+                </div>
             </div>
         </div>
 
@@ -83,16 +89,26 @@
                 <span id="media-type-label">Image</span>
                 <span id="media-dimensions">-</span>
                 <span id="media-duration" style="display: none;">-</span>
+                <span id="gallery-entity-info" class="entity-info"></span>
             </div>
             <div class="gallery-actions">
-                <button class="button" onclick="MEDIA_GALLERY.downloadCurrent()" id="download-button">
+                <button class="button" id="batch-upload-button" style="display: none;">
+                    Upload Files
+                </button>
+                <button class="button danger" id="batch-delete-button" style="display: none;" disabled>
+                    Delete Selected
+                </button>
+                <button class="button" onclick="ENHANCED_GALLERY.downloadCurrent ? ENHANCED_GALLERY.downloadCurrent() : MEDIA_GALLERY.downloadCurrent()" id="download-button">
                     Download
                 </button>
-                <button class="button" onclick="MEDIA_GALLERY.toggleFullscreen()" id="fullscreen-button">
+                <button class="button" onclick="ENHANCED_GALLERY.toggleFullscreen ? ENHANCED_GALLERY.toggleFullscreen() : MEDIA_GALLERY.toggleFullscreen()" id="fullscreen-button">
                     Fullscreen
                 </button>
             </div>
         </div>
+        
+        <!-- Hidden file input for batch upload -->
+        <input type="file" id="gallery-file-input" multiple accept="image/*,video/*" style="display: none;">
     </div>
 </div>
 
