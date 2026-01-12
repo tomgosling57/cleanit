@@ -1,6 +1,7 @@
 from database import Media, PropertyMedia, JobMedia
 import os
 from werkzeug.utils import secure_filename
+from typing import List, Dict, Any, Optional
 
 
 class MediaNotFound(Exception):
@@ -294,6 +295,222 @@ class MediaService:
         self.db_session.delete(association)
         self.db_session.commit()
         return True
+
+    # ========== BATCH OPERATION METHODS ==========
+
+    def associate_media_batch_with_property(self, property_id: int, media_ids: List[int]) -> List[PropertyMedia]:
+        """
+        Associate multiple media items with a property.
+
+        Args:
+            property_id (int): The property ID
+            media_ids (List[int]): List of media IDs to associate
+
+        Returns:
+            List[PropertyMedia]: List of created association objects
+        """
+        associations = []
+        for media_id in media_ids:
+            # Check if association already exists
+            existing = self.db_session.query(PropertyMedia).filter_by(
+                media_id=media_id,
+                property_id=property_id
+            ).first()
+            if existing:
+                associations.append(existing)
+                continue
+
+            association = PropertyMedia(
+                media_id=media_id,
+                property_id=property_id
+            )
+            self.db_session.add(association)
+            associations.append(association)
+        
+        self.db_session.commit()
+        # Refresh all associations to get IDs
+        for assoc in associations:
+            self.db_session.refresh(assoc)
+        return associations
+
+    def associate_media_batch_with_job(self, job_id: int, media_ids: List[int]) -> List[JobMedia]:
+        """
+        Associate multiple media items with a job.
+
+        Args:
+            job_id (int): The job ID
+            media_ids (List[int]): List of media IDs to associate
+
+        Returns:
+            List[JobMedia]: List of created association objects
+        """
+        associations = []
+        for media_id in media_ids:
+            # Check if association already exists
+            existing = self.db_session.query(JobMedia).filter_by(
+                media_id=media_id,
+                job_id=job_id
+            ).first()
+            if existing:
+                associations.append(existing)
+                continue
+
+            association = JobMedia(
+                media_id=media_id,
+                job_id=job_id
+            )
+            self.db_session.add(association)
+            associations.append(association)
+        
+        self.db_session.commit()
+        # Refresh all associations to get IDs
+        for assoc in associations:
+            self.db_session.refresh(assoc)
+        return associations
+
+    def disassociate_media_batch_from_property(self, property_id: int, media_ids: List[int]) -> Dict[str, Any]:
+        """
+        Disassociate multiple media items from a property.
+
+        Args:
+            property_id (int): The property ID
+            media_ids (List[int]): List of media IDs to disassociate
+
+        Returns:
+            Dict[str, Any]: Result with success/failure details
+        """
+        successful = []
+        failed = []
+        
+        for media_id in media_ids:
+            association = self.db_session.query(PropertyMedia).filter_by(
+                media_id=media_id,
+                property_id=property_id
+            ).first()
+            
+            if association:
+                self.db_session.delete(association)
+                successful.append(media_id)
+            else:
+                failed.append({"id": media_id, "error": "Association not found"})
+        
+        self.db_session.commit()
+        
+        return {
+            "success": len(failed) == 0,
+            "successful_items": successful,
+            "failed_items": failed,
+            "total_processed": len(media_ids)
+        }
+
+    def disassociate_media_batch_from_job(self, job_id: int, media_ids: List[int]) -> Dict[str, Any]:
+        """
+        Disassociate multiple media items from a job.
+
+        Args:
+            job_id (int): The job ID
+            media_ids (List[int]): List of media IDs to disassociate
+
+        Returns:
+            Dict[str, Any]: Result with success/failure details
+        """
+        successful = []
+        failed = []
+        
+        for media_id in media_ids:
+            association = self.db_session.query(JobMedia).filter_by(
+                media_id=media_id,
+                job_id=job_id
+            ).first()
+            
+            if association:
+                self.db_session.delete(association)
+                successful.append(media_id)
+            else:
+                failed.append({"id": media_id, "error": "Association not found"})
+        
+        self.db_session.commit()
+        
+        return {
+            "success": len(failed) == 0,
+            "successful_items": successful,
+            "failed_items": failed,
+            "total_processed": len(media_ids)
+        }
+
+    def upload_and_associate_with_property(self, property_id: int, files_data: List[dict]) -> List[Media]:
+        """
+        Upload multiple files and associate them with a property.
+
+        Args:
+            property_id (int): The property ID
+            files_data (List[dict]): List of file data dictionaries with keys:
+                - 'file_name': Original filename
+                - 'file_path': Storage path
+                - 'media_type': Type of media
+                - 'mimetype': MIME type
+                - 'size_bytes': File size
+                - 'description': Optional description
+                - 'metadata': Optional metadata dict
+
+        Returns:
+            List[Media]: List of created Media objects
+        """
+        media_items = []
+        for file_data in files_data:
+            media = self.add_media(
+                file_name=file_data.get('file_name'),
+                file_path=file_data.get('file_path'),
+                media_type=file_data.get('media_type'),
+                mimetype=file_data.get('mimetype'),
+                size_bytes=file_data.get('size_bytes'),
+                description=file_data.get('description'),
+                metadata=file_data.get('metadata')
+            )
+            media_items.append(media)
+        
+        # Associate all created media with the property
+        media_ids = [media.id for media in media_items]
+        self.associate_media_batch_with_property(property_id, media_ids)
+        
+        return media_items
+
+    def upload_and_associate_with_job(self, job_id: int, files_data: List[dict]) -> List[Media]:
+        """
+        Upload multiple files and associate them with a job.
+
+        Args:
+            job_id (int): The job ID
+            files_data (List[dict]): List of file data dictionaries with keys:
+                - 'file_name': Original filename
+                - 'file_path': Storage path
+                - 'media_type': Type of media
+                - 'mimetype': MIME type
+                - 'size_bytes': File size
+                - 'description': Optional description
+                - 'metadata': Optional metadata dict
+
+        Returns:
+            List[Media]: List of created Media objects
+        """
+        media_items = []
+        for file_data in files_data:
+            media = self.add_media(
+                file_name=file_data.get('file_name'),
+                file_path=file_data.get('file_path'),
+                media_type=file_data.get('media_type'),
+                mimetype=file_data.get('mimetype'),
+                size_bytes=file_data.get('size_bytes'),
+                description=file_data.get('description'),
+                metadata=file_data.get('metadata')
+            )
+            media_items.append(media)
+        
+        # Associate all created media with the job
+        media_ids = [media.id for media in media_items]
+        self.associate_media_batch_with_job(job_id, media_ids)
+        
+        return media_items
 
     def get_all_media(self):
         """
