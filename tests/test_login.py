@@ -61,7 +61,7 @@ def test_login_supervisor(page, goto) -> None:
     expect(page).to_have_title("Timetable") # Assert login was successful
     expect(page.get_by_text("Create Job")).to_be_hidden() # Assert admin-specific element is hidden
     
-def test_unauthorized_json_api_returns_json(page, goto) -> None:
+def test_unauthorized_json_api_returns_json(page, server_url) -> None:
     """
     Tests that JSON API requests get JSON responses when unauthorized,
     not HTML redirects.
@@ -70,7 +70,7 @@ def test_unauthorized_json_api_returns_json(page, goto) -> None:
     
     Args:
         page: The page pytest-playwright fixture representing the current browser page.
-        goto: A fixture to navigate to a specified URL.
+        server_url: The base URL of the test server.
 
     Returns:
         None
@@ -78,8 +78,8 @@ def test_unauthorized_json_api_returns_json(page, goto) -> None:
     # Make a JSON request to a protected endpoint
     # We'll use the fetch API to make a request with Accept: application/json header
     response = page.evaluate("""
-        async () => {
-            const response = await fetch('/users/', {
+        async (serverUrl) => {
+            const response = await fetch(serverUrl + '/users/', {
                 headers: {
                     'Accept': 'application/json'
                 }
@@ -90,7 +90,7 @@ def test_unauthorized_json_api_returns_json(page, goto) -> None:
                 body: await response.text()
             };
         }
-    """)
+    """, server_url)
     
     # Should return 401 Unauthorized with JSON content
     assert response['status'] == 401
