@@ -411,7 +411,7 @@ def fill_property_form(
         page.locator("#notes").fill(notes)
 
 
-def submit_property_form(page: Page) -> None:
+def submit_property_creation_form(page: Page) -> None:
     """Submit the property form (for creation)"""
     with page.expect_response("**/address-book/property/create**"):
         page.wait_for_load_state('networkidle')

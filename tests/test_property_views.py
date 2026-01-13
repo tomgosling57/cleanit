@@ -12,7 +12,8 @@ from tests.helpers import (
     assert_gallery_modal_content,
     open_property_creation_modal,
     fill_property_form,
-    submit_property_form,
+    submit_property_creation_form,
+    submit_property_update_form,
     open_property_update_modal,
     open_property_jobs_modal,
     delete_property,
@@ -69,7 +70,7 @@ def test_create_property(page, goto) -> None:
     fill_property_form(page, test_address, test_access_notes, test_notes)
     
     # Submit form
-    submit_property_form(page)
+    submit_property_creation_form(page)
     
     # Wait for property list to update
     expect(page.locator("#property-list")).to_be_visible()
