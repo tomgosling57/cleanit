@@ -453,7 +453,8 @@ def delete_property(page: Page, property_card: Locator) -> None:
     
     with page.expect_response(f"**/property/{property_id}/delete**"):
         page.wait_for_load_state('networkidle')
-        property_card.locator('button[type="delete"]').click()
+        # Find delete button by CSS class
+        property_card.locator(".property-delete-button").click()
 
 
 def assert_property_card_content(

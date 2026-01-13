@@ -40,6 +40,7 @@
             'label': 'Delete',
             'icon_name': 'trash-can-solid-full',
             'type': 'delete',
+            'class': 'property-delete-button',
             'htmx_attrs': {
                 'hx-delete': url_for('properties.delete_property_route', property_id=property.id),
                 'hx-target': '#property-list',
