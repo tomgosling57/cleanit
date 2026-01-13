@@ -383,11 +383,14 @@ def assert_gallery_modal_content(page: Page) -> None:
     placeholder = gallery_modal.locator("#media-placeholder")
     expect(placeholder).to_be_visible()
     expect(placeholder.locator('img[src*="image-not-found.png"]')).to_be_visible()
+    
+    # Note: thumbnail container (#thumbnail-container) may be hidden when no media exists
+    # This is acceptable behavior for the "media not successfully loaded" case
 
 
 def open_property_creation_modal(page: Page) -> None:
     """Open the create property modal"""
-    with page.expect_response("**/properties/create**"):
+    with page.expect_response("**/address-book/property/create**"):
         page.wait_for_load_state('networkidle')
         page.locator('button:has-text("Create Property")').click()
     
@@ -410,7 +413,7 @@ def fill_property_form(
 
 def submit_property_form(page: Page) -> None:
     """Submit the property form"""
-    with page.expect_response("**/properties/create**"):
+    with page.expect_response("**/address-book/property/create**"):
         page.wait_for_load_state('networkidle')
         page.locator('#property-modal button[type="submit"]').click()
 
