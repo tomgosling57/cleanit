@@ -124,7 +124,8 @@ def test_delete_property(page, goto) -> None:
     property_card = get_first_property_card(page)
     expect(property_card).to_be_visible()
     
-    # Get the property address before deletion for verification
+    # Get the property ID and address before deletion for verification
+    property_id = property_card.get_attribute("data-id")
     property_address = property_card.locator("h3").text_content()
     
     # Delete the property
@@ -134,8 +135,9 @@ def test_delete_property(page, goto) -> None:
     expect(page.locator("#property-list")).to_be_visible()
     
     # Verify property is no longer in the list
-    # The card should be hidden/removed
-    expect(property_card).not_to_be_visible()
+    # Check that the specific property card (by ID) is not visible
+    deleted_card = page.locator(f'[data-id="{property_id}"]')
+    expect(deleted_card).not_to_be_visible()
 
 def test_view_property_jobs(page, goto) -> None:
     """Test viewing jobs for a property"""
