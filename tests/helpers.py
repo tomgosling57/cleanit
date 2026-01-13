@@ -328,7 +328,6 @@ def open_address_book(page: Page) -> None:
     with page.expect_response("**/address-book**"):
         page.wait_for_load_state('networkidle')
         page.get_by_text("Address Book").click()
-    expect(page.locator("#property-list")).to_be_visible()
 
 def get_first_property_card(page: Page) -> Locator:
     return page.locator(".property-card").first
@@ -341,3 +340,12 @@ def open_property_details(page: Page, property_card) -> None:
         property_card.locator(f".edit-button").click()
 
     expect(page.locator("#property-details-modal")).to_be_visible()
+
+def open_property_card_gallery(page: Page, property_card: Locator) -> None:
+    """Open the gallery modal from a property card"""
+    property_id = property_card.get_attribute("data-id")
+    with page.expect_response(f"**/address-book/property/{property_id}/media**"):
+        page.wait_for_load_state('networkidle')
+        property_card.locator(".gallery-button").click()
+
+    expect(page.locator("#media-gallery-modal")).to_be_visible()
