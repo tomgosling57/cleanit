@@ -159,8 +159,8 @@ def test_view_property_jobs(page, goto) -> None:
     # At minimum, check modal is visible and has some content
     expect(modal.locator("h2")).to_be_visible()
     
-    # Close modal
-    modal.get_by_text("×").click()
+    # Close modal - use first close button (modal close button)
+    modal.locator(".close-button").first.click()
     expect(modal).not_to_be_visible()
 
 def test_admin_can_access_address_book(page, goto) -> None:
