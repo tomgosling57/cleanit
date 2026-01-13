@@ -412,8 +412,14 @@ def fill_property_form(
 
 
 def submit_property_form(page: Page) -> None:
-    """Submit the property form"""
+    """Submit the property form (for creation)"""
     with page.expect_response("**/address-book/property/create**"):
+        page.wait_for_load_state('networkidle')
+        page.locator('#property-modal button[type="submit"]').click()
+
+def submit_property_update_form(page: Page, property_id: int) -> None:
+    """Submit the property update form"""
+    with page.expect_response(f"**/address-book/property/{property_id}/update**"):
         page.wait_for_load_state('networkidle')
         page.locator('#property-modal button[type="submit"]').click()
 

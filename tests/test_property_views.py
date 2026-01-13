@@ -101,8 +101,8 @@ def test_update_property(page, goto) -> None:
     
     fill_property_form(page, updated_address, updated_access_notes, updated_notes)
     
-    # Submit form (using same submit helper - endpoint will be different but helper handles it)
-    submit_property_form(page)
+    # Submit form using update-specific helper
+    submit_property_update_form(page, property_id=1)
     
     # Wait for property list to update
     expect(page.locator("#property-list")).to_be_visible()
