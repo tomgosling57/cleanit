@@ -129,3 +129,61 @@ def test_login_invalid_credentials(page, goto) -> None:
     """
     login_invalid_credentials(page, goto)
     expect(page.get_by_text("Invalid email or password")).to_be_visible() # Assert error
+
+def test_unauthorized_htmx_request_gets_hx_redirect(page, server_url, goto) -> None:
+    """
+    Tests that HTMX requests get HX-Redirect headers when unauthorized,
+    not HTML redirects or JSON responses.
+    
+    This verifies the unauthorized handler correctly handles HTMX requests.
+    
+    Args:
+        page: The page pytest-playwright fixture representing the current browser page.
+        server_url: The base URL of the test server.
+        goto: A fixture to navigate to a specified URL.
+
+    Returns:
+        None
+    """
+    # First navigate to the base URL to establish same-origin context
+    goto("/")
+    
+    # Make an HTMX request to a protected endpoint
+    # We'll use the fetch API to make a request with HTMX headers
+    response = page.evaluate("""
+        async ([endpoint]) => {
+            try {
+                const response = await fetch(endpoint, {
+                    headers: {
+                        'HX-Request': 'true',
+                        'HX-Trigger': 'test-trigger'
+                    }
+                });
+                return {
+                    status: response.status,
+                    contentType: response.headers.get('content-type'),
+                    hxRedirect: response.headers.get('HX-Redirect'),
+                    body: await response.text(),
+                    error: null
+                };
+            } catch (error) {
+                return {
+                    status: 0,
+                    contentType: null,
+                    hxRedirect: null,
+                    body: null,
+                    error: error.toString()
+                };
+            }
+        }
+    """, [f"{server_url}/users/"])
+    
+    # Should return 401 Unauthorized with HX-Redirect header
+    assert response['status'] == 401, f"Expected status 401 but got {response['status']}. Error: {response.get('error')}"
+    
+    # Should have HX-Redirect header pointing to login page
+    assert response['hxRedirect'] is not None, "Expected HX-Redirect header but got none"
+    assert '/user/login' in response['hxRedirect'], f"Expected HX-Redirect to contain '/user/login' but got {response['hxRedirect']}"
+    
+    # The response body might be empty or contain minimal content
+    # HTMX will handle the redirect client-side
