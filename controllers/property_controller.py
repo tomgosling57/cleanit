@@ -64,13 +64,15 @@ class PropertyController:
         """
         address = request.form.get('address')
         access_notes = request.form.get('access_notes')
+        notes = request.form.get('notes')
 
         if not address:
             return render_template_string('{% include "_form_response.html" with messages=["Address is required."] %}')
 
         property_data = {
             'address': address,
-            'access_notes': access_notes
+            'access_notes': access_notes,
+            'notes': notes
         }
 
         new_property = self.property_service.create_property(property_data)
