@@ -61,7 +61,7 @@ def test_login_supervisor(page, goto) -> None:
     expect(page).to_have_title("Timetable") # Assert login was successful
     expect(page.get_by_text("Create Job")).to_be_hidden() # Assert admin-specific element is hidden
     
-def test_unauthorized_json_api_returns_json(page, server_url) -> None:
+def test_unauthorized_json_api_returns_json(page, server_url, goto) -> None:
     """
     Tests that JSON API requests get JSON responses when unauthorized,
     not HTML redirects.
@@ -71,30 +71,45 @@ def test_unauthorized_json_api_returns_json(page, server_url) -> None:
     Args:
         page: The page pytest-playwright fixture representing the current browser page.
         server_url: The base URL of the test server.
+        goto: A fixture to navigate to a specified URL.
 
     Returns:
         None
     """
+    # First navigate to the base URL to establish same-origin context
+    goto("/")
+    
     # Make a JSON request to a protected endpoint
     # We'll use the fetch API to make a request with Accept: application/json header
     response = page.evaluate("""
-        async (serverUrl) => {
-            const response = await fetch(serverUrl + '/users/', {
-                headers: {
-                    'Accept': 'application/json'
-                }
-            });
-            return {
-                status: response.status,
-                contentType: response.headers.get('content-type'),
-                body: await response.text()
-            };
+        async ([endpoint]) => {
+            try {
+                const response = await fetch(endpoint, {
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+                return {
+                    status: response.status,
+                    contentType: response.headers.get('content-type'),
+                    body: await response.text(),
+                    error: null
+                };
+            } catch (error) {
+                return {
+                    status: 0,
+                    contentType: null,
+                    body: null,
+                    error: error.toString()
+                };
+            }
         }
-    """, server_url)
+    """, [f"{server_url}/users/"])
     
     # Should return 401 Unauthorized with JSON content
-    assert response['status'] == 401
-    assert 'application/json' in response['contentType']
+    assert response['status'] == 401, f"Expected status 401 but got {response['status']}. Error: {response.get('error')}"
+    assert 'application/json' in response['contentType'], f"Expected JSON content type but got {response['contentType']}"
+    
     # The response should be JSON, not HTML
     import json
     json_response = json.loads(response['body'])
