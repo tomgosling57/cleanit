@@ -61,7 +61,7 @@ def test_get_file_url_local(client_local, local_storage_app):
         with local_storage_app.test_request_context():
             filename = "some_file.jpg"
             url = get_file_url(filename)
-            assert url == url_for('storage.serve_file', filename=filename, _external=True)
+            assert url == url_for('media.serve_media', filename=filename, _external=True)
             assert 'http://localhost' in url # Ensure it's an external URL for testing
 
 # --- Test file_exists function (local storage) ---
@@ -134,13 +134,13 @@ def test_serve_file_route_local(client_local, local_storage_app):
             with open(test_filepath, 'wb') as f:
                 f.write(file_content)
 
-        response = client_local.get(f'/uploads/{test_filename}')
+        response = client_local.get(f'/media/serve/{test_filename}')
         assert response.status_code == 200
         assert response.data == file_content
         assert response.headers['Content-Type'] == 'text/plain; charset=utf-8'
 
         # Test file not found
-        response = client_local.get('/uploads/non_existent_file.txt')
+        response = client_local.get('/media/serve/non_existent_file.txt')
         assert response.status_code == 404
         assert b"File not found" in response.data
 
@@ -149,7 +149,7 @@ def test_serve_file_route_local(client_local, local_storage_app):
         original_provider = local_storage_app.config.get('STORAGE_PROVIDER')
         local_storage_app.config['STORAGE_PROVIDER'] = 's3'
         try:
-            response = client_local.get(f'/uploads/{test_filename}')
+            response = client_local.get(f'/media/serve/{test_filename}')
             assert response.status_code == 404
             assert b"File serving not available when STORAGE_PROVIDER is 's3'" in response.data
         finally:

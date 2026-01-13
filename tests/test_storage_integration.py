@@ -15,10 +15,10 @@ def test_imports():
         return False
 
     try:
-        from routes.storage import storage_bp
-        print("✓ routes.storage imports succeeded")
+        from routes.media import media_bp
+        print("✓ routes.media imports succeeded")
     except Exception as e:
-        print(f"✗ routes.storage imports failed: {e}")
+        print(f"✗ routes.media imports failed: {e}")
         return False
 
     try:

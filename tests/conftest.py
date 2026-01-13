@@ -1,7 +1,7 @@
 # conftest.py
 from typing import Generator
 import pytest
-from flask_login import LoginManager
+from flask_login import LoginManager, login_user
 from app_factory import create_app
 import tempfile
 import os
@@ -14,8 +14,9 @@ from services.assignment_service import AssignmentService
 from services.job_service import JobService
 from services.property_service import PropertyService
 from services.user_service import UserService
+from services.media_service import MediaService
 from utils.populate_database import populate_database
-from database import Team, get_db, teardown_db, User, Property, Job, Assignment
+from database import Team, get_db, teardown_db, User, Property, Job, Assignment, Media, PropertyMedia, JobMedia
 
 @pytest.fixture(scope='session')
 def test_db_path():
@@ -81,6 +82,25 @@ def app(test_db_path):
     
     yield app
 
+@pytest.fixture(scope='session')
+def app_no_csrf(test_db_path):
+    """
+    Configures and creates a Flask app for testing with CSRF protection disabled.
+    Useful for API testing where CSRF tokens are not needed.
+    """
+    login_manager = LoginManager()
+    
+    test_config = {
+        'TESTING': True,
+        'STORAGE_PROVIDER': 'temp',
+        'WTF_CSRF_ENABLED': False,  # Disable CSRF protection
+    }
+    
+    app = create_app(login_manager=login_manager, config_override=test_config)
+    populate_database(app.config['SQLALCHEMY_DATABASE_URI'])
+    
+    yield app
+
     
 @pytest.fixture(autouse=True)
 def rollback_db_after_test(app):
@@ -89,7 +109,18 @@ def rollback_db_after_test(app):
     
     # After test completes, rollback any uncommitted changes
     with app.app_context():
-        populate_database(app.config['SQLALCHEMY_DATABASE_URI'])  # Reseed data to initial state
+        # Delete any media and their associations to ensure clean state
+        db_session = get_db()
+        try:
+            db_session.query(PropertyMedia).delete()
+            db_session.query(JobMedia).delete()
+            db_session.query(Media).delete()
+            db_session.commit()
+        finally:
+            teardown_db()
+        
+        # Reseed data to initial state
+        populate_database(app.config['SQLALCHEMY_DATABASE_URI'])
 
 @pytest.fixture
 def goto(page, live_server):
@@ -109,6 +140,250 @@ def page(context: BrowserContext) -> Generator[Page, None, None]:
 def server_url(live_server):
     """Get the base URL from the live server"""
     return live_server.url()
+
+# User fixtures for authentication testing
+@pytest.fixture
+def admin_user():
+    """
+    A mock admin user object for testing.
+    """
+    user = User(
+        id=999,
+        email="admin@example.com",
+        first_name="Admin",
+        last_name="User",
+        role="admin",
+        is_active=True,
+        is_authenticated=True,
+        is_anonymous=False
+    )
+    return user
+
+@pytest.fixture
+def regular_user():
+    """
+    A mock regular user object for testing.
+    """
+    user = User(
+        id=998,
+        email="user@example.com",
+        first_name="Regular",
+        last_name="User",
+        role="user",
+        is_active=True,
+        is_authenticated=True,
+        is_anonymous=False
+    )
+    return user
+
+@pytest.fixture
+def authenticated_client(app, admin_user):
+    """
+    Provides a Flask test client with a mocked admin user logged in.
+    Uses unittest.mock.patch to replace flask_login.current_user.
+    """
+    with app.test_client() as client:
+        with patch('flask_login.current_user', new=admin_user):
+            yield client
+
+@pytest.fixture
+def regular_authenticated_client(app, regular_user):
+    """
+    Provides a Flask test client with a mocked regular user logged in.
+    Uses unittest.mock.patch to replace flask_login.current_user.
+    """
+    with app.test_client() as client:
+        with patch('flask_login.current_user', new=regular_user):
+            yield client
+
+# Integration testing helpers
+def login_user_for_test(client, email, password, debug=False):
+    """
+    Enhanced login helper with debugging and CSRF support.
+    Returns the client with an authenticated session.
+    """
+    import re
+    
+    # Get the correct login URL using the app's url_for
+    # The login endpoint is 'user.login' which maps to '/users/user/login'
+    login_url = '/users/user/login'
+    
+    # First, get the login page to extract CSRF token
+    login_page_response = client.get(login_url)
+    if debug:
+        print(f"Login page status: {login_page_response.status_code}")
+        print(f"Login page content length: {len(login_page_response.data)}")
+        if login_page_response.status_code != 200:
+            print(f"Login page response: {login_page_response.data.decode('utf-8')[:200]}")
+    
+    # Extract CSRF token from the HTML
+    csrf_token = None
+    if login_page_response.status_code == 200:
+        html = login_page_response.data.decode('utf-8')
+        # Look for <input type="hidden" name="csrf_token" value="..."/>
+        match = re.search(r'name="csrf_token"\s+value="([^"]+)"', html)
+        if match:
+            csrf_token = match.group(1)
+            if debug:
+                print(f"Extracted CSRF token: {csrf_token[:20]}...")
+        else:
+            if debug:
+                print("WARNING: No CSRF token found in login page")
+                # Try alternative pattern
+                match = re.search(r'csrf_token.*?value="([^"]+)"', html)
+                if match:
+                    csrf_token = match.group(1)
+                    print(f"Alternative CSRF token: {csrf_token[:20]}...")
+    else:
+        if debug:
+            print("ERROR: Could not load login page")
+    
+    # Prepare login data with CSRF token if found
+    login_data = {
+        'email': email,
+        'password': password
+    }
+    if csrf_token:
+        login_data['csrf_token'] = csrf_token
+    
+    # Perform login
+    response = client.post(login_url, data=login_data, follow_redirects=True)
+    
+    if debug:
+        print(f"Login POST status: {response.status_code}")
+        print(f"Login POST redirected to: {response.request.path if hasattr(response, 'request') else 'unknown'}")
+        
+        # Debug session
+        with client.session_transaction() as session:
+            session_dict = dict(session)
+            print(f"Session after login: {session_dict}")
+            if '_user_id' in session_dict:
+                print(f"User ID in session: {session_dict['_user_id']}")
+            else:
+                print("WARNING: No _user_id in session - login may have failed")
+    
+    return client
+
+def login_admin_for_test(client, debug=False):
+    """Helper to log in as admin with correct password."""
+    return login_user_for_test(client, "admin@example.com", "admin_password", debug=debug)
+
+def login_regular_for_test(client, debug=False):
+    """Helper to log in as regular user with correct password."""
+    return login_user_for_test(client, "user@example.com", "user_password", debug=debug)
+
+def debug_session(client):
+    """
+    Print session contents for debugging.
+    """
+    with client.session_transaction() as session:
+        print(f"Session: {dict(session)}")
+
+@pytest.fixture
+def admin_client(app):
+    """
+    Provides a Flask test client with a real admin user logged in.
+    Uses the seeded database to find an admin user and logs in via the login endpoint.
+    """
+    # Create client without context manager to avoid context nesting issues
+    client = app.test_client()
+    login_admin_for_test(client)
+    yield client
+
+@pytest.fixture
+def regular_client(app):
+    """
+    Provides a Flask test client with a real regular user logged in.
+    Uses the seeded database to find a regular user and logs in via the login endpoint.
+    """
+    # Create client without context manager to avoid context nesting issues
+    client = app.test_client()
+    login_regular_for_test(client)
+    yield client
+
+@pytest.fixture
+def regular_client_secure(app):
+    """
+    Provides a Flask test client with a real regular user logged in using proper CSRF handling.
+    Includes debug output to verify authentication.
+    """
+    # Create client without context manager to avoid context nesting issues
+    client = app.test_client()
+    login_regular_for_test(client, debug=True)
+    # Verify login succeeded
+    with client.session_transaction() as session:
+        if '_user_id' not in session:
+            print("WARNING: regular_client_secure login may have failed")
+    yield client
+
+@pytest.fixture
+def admin_client_secure(app):
+    """
+    Provides a Flask test client with a real admin user logged in using proper CSRF handling.
+    Includes debug output to verify authentication.
+    """
+    # Create client without context manager to avoid context nesting issues
+    client = app.test_client()
+    login_admin_for_test(client, debug=True)
+    # Verify login succeeded
+    with client.session_transaction() as session:
+        if '_user_id' not in session:
+            print("WARNING: admin_client_secure login may have failed")
+    yield client
+
+@pytest.fixture
+def debug_regular_client(app):
+    """
+    Provides a Flask test client with a real regular user logged in and verbose debugging.
+    Useful for troubleshooting authentication issues.
+    """
+    # Create client without context manager to avoid context nesting issues
+    client = app.test_client()
+    print("=== DEBUG REGULAR CLIENT LOGIN ===")
+    login_regular_for_test(client, debug=True)
+    print("=== DEBUG SESSION CONTENTS ===")
+    debug_session(client)
+    print("=== END DEBUG ===")
+    yield client
+
+# Client fixtures with CSRF disabled for API testing
+@pytest.fixture
+def admin_client_no_csrf(app_no_csrf):
+    """
+    Provides a Flask test client with a real admin user logged in and CSRF disabled.
+    """
+    # Create client without context manager to avoid context nesting issues
+    client = app_no_csrf.test_client()
+    login_admin_for_test(client)
+    yield client
+
+@pytest.fixture
+def regular_client_no_csrf(app_no_csrf):
+    """
+    Provides a Flask test client with a real regular user logged in and CSRF disabled.
+    """
+    # Create client without context manager to avoid context nesting issues
+    client = app_no_csrf.test_client()
+    login_regular_for_test(client)
+    yield client
+
+@pytest.fixture
+def authenticated_client_no_csrf(app_no_csrf, admin_user):
+    """
+    Provides a Flask test client with a mocked admin user logged in and CSRF disabled.
+    """
+    with app_no_csrf.test_client() as client:
+        with patch('flask_login.current_user', new=admin_user):
+            yield client
+
+@pytest.fixture
+def regular_authenticated_client_no_csrf(app_no_csrf, regular_user):
+    """
+    Provides a Flask test client with a mocked regular user logged in and CSRF disabled.
+    """
+    with app_no_csrf.test_client() as client:
+        with patch('flask_login.current_user', new=regular_user):
+            yield client
 
 @pytest.fixture(scope='function')
 def seeded_test_data(app):
@@ -171,6 +446,11 @@ def user_service(app):
 def property_service(app):
     with app.app_context():
         yield PropertyService(app.config['SQLALCHEMY_SESSION']())
+
+@pytest.fixture
+def media_service(app):
+    with app.app_context():
+        yield MediaService(app.config['SQLALCHEMY_SESSION']())
 
 
 

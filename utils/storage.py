@@ -8,7 +8,12 @@ from libcloud.storage.base import StorageDriver
 
 CHUNK_SIZE = 8192 # 8KB Practical Limit
 
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'pdf', 'mp4'}
+ALLOWED_EXTENSIONS = {
+    'png', 'jpg', 'jpeg', 'gif', 'webp',  # images
+    'mp4', 'webm', 'ogg', 'mov', 'avi',   # videos
+    'mp3', 'wav', 'ogg', 'flac',          # audio
+    'pdf', 'doc', 'docx', 'txt',          # documents
+}
 MAX_FILE_SIZE = 16 * 1024 * 1024  # 16MB
 
 def allowed_file(filename):
@@ -72,7 +77,7 @@ def get_file_url(filename):
         return driver.get_object_cdn_url(obj)
     else:
         # For 'local' and 'temp' providers, use the Flask route to serve files
-        return url_for('storage.serve_file', filename=filename, _external=True)
+        return url_for('media.serve_media', filename=filename, _external=True)
 
 
 def delete_file(filename):
@@ -115,6 +120,23 @@ def validate_and_upload(flask_file, filename=None):
     if size > MAX_FILE_SIZE:
         current_app.logger.debug(f"validate_and_upload: File too large for {flask_file.filename}")
         raise ValueError('File too large')
+
+    # Identify media type and perform media-specific validation
+    try:
+        # Import here to avoid circular import with media_utils
+        from utils.media_utils import validate_media, identify_file_type
+        media_type, mime_type = identify_file_type(flask_file.stream)
+        current_app.logger.debug(f"validate_and_upload: Identified media type '{media_type}', mime type '{mime_type}' for {flask_file.filename}")
+        
+        # Validate media integrity and security
+        validate_media(flask_file.stream, media_type)
+        current_app.logger.debug(f"validate_and_upload: Media validation passed for {flask_file.filename}")
+    except ValueError as e:
+        current_app.logger.debug(f"validate_and_upload: Media validation failed for {flask_file.filename}: {e}")
+        raise ValueError(f'Media validation failed: {e}')
+    except Exception as e:
+        current_app.logger.debug(f"validate_and_upload: Unexpected error during media validation for {flask_file.filename}: {e}")
+        raise ValueError(f'Media validation error: {e}')
 
     # Upload if validation passes
     return upload_flask_file(flask_file, filename)

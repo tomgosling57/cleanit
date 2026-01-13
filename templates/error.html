@@ -1,0 +1,10 @@
+<div class="errors-container" id="errors-container" hx-swap-oob="outerHTML">
+    <div id="errors" class="error-messages">
+        <h3>Error {{ status_code }}: {{ error_title | default('Media Not Found') }}</h3>
+        <p>{{ error_message | default('The requested media could not be found.') }}</p>
+        {% if suggestion %}
+        <p class="suggestion">{{ suggestion }}</p>
+        {% endif %}
+        <p><a href="{{ url_for('job.timetable') }}">Return to timetable</a></p>
+    </div>
+</div>

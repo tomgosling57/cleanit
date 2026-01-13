@@ -51,6 +51,7 @@ class Property(Base):
     notes = Column(String)
 
     jobs = relationship("Job", back_populates="property")
+    property_media = relationship("PropertyMedia", back_populates="property")
 
     def __repr__(self):
         return f"<Property(id={self.id}, address='{self.address}')>"
@@ -94,6 +95,7 @@ class Job(Base):
     property = relationship("Property", back_populates="jobs")
 
     assignments = relationship("Assignment", back_populates="job")
+    job_media = relationship("JobMedia", back_populates="job")
  
     @hybrid_property
     def arrival_date(self):
@@ -164,6 +166,61 @@ class Assignment(Base):
     __table_args__ = (UniqueConstraint('job_id', 'user_id', name='_job_user_uc'),
                       UniqueConstraint('job_id', 'team_id', name='_job_team_uc'),
                       )
+
+class Media(Base):
+    __tablename__ = 'media'
+    
+    id = Column(Integer, primary_key=True)
+    filename = Column(String, nullable=False, unique=True)
+    file_path = Column(String, nullable=False)
+    media_type = Column(String, nullable=False)
+    mimetype = Column(String, nullable=False)
+    size_bytes = Column(Integer, nullable=False)
+    upload_date = Column(DateTime, nullable=False, default=func.now())
+    description = Column(String, nullable=True)
+    width = Column(Integer, nullable=True)
+    height = Column(Integer, nullable=True)
+    duration_seconds = Column(Integer, nullable=True)
+    thumbnail_url = Column(String, nullable=True)
+    resolution = Column(String, nullable=True)
+    codec = Column(String, nullable=True)
+    aspect_ratio = Column(String, nullable=True)
+    
+    property_media = relationship("PropertyMedia", back_populates="media")
+    job_media = relationship("JobMedia", back_populates="media")
+    
+    def __repr__(self):
+        return f"<Media(id={self.id}, filename='{self.filename}', media_type='{self.media_type}')>"
+
+class PropertyMedia(Base):
+    __tablename__ = 'property_media'
+    
+    id = Column(Integer, primary_key=True)
+    property_id = Column(Integer, ForeignKey('properties.id'), nullable=False)
+    media_id = Column(Integer, ForeignKey('media.id'), nullable=False)
+    
+    property = relationship("Property", back_populates="property_media")
+    media = relationship("Media", back_populates="property_media")
+    
+    __table_args__ = (UniqueConstraint('property_id', 'media_id', name='_property_media_uc'),)
+    
+    def __repr__(self):
+        return f"<PropertyMedia(id={self.id}, property_id={self.property_id}, media_id={self.media_id})>"
+
+class JobMedia(Base):
+    __tablename__ = 'job_media'
+    
+    id = Column(Integer, primary_key=True)
+    job_id = Column(Integer, ForeignKey('jobs.id'), nullable=False)
+    media_id = Column(Integer, ForeignKey('media.id'), nullable=False)
+    
+    job = relationship("Job", back_populates="job_media")
+    media = relationship("Media", back_populates="job_media")
+    
+    __table_args__ = (UniqueConstraint('job_id', 'media_id', name='_job_media_uc'),)
+    
+    def __repr__(self):
+        return f"<JobMedia(id={self.id}, job_id={self.job_id}, media_id={self.media_id})>"
 
 # Database initialization function
 def init_db(database_uri: str):
