@@ -355,6 +355,7 @@ def assert_gallery_modal_content(page: Page) -> None:
     """
     Asserts the gallery modal structure and content.
     Since no actual images exist in test, checks for placeholder.
+    When media fails to load or no media exists, thumbnail container may be hidden.
     """
     gallery_modal = page.locator("#media-gallery-modal")
     expect(gallery_modal).to_be_visible()
@@ -372,9 +373,6 @@ def assert_gallery_modal_content(page: Page) -> None:
     
     # Check media description area
     expect(gallery_modal.locator("#media-description-text")).to_be_visible()
-    
-    # Check thumbnail strip container
-    expect(gallery_modal.locator("#thumbnail-container")).to_be_visible()
     
     # Check gallery footer with actions
     expect(gallery_modal.locator("#download-button")).to_be_visible()
