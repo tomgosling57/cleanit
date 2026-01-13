@@ -3,6 +3,34 @@ from playwright.sync_api import expect
 
 from tests.helpers import login_invalid_credentials, login_admin, login_supervisor
 
+def test_unauthorized_redirect_to_login(page, goto) -> None:
+    """
+    Tests that unauthenticated users are redirected to the login page
+    when trying to access protected pages, not given JSON responses.
+    
+    This verifies the fix for the unauthorized handler in app_factory.py.
+    
+    Args:
+        page: The page pytest-playwright fixture representing the current browser page.
+        goto: A fixture to navigate to a specified URL.
+
+    Returns:
+        None
+    """
+    # Should be redirected to login page
+    with page.expect_response("**/users/user/login**"):
+        # Try to access a protected page without logging in
+        # The timetable page requires authentication
+        goto("/jobs/")
+    
+
+    expect(page.locator("h1")).to_have_text("Login to CleanIt")
+    
+    # Should show login form, not JSON error
+    expect(page.locator('form[action*="/user/login"]')).to_be_visible()
+    expect(page.locator('input[name="email"]')).to_be_visible()
+    expect(page.locator('input[name="password"]')).to_be_visible()
+
 def test_login_admin(page, goto) -> None:
     """
     Tests the login functionality for the admin.
