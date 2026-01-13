@@ -6,6 +6,7 @@ from services.team_service import TeamService
 from services.user_service import UserService
 from services.property_service import PropertyService
 from services.assignment_service import AssignmentService
+from services.media_service import MediaService
 from datetime import date, datetime
 from collections import defaultdict
 from utils.job_helper import JobHelper
@@ -19,7 +20,8 @@ class JobController:
     
     def __init__(self, job_service: JobService, team_service: TeamService,
                  user_service: UserService, property_service: PropertyService,
-                 assignment_service: AssignmentService, job_helper: JobHelper):
+                 assignment_service: AssignmentService, job_helper: JobHelper,
+                 media_service: MediaService = None):
         """
         Initialize the controller with injected service dependencies.
         
@@ -30,6 +32,7 @@ class JobController:
             property_service: Service for property operations
             assignment_service: Service for assignment operations
             job_helper: Helper class for job-related operations
+            media_service: Service for media operations (optional for backward compatibility)
         """
         self.job_service = job_service
         self.team_service = team_service
@@ -37,6 +40,7 @@ class JobController:
         self.property_service = property_service
         self.assignment_service = assignment_service
         self.job_helper = job_helper
+        self.media_service = media_service
 
     def _handle_errors(self, errors=None, view_type=None):
         date = request.args.get('date')
@@ -353,3 +357,183 @@ class JobController:
         selected_date_for_fetch = self.job_helper.process_selected_date()
         response_html = self.job_helper.render_teams_timetable_fragment(current_user, selected_date_for_fetch)
         return response_html
+
+    # ========== MEDIA GALLERY METHODS ==========
+
+    def get_job_gallery(self, job_id):
+        """
+        GET /jobs/<job_id>/media - Get all media for job
+        
+        Args:
+            job_id (int): The job ID
+            
+        Returns:
+            JSON response with media list or error
+        """
+        if not current_user.is_authenticated:
+            return jsonify({'error': 'Unauthorized'}), 401
+        
+        # Check if user has access to this job
+        job_is_assigned_to_current_user = self.assignment_service.user_assigned_to_job(current_user.id, job_id)
+        job_is_assigned_to_current_user_team = self.assignment_service.team_assigned_to_job(current_user.team_id, job_id)
+        if current_user.role not in ['admin', 'supervisor'] and (current_user.role == 'user' and not (job_is_assigned_to_current_user or job_is_assigned_to_current_user_team)):
+            return jsonify({'error': 'Unauthorized'}), 403
+        
+        if not self.media_service:
+            return jsonify({'error': 'Media service not available'}), 500
+        
+        try:
+            media_items = self.media_service.get_media_for_job(job_id)
+            formatted_media = [self._format_media_response(media) for media in media_items]
+            return jsonify({
+                'success': True,
+                'job_id': job_id,
+                'media': formatted_media,
+                'count': len(formatted_media)
+            }), 200
+        except Exception as e:
+            return jsonify({'error': f'Failed to retrieve job gallery: {str(e)}'}), 500
+
+    def add_job_media(self, job_id):
+        """
+        POST /jobs/<job_id>/media - Add media to job (single or batch)
+        
+        Args:
+            job_id (int): The job ID
+            
+        Returns:
+            JSON response with success/error
+        """
+        if not current_user.is_authenticated or current_user.role != 'admin':
+            return jsonify({'error': 'Unauthorized: Admin access required'}), 403
+        
+        if not self.media_service:
+            return jsonify({'error': 'Media service not available'}), 500
+        
+        try:
+            # Check if job exists
+            job = self.job_service.get_job_details(job_id)
+            if not job:
+                return jsonify({'error': 'Job not found'}), 404
+            
+            # TODO: Implement actual file upload logic here
+            # For now, return a placeholder response
+            return jsonify({
+                'success': True,
+                'message': 'Media upload endpoint ready - implementation pending',
+                'job_id': job_id,
+                'note': 'This endpoint will handle single and batch uploads'
+            }), 200
+        except Exception as e:
+            return jsonify({'error': f'Failed to add media to job: {str(e)}'}), 500
+
+    def remove_job_media(self, job_id):
+        """
+        DELETE /jobs/<job_id>/media - Remove media from job (batch)
+        
+        Args:
+            job_id (int): The job ID
+            
+        Returns:
+            JSON response with success/error
+        """
+        if not current_user.is_authenticated or current_user.role != 'admin':
+            return jsonify({'error': 'Unauthorized: Admin access required'}), 403
+        
+        if not self.media_service:
+            return jsonify({'error': 'Media service not available'}), 500
+        
+        try:
+            # Check if job exists
+            job = self.job_service.get_job_details(job_id)
+            if not job:
+                return jsonify({'error': 'Job not found'}), 404
+            
+            # Get media IDs from request JSON
+            data = request.get_json()
+            if not data or 'media_ids' not in data:
+                return jsonify({'error': 'Missing media_ids in request body'}), 400
+            
+            media_ids = data['media_ids']
+            if not isinstance(media_ids, list):
+                return jsonify({'error': 'media_ids must be a list'}), 400
+            
+            # Batch disassociate media from job
+            result = self.media_service.disassociate_media_batch_from_job(job_id, media_ids)
+            
+            return jsonify(result), 200
+        except Exception as e:
+            return jsonify({'error': f'Failed to remove media from job: {str(e)}'}), 500
+
+    def remove_single_job_media(self, job_id, media_id):
+        """
+        DELETE /jobs/<job_id>/media/<media_id> - Remove single media from job
+        
+        Args:
+            job_id (int): The job ID
+            media_id (int): The media ID
+            
+        Returns:
+            JSON response with success/error
+        """
+        if not current_user.is_authenticated or current_user.role != 'admin':
+            return jsonify({'error': 'Unauthorized: Admin access required'}), 403
+        
+        if not self.media_service:
+            return jsonify({'error': 'Media service not available'}), 500
+        
+        try:
+            # Check if job exists
+            job = self.job_service.get_job_details(job_id)
+            if not job:
+                return jsonify({'error': 'Job not found'}), 404
+            
+            # Remove single association
+            success = self.media_service.remove_association_from_job(media_id, job_id)
+            
+            if success:
+                return jsonify({
+                    'success': True,
+                    'message': 'Media removed from job successfully',
+                    'job_id': job_id,
+                    'media_id': media_id
+                }), 200
+            else:
+                return jsonify({
+                    'success': False,
+                    'error': 'Association not found'
+                }), 404
+        except Exception as e:
+            return jsonify({'error': f'Failed to remove media from job: {str(e)}'}), 500
+
+    def _format_media_response(self, media):
+        """
+        Format a media object for JSON response.
+        
+        Args:
+            media: Media object
+            
+        Returns:
+            dict: Formatted media data
+        """
+        from utils.media_utils import get_media_url
+        
+        media_url = get_media_url(media.file_path) if media.file_path else None
+        
+        return {
+            'id': media.id,
+            'filename': media.filename,
+            'url': media_url,
+            'media_type': media.media_type,
+            'mimetype': media.mimetype,
+            'size_bytes': media.size_bytes,
+            'description': media.description,
+            'width': media.width,
+            'height': media.height,
+            'duration_seconds': media.duration_seconds,
+            'thumbnail_url': media.thumbnail_url,
+            'resolution': media.resolution,
+            'codec': media.codec,
+            'aspect_ratio': media.aspect_ratio,
+            'upload_date': media.upload_date.isoformat() if media.upload_date else None
+        }

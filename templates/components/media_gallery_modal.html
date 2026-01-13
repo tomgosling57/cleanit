@@ -1,0 +1,123 @@
+<!-- Gallery Modal Template -->
+<div id="media-gallery-modal" class="modal" style="display:none;" 
+     tabindex="-1" 
+     role="dialog" 
+     aria-labelledby="gallery-modal-title"
+     aria-modal="true">
+    <div class="modal-content gallery-modal-content">
+        <span class="close-button" 
+              onclick="document.getElementById('media-gallery-modal').style.display='none'"
+              aria-label="Close gallery">&times;</span>
+        
+        <div class="gallery-header">
+            <h2 id="gallery-modal-title">Media Gallery</h2>
+            <div class="gallery-header-controls">
+                <div class="media-counter" aria-live="polite" aria-atomic="true">
+                    <span id="current-index">1</span> / <span id="total-count">0</span>
+                </div>
+                <div class="gallery-mode-controls">
+                    <button class="button small" id="gallery-edit-toggle">Edit Mode</button>
+                    <span class="selected-count" id="selected-count" style="display: none;">0 selected</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="media-description" aria-live="polite" aria-atomic="true">
+            <p id="media-description-text">No description available</p>
+        </div>
+
+        <div class="media-display-container">
+            <!-- Navigation buttons -->
+            <button class="nav-button prev-button" 
+                    onclick="MEDIA_GALLERY.prev()"
+                    aria-label="Previous media"
+                    disabled>
+                <img src="/static/icons/arrow-left.svg" alt="Previous" class="nav-icon">
+            </button>
+            
+            <div class="media-display">
+                <!-- Image element for images -->
+                <img id="gallery-image" 
+                     src="" 
+                     alt="Gallery image"
+                     style="display: none;"
+                     crossorigin="anonymous">
+                
+                <!-- Video element for HTML5 video -->
+                <video id="gallery-video" 
+                       controls 
+                       preload="metadata" 
+                       crossorigin="anonymous"
+                       style="display: none;">
+                    <source src="" type="video/mp4">
+                    Your browser does not support HTML5 video.
+                </video>
+                
+                <!-- Fallback placeholder -->
+                <div id="media-placeholder" style="display: none;">
+                    <img src="/static/images/placeholders/image-not-found.png" 
+                         alt="Media not available"
+                         class="placeholder-image">
+                    <p>Media could not be loaded</p>
+                </div>
+            </div>
+            
+            <button class="nav-button next-button" 
+                    onclick="MEDIA_GALLERY.next()"
+                    aria-label="Next media"
+                    disabled>
+                <img src="/static/icons/arrow-right.svg" alt="Next" class="nav-icon">
+            </button>
+        </div>
+
+        <div class="thumbnail-strip" role="region" aria-label="Media thumbnails">
+            <div class="thumbnail-container" id="thumbnail-container" role="list">
+                <!-- Thumbnails will be dynamically inserted here -->
+                <!-- Template for thumbnail:
+                <div class="thumbnail" data-index="0" onclick="MEDIA_GALLERY.goTo(0)" role="listitem" aria-label="Thumbnail 1">
+                    <img src="thumbnail-url" alt="Thumbnail" class="thumbnail-image">
+                    <div class="thumbnail-overlay">
+                        <span class="thumbnail-type-icon"></span>
+                    </div>
+                </div>
+                -->
+            </div>
+        </div>
+
+        <div class="gallery-footer">
+            <div class="media-info">
+                <span id="media-type-label">Image</span>
+                <span id="media-dimensions">-</span>
+                <span id="media-duration" style="display: none;">-</span>
+                <span id="gallery-entity-info" class="entity-info"></span>
+            </div>
+            <div class="gallery-actions">
+                <button class="button" id="batch-upload-button" style="display: none;">
+                    Upload Files
+                </button>
+                <button class="button danger" id="batch-delete-button" style="display: none;" disabled>
+                    Delete Selected
+                </button>
+                <button class="button" onclick="ENHANCED_GALLERY.downloadCurrent ? ENHANCED_GALLERY.downloadCurrent() : MEDIA_GALLERY.downloadCurrent()" id="download-button">
+                    Download
+                </button>
+                <button class="button" onclick="ENHANCED_GALLERY.toggleFullscreen ? ENHANCED_GALLERY.toggleFullscreen() : MEDIA_GALLERY.toggleFullscreen()" id="fullscreen-button">
+                    Fullscreen
+                </button>
+            </div>
+        </div>
+        
+        <!-- Hidden file input for batch upload -->
+        <input type="file" id="gallery-file-input" multiple accept="image/*,video/*" style="display: none;">
+    </div>
+</div>
+
+<!-- Template for thumbnail item (hidden, used by JavaScript) -->
+<template id="thumbnail-template">
+    <div class="thumbnail" data-index="" role="listitem" tabindex="0" aria-label="Thumbnail">
+        <img src="" alt="Thumbnail" class="thumbnail-image">
+        <div class="thumbnail-overlay">
+            <span class="thumbnail-type-icon" aria-hidden="true"></span>
+        </div>
+    </div>
+</template>

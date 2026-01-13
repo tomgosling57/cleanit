@@ -48,6 +48,16 @@
     <main>
         {% block content %}{% endblock %}
     </main>
+    
+    <!-- Include gallery modal -->
+    {% include 'components/media_gallery_modal.html' %}
+    
+    <!-- Gallery JavaScript -->
+    <script src="/static/js/gallery-core.js"></script>
+    <script src="/static/js/gallery-dom-events.js"></script>
+    <script src="/static/js/gallery.js"></script>
+    <script src="/static/js/gallery-enhanced.js"></script>
+    
     <script src="https://unpkg.com/htmx.org@1.9.10"></script> 
     <script>
         // Keyboard shortcuts

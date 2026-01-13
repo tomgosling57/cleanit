@@ -29,9 +29,18 @@
             }
         },
         {
+            'label': 'Gallery',
+            'icon_name': 'gallery',
+            'class': 'gallery-button',
+            'htmx_attrs': {
+                'onclick': "ENHANCED_GALLERY.open({type: 'property', id: " + property.id|string + " })"
+            }
+        },
+        {
             'label': 'Delete',
             'icon_name': 'trash-can-solid-full',
             'type': 'delete',
+            'class': 'property-delete-button',
             'htmx_attrs': {
                 'hx-delete': url_for('properties.delete_property_route', property_id=property.id),
                 'hx-target': '#property-list',

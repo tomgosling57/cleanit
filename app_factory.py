@@ -121,16 +121,21 @@ def create_app(login_manager=LoginManager(), config_override=dict()):
     
     @login_manager.unauthorized_handler
     def unauthorized():
-        if request.accept_mimetypes.accept_json:
-            return jsonify({"error": "Unauthorized"}), 401
-        elif request.headers.get('HX-Request') == 'true':
+        # Check for HTMX requests first (they need special handling)
+        if request.headers.get('HX-Request') == 'true':
             response = Response("Unauthorized", 401)
             response.headers['HX-Redirect'] = url_for('user.login')
             return response
+        # Check for AJAX requests
         elif request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return Response("Unauthorized", 401)
+        # Check for specific endpoints that need special handling
         elif request.endpoint == 'job.update_job_status':
             return Response("Unauthorized", 401)
+        # Check if client prefers JSON over HTML
+        elif request.accept_mimetypes.best == 'application/json':
+            return jsonify({"error": "Unauthorized"}), 401
+        # Default: redirect to login page
         else:
             return redirect(url_for('user.login'))
     
@@ -151,4 +156,3 @@ def create_app(login_manager=LoginManager(), config_override=dict()):
         load_svg_icons(app)
     
     return app
-

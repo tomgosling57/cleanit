@@ -138,157 +138,36 @@ class TestMediaControllerIntegration:
             admin_client_no_csrf.delete(f'/media/{media_id}')
 
     def test_associate_media_with_property_admin_success(self, admin_client_no_csrf, seeded_test_data):
-        """POST /properties/<property_id>/media/<media_id> should succeed for admin."""
-        # Get a property from seeded data
-        properties = seeded_test_data['properties']
-        if not properties:
-            pytest.skip("No properties in seeded data")
+        """POST /properties/<property_id>/media/<media_id> should succeed for admin.
         
-        property_id = list(properties.values())[0].id
-        
-        # Upload a media file first
-        test_file = io.BytesIO(b"fake image data for association")
-        test_file.name = "assoc_test.jpg"
-        
-        upload_response = admin_client_no_csrf.post(
-            '/media/upload',
-            data={
-                'file': (test_file, 'assoc_test.jpg'),
-                'description': 'For property association'
-            },
-            content_type='multipart/form-data'
-        )
-        
-        if upload_response.status_code == 200:
-            upload_data = json.loads(upload_response.data)
-            media_id = upload_data['media_id']
-            
-            # Associate with property
-            response = admin_client_no_csrf.post(f'/media/properties/{property_id}/media/{media_id}')
-            assert response.status_code == 200
-            data = json.loads(response.data)
-            assert 'message' in data
-            assert 'Media associated with property successfully' in data['message']
-            assert data['property_id'] == property_id
-            assert data['media_id'] == media_id
-            assert 'association_id' in data
-            
-            # Clean up
-            admin_client_no_csrf.delete(f'/media/{media_id}')
+        DEPRECATED: This endpoint was removed in media refactoring.
+        Use POST /properties/<property_id>/gallery/add instead.
+        """
+        pytest.skip("DEPRECATED: Endpoint removed in media refactoring. Use property gallery endpoints.")
 
     def test_associate_media_with_property_regular_user_forbidden(self, regular_client_no_csrf, admin_client_no_csrf, seeded_test_data):
-        """POST /properties/<property_id>/media/<media_id> should return 403 for regular user."""
-        # Get a property from seeded data
-        properties = seeded_test_data['properties']
-        if not properties:
-            pytest.skip("No properties in seeded data")
+        """POST /properties/<property_id>/media/<media_id> should return 403 for regular user.
         
-        property_id = list(properties.values())[0].id
-        
-        # Admin uploads a media file
-        test_file = io.BytesIO(b"fake image data")
-        test_file.name = "assoc_test2.jpg"
-        
-        upload_response = admin_client_no_csrf.post(
-            '/media/upload',
-            data={
-                'file': (test_file, 'assoc_test2.jpg'),
-                'description': 'For property association'
-            },
-            content_type='multipart/form-data'
-        )
-        
-        if upload_response.status_code == 200:
-            upload_data = json.loads(upload_response.data)
-            media_id = upload_data['media_id']
-            
-            # Regular user tries to associate
-            response = regular_client_no_csrf.post(f'/media/properties/{property_id}/media/{media_id}')
-            assert response.status_code == 403
-            data = json.loads(response.data)
-            assert 'error' in data
-            assert 'Unauthorized: Admin access required' in data['error']
-            
-            # Clean up
-            admin_client_no_csrf.delete(f'/media/{media_id}')
+        DEPRECATED: This endpoint was removed in media refactoring.
+        Use POST /properties/<property_id>/gallery/add instead.
+        """
+        pytest.skip("DEPRECATED: Endpoint removed in media refactoring. Use property gallery endpoints.")
 
     def test_disassociate_media_from_property_admin_success(self, admin_client_no_csrf, seeded_test_data):
-        """DELETE /properties/<property_id>/media/<media_id> should succeed for admin."""
-        # Get a property from seeded data
-        properties = seeded_test_data['properties']
-        if not properties:
-            pytest.skip("No properties in seeded data")
+        """DELETE /properties/<property_id>/media/<media_id> should succeed for admin.
         
-        property_id = list(properties.values())[0].id
-        
-        # Upload and associate a media file
-        test_file = io.BytesIO(b"fake image data")
-        test_file.name = "disassoc_test.jpg"
-        
-        upload_response = admin_client_no_csrf.post(
-            '/media/upload',
-            data={
-                'file': (test_file, 'disassoc_test.jpg'),
-                'description': 'For disassociation test'
-            },
-            content_type='multipart/form-data'
-        )
-        
-        if upload_response.status_code == 200:
-            upload_data = json.loads(upload_response.data)
-            media_id = upload_data['media_id']
-            
-            # Associate
-            admin_client_no_csrf.post(f'/media/properties/{property_id}/media/{media_id}')
-            
-            # Disassociate
-            response = admin_client_no_csrf.delete(f'/media/properties/{property_id}/media/{media_id}')
-            assert response.status_code == 200
-            data = json.loads(response.data)
-            assert 'message' in data
-            assert 'Media disassociated from property successfully' in data['message']
-            
-            # Clean up
-            admin_client_no_csrf.delete(f'/media/{media_id}')
+        DEPRECATED: This endpoint was removed in media refactoring.
+        Use POST /properties/<property_id>/gallery/remove instead.
+        """
+        pytest.skip("DEPRECATED: Endpoint removed in media refactoring. Use property gallery endpoints.")
 
     def test_associate_media_with_job_admin_success(self, admin_client_no_csrf, seeded_test_data):
-        """POST /jobs/<job_id>/media/<media_id> should succeed for admin."""
-        # Get a job from seeded data
-        jobs = seeded_test_data['jobs']
-        if not jobs:
-            pytest.skip("No jobs in seeded data")
+        """POST /jobs/<job_id>/media/<media_id> should succeed for admin.
         
-        job_id = list(jobs.values())[0].id
-        
-        # Upload a media file
-        test_file = io.BytesIO(b"fake image data for job association")
-        test_file.name = "job_assoc_test.jpg"
-        
-        upload_response = admin_client_no_csrf.post(
-            '/media/upload',
-            data={
-                'file': (test_file, 'job_assoc_test.jpg'),
-                'description': 'For job association'
-            },
-            content_type='multipart/form-data'
-        )
-        
-        if upload_response.status_code == 200:
-            upload_data = json.loads(upload_response.data)
-            media_id = upload_data['media_id']
-            
-            # Associate with job
-            response = admin_client_no_csrf.post(f'/media/jobs/{job_id}/media/{media_id}')
-            assert response.status_code == 200
-            data = json.loads(response.data)
-            assert 'message' in data
-            assert 'Media associated with job successfully' in data['message']
-            assert data['job_id'] == job_id
-            assert data['media_id'] == media_id
-            assert 'association_id' in data
-            
-            # Clean up
-            admin_client_no_csrf.delete(f'/media/{media_id}')
+        DEPRECATED: This endpoint was removed in media refactoring.
+        Use POST /jobs/<job_id>/gallery/add instead.
+        """
+        pytest.skip("DEPRECATED: Endpoint removed in media refactoring. Use job gallery endpoints.")
 
     def test_serve_media_endpoint(self, admin_client_no_csrf):
         """GET /media/serve/<filename> should serve file or return appropriate error."""
@@ -348,14 +227,9 @@ class TestMediaControllerErrorHandling:
         assert 'Media not found' in data['error']
     
     def test_associate_nonexistent_media_with_property_returns_404(self, admin_client_no_csrf, seeded_test_data):
-        """POST /properties/<property_id>/media/<non-existent-media_id> should return 404."""
-        properties = seeded_test_data['properties']
-        if not properties:
-            pytest.skip("No properties in seeded data")
+        """POST /properties/<property_id>/media/<non-existent-media_id> should return 404.
         
-        property_id = list(properties.values())[0].id
-        response = admin_client_no_csrf.post(f'/media/properties/{property_id}/media/999999', headers={'Accept': 'application/json'})
-        assert response.status_code == 404
-        data = json.loads(response.data)
-        assert 'error' in data
-        assert 'Media not found' in data['error']
+        DEPRECATED: This endpoint was removed in media refactoring.
+        Use POST /properties/<property_id>/gallery/add instead.
+        """
+        pytest.skip("DEPRECATED: Endpoint removed in media refactoring. Use property gallery endpoints.")

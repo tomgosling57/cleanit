@@ -107,14 +107,21 @@
             <div class="job-status-badge red">See Notes</div>
             {% endif %}
         </div>
-        {% if current_user.role == 'admin' %}
-            <button hx-get="{{ url_for('job.update_job', job_id=job.id, view_type=view_type) }}"
-                hx-target="#job-modal-content"
-                hx-swap="innerHTML"
-                hx-trigger="click"
-            class="button edit-button">
-                <span class="icon">{{ svg_icons['pencil-solid-full'] | safe }}</span>Edit
+        <!-- Job actions buttons container added by llm -->
+        <div class="job-action-buttons">
+            {% if current_user.role == 'admin' %}
+                <button hx-get="{{ url_for('job.update_job', job_id=job.id, view_type=view_type) }}"
+                    hx-target="#job-modal-content"
+                    hx-swap="innerHTML"
+                    hx-trigger="click"
+                class="button edit-button">
+                    <span class="icon">{{ svg_icons['pencil-solid-full'] | safe }}</span>Edit
+                </button>
+            {% endif %}
+            <button onclick="ENHANCED_GALLERY.open({type: 'job', id: {{ job.id }}})"
+                class="button gallery-button">
+                 <span class="icon">{{ svg_icons['gallery'] | safe }}</span>Gallery
             </button>
-        {% endif %}
+        </div>
     </div>
 </div>

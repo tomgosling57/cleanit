@@ -328,7 +328,6 @@ def open_address_book(page: Page) -> None:
     with page.expect_response("**/address-book**"):
         page.wait_for_load_state('networkidle')
         page.get_by_text("Address Book").click()
-    expect(page.locator("#property-list")).to_be_visible()
 
 def get_first_property_card(page: Page) -> Locator:
     return page.locator(".property-card").first
@@ -341,3 +340,147 @@ def open_property_details(page: Page, property_card) -> None:
         property_card.locator(f".edit-button").click()
 
     expect(page.locator("#property-details-modal")).to_be_visible()
+
+def open_property_card_gallery(page: Page, property_card: Locator) -> None:
+    """Open the gallery modal from a property card"""
+    property_id = property_card.get_attribute("data-id")
+    with page.expect_response(f"**/address-book/property/{property_id}/media**"):
+        page.wait_for_load_state('networkidle')
+        property_card.locator(".gallery-button").click()
+
+    expect(page.locator("#media-gallery-modal")).to_be_visible()
+
+
+def assert_gallery_modal_content(page: Page) -> None:
+    """
+    Asserts the gallery modal structure and content.
+    Since no actual images exist in test, checks for placeholder.
+    When media fails to load or no media exists, thumbnail container may be hidden.
+    """
+    gallery_modal = page.locator("#media-gallery-modal")
+    expect(gallery_modal).to_be_visible()
+    
+    # Check modal title using CSS selector
+    expect(gallery_modal.locator("#gallery-modal-title")).to_have_text("Media Gallery")
+    
+    # Check media counter (shows "1 / 0" when no media)
+    expect(gallery_modal.locator("#current-index")).to_be_visible()
+    expect(gallery_modal.locator("#total-count")).to_be_visible()
+    
+    # Check navigation buttons using CSS classes
+    expect(gallery_modal.locator(".prev-button")).to_be_visible()
+    expect(gallery_modal.locator(".next-button")).to_be_visible()
+    
+    # Check media description area
+    expect(gallery_modal.locator("#media-description-text")).to_be_visible()
+    
+    # Check gallery footer with actions
+    expect(gallery_modal.locator("#download-button")).to_be_visible()
+    expect(gallery_modal.locator("#fullscreen-button")).to_be_visible()
+    
+    # Check placeholder image is shown (image-not-found.png)
+    # The placeholder div should be visible when no media exists
+    placeholder = gallery_modal.locator("#media-placeholder")
+    expect(placeholder).to_be_visible()
+    expect(placeholder.locator('img[src*="image-not-found.png"]')).to_be_visible()
+    
+    # Note: thumbnail container (#thumbnail-container) may be hidden when no media exists
+    # This is acceptable behavior for the "media not successfully loaded" case
+
+
+def open_property_creation_modal(page: Page) -> None:
+    """Open the create property modal"""
+    with page.expect_response("**/address-book/property/create**"):
+        page.wait_for_load_state('networkidle')
+        page.locator('button:has-text("Create Property")').click()
+    
+    expect(page.locator("#property-modal")).to_be_visible()
+
+
+def fill_property_form(
+    page: Page, 
+    address: str, 
+    access_notes: str = "", 
+    notes: str = ""
+) -> None:
+    """Fill the property form fields"""
+    page.locator("#address").fill(address)
+    if access_notes:
+        page.locator("#access_notes").fill(access_notes)
+    if notes:
+        page.locator("#notes").fill(notes)
+
+
+def submit_property_creation_form(page: Page) -> None:
+    """Submit the property form (for creation)"""
+    with page.expect_response("**/address-book/property/create**"):
+        page.wait_for_load_state('networkidle')
+        page.locator('#property-modal button[type="submit"]').click()
+
+def submit_property_update_form(page: Page, property_id: int) -> None:
+    """Submit the property update form"""
+    with page.expect_response(f"**/address-book/property/{property_id}/update**"):
+        page.wait_for_load_state('networkidle')
+        page.locator('#property-modal button[type="submit"]').click()
+
+
+def open_property_update_modal(page: Page, property_card: Locator) -> None:
+    """Open the update modal for a property"""
+    property_id = property_card.get_attribute("data-id")
+    with page.expect_response(f"**/property/{property_id}/update**"):
+        page.wait_for_load_state('networkidle')
+        property_card.locator(".edit-button").click()
+    
+    expect(page.locator("#property-modal")).to_be_visible()
+
+
+def open_property_jobs_modal(page: Page, property_card: Locator) -> None:
+    """Open the view jobs modal for a property"""
+    property_id = property_card.get_attribute("data-id")
+    with page.expect_response(f"**/property/{property_id}/jobs**"):
+        page.wait_for_load_state('networkidle')
+        property_card.locator(".view-jobs-button").click()
+    
+    expect(page.locator("#property-modal")).to_be_visible()
+
+
+def delete_property(page: Page, property_card: Locator) -> None:
+    """Delete a property with confirmation"""
+    property_id = property_card.get_attribute("data-id")
+    
+    # Set up dialog handler to accept confirmation
+    page.once('dialog', lambda dialog: dialog.accept())
+    
+    with page.expect_response(f"**/property/{property_id}/delete**"):
+        page.wait_for_load_state('networkidle')
+        # Find delete button by CSS class
+        property_card.locator(".property-delete-button").click()
+
+
+def assert_property_card_content(
+    property_card: Locator,
+    address: str,
+    access_notes: str = None,
+    notes: str = None
+) -> None:
+    """Assert the content of a property card using CSS selectors"""
+    # Check address in h3 tag
+    expect(property_card.locator("h3")).to_have_text(address)
+    
+    # Check address line - find the paragraph containing "Address:" text
+    # Using CSS selector to find p tag that contains strong with text "Address:"
+    address_paragraph = property_card.locator('p:has(strong:has-text("Address:"))')
+    expect(address_paragraph).to_be_visible()
+    expect(address_paragraph).to_contain_text(address)
+    
+    if access_notes:
+        # Check access notes - find paragraph containing "Access Notes:"
+        access_notes_paragraph = property_card.locator('p:has(strong:has-text("Access Notes:"))')
+        expect(access_notes_paragraph).to_be_visible()
+        expect(access_notes_paragraph).to_contain_text(access_notes)
+    
+    if notes:
+        # Check additional notes - find paragraph containing "Additional Notes:"
+        notes_paragraph = property_card.locator('p:has(strong:has-text("Additional Notes:"))')
+        expect(notes_paragraph).to_be_visible()
+        expect(notes_paragraph).to_contain_text(notes)

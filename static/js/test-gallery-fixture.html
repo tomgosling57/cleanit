@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gallery Actual Load Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .test-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+        
+        .test-button {
+            padding: 10px 20px;
+            margin: 5px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .test-button:hover {
+            background: #0056b3;
+        }
+        
+        .test-button.secondary {
+            background: #6c757d;
+        }
+        
+        .test-button.secondary:hover {
+            background: #545b62;
+        }
+        
+        .log-output {
+            margin-top: 20px;
+            padding: 15px;
+            background: #333;
+            color: #0f0;
+            font-family: monospace;
+            border-radius: 4px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        
+        .success {
+            color: #28a745;
+            font-weight: bold;
+        }
+        
+        .error {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        
+        .info {
+            color: #17a2b8;
+        }
+        
+        .media-display {
+            margin: 20px 0;
+            padding: 20px;
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            text-align: center;
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f8f9fa;
+        }
+        
+        .media-display img,
+        .media-display video {
+            max-width: 100%;
+            max-height: 400px;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .thumbnail-strip {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            padding: 10px;
+            overflow-x: auto;
+            background: #f1f3f4;
+            border-radius: 8px;
+        }
+        
+        .thumbnail {
+            width: 100px;
+            height: 75px;
+            border: 2px solid transparent;
+            border-radius: 4px;
+            overflow: hidden;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .thumbnail.active {
+            border-color: #007bff;
+        }
+        
+        .thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .thumbnail-overlay {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+        
+        .gallery-info {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            padding: 10px;
+            background: #e9ecef;
+            border-radius: 4px;
+        }
+        
+        .navigation-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Gallery Actual Load Test</h1>
+    <p>This page actually loads the gallery JavaScript modules and tests them.</p>
+    
+    <div class="test-section">
+        <h2>1. Load Status</h2>
+        <div id="load-status" class="log-output">
+            Loading gallery modules...
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. Test Gallery with Sample Media</h2>
+        
+        <div class="navigation-buttons">
+            <button class="test-button" onclick="testWithImages()">Test with Images</button>
+            <button class="test-button" onclick="testWithVideos()">Test with Videos</button>
+            <button class="test-button" onclick="testMixedMedia()">Test Mixed Media</button>
+            <button class="test-button secondary" onclick="testEmpty()">Test Empty</button>
+        </div>
+        
+        <div class="gallery-info">
+            <div>
+                <strong>Current:</strong> <span id="current-index">0</span> / <span id="total-count">0</span>
+            </div>
+            <div>
+                <strong>Type:</strong> <span id="media-type">-</span>
+            </div>
+            <div>
+                <strong>Description:</strong> <span id="media-description">-</span>
+            </div>
+        </div>
+        
+        <div class="media-display" id="media-display">
+            <p>No media loaded. Click a test button above.</p>
+        </div>
+        
+        <div class="navigation-buttons">
+            <button class="test-button" onclick="MEDIA_GALLERY.prev()" id="prev-button">Previous</button>
+            <button class="test-button" onclick="MEDIA_GALLERY.next()" id="next-button">Next</button>
+            <button class="test-button" onclick="MEDIA_GALLERY.open()" id="open-button">Open Gallery</button>
+            <button class="test-button secondary" onclick="MEDIA_GALLERY.close()" id="close-button">Close Gallery</button>
+        </div>
+        
+        <div class="thumbnail-strip" id="thumbnail-container">
+            <!-- Thumbnails will be generated here -->
+        </div>
+        
+        <div id="test-output" class="log-output"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>3. Console Output</h2>
+        <div id="console-output" class="log-output">
+            Console messages will appear here...
+        </div>
+    </div>
+    
+    <!-- Load the actual gallery modules -->
+    <script src="gallery-core.js"></script>
+    <script src="gallery-dom-events.js"></script>
+    <script src="gallery.js"></script>
+    
+    <script>
+        // Override console.log to capture output
+        const originalConsoleLog = console.log;
+        const originalConsoleError = console.error;
+        const originalConsoleWarn = console.warn;
+        
+        function captureLog(type, ...args) {
+            const output = document.getElementById('console-output');
+            const message = args.map(arg => 
+                typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+            ).join(' ');
+            
+            const line = `<div class="${type}">[${type.toUpperCase()}] ${message}</div>`;
+            output.innerHTML += line + '\n';
+            output.scrollTop = output.scrollHeight;
+            
+            // Also call original console method
+            if (type === 'log') originalConsoleLog.apply(console, args);
+            if (type === 'error') originalConsoleError.apply(console, args);
+            if (type === 'warn') originalConsoleWarn.apply(console, args);
+        }
+        
+        console.log = (...args) => captureLog('log', ...args);
+        console.error = (...args) => captureLog('error', ...args);
+        console.warn = (...args) => captureLog('warn', ...args);
+        
+        // Sample media data
+        const sampleImages = [
+            {
+                id: 1,
+                url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb',
+                media_type: 'image',
+                mimetype: 'image/jpeg',
+                description: 'Mountain landscape at sunset',
+                thumbnail_url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=150&h=100&fit=crop'
+            },
+            {
+                id: 2,
+                url: 'https://images.unsplash.com/photo-1519681393784-d120267933ba',
+                media_type: 'image',
+                mimetype: 'image/jpeg',
+                description: 'Northern lights over snowy mountains',
+                thumbnail_url: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=150&h=100&fit=crop'
+            }
+        ];
+        
+        const sampleVideos = [
+            {
+                id: 3,
+                url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+                media_type: 'video',
+                mimetype: 'video/mp4',
+                description: 'Big Buck Bunny animated short film',
+                duration_seconds: 60,
+                thumbnail_url: 'https://images.unsplash.com/photo-1574269909862-7e1d70bb8078?w=150&h=100&fit=crop'
+            }
+        ];
+        
+        const mixedMedia = [...sampleImages, ...sampleVideos];
+        
+        // Update UI based on gallery state
+        function updateGalleryUI() {
+            const currentIndex = MEDIA_GALLERY.currentIndex;
+            const itemCount = MEDIA_GALLERY.items.length;
+            const currentItem = MEDIA_GALLERY.getCurrentItem();
+            
+            // Update counters
+            document.getElementById('current-index').textContent = currentIndex + 1;
+            document.getElementById('total-count').textContent = itemCount;
+            
+            // Update media info
+            if (currentItem) {
+                document.getElementById('media-type').textContent = currentItem.media_type;
+                document.getElementById('media-description').textContent = currentItem.description;
+                
+                // Update media display
+                const mediaDisplay = document.getElementById('media-display');
+                mediaDisplay.innerHTML = '';
+                
+                if (currentItem.media_type === 'image') {
+                    const img = document.createElement('img');
+                    img.src = currentItem.url;
+                    img.alt = currentItem.description;
+                    img.onerror = function() {
+                        this.src = 'https://via.placeholder.com/800x600/ccc/999?text=Image+Failed+to+Load';
+                    };
+                    mediaDisplay.appendChild(img);
+                } else if (currentItem.media_type === 'video') {
+                    const video = document.createElement('video');
+                    video.controls = true;
+                    video.style.maxWidth = '100%';
+                    
+                    const source = document.createElement('source');
+                    source.src = currentItem.url;
+                    source.type = currentItem.mimetype || 'video/mp4';
+                    
+                    video.appendChild(source);
+                    video.appendChild(document.createTextNode('Your browser does not support HTML5 video.'));
+                    mediaDisplay.appendChild(video);
+                }
+            } else {
+                document.getElementById('media-type').textContent = '-';
+                document.getElementById('media-description').textContent = '-';
+                document.getElementById('media-display').innerHTML = '<p>No media loaded</p>';
+            }
+            
+            // Update button states
+            document.getElementById('prev-button').disabled = currentIndex === 0;
+            document.getElementById('next-button').disabled = currentIndex === itemCount - 1;
+            
+            // Update thumbnails
+            updateThumbnails();
+        }
+        
+        function updateThumbnails() {
+            const container = document.getElementById('thumbnail-container');
+            container.innerHTML = '';
+            
+            MEDIA_GALLERY.items.forEach((item, index) => {
+                const thumbnail = document.createElement('div');
+                thumbnail.className = `thumbnail ${index === MEDIA_GALLERY.currentIndex ? 'active' : ''}`;
+                thumbnail.onclick = () => {
+                    MEDIA_GALLERY.goTo(index);
+                    updateGalleryUI();
+                };
+                
+                const img = document.createElement('img');
+                img.src = item.thumbnail_url || item.url;
+                img.alt = `Thumbnail: ${item.description}`;
+                img.onerror = function() {
+                    this.src = 'https://via.placeholder.com/100x75/ccc/999?text=Thumb';
+                };
+                
+                const overlay = document.createElement('div');
+                overlay.className = 'thumbnail-overlay';
+                overlay.textContent = item.media_type === 'video' ? '▶' : '🖼️';
+                
+                thumbnail.appendChild(img);
+                thumbnail.appendChild(overlay);
+                container.appendChild(thumbnail);
+            });
+        }
+        
+        // Test functions
+        function testWithImages() {
+            console.log('Testing with images...');
+            MEDIA_GALLERY.open(sampleImages);
+            updateGalleryUI();
+            logTestResult('Images test', true);
+        }
+        
+        function testWithVideos() {
+            console.log('Testing with videos...');
+            MEDIA_GALLERY.open(sampleVideos);
+            updateGalleryUI();
+            logTestResult('Videos test', true);
+        }
+        
+        function testMixedMedia() {
+            console.log('Testing with mixed media...');
+            MEDIA_GALLERY.open(mixedMedia);
+            updateGalleryUI();
+            logTestResult('Mixed media test', true);
+        }
+        
+        function testEmpty() {
+            console.log('Testing empty gallery...');
+            MEDIA_GALLERY.open([]);
+            updateGalleryUI();
+            logTestResult('Empty gallery test', true);
+        }
+        
+        function logTestResult(testName, passed) {
+            const output = document.getElementById('test-output');
+            const result = passed ? '✓' : '✗';
+            const className = passed ? 'success' : 'error';
+            output.innerHTML += `<div class="${className}">${result} ${testName}</div>\n`;
+        }
+        
+        // Check if modules loaded successfully
+        function checkModulesLoaded() {
+            const status = document.getElementById('load-status');
+            
+            if (typeof GalleryCore === 'undefined') {
+                status.innerHTML += '<div class="error">✗ GalleryCore not loaded</div>';
+                return false;
+            } else {
+                status.innerHTML += '<div class="success">✓ GalleryCore loaded</div>';
+            }
+            
+            if (typeof GalleryDOM === 'undefined') {
+                status.innerHTML += '<div class="error">✗ GalleryDOM not loaded</div>';
+                return false;
+            } else {
+                status.innerHTML += '<div class="success">✓ GalleryDOM loaded</div>';
+            }
+            
+            if (typeof MEDIA_GALLERY === 'undefined') {
+                status.innerHTML += '<div class="error">✗ MEDIA_GALLERY not loaded</div>';
+                return false;
+            } else {
+                status.innerHTML += '<div class="success">✓ MEDIA_GALLERY loaded</div>';
+                
+                // Check API methods
+                const methods = ['init', 'render', 'prev', 'next', 'goTo', 'open', 'close', 'loadFromHTMX'];
+                methods.forEach(method => {
+                    if (typeof MEDIA_GALLERY[method] === 'function') {
+                        status.innerHTML += `<div class="success">✓ MEDIA_GALLERY.${method}() available</div>`;
+                    } else {
+                        status.innerHTML += `<div class="error">✗ MEDIA_GALLERY.${method}() missing</div>`;
+                    }
+                });
+            }
+            
+            status.innerHTML += '<div class="success">All gallery modules loaded successfully!</div>';
+            return true;
+        }
+        
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Page loaded, checking gallery modules...');
+            
+            // Give modules a moment to load
+            setTimeout(() => {
+                const loaded = checkModulesLoaded();
+                
+                if (loaded) {
+                    console.log('Gallery modules loaded successfully!');
+                    
+                    // Set up gallery state change listener
+                    const originalOpen = MEDIA_GALLERY.open;
+                    const originalClose = MEDIA_GALLERY.close;
+                    const originalGoTo = MEDIA_GALLERY.goTo;
+                    const originalPrev = MEDIA_GALLERY.prev;
+                    const originalNext = MEDIA_GALLERY.next;
+                    
+                    MEDIA_GALLERY.open = function(...args) {
+                        const result = originalOpen.apply(this, args);
+                        console.log('Gallery opened with', this.items.length, 'items');
+                        updateGalleryUI();
+                        return result;
+                    };
+                    
+                    MEDIA_GALLERY.close = function(...args) {
+                        const result = originalClose.apply(this, args);
+                        console.log('Gallery closed');
+                        return result;
+                    };
+                    
+                    MEDIA_GALLERY.goTo = function(...args) {
+                        const result = originalGoTo.apply(this, args);
+                        console.log('Navigated to index', this.currentIndex);
+                        updateGalleryUI();
+                        return result;
+                    };
+                    
+                    MEDIA_GALLERY.prev = function(...args) {
+                        const result = originalPrev.apply(this, args);
+                        console.log('Previous, now at index', this.currentIndex);
+                        updateGalleryUI();
+                        return result;
+                    };
+                    
+                    MEDIA_GALLERY.next = function(...args) {
+                        const result = originalNext.apply(this, args);
+                        console.log('Next, now at index', this.currentIndex);
+                        updateGalleryUI();
+                        return result;
+                    };
+                    
+                    // Test with some initial data
+                    setTimeout(() => {
+                        MEDIA_GALLERY.open(sampleImages);
+                    }, 500);
+                } else {
+                    console.error('Failed to load gallery modules');
+                }
+            }, 100);
+        });
+    </script>
+</body>
+</html>
