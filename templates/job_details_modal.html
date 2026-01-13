@@ -109,7 +109,7 @@
         </div>
         <!-- Job actions buttons container added by llm -->
         <div class="job-action-buttons">
-            
+            {% if current_user.role == 'admin' %}
                 <button hx-get="{{ url_for('job.update_job', job_id=job.id, view_type=view_type) }}"
                     hx-target="#job-modal-content"
                     hx-swap="innerHTML"
