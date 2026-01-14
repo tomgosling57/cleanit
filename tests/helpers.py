@@ -3,9 +3,9 @@ import re
 from playwright.sync_api import expect, Page, Locator
 from typing import Optional
 
-def login_admin(page, goto) -> None:
+def login_with_credentials(page, goto, email, password) -> None:
     """
-    Executes the login flow for the admin.
+    Executes the login flow with the given credentials.
 
     Args:
         page: The page pytest-playwright fixture representing the current browser page.
@@ -14,15 +14,40 @@ def login_admin(page, goto) -> None:
     Returns:
         None
     """
-    goto("/")                               
+    
+    with page.expect_response("**/user/login**"):
+        page.wait_for_load_state('networkidle')        
+        goto("/")                               
+    page.wait_for_load_state('networkidle')        
+    csrf = page.locator("input[name=csrf_token]")
+    csrf.wait_for(state="attached")
+    page.locator("#login-form").wait_for(state="attached")
+    page.locator("#email").wait_for(state="attached")
+    page.locator("#password").wait_for(state="attached")
     page.get_by_role("textbox", name="email").click()
-    page.get_by_role("textbox", name="email").fill("admin@example.com")
+    page.get_by_role("textbox", name="email").fill(email)
     page.get_by_role("textbox", name="password").click()
-    page.get_by_role("textbox", name="password").fill("admin_password")
+    page.get_by_role("textbox", name="password").fill(password)
+    expect(page.get_by_role("textbox", name="email")).to_have_value(email)
+    expect(page.get_by_role("textbox", name="password")).to_have_value(password)
 
+    # Wait for login response and redirect to complete
     with page.expect_response(f"**/user/login**"):
         page.wait_for_load_state('networkidle')
         page.get_by_role("button", name="Login").click()
+    page.wait_for_load_state('networkidle')
+
+def login_admin(page, goto) -> None:
+    """
+    Executes the login flow for the admin user.
+
+    Args:
+        page: The page pytest-playwright fixture representing the current browser page.
+        goto: A fixture to navigate to a specified URL.
+    """
+    with page.expect_response("**/jobs**"):
+        login_with_credentials(page, goto, "admin@example.com", "admin_password")
+    page.wait_for_load_state('networkidle')
 
 def login_supervisor(page, goto) -> None:
     """
@@ -31,18 +56,11 @@ def login_supervisor(page, goto) -> None:
     Args:
         page: The page pytest-playwright fixture representing the current browser page.
         goto: A fixture to navigate to a specified URL.
-
-    Returns:
-        None
     """
-    goto("/")                               
-    page.get_by_role("textbox", name="email").click()
-    page.get_by_role("textbox", name="email").fill("supervisor@example.com")
-    page.get_by_role("textbox", name="password").click()
-    page.get_by_role("textbox", name="password").fill("supervisor_password")
-    with page.expect_response(f"**/user/login**"):
-        page.wait_for_load_state('networkidle')
-        page.get_by_role("button", name="Login").click()
+    
+    with page.expect_response("**/jobs**"):
+        login_with_credentials(page, goto, "supervisor@example.com", "supervisor_password")
+    page.wait_for_load_state('networkidle')
 
 def login_user(page, goto) -> None:
     """
@@ -51,18 +69,10 @@ def login_user(page, goto) -> None:
     Args:
         page: The page pytest-playwright fixture representing the current browser page.
         goto: A fixture to navigate to a specified URL.
-    
-    Returns:
-        None
     """
-    goto("/")                               
-    page.get_by_role("textbox", name="email").click()
-    page.get_by_role("textbox", name="email").fill("user@example.com")
-    page.get_by_role("textbox", name="password").click()
-    page.get_by_role("textbox", name="password").fill("user_password")
-    with page.expect_response(f"**/user/login**"):
-        page.wait_for_load_state('networkidle')
-        page.get_by_role("button", name="Login").click()
+    with page.expect_response("**/jobs**"):
+        login_with_credentials(page, goto, "user@example.com", "user_password")
+    page.wait_for_load_state('networkidle')
 
 def login_invalid_credentials(page, goto) -> None:
     """
@@ -75,12 +85,7 @@ def login_invalid_credentials(page, goto) -> None:
     Returns:
         None
     """
-    goto("/")                               
-    page.get_by_role("textbox", name="email").click()
-    page.get_by_role("textbox", name="email").fill("invalid@example.com")
-    page.get_by_role("textbox", name="password").click()
-    page.get_by_role("textbox", name="password").fill("wrong_password")
-    page.get_by_role("button", name="Login").click()
+    login_with_credentials(page, goto, "invalid@example.com", "wrong_password")
 
 def assert_job_card_variables(job_card, expected_variables: dict, expected_indicators: list = None) -> None:
     """
