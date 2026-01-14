@@ -284,7 +284,7 @@ def assert_team_column_content(team_column_locator: Locator, team_name: str, exp
 
 def setup_team_page(page: Page) -> None:
     page.get_by_text("Teams").click()
-    page.locator(".teams-grid").wait_for()
+    page.locator(".teams-grid").wait_for(state="attached")
 
 def get_all_team_cards(page: Page) -> Locator:
     return page.locator(".team-card")
@@ -330,24 +330,30 @@ def simulate_htmx_delete_and_expect_response(page: Page, server_url: str, endpoi
 
 def open_address_book(page: Page) -> None:
     """Navigate to the address book page"""
+    page.wait_for_selector("a[href='/address-book/']") 
     with page.expect_response("**/address-book**"):
         page.wait_for_load_state('networkidle')
         page.get_by_text("Address Book").click()
+
+    page.wait_for_load_state('networkidle')
 
 def get_first_property_card(page: Page) -> Locator:
     return page.locator(".property-card").first
 
 def open_property_details(page: Page, property_card) -> None:
     """Open the details of a property from the address book"""
+    property_card.locator(".edit-button").wait_for(state="attached")
     property_id = property_card.get_attribute("data-id")
     with page.expect_response(f"**/property/{property_id}/update**"):
         page.wait_for_load_state('networkidle')
         property_card.locator(f".edit-button").click()
-
+    
+    page.wait_for_load_state('networkidle')
     expect(page.locator("#property-details-modal")).to_be_visible()
 
 def open_property_card_gallery(page: Page, property_card: Locator) -> None:
     """Open the gallery modal from a property card"""
+    property_card.locator(".gallery-button").wait_for(state="attached")
     property_id = property_card.get_attribute("data-id")
     with page.expect_response(f"**/address-book/property/{property_id}/media**"):
         page.wait_for_load_state('networkidle')
@@ -395,6 +401,7 @@ def assert_gallery_modal_content(page: Page) -> None:
 
 def open_property_creation_modal(page: Page) -> None:
     """Open the create property modal"""
+    page.wait_for_selector("button:has-text('Create Property')") 
     with page.expect_response("**/address-book/property/create**"):
         page.wait_for_load_state('networkidle')
         page.locator('button:has-text("Create Property")').click()
@@ -409,6 +416,9 @@ def fill_property_form(
     notes: str = ""
 ) -> None:
     """Fill the property form fields"""
+    page.locator("#address").wait_for(state="attached")
+    page.locator("#access_notes").wait_for(state="attached")
+    page.locator("#notes").wait_for(state="attached")
     page.locator("#address").fill(address)
     if access_notes:
         page.locator("#access_notes").fill(access_notes)
@@ -421,6 +431,8 @@ def submit_property_creation_form(page: Page) -> None:
     with page.expect_response("**/address-book/property/create**"):
         page.wait_for_load_state('networkidle')
         page.locator('#property-modal button[type="submit"]').click()
+    
+    page.wait_for_load_state('networkidle')
 
 def submit_property_update_form(page: Page, property_id: int) -> None:
     """Submit the property update form"""
@@ -428,24 +440,29 @@ def submit_property_update_form(page: Page, property_id: int) -> None:
         page.wait_for_load_state('networkidle')
         page.locator('#property-modal button[type="submit"]').click()
 
+    page.wait_for_load_state('networkidle')
 
 def open_property_update_modal(page: Page, property_card: Locator) -> None:
     """Open the update modal for a property"""
+    property_card.locator(".edit-button").wait_for(state="attached")
     property_id = property_card.get_attribute("data-id")
     with page.expect_response(f"**/property/{property_id}/update**"):
         page.wait_for_load_state('networkidle')
         property_card.locator(".edit-button").click()
     
+    page.wait_for_load_state('networkidle')
     expect(page.locator("#property-modal")).to_be_visible()
 
 
 def open_property_jobs_modal(page: Page, property_card: Locator) -> None:
     """Open the view jobs modal for a property"""
+    property_card.locator(".view-jobs-button").wait_for(state="attached")
     property_id = property_card.get_attribute("data-id")
     with page.expect_response(f"**/property/{property_id}/jobs**"):
         page.wait_for_load_state('networkidle')
         property_card.locator(".view-jobs-button").click()
-    
+
+    page.wait_for_load_state('networkidle')    
     expect(page.locator("#property-modal")).to_be_visible()
 
 
@@ -461,6 +478,7 @@ def delete_property(page: Page, property_card: Locator) -> None:
         # Find delete button by CSS class
         property_card.locator(".property-delete-button").click()
 
+    page.wait_for_load_state('networkidle')
 
 def assert_property_card_content(
     property_card: Locator,
