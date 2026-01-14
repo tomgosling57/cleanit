@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Page Not Found - CleanIt</title>
+    
+    {% include 'styles.html' %}
+</head>
+<body>
+    {% include 'base.html' %}
+    
+    <div class="container">
+        <div class="error-container">
+            <div class="error-icon">
+                <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM13 17H11V15H13V17ZM13 13H11V7H13V13Z" fill="currentColor"/>
+                </svg>
+            </div>
+            
+            <h1 class="error-code">404</h1>
+            <h2 class="error-title">Page Not Found</h2>
+            
+            <p class="error-message">
+                The page you're looking for doesn't exist or has been moved.
+                Please check the URL or navigate back to a working page.
+            </p>
+            
+            <div class="error-actions">
+                <a href="{{ url_for('job.timetable') }}" class="button">
+                    <span class="icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M10 20V14H14V20H19V12H22L12 3L2 12H5V20H10Z" fill="currentColor"/>
+                        </svg>
+                    </span>
+                    Go to Timetable
+                </a>
+                
+                <a href="javascript:history.back()" class="button" style="background: linear-gradient(135deg, var(--text-light) 0%, var(--text-dark) 100%);">
+                    <span class="icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M20 11H7.83L13.42 5.41L12 4L4 12L12 20L13.41 18.59L7.83 13H20V11Z" fill="currentColor"/>
+                        </svg>
+                    </span>
+                    Go Back
+                </a>
+                
+                {% if current_user.is_authenticated and current_user.role == 'admin' %}
+                <a href="{{ url_for('properties.properties_collection') }}" class="button" style="background: linear-gradient(135deg, var(--secondary-color) 0%, var(--success-color) 100%);">
+                    <span class="icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2C8.13 2 5 5.13 5 9C5 14.25 12 22 12 22C12 22 19 14.25 19 9C19 5.13 15.87 2 12 2ZM12 11.5C10.62 11.5 9.5 10.38 9.5 9C9.5 7.62 10.62 6.5 12 6.5C13.38 6.5 14.5 7.62 14.5 9C14.5 10.38 13.38 11.5 12 11.5Z" fill="currentColor"/>
+                        </svg>
+                    </span>
+                    Address Book
+                </a>
+                {% endif %}
+            </div>
+            
+            {% if debug and request.path %}
+            <div class="error-details">
+                <h4>Debug Information</h4>
+                <p><strong>Requested Path:</strong> {{ request.path }}</p>
+                <p><strong>Method:</strong> {{ request.method }}</p>
+                <p><strong>Time:</strong> {{ now|default('Unknown') }}</p>
+                
+                {% if suggestion %}
+                <p><strong>Suggestion:</strong> {{ suggestion }}</p>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    {% include 'components/media_gallery_modal.html' %}
+    
+    <!-- Gallery JavaScript -->
+    <script src="/static/js/gallery-core.js"></script>
+    <script src="/static/js/gallery-dom-events.js"></script>
+    <script src="/static/js/gallery.js"></script>
+    <script src="/static/js/gallery-enhanced.js"></script>
+    
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+</body>
+</html>
