@@ -64,7 +64,7 @@
         {% endif %}
     {% endwith %}
     
-    <form action="{{url_for('user.login')}}" method="POST">
+    <form id="login-form" action="{{url_for('user.login')}}" method="POST">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         <div class="form-group">
             <label for="email">email:</label>
