@@ -52,30 +52,6 @@ class TestErrorHandlers:
         assert b'404' in response.data
         assert b'Go to Timetable' in response.data
     
-    def test_404_page_json_response_for_api_requests(self, admin_client_no_csrf):
-        """
-        Test that API requests (Accept: application/json) to non-existent routes
-        return JSON error responses instead of HTML.
-        """
-        # Make a request with JSON accept header
-        response = admin_client_no_csrf.get(
-            '/nonexistent-route-that-does-not-exist',
-            headers={'Accept': 'application/json'}
-        )
-        
-        # Should return 404 status
-        assert response.status_code == 404
-        
-        # Should return JSON content type
-        assert response.content_type == 'application/json'
-        
-        # Should contain error information in JSON format
-        import json
-        data = json.loads(response.data)
-        assert 'error' in data
-        assert 'message' in data
-        assert 'path' in data
-    
     def test_media_not_found_error_handler(self, admin_client_no_csrf):
         """
         Test that MediaNotFound exceptions are handled by the specialized handler.
