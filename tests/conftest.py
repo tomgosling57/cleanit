@@ -182,7 +182,6 @@ def _create_auth_state(browser, live_server, email, password):
     return state
 
 @pytest.fixture(scope="session")
-@pytest.mark.no_csrf
 def admin_auth_state(browser, live_server):
     """
     Creates and returns authentication state (cookies, storage) for admin user.
@@ -196,7 +195,6 @@ def admin_auth_state(browser, live_server):
     )
 
 @pytest.fixture(scope="session")
-@pytest.mark.no_csrf
 def supervisor_auth_state(browser, live_server):
     """
     Creates and returns authentication state (cookies, storage) for supervisor user.
@@ -210,7 +208,6 @@ def supervisor_auth_state(browser, live_server):
     )
 
 @pytest.fixture(scope="session")
-@pytest.mark.no_csrf
 def user_auth_state(browser, live_server):
     """
     Creates and returns authentication state (cookies, storage) for regular user.
@@ -233,7 +230,6 @@ def admin_context(browser, admin_auth_state):
     context.close()
 
 @pytest.fixture
-@pytest.mark.no_csrf
 def admin_page(admin_context, live_server):
     """
     Creates a page with admin user already authenticated and navigates to timetable.
@@ -256,7 +252,6 @@ def supervisor_context(browser, supervisor_auth_state):
     context.close()
 
 @pytest.fixture
-@pytest.mark.no_csrf
 def supervisor_page(supervisor_context, live_server):
     """
     Creates a page with supervisor user already authenticated and navigates to timetable.
@@ -279,7 +274,6 @@ def user_context(browser, user_auth_state):
     context.close()
 
 @pytest.fixture
-@pytest.mark.no_csrf
 def user_page(user_context, live_server):
     """
     Creates a page with regular user already authenticated and navigates to timetable.
