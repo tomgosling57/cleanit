@@ -99,14 +99,6 @@ def register_general_error_handlers(app, login_manager):
             # This will trigger the redirect to login page
             return login_manager.unauthorized()
         
-        # JSON response for API requests
-        if request.accept_mimetypes.accept_json:
-            return jsonify({
-                "error": "Not Found",
-                "message": f"The requested URL {request.path} was not found on the server.",
-                "path": request.path
-            }), 404
-        
         # UI response - render dedicated 404 page for authenticated users
         return render_template('not_found.html',
                                debug=app.debug,
