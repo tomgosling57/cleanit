@@ -1,4 +1,5 @@
-from flask import jsonify, render_template, session, url_for, request, flash, render_template_string
+from flask import jsonify, render_template, session, url_for, request, flash, render_template_string, Response, abort
+from werkzeug.exceptions import NotFound
 from flask_login import current_user
 from services.property_service import PropertyService
 from services.job_service import JobService
@@ -26,7 +27,12 @@ class PropertyController:
     def get_properties_view(self):
         """
         Retrieve all properties and render them in a view.
+        Access restricted to admin users only.
         """
+        if not current_user.is_authenticated or current_user.role != 'admin':
+            # Return 404 Not Found for non-admin users
+            raise NotFound()
+        
         properties = self.property_service.get_all_properties()
         return render_template('properties.html', properties=properties, view_type='property', DATETIME_FORMATS=DATETIME_FORMATS)
 
