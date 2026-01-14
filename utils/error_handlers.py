@@ -5,7 +5,8 @@ Centralized error handling for media-related and other exceptions.
 
 import os
 from datetime import datetime
-from flask import current_app, request, Response, jsonify, render_template, send_from_directory
+from flask import current_app, request, Response, jsonify, render_template, send_from_directory, flash, redirect, url_for
+from flask_wtf.csrf import CSRFError
 from services.media_service import MediaNotFound
 from config import DATETIME_FORMATS
 
@@ -78,6 +79,33 @@ def register_general_error_handlers(app, login_manager):
         app: Flask application instance
         login_manager: Flask-Login LoginManager instance
     """
+    @app.errorhandler(CSRFError)
+    def handle_csrf_error(e):
+        """
+        Global handler for CSRF token errors.
+        
+        Behavior:
+        - Log the error as a warning.
+        - Check if token expired vs missing and flash appropriate message.
+        - Redirect to login page for unauthenticated users, or to referrer/index.
+        """
+        # Log the error
+        current_app.logger.warning(f"CSRFError: {e.description}")
+        
+        # Determine error type and flash appropriate message
+        if "expired" in e.description.lower():
+            flash("Your session expired. Please refresh the page and try again.", "warning")
+        else:
+            flash("CSRF token missing. Please refresh the page and try again.", "danger")
+        
+        # Redirect to login page for unauthenticated users, or to referrer/index
+        from flask_login import current_user
+        if not current_user.is_authenticated:
+            return redirect(url_for('user.login'))
+        
+        # For authenticated users, redirect to referrer or index
+        return redirect(request.referrer or url_for('job.timetable'))
+    
     @app.errorhandler(404)
     def handle_404(error):
         """
