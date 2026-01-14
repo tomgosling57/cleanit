@@ -15,8 +15,8 @@ def login_with_credentials(page, goto, email, password) -> None:
         None
     """
     
-    goto("/")                               
-    page.wait_for_load_state('networkidle')        
+    goto("/", page)
+    page.wait_for_load_state('networkidle')
     csrf = page.locator("input[name=csrf_token]")
     csrf.wait_for(state="attached")
     page.wait_for_function("() => document.querySelector('input[name=csrf_token]')?.value?.length > 0")
