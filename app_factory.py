@@ -14,7 +14,7 @@ from routes.media import media_bp
 from services.user_service import UserService
 from utils.populate_database import populate_database
 from utils.svg_helper import load_svg_icons
-from utils.error_handlers import register_media_error_handlers
+from utils.error_handlers import register_media_error_handlers, register_general_error_handlers
 
 def create_app(login_manager=LoginManager(), config_override=dict()):
     """
@@ -151,6 +151,7 @@ def create_app(login_manager=LoginManager(), config_override=dict()):
 
     # Register global error handlers
     register_media_error_handlers(app)
+    register_general_error_handlers(app, login_manager)
 
     with app.app_context():
         load_svg_icons(app)

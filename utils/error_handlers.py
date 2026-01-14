@@ -4,8 +4,10 @@ Centralized error handling for media-related and other exceptions.
 """
 
 import os
-from flask import current_app, request, jsonify, render_template, send_from_directory
+from datetime import datetime
+from flask import current_app, request, Response, jsonify, render_template, send_from_directory
 from services.media_service import MediaNotFound
+from config import DATETIME_FORMATS
 
 
 def register_media_error_handlers(app):
@@ -65,3 +67,76 @@ def register_media_error_handlers(app):
                                error_message="The requested media could not be found.",
                                status_code=404,
                                suggestion="Please check the media ID or filename and try again."), 404
+
+
+def register_general_error_handlers(app, login_manager):
+    """
+    Register global error handlers for general HTTP errors (404, 500, etc.).
+    Should be called during application factory setup.
+    
+    Args:
+        app: Flask application instance
+        login_manager: Flask-Login LoginManager instance
+    """
+    @app.errorhandler(404)
+    def handle_404(error):
+        """
+        Global handler for 404 Not Found errors.
+        
+        Behavior:
+        - Log the error as a warning.
+        - Check if user is authenticated. If not, invoke login manager's unauthorized handler.
+        - If the request accepts JSON, return a JSON error response with 404.
+        - Otherwise (UI request), render the dedicated 404 page template.
+        """
+        # Log the error
+        current_app.logger.warning(f"404 Not Found: {request.path} - {error}")
+        
+        # Check if user is not authenticated
+        from flask_login import current_user
+        if not current_user.is_authenticated:
+            # Invoke the login manager's unauthorized handler directly
+            # This will trigger the redirect to login page
+            return login_manager.unauthorized()
+        
+        # JSON response for API requests
+        if request.accept_mimetypes.accept_json:
+            return jsonify({
+                "error": "Not Found",
+                "message": f"The requested URL {request.path} was not found on the server.",
+                "path": request.path
+            }), 404
+        
+        # UI response - render dedicated 404 page for authenticated users
+        return render_template('not_found.html',
+                               debug=app.debug,
+                               now=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                               suggestion="Check the URL for typos or navigate using the links above.",
+                               DATETIME_FORMATS=DATETIME_FORMATS), 404
+    
+    @app.errorhandler(500)
+    def handle_500(error):
+        """
+        Global handler for 500 Internal Server Error.
+        
+        Behavior:
+        - Log the error as an error.
+        - If the request accepts JSON, return a JSON error response with 500.
+        - Otherwise (UI request), render a generic error template.
+        """
+        # Log the error
+        current_app.logger.error(f"500 Internal Server Error: {error}")
+        
+        # JSON response for API requests
+        if request.accept_mimetypes.accept_json:
+            return jsonify({
+                "error": "Internal Server Error",
+                "message": "An unexpected error occurred on the server."
+            }), 500
+        
+        # UI response - render generic error template
+        return render_template('error.html',
+                               error_title="Internal Server Error",
+                               error_message="An unexpected error occurred. Please try again later.",
+                               status_code=500,
+                               suggestion="If the problem persists, contact the administrator."), 500
