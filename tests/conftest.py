@@ -7,8 +7,9 @@ import tempfile
 import os
 import shutil
 import glob
-from playwright.sync_api import Page, BrowserContext
+from playwright.sync_api import Page, BrowserContext, sync_playwright
 from unittest.mock import MagicMock, patch
+import json
 
 from services.assignment_service import AssignmentService
 from services.job_service import JobService
@@ -63,18 +64,24 @@ def local_storage_app():
         print(f"Error cleaning up temporary upload directory {temp_upload_dir}: {e}")
 
 @pytest.fixture(scope='session')
-def app(test_db_path):
+def app(request, test_db_path):
     """
     Configures and creates a Flask app for testing.
     The database is configured to be seeded with deterministic data for consistent testing.
     Uses temporary storage for file uploads.
     pytest-flask will use this fixture automatically.
+    
+    Can be configured to disable CSRF protection using the @pytest.mark.no_csrf marker.
     """
     login_manager = LoginManager()
+    
+    # Check if test is marked with no_csrf
+    no_csrf = request.node.get_closest_marker("no_csrf") is not None
     
     test_config = {
         'TESTING': True,
         'STORAGE_PROVIDER': 'temp',  # Use temporary storage for all tests
+        'WTF_CSRF_ENABLED': not no_csrf,  # Disable CSRF only for marked tests
     }
     
     app = create_app(login_manager=login_manager, config_override=test_config)
@@ -145,6 +152,143 @@ def page(context) -> Generator[Page, None, None]:
 def server_url(live_server):
     """Get the base URL from the live server"""
     return live_server.url()
+
+# Authorization state fixtures for Playwright tests
+def _create_auth_state(browser, live_server, email, password):
+    """
+    Generic helper for creating authentication state.
+    Uses pytest-playwright's browser fixture to avoid nested async contexts.
+    """
+    context = browser.new_context()
+    page = context.new_page()
+
+    page.goto(f"{live_server.url()}/")
+    page.wait_for_load_state("networkidle")
+
+    page.locator('input[name="email"]').fill(email)
+    page.locator('input[name="password"]').fill(password)
+
+    with page.expect_response("**/user/login**"):
+        page.locator('button[type="submit"]').click()
+
+    page.wait_for_load_state("networkidle")
+
+    assert any(k in page.url.lower() for k in ("jobs", "timetable")), "Login failed"
+
+    state = context.storage_state()
+    context.close()
+    return state
+
+@pytest.fixture(scope="session")
+@pytest.mark.no_csrf
+def admin_auth_state(browser, live_server):
+    """
+    Creates and returns authentication state (cookies, storage) for admin user.
+    Uses CSRF-disabled server so authentication state can be saved and reused.
+    """
+    return _create_auth_state(
+        browser,
+        live_server,
+        "admin@example.com",
+        "admin_password",
+    )
+
+@pytest.fixture(scope="session")
+@pytest.mark.no_csrf
+def supervisor_auth_state(browser, live_server):
+    """
+    Creates and returns authentication state (cookies, storage) for supervisor user.
+    Uses CSRF-disabled server so authentication state can be saved and reused.
+    """
+    return _create_auth_state(
+        browser,
+        live_server,
+        "supervisor@example.com",
+        "supervisor_password",
+    )
+
+@pytest.fixture(scope="session")
+@pytest.mark.no_csrf
+def user_auth_state(browser, live_server):
+    """
+    Creates and returns authentication state (cookies, storage) for regular user.
+    Uses CSRF-disabled server so authentication state can be saved and reused.
+    """
+    return _create_auth_state(
+        browser,
+        live_server,
+        "user@example.com",
+        "user_password",
+    )
+
+@pytest.fixture
+def admin_context(browser, admin_auth_state):
+    """
+    Creates a browser context with admin user already authenticated.
+    """
+    context = browser.new_context(storage_state=admin_auth_state)
+    yield context
+    context.close()
+
+@pytest.fixture
+@pytest.mark.no_csrf
+def admin_page(admin_context, live_server):
+    """
+    Creates a page with admin user already authenticated and navigates to timetable.
+    Uses CSRF-disabled server.
+    """
+    page = admin_context.new_page()
+    page.set_default_navigation_timeout(5000)
+    # Navigate to timetable page (where login redirects to)
+    page.goto(f"{live_server.url()}/jobs/")
+    page.wait_for_load_state('networkidle')
+    yield page
+
+@pytest.fixture
+def supervisor_context(browser, supervisor_auth_state):
+    """
+    Creates a browser context with supervisor user already authenticated.
+    """
+    context = browser.new_context(storage_state=supervisor_auth_state)
+    yield context
+    context.close()
+
+@pytest.fixture
+@pytest.mark.no_csrf
+def supervisor_page(supervisor_context, live_server):
+    """
+    Creates a page with supervisor user already authenticated and navigates to timetable.
+    Uses CSRF-disabled server.
+    """
+    page = supervisor_context.new_page()
+    page.set_default_navigation_timeout(5000)
+    # Navigate to timetable page (where login redirects to)
+    page.goto(f"{live_server.url()}/jobs/")
+    page.wait_for_load_state('networkidle')
+    yield page
+
+@pytest.fixture
+def user_context(browser, user_auth_state):
+    """
+    Creates a browser context with regular user already authenticated.
+    """
+    context = browser.new_context(storage_state=user_auth_state)
+    yield context
+    context.close()
+
+@pytest.fixture
+@pytest.mark.no_csrf
+def user_page(user_context, live_server):
+    """
+    Creates a page with regular user already authenticated and navigates to timetable.
+    Uses CSRF-disabled server.
+    """
+    page = user_context.new_page()
+    page.set_default_navigation_timeout(5000)
+    # Navigate to timetable page (where login redirects to)
+    page.goto(f"{live_server.url()}/jobs/")
+    page.wait_for_load_state('networkidle')
+    yield page
 
 # User fixtures for authentication testing
 @pytest.fixture
