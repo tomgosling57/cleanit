@@ -15,12 +15,11 @@ def login_with_credentials(page, goto, email, password) -> None:
         None
     """
     
-    with page.expect_response("**/user/login**"):
-        page.wait_for_load_state('networkidle')        
-        goto("/")                               
+    goto("/")                               
     page.wait_for_load_state('networkidle')        
     csrf = page.locator("input[name=csrf_token]")
     csrf.wait_for(state="attached")
+    page.wait_for_function("() => document.querySelector('input[name=csrf_token]')?.value?.length > 0")
     page.locator("#login-form").wait_for(state="attached")
     page.locator("#email").wait_for(state="attached")
     page.locator("#password").wait_for(state="attached")
@@ -30,12 +29,26 @@ def login_with_credentials(page, goto, email, password) -> None:
     page.get_by_role("textbox", name="password").fill(password)
     expect(page.get_by_role("textbox", name="email")).to_have_value(email)
     expect(page.get_by_role("textbox", name="password")).to_have_value(password)
-
+    
+    page.route("**/user/login**", validate_login_request_csrf)
     # Wait for login response and redirect to complete
     with page.expect_response(f"**/user/login**"):
-        page.wait_for_load_state('networkidle')
         page.get_by_role("button", name="Login").click()
     page.wait_for_load_state('networkidle')
+
+def validate_login_request_csrf(route, request):
+    if "/user/login" in request.url:
+        post_data = request.post_data or ""
+        cookies = request.headers.get("cookie")
+
+        # Assert session cookie exists
+        assert cookies and "session" in cookies, "Session cookie missing in login POST"
+
+        # Assert CSRF token exists in the POST body
+        assert "csrf_token=" in post_data, "CSRF token missing in login POST"
+
+    # Continue the request normally
+    route.continue_()
 
 def login_admin(page, goto) -> None:
     """
@@ -239,6 +252,16 @@ def fill_job_modal_form(
     assigned_teams: list[str],
     assigned_cleaners: list[str],
 ) -> None:
+    page.locator("#time").wait_for(state="attached")
+    page.locator("#end_time").wait_for(state="attached")
+    page.locator("#date").wait_for(state="attached")
+    page.locator("#description").wait_for(state="attached")
+    page.locator("#property_id").wait_for(state="attached")
+    page.locator('input[type="text"].flatpickr').wait_for(state="attached")
+    page.locator("#access_notes").wait_for(state="attached")
+    page.locator("#assigned_teams").wait_for(state="attached")
+    page.locator("#assigned_cleaners").wait_for(state="attached")
+    
     page.locator("#time").fill(start_time)
     page.locator("#end_time").fill(end_time)
     page.locator("#date").fill(date)
@@ -428,6 +451,7 @@ def fill_property_form(
 
 def submit_property_creation_form(page: Page) -> None:
     """Submit the property form (for creation)"""
+    page.locator("#property-modal button[type='submit']").wait_for(state="attached")
     with page.expect_response("**/address-book/property/create**"):
         page.wait_for_load_state('networkidle')
         page.locator('#property-modal button[type="submit"]').click()
@@ -436,6 +460,7 @@ def submit_property_creation_form(page: Page) -> None:
 
 def submit_property_update_form(page: Page, property_id: int) -> None:
     """Submit the property update form"""
+    page.locator("#property-modal button[type='submit']").wait_for(state="attached")
     with page.expect_response(f"**/address-book/property/{property_id}/update**"):
         page.wait_for_load_state('networkidle')
         page.locator('#property-modal button[type="submit"]').click()
@@ -507,3 +532,9 @@ def assert_property_card_content(
         notes_paragraph = property_card.locator('p:has(strong:has-text("Additional Notes:"))')
         expect(notes_paragraph).to_be_visible()
         expect(notes_paragraph).to_contain_text(notes)
+
+def validate_csrf_token_in_modal(modal: Locator) -> None:
+    """Validate that the CSRF token input in the modal is present and has a value"""
+    csrf_input = modal.locator("input[name=csrf_token]")
+    csrf_input.wait_for(state="attached")
+    assert csrf_input.input_value(), "CSRF token input is empty in modal"

@@ -129,9 +129,14 @@ def goto(page, live_server):
         return page.goto(f"{live_server.url()}{path}")
     return _goto
 
+@pytest.fixture
+def context(browser) -> Generator[BrowserContext, None, None]:
+    ctx = browser.new_context()  # NEW context per test
+    yield ctx
+    ctx.close()
 
 @pytest.fixture
-def page(context: BrowserContext) -> Generator[Page, None, None]:
+def page(context) -> Generator[Page, None, None]:
     page = context.new_page()
     page.set_default_navigation_timeout(5000) # the timeout is in milliseconds
     yield page

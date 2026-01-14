@@ -5,7 +5,7 @@ from config import DATETIME_FORMATS
 from tests.helpers import (
     assert_job_card_variables, login_admin,
     get_first_job_card, open_job_details_modal, open_job_update_modal,
-    fill_job_modal_form, assert_job_details_modal_content, close_modal_and_assert_hidden, wait_for_modal
+    fill_job_modal_form, assert_job_details_modal_content, close_modal_and_assert_hidden, validate_csrf_token_in_modal, wait_for_modal
 )
 from tests.test_utils import get_future_date, get_future_time
 
@@ -41,7 +41,8 @@ def test_job_details(page, goto) -> None:
 
 def test_update_job(page, goto) -> None:
     login_admin(page, goto)
-
+    get_first_job_card(page).wait_for(state="attached")
+    page.get_by_text("Create Job").wait_for(state="attached")
     job_card = get_first_job_card(page)
     expect(job_card).to_be_visible()
 
@@ -49,13 +50,14 @@ def test_update_job(page, goto) -> None:
     with page.expect_response(f"**/jobs/job/{job_id}/details**"):
         open_job_details_modal(page, job_card, f"**/jobs/job/{job_id}/details**")
     modal = page.locator("#job-modal")
-
+    modal.wait_for(state="attached")
     expect(modal.get_by_text("Edit")).to_be_visible()
 
     job_id = job_card.get_attribute('data-job-id')
     with page.expect_response(f"**/jobs/job/{job_id}/update**"):
         open_job_update_modal(page, modal, f"**/jobs/job/{job_id}/update**")
     modal = page.locator("#job-modal")
+    validate_csrf_token_in_modal(modal)
     expect(modal.locator("#time")).to_be_visible()
 
     selected_date_from_timetable = page.locator("#timetable-datepicker").input_value()
@@ -107,14 +109,17 @@ def test_update_job(page, goto) -> None:
 def test_create_job(page, goto) -> None:
     login_admin(page, goto)
 
-    expect(get_first_job_card(page)).to_be_visible()
-    expect(page.get_by_text("Create Job")).to_be_enabled()
+    get_first_job_card(page).wait_for(state="attached")
+    page.get_by_text("Create Job").wait_for(state="attached")
 
     with page.expect_response("**/jobs/job/create**"):
         page.wait_for_load_state('networkidle')
         page.get_by_text("Create Job").click()
 
     modal = wait_for_modal(page, "#job-modal")
+    validate_csrf_token_in_modal(modal)
+    # optional: log its length or hash to see if it changes per login
+
     expect(modal.locator("#time")).to_be_visible()
 
     new_start_time = "07:00"
