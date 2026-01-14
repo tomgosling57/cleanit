@@ -21,32 +21,30 @@ from tests.helpers import (
 )
 from tests.test_utils import get_future_date, get_future_time
 
-def test_address_book(page, goto) -> None:
-    login_admin(page, goto)
-    open_address_book(page)        
-    expect(page.locator("#property-list")).to_be_visible()
-    expect(page.get_by_text("All Properties")).to_be_visible()
+def test_address_book(admin_page) -> None:
+    open_address_book(admin_page)
+    expect(admin_page.locator("#property-list")).to_be_visible()
+    expect(admin_page.get_by_text("All Properties")).to_be_visible()
 
-def test_property_card_gallery_content(page, goto) -> None:
+def test_property_card_gallery_content(admin_page) -> None:
     """
     Test that the property card gallery modal opens and shows expected content.
     Since no actual images exist in test, checks for placeholder structure.
     """
-    login_admin(page, goto)
-    open_address_book(page)        
-    expect(page.locator("#property-list")).to_be_visible()
-    expect(page.get_by_text("All Properties")).to_be_visible()
+    open_address_book(admin_page)
+    expect(admin_page.locator("#property-list")).to_be_visible()
+    expect(admin_page.get_by_text("All Properties")).to_be_visible()
 
-    property_card = get_first_property_card(page)
+    property_card = get_first_property_card(admin_page)
     expect(property_card).to_be_visible()
 
-    open_property_card_gallery(page, property_card)
+    open_property_card_gallery(admin_page, property_card)
     
     # Assert gallery modal content using helper
-    assert_gallery_modal_content(page)
+    assert_gallery_modal_content(admin_page)
     
     # Close the gallery modal
-    gallery_modal = page.locator("#media-gallery-modal")
+    gallery_modal = admin_page.locator("#media-gallery-modal")
     close_button = gallery_modal.locator(".close-button")
     expect(close_button).to_be_visible()
     close_button.click()
@@ -54,9 +52,9 @@ def test_property_card_gallery_content(page, goto) -> None:
     # Ensure the gallery modal is closed
     expect(gallery_modal).not_to_be_visible()
 
-def test_create_property(page, goto) -> None:
+def test_create_property(admin_page) -> None:
     """Test creating a new property"""
-    login_admin(page, goto)
+    page = admin_page
     open_address_book(page)
     
     # Open creation modal
@@ -83,9 +81,9 @@ def test_create_property(page, goto) -> None:
     # Assert card content
     assert_property_card_content(new_property_card, test_address, test_access_notes, test_notes)
 
-def test_update_property(page, goto) -> None:
+def test_update_property(admin_page) -> None:
     """Test updating an existing property"""
-    login_admin(page, goto)
+    page = admin_page
     open_address_book(page)
     
     # Get first property card (Property ID 1: "123 Main St, Anytown" from seeded data)
@@ -115,9 +113,9 @@ def test_update_property(page, goto) -> None:
     # Assert updated content
     assert_property_card_content(updated_card, updated_address, updated_access_notes, updated_notes)
 
-def test_delete_property(page, goto) -> None:
+def test_delete_property(admin_page) -> None:
     """Test deleting a property"""
-    login_admin(page, goto)
+    page = admin_page
     open_address_book(page)
     
     # Get first property card
@@ -139,9 +137,9 @@ def test_delete_property(page, goto) -> None:
     deleted_card = page.locator(f'[data-id="{property_id}"]')
     expect(deleted_card).not_to_be_visible()
 
-def test_view_property_jobs(page, goto) -> None:
+def test_view_property_jobs(admin_page) -> None:
     """Test viewing jobs for a property"""
-    login_admin(page, goto)
+    page = admin_page
     open_address_book(page)
     
     # Get first property card
@@ -163,25 +161,25 @@ def test_view_property_jobs(page, goto) -> None:
     modal.locator(".close-button").first.click()
     expect(modal).not_to_be_visible()
 
-def test_admin_can_access_address_book(page, goto) -> None:
+def test_admin_can_access_address_book(admin_page) -> None:
     """Test that admin can access the address book page"""
-    login_admin(page, goto)
+    page = admin_page
     open_address_book(page)
     
     # Verify address book page loads
     expect(page.locator("#property-list")).to_be_visible()
     expect(page.get_by_text("All Properties")).to_be_visible()
 
-def test_supervisor_cannot_access_address_book(page, goto) -> None:
+def test_supervisor_cannot_access_address_book(supervisor_page, goto) -> None:
     """Test that supervisor cannot access the address book page"""
-    login_supervisor(page, goto)
+    page = supervisor_page
     
     # Supervisor should not see the "Address Book" link in navigation
     # Check that the link is not visible (it's only shown to admins)
     expect(page.get_by_text("Address Book")).not_to_be_visible()
         
     # Try to navigate directly to address book URL
-    goto("/address-book/")
+    goto("/address-book/", page)
     
     # Supervisor should not see address book content
     # They might be redirected or see an error/empty state
@@ -190,16 +188,16 @@ def test_supervisor_cannot_access_address_book(page, goto) -> None:
     # Supervisor should be redirected to the login page
     expect(page.get_by_text("404")).to_be_visible()
 
-def test_user_cannot_access_address_book(page, goto) -> None:
+def test_user_cannot_access_address_book(user_page, goto) -> None:
     """Test that regular user cannot access the address book page"""
-    login_user(page, goto)
+    page = user_page
     
     # User should not see the "Address Book" link in navigation
     # Check that the link is not visible (it's only shown to admins)
     expect(page.get_by_text("Address Book")).not_to_be_visible()
     
     # Try to navigate directly to address book URL
-    goto("/address-book/")
+    goto("/address-book/", page)
     
     # User should not see address book content
     # They might be redirected or see an error/empty state

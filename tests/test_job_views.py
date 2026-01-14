@@ -9,21 +9,20 @@ from tests.helpers import (
 )
 from tests.test_utils import get_future_date, get_future_time
 
-def test_job_details(page, goto) -> None:
-    login_admin(page, goto)
+def test_job_details(admin_page) -> None:
 
-    job_card = get_first_job_card(page)
+    job_card = get_first_job_card(admin_page)
     expect(job_card).to_be_visible()
 
     job_id = job_card.get_attribute('data-job-id')
-    with page.expect_response(f"**/jobs/job/{job_id}/details**"):
-        page.wait_for_load_state('networkidle')
-        open_job_details_modal(page, job_card, f"**/jobs/job/{job_id}/details**")
-    modal = page.locator("#job-modal")
+    with admin_page.expect_response(f"**/jobs/job/{job_id}/details**"):
+        admin_page.wait_for_load_state('networkidle')
+        open_job_details_modal(admin_page, job_card, f"**/jobs/job/{job_id}/details**")
+    modal = admin_page.locator("#job-modal")
 
     expected_date = get_future_date(days=2)
     assert_job_details_modal_content(
-        page,
+        admin_page,
         modal_id="#job-modal",
         title="Job Details",
         start_time="09:00",
@@ -36,11 +35,11 @@ def test_job_details(page, goto) -> None:
         assigned_cleaner="Lily Hargrave",
     )
 
-    close_modal_and_assert_hidden(page, "#job-modal")
+    close_modal_and_assert_hidden(admin_page, "#job-modal")
 
 
-def test_update_job(page, goto) -> None:
-    login_admin(page, goto)
+def test_update_job(admin_page) -> None:
+    page = admin_page
     get_first_job_card(page).wait_for(state="attached")
     page.get_by_text("Create Job").wait_for(state="attached")
     job_card = get_first_job_card(page)
@@ -106,8 +105,8 @@ def test_update_job(page, goto) -> None:
         expected_indicators=["Next Day Arrival"]
     )
 
-def test_create_job(page, goto) -> None:
-    login_admin(page, goto)
+def test_create_job(admin_page) -> None:
+    page = admin_page
 
     get_first_job_card(page).wait_for(state="attached")
     page.get_by_text("Create Job").wait_for(state="attached")

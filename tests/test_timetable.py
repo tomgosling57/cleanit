@@ -8,17 +8,16 @@ from tests.helpers import get_csrf_token, login_user, login_admin, login_supervi
 from tests.test_utils import get_future_date, get_future_time
 
 
-def test_supervisors_timetable(page, goto) -> None:
+def test_supervisors_timetable(supervisor_page) -> None:
     """
     Test that the timetable is displayed correctly after logging in as a supervisor.
 
     Args:
-        page: Playwright page object
-        goto: Function to navigate to a URL
+        supervisor_page: Playwright page object with supervisor authentication
     Returns:
         None
     """
-    login_supervisor(page, goto)
+    page = supervisor_page
     
 
     # Check jobs in expected order    
@@ -63,17 +62,16 @@ def test_supervisors_timetable(page, goto) -> None:
     }, expected_indicators=["Next Day Arrival"])
     assert_job_card_default_state(job_card_4)
 
-def test_admin_timetable(page, goto) -> None:
+def test_admin_timetable(admin_page) -> None:
     """
     Test that the timetable is displayed correctly after logging in as an admin.
 
     Args:
-        page: Playwright page object
-        goto: Function to navigate to a URL
+        admin_page: Playwright page object with admin authentication
     Returns:
         None
     """
-    login_admin(page, goto)
+    page = admin_page
 
     # Check jobs in expected order    
     job_card_1 = page.locator('div.job-card').first
@@ -106,17 +104,16 @@ def test_admin_timetable(page, goto) -> None:
     }, expected_indicators=["Same Day Arrival"])
     assert_job_card_default_state(job_card_3)
 
-def test_user_timetable(page, goto) -> None:
+def test_user_timetable(user_page) -> None:
     """
     Test that the timetable is displayed correctly after logging in as a user.
 
     Args:
-        page: Playwright page object
-        goto: Function to navigate to a URL
+        user_page: Playwright page object with user authentication
     Returns:
         None
     """
-    login_user(page, goto)
+    page = user_page
 
     # Check jobs in expected order    
     job_card_1 = page.locator('div.job-card').first
@@ -153,17 +150,16 @@ def test_user_timetable(page, goto) -> None:
     }, expected_indicators=["Next Day Arrival"])
     assert_job_card_default_state(job_card_4)
 
-def test_admin_team_timetable(page, goto) -> None:
+def test_admin_team_timetable(admin_page) -> None:
     """
     Test that the timetable is displayed correctly after logging in as an admin with team assignments.
 
     Args:
-        page: Playwright page object
-        goto: Function to navigate to a URL
+        admin_page: Playwright page object with admin authentication
     Returns:
         None
     """
-    login_admin(page, goto)
+    page = admin_page
     
     page.get_by_text('Team View').click()
 
@@ -205,17 +201,16 @@ def test_admin_team_timetable(page, goto) -> None:
     team_column_5 = page.locator('div.column-container').nth(4)
     assert_team_column_content(team_column_5, "Delta Team", 1)
 
-def test_team_timetable_job_reassignment(page, goto) -> None:
+def test_team_timetable_job_reassignment(admin_page) -> None:
     """
     Test that a job can be reassigned to a different team via drag-and-drop in the team timetable.
 
     Args:
-        page: Playwright page object
-        goto: Function to navigate to a URL
+        admin_page: Playwright page object with admin authentication
     Returns:
         None
     """
-    login_admin(page, goto)
+    page = admin_page
     
     page.get_by_text('Team View').click()
 
@@ -235,8 +230,8 @@ def test_team_timetable_job_reassignment(page, goto) -> None:
     expect(team_column_2.locator(f'div.job-card[data-job-id="{job_id}"]')).to_be_visible()
     expect(team_column_1.locator(f'div.job-card[data-job-id="{job_id}"]')).to_have_count(0)
 
-def test_delete_job(page, goto) -> None:
-    login_admin(page, goto)
+def test_delete_job(admin_page) -> None:
+    page = admin_page
 
     expect(page.locator('div.job-card').first).to_be_visible()
     job_card = page.locator('div.job-card').first
@@ -245,13 +240,13 @@ def test_delete_job(page, goto) -> None:
     job_card = page.locator(f'div.job-card[data-job-id="{job_id}"]')
     delete_job_and_confirm(page, job_card)
 
-def test_job_not_found_handling_for_update_status(page, goto, server_url) -> None:
+def test_job_not_found_handling_for_update_status(admin_page, server_url) -> None:
     """Test that the job not found message is displayed when trying to interact with non-existent job.
     
     Args:
-        page: Playwright page object
-        goto: Function to navigate to a URL"""
-    login_admin(page, goto)
+        admin_page: Playwright page object with admin authentication
+        server_url: Base URL of the test server"""
+    page = admin_page
     
     assert_job_not_found_htmx_error(
         page,
@@ -262,13 +257,13 @@ def test_job_not_found_handling_for_update_status(page, goto, server_url) -> Non
         csrf_token=get_csrf_token(page)
     )
 
-def test_job_not_found_handling_for_get_job_details(page, goto, server_url) -> None:
+def test_job_not_found_handling_for_get_job_details(admin_page, server_url) -> None:
     """Test that the job not found message is displayed when trying to get details of a non-existent job.
     
     Args:
-        page: Playwright page object
-        goto: Function to navigate to a URL"""
-    login_admin(page, goto)
+        admin_page: Playwright page object with admin authentication
+        server_url: Base URL of the test server"""
+    page = admin_page
     csrf_token = get_csrf_token(page)
     assert_job_not_found_htmx_error(
         page,
@@ -279,13 +274,13 @@ def test_job_not_found_handling_for_get_job_details(page, goto, server_url) -> N
         csrf_token=csrf_token
     )
 
-def test_job_not_found_handling_for_update_job(page, goto, server_url) -> None:
+def test_job_not_found_handling_for_update_job(admin_page, server_url) -> None:
     """Test that the job not found message is displayed when trying to update a non-existent job.
     
     Args:
-        page: Playwright page object
-        goto: Function to navigate to a URL"""
-    login_admin(page, goto)
+        admin_page: Playwright page object with admin authentication
+        server_url: Base URL of the test server"""
+    page = admin_page
     csrf_token = get_csrf_token(page)
     assert_job_not_found_htmx_error(
         page,
@@ -296,13 +291,13 @@ def test_job_not_found_handling_for_update_job(page, goto, server_url) -> None:
         csrf_token=csrf_token
     )
 
-def test_job_not_found_handling_for_delete_job(page, goto, server_url) -> None:
+def test_job_not_found_handling_for_delete_job(admin_page, server_url) -> None:
     """Test that the job not found message is displayed when trying to delete a non-existent job.
     
     Args:
-        page: Playwright page object
-        goto: Function to navigate to a URL"""
-    login_admin(page, goto)
+        admin_page: Playwright page object with admin authentication
+        server_url: Base URL of the test server"""
+    page = admin_page
     csrf_token = get_csrf_token(page)
     assert_job_not_found_htmx_error(
         page,
@@ -313,13 +308,13 @@ def test_job_not_found_handling_for_delete_job(page, goto, server_url) -> None:
         csrf_token=csrf_token
     )
 
-def test_job_not_found_handling_for_get_update_job_form(page, goto, server_url) -> None:
+def test_job_not_found_handling_for_get_update_job_form(admin_page, server_url) -> None:
     """Test that the job not found message is displayed when trying to get update form of a non-existent job.
     
     Args:
-        page: Playwright page object
-        goto: Function to navigate to a URL"""
-    login_admin(page, goto)
+        admin_page: Playwright page object with admin authentication
+        server_url: Base URL of the test server"""
+    page = admin_page
     csrf_token = get_csrf_token(page)
     assert_job_not_found_htmx_error(
         page,
@@ -330,13 +325,13 @@ def test_job_not_found_handling_for_get_update_job_form(page, goto, server_url) 
         csrf_token=csrf_token
     )
 
-def test_job_not_found_handling_for_reassign_job_team(page, goto, server_url) -> None:
+def test_job_not_found_handling_for_reassign_job_team(admin_page, server_url) -> None:
     """Test that the job not found message is displayed when trying to reassign team for a non-existent job.
     
     Args:
-        page: Playwright page object
-        goto: Function to navigate to a URL"""
-    login_admin(page, goto)
+        admin_page: Playwright page object with admin authentication
+        server_url: Base URL of the test server"""
+    page = admin_page
     csrf_token = get_csrf_token(page)
     assert_job_not_found_htmx_error(
         page,
@@ -353,17 +348,16 @@ def test_job_not_found_handling_for_reassign_job_team(page, goto, server_url) ->
         },
         team_view=True
     )
-def test_auto_push_for_uncompleted_jobs(page, goto) -> None:
+def test_auto_push_for_uncompleted_jobs(admin_page) -> None:
     """
     Test that uncompleted jobs from previous days are pushed to the next day upon accessing the timetable.
 
     Checks for the presence of the second beta team job which has yesterday's date.
 
     Args:
-        page: Playwright page object
-        goto: Function to navigate to a URL
+        admin_page: Playwright page object with admin authentication
     """
-    login_admin(page, goto)
+    page = admin_page
 
     page.get_by_text('Team View').click()
 
