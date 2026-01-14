@@ -149,12 +149,78 @@ Content-Type: application/json
 5. **Update old association tests** in `tests/test_media_controller.py`
 6. **Performance testing** with large galleries (50+ files)
 
-## Error Handling and Frontend Feedback
+## Error Handling Improvements: 404 Page and Global Error Handlers
+
+### New 404 Page Implementation
+- **Dedicated 404 Template**: Created `templates/not_found.html` with user-friendly design
+- **Consistent Styling**: Uses application's CSS variables and design system
+- **Helpful Navigation**: Includes links to timetable, back navigation, and admin-specific routes
+- **Responsive Design**: Mobile-friendly layout with appropriate scaling
+- **Debug Information**: Shows request details when in debug mode
+
+### Global Error Handler Enhancements
+- **Centralized Error Handling**: Added `register_general_error_handlers()` function in `utils/error_handlers.py`
+- **404 Handler**: Custom handler that serves JSON for API requests and HTML for UI requests
+- **Authentication Integration**: Unauthenticated users are redirected to login page via Flask-Login's unauthorized handler regardless of the existence of the route
+- **500 Handler**: Basic internal server error handler with appropriate responses
+- **Media-Specific Handling**: Existing `MediaNotFound` handler remains for specialized media error handling
+
+### Technical Implementation Details
+1. **Template Features**:
+   - Large error code display (404) with visual emphasis
+   - Clear error message explaining the issue
+   - Action buttons for common navigation paths
+   - SVG icons for visual reinforcement
+   - Debug information section for development
+
+2. **CSS Integration**:
+   - Added error page styles to `static/css/style.css` (reusable `.error-*` classes)
+   - Responsive breakpoints for mobile devices
+   - Consistent use of CSS custom properties (variables)
+
+3. **Handler Logic**:
+   - **JSON API Requests**: Returns structured JSON error response
+   - **HTML UI Requests**: Renders full `not_found.html` template
+   - **Authentication Check**: Unauthenticated users invoke Flask-Login's unauthorized handler for redirect
+   - **Logging**: All 404 errors are logged with request path
+   - **Context**: Passes debug information and timestamps to template
+
+### Integration Points
+- **App Factory**: Registered via `register_general_error_handlers(app, login_manager)` in `app_factory.py`
+- **Login Manager Integration**: 404 handler receives login_manager to invoke unauthorized handler
+- **Existing Error System**: Complements existing `_form_response.html` for form errors
+- **Media Error Handling**: Works alongside specialized `MediaNotFound` handler
+- **HTMX Compatibility**: Returns proper HTML that can be swapped if needed
+
+### Authentication Priority System
+- **Authentication Dominance**: Unauthenticated requests to non-existent routes redirect to login page
+- **Direct Invocation**: 404 handler calls `login_manager.unauthorized()` for unauthenticated users
+- **Test Coverage**: Comprehensive test suite verifies authentication redirect behavior
+- **Consistent UX**: Users always see login page first, then 404 page after authentication
+
+### Benefits
+1. **Improved User Experience**: Professional, helpful error pages instead of generic browser defaults
+2. **Consistent Branding**: Maintains application's visual identity even in error states
+3. **Better Debugging**: Development mode shows request details for troubleshooting
+4. **API Compatibility**: Proper JSON responses for programmatic clients
+5. **Maintainable Code**: Reusable CSS classes and template structure
+6. **Security First**: Authentication takes precedence over 404 errors for unauthenticated users
+
+### Testing Implementation
+- **Comprehensive Test Suite**: Created `tests/test_error_handlers.py` with 6 tests
+- **Authentication Tests**: Verify unauthorized users are redirected to login for non-existent routes
+- **Authenticated Tests**: Verify authenticated users see proper 404 page
+- **API Response Tests**: Verify JSON responses for API requests
+- **Media Error Tests**: Verify MediaNotFound handler functionality
+- **All Tests Passing**: 6/6 tests pass with the updated error handling implementation
+
+### Error Handling and Frontend Feedback
 
 ### Current Error Handling Approach
 - **`_form_response.html` template**: Currently used for relaying errors and feedback to users in form contexts
 - **Form-specific implementation**: Works well for form submissions but lacks global consistency
 - **HTMX integration**: Partial support for dynamic error display via HTMX swaps
+- **New 404 Page**: Dedicated template for page not found errors with consistent styling
 
 ### Requirements for Global Error Handling
 1. **Consistent Error Presentation**: Unified error display across all application interfaces
