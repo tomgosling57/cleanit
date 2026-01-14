@@ -132,8 +132,10 @@ def rollback_db_after_test(app):
 @pytest.fixture
 def goto(page, live_server):
     """Helper fixture that navigates to a path"""
-    def _goto(path="/"):
-        return page.goto(f"{live_server.url()}{path}")
+    def _goto(path="/", _page=None):
+        if _page is None:
+            _page = page
+        return _page.goto(f"{live_server.url()}{path}")
     return _goto
 
 @pytest.fixture
