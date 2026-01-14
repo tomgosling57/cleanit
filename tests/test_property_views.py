@@ -179,14 +179,16 @@ def test_supervisor_cannot_access_address_book(page, goto) -> None:
     # Supervisor should not see the "Address Book" link in navigation
     # Check that the link is not visible (it's only shown to admins)
     expect(page.get_by_text("Address Book")).not_to_be_visible()
-    
+        
     # Try to navigate directly to address book URL
-    goto("/address-book")
+    goto("/address-book/")
     
     # Supervisor should not see address book content
     # They might be redirected or see an error/empty state
     # Check that property list is not visible
     expect(page.locator("#property-list")).not_to_be_visible()
+    # Supervisor should be redirected to the login page
+    expect(page.get_by_text("404")).to_be_visible()
 
 def test_user_cannot_access_address_book(page, goto) -> None:
     """Test that regular user cannot access the address book page"""
@@ -197,9 +199,11 @@ def test_user_cannot_access_address_book(page, goto) -> None:
     expect(page.get_by_text("Address Book")).not_to_be_visible()
     
     # Try to navigate directly to address book URL
-    goto("/address-book")
+    goto("/address-book/")
     
     # User should not see address book content
     # They might be redirected or see an error/empty state
     # Check that property list is not visible
     expect(page.locator("#property-list")).not_to_be_visible()
+    # User should be redirected to the login page
+    expect(page.get_by_text("404")).to_be_visible()
