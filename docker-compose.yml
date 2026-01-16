@@ -1,0 +1,132 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: cleanit-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-cleanit}
+      POSTGRES_USER: ${POSTGRES_USER:-cleanit_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - cleanit-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-cleanit_user}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # MinIO S3-compatible Storage
+  minio:
+    image: minio/minio:latest
+    container_name: cleanit-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    volumes:
+      - minio_data:/data
+    ports:
+      - "9000:9000"  # S3 API
+      - "9001:9001"  # Console UI
+    networks:
+      - cleanit-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  # Flask Application
+  web:
+    build: .
+    container_name: cleanit-web
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_started
+    environment:
+      # Flask Configuration
+      FLASK_ENV: ${FLASK_ENV:-production}
+      SECRET_KEY: ${SECRET_KEY}
+      
+      # Database Configuration
+      DATABASE_URL: postgresql://${POSTGRES_USER:-cleanit_user}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-cleanit}
+      
+      # MinIO/S3 Configuration
+      STORAGE_PROVIDER: s3
+      S3_BUCKET: ${S3_BUCKET:-cleanit-media}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER:-minioadmin}
+      AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin}
+      S3_ENDPOINT_URL: http://minio:9000
+      S3_USE_HTTPS: "false"
+      S3_VERIFY_SSL: "false"
+      
+      # Application Settings
+      UPLOAD_FOLDER: /app/uploads
+    volumes:
+      - ./uploads:/app/uploads
+      - ./static:/app/static
+      - ./instance:/app/instance
+    ports:
+      - "5000:5000"
+    networks:
+      - cleanit-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    command: >
+      sh -c "
+        echo 'Waiting for services to be ready...' &&
+        sleep 10 &&
+        python -c '
+          import sys
+          sys.path.append(\"/app\")
+          from utils.populate_database import populate_database
+          from config import Config
+          import os
+          db_url = os.environ.get(\"DATABASE_URL\")
+          if db_url:
+            print(f\"Initializing database at {db_url}\")
+            populate_database(db_url)
+          else:
+            print(\"DATABASE_URL not set, skipping database initialization\")
+        ' &&
+        gunicorn --bind 0.0.0.0:5000 --workers 4 --threads 2 app:app
+      "
+
+  # MinIO Client (optional, for bucket setup)
+  mc:
+    image: minio/mc:latest
+    container_name: cleanit-mc
+    depends_on:
+      - minio
+    networks:
+      - cleanit-network
+    entrypoint: >
+      /bin/sh -c "
+        until (/usr/bin/mc config host add minio http://minio:9000 ${MINIO_ROOT_USER:-minioadmin} ${MINIO_ROOT_PASSWORD:-minioadmin}) do echo 'Waiting for MinIO...' && sleep 5; done;
+        /usr/bin/mc mb minio/${S3_BUCKET:-cleanit-media} || true;
+        /usr/bin/mc policy set public minio/${S3_BUCKET:-cleanit-media} || true;
+        echo 'MinIO bucket ${S3_BUCKET:-cleanit-media} created and configured';
+        tail -f /dev/null
+      "
+
+volumes:
+  postgres_data:
+    driver: local
+  minio_data:
+    driver: local
+
+networks:
+  cleanit-network:
+    driver: bridge
