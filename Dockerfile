@@ -37,6 +37,10 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Set environment variables
+# FLASK_ENV valid values: production, debug, testing
+# - production: Default production configuration with S3 storage
+# - debug: Development configuration with auto-reloading and debug features
+# - testing: Testing configuration with temporary storage
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PATH="/home/appuser/.local/bin:${PATH}" \
