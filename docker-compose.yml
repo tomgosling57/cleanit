@@ -88,7 +88,6 @@ services:
       sh -c "
         echo 'Waiting for services to be ready...' &&
         sleep 10 &&
-        python -c \"import sys; sys.path.append('/app'); from utils.populate_database import populate_database; import os; db_url = os.environ.get('DATABASE_URL'); if db_url: print(f'Initializing database at {db_url}'); populate_database(db_url); else: print('DATABASE_URL not set, skipping database initialization')\" &&
         gunicorn --bind 0.0.0.0:5000 --workers 4 --threads 2 app:app
       "
 
