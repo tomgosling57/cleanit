@@ -214,7 +214,58 @@ Content-Type: application/json
 - **Media Error Tests**: Verify MediaNotFound handler functionality
 - **All Tests Passing**: 6/6 tests pass with the updated error handling implementation
 
-### Error Handling and Frontend Feedback
+### Environmental Configuration System Enhancement
+
+### FLASK_ENV Configuration Implementation
+- **Three Environment Modes**: Production, Debug, and Testing configurations now properly implemented
+- **Configuration Classes**: Enhanced `config.py` with dedicated `DebugConfig` class for development
+- **Runtime Selection**: Application factory selects configuration based on `FLASK_ENV` environment variable
+- **Backward Compatibility**: Maintains support for `TESTING` flag in `config_override` parameter
+
+### Configuration Details
+1. **Production Configuration** (`FLASK_ENV=production`):
+   - DEBUG: False
+   - TESTING: False
+   - Storage Provider: S3 (cloud storage)
+   - Database: Production database (PostgreSQL/MySQL)
+   - Security: Strict validation and error handling
+
+2. **Debug Configuration** (`FLASK_ENV=debug`):
+   - DEBUG: True (auto-reloading enabled)
+   - TESTING: False
+   - Storage Provider: Local filesystem (`./uploads`)
+   - Database: Development database (SQLite)
+   - Features: Enhanced logging, detailed error pages
+
+3. **Testing Configuration** (`FLASK_ENV=testing`):
+   - DEBUG: False
+   - TESTING: True
+   - Storage Provider: Temporary storage (auto-cleaned)
+   - Database: Test database with seeded dummy data
+   - Features: Deterministic test data, isolated test environment
+
+### Implementation Changes
+- **Updated `config.py`**: Added `DebugConfig` class with debug-specific settings
+- **Enhanced `app_factory.py`**: Improved configuration selection logic with proper environment variable handling
+- **Documentation Updates**: Added FLASK_ENV documentation to:
+  - `Dockerfile` (with valid values explanation)
+  - `docker-compose.yml` (environment variable documentation)
+  - `set_environment_variables.py` (interactive setup guidance)
+  - `memory-bank/techContext.md` (technical documentation)
+
+### Validation and Testing
+- **Configuration Tests**: Verified all three FLASK_ENV modes work correctly
+- **Storage Provider Selection**: Confirmed each mode uses appropriate storage (S3, local, temp)
+- **Backward Compatibility**: Verified `TESTING` flag in `config_override` still works
+- **Application Startup**: Tested application creation with each configuration
+
+### Usage Guidelines
+- **Development**: Set `FLASK_ENV=debug` for auto-reloading and local storage
+- **Testing**: Set `FLASK_ENV=testing` for isolated test environment with seeded data
+- **Production**: Set `FLASK_ENV=production` (default) for S3 storage and production settings
+- **Environment Variables**: Use `set_environment_variables.py` script for guided setup
+
+## Error Handling and Frontend Feedback
 
 ### Current Error Handling Approach
 - **`_form_response.html` template**: Currently used for relaying errors and feedback to users in form contexts
