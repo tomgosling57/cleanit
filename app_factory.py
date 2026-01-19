@@ -76,7 +76,6 @@ def create_app(login_manager=LoginManager(), config_override=dict()):
     # Initialize Libcloud storage driver
     from libcloud.storage.types import Provider
     from libcloud.storage.providers import get_driver
-    import os
     import tempfile
 
     storage_provider = app.config.get('STORAGE_PROVIDER', 's3')
