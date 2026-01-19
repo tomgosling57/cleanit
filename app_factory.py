@@ -157,6 +157,10 @@ def create_app(login_manager=LoginManager(), config_override=dict()):
     def index():
         return redirect(url_for('user.login'))
     
+    @app.route('/health')
+    def health():
+        return jsonify({"status": "healthy"}), 200
+    
     app.register_blueprint(user_bp)
     app.register_blueprint(job_bp)
     app.register_blueprint(teams_bp)
