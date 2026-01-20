@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+set -e
+
+echo "▶ Setting up direnv for this project"
+
+# 1. Install direnv if missing
+if ! command -v direnv >/dev/null 2>&1; then
+  echo "▶ Installing direnv"
+  sudo apt update
+  sudo apt install -y direnv
+else
+  echo "✔ direnv already installed"
+fi
+
+# 2. Detect shell and add hook
+SHELL_NAME="$(basename "$SHELL")"
+
+if [ "$SHELL_NAME" = "bash" ]; then
+  RC_FILE="$HOME/.bashrc"
+  HOOK='eval "$(direnv hook bash)"'
+elif [ "$SHELL_NAME" = "zsh" ]; then
+  RC_FILE="$HOME/.zshrc"
+  HOOK='eval "$(direnv hook zsh)"'
+else
+  echo "✖ Unsupported shell: $SHELL_NAME"
+  exit 1
+fi
+
+if ! grep -q 'direnv hook' "$RC_FILE"; then
+  echo "▶ Adding direnv hook to $RC_FILE"
+  echo "" >> "$RC_FILE"
+  echo "$HOOK" >> "$RC_FILE"
+else
+  echo "✔ direnv hook already present"
+fi
+
+# 3. Create bin directory if missing
+mkdir -p bin
+
+# 4. Create .envrc
+if [ ! -f .envrc ]; then
+  echo "▶ Creating .envrc"
+  echo 'PATH_add bin' > .envrc
+else
+  echo "✔ .envrc already exists"
+fi
+
+# 5. Reload shell config
+echo "▶ Reloading shell config"
+# shellcheck source=/dev/null
+source "$RC_FILE"
+
+# 6. Allow direnv
+echo "▶ Allowing direnv for this project"
+direnv allow
+
+echo "✔ Done"
+echo ""
+echo "You can now run scripts from ./bin when inside this project."
