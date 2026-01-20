@@ -1,0 +1,5 @@
+#!/bin/bash
+# This script stops all containers and removes the volumes.
+docker-compose down -v;
+echo "All containers stopped and volumes removed.";
+echo "CMD: docker-compose down -v";

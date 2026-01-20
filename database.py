@@ -449,8 +449,105 @@ def insert_dummy_data(Session):
     """
     session = Session()
     
-    admin, supervisor_user, user = create_initial_users(session)
-    initial_team, alpha_team, beta_team, charlie_team, delta_team = create_initial_teams(session, admin, supervisor_user, user)
-    create_initial_properties_and_jobs(session, admin, user, initial_team, alpha_team, beta_team, charlie_team, delta_team)
+    # Delete all data in correct order to avoid foreign key constraint violations
+    # 1. Delete assignments first (references users, jobs, teams)
+    session.query(Assignment).delete()
+    # 2. Delete job_media and property_media (references media, jobs, properties)
+    session.query(JobMedia).delete()
+    session.query(PropertyMedia).delete()
+    # 3. Delete media (referenced by job_media and property_media)
+    session.query(Media).delete()
+    # 4. Delete jobs (references properties)
+    session.query(Job).delete()
+    # 5. Delete properties
+    session.query(Property).delete()
+    
+    # 6. Before deleting teams, we need to handle foreign key constraints:
+    #    - users.team_id references teams.id
+    #    - teams.team_leader_id references users.id
+    # So we need to set team_id to NULL for all users first
+    session.query(User).update({User.team_id: None})
+    # Also set team_leader_id to NULL for all teams
+    session.query(Team).update({Team.team_leader_id: None})
+    session.commit()
+    
+    # 7. Now we can delete teams
+    session.query(Team).delete()
+    # 8. Finally delete users
+    session.query(User).delete()
+    
+    session.commit()
+    print("Cleared existing data for fresh population.")
+    
+    # Now create new data
+    admin = User(id=1, first_name='Lily', last_name='Hargrave', email='admin@example.com', phone='12345678', role='admin')
+    admin.set_password('admin_password')
+    session.add(admin)
+
+    supervisor = User(id=2, first_name='Benjara', last_name="Brown", email='supervisor@example.com', role='supervisor')
+    supervisor.set_password('supervisor_password')
+    session.add(supervisor)
+
+    user = User(id=3, first_name='Tom', last_name='Gosling', email='user@example.com', role='user')
+    user.set_password('user_password')
+    session.add(user)
+    
+    session.commit()
+    print("Initial users created for deterministic testing.")
+    
+    # Create teams
+    initial_team = Team(id=1, name='Initial Team', team_leader_id=admin.id)
+    session.add(initial_team)
+    alpha_team = Team(id=2, name='Alpha Team', team_leader_id=supervisor.id)
+    session.add(alpha_team)
+    beta_team = Team(id=3, name='Beta Team')
+    session.add(beta_team)
+    charlie_team = Team(id=4, name='Charlie Team')
+    session.add(charlie_team)
+    delta_team = Team(id=5, name='Delta Team')
+    session.add(delta_team)
+    session.commit()
+    
+    # Assign users to teams
+    admin.team_id = initial_team.id
+    user.team_id = initial_team.id
+    supervisor.team_id = alpha_team.id
+    session.commit()
+    
+    print("Initial teams created for deterministic testing.")
+    
+    # Create properties
+    property1 = Property(id=1, address='123 Main St, Anytown', access_notes='Key under mat')
+    session.add(property1)
+    
+    property_alpha = Property(id=2, address='456 Oak Ave, Teamville', access_notes='Code 1234')
+    session.add(property_alpha)
+    session.commit()
+    print("Initial properties created for deterministic testing.")
+    
+    # Create jobs and assignments
+    today = date.today()
+    
+    # Initial jobs
+    _create_job(session, today, time(9, 0), time(11, 0), 'Full house clean, focus on kitchen and bathrooms.', property1, team_obj=initial_team, user_obj=admin, job_id=1, arrival_date_offset=2)
+    _create_job(session, today, time(12, 0), time(14, 0), '', property1, team_obj=initial_team, job_id=2, arrival_date_offset=1)
+    _create_job(session, today, time(14, 0), time(16, 0), '', property1, team_obj=initial_team, job_id=3, arrival_date_offset=0)
+    
+    # Alpha Team job
+    _create_job(session, today, time(10, 0), time(12, 0), '', property_alpha, team_obj=alpha_team, job_id=4)
+    _create_job(session, today, time(12, 30), time(14, 30), '', property_alpha, team_obj=alpha_team, job_id=8, arrival_date_offset=1)
+    _create_job(session, today, time(9, 0), time(10, 30), "Don't let the cat outside", property1, team_obj=alpha_team, job_id=9, arrival_date_offset=2)
+    _create_job(session, today, time(18, 30), time(20, 30), '', property1, team_obj=alpha_team, user_obj=user, job_id=10, arrival_date_offset=1)
+
+    # Beta Team job
+    _create_job(session, today, time(13, 0), time(15, 0), 'Beta Team Job: Garden maintenance.', property1, team_obj=beta_team, job_id=5)
+    _create_job(session, today - timedelta(days=1), time(8, 0), time(10, 0), 'Beta Team Job: Pool cleaning.', property1, team_obj=beta_team, job_id=11)
+
+    # Charlie Team job
+    _create_job(session, today, time(9, 30), time(11, 30), 'Charlie Team Job: Roof and gutter clean.', property_alpha, team_obj=charlie_team, job_id=6)
+
+    # Delta Team job
+    _create_job(session, today, time(15, 0), time(17, 0), 'Delta Team Job: Driveway pressure wash.', property1, team_obj=delta_team, job_id=7)
+    print("Initial jobs created and assigned for deterministic testing.")
     
     session.close()

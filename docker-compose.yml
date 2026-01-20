@@ -15,7 +15,7 @@ services:
     networks:
       - cleanit-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-cleanit_user}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-cleanit_user} -d ${POSTGRES_DB:-cleanit}"]
       interval: 10s
       timeout: 5s
       retries: 5

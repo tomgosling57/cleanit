@@ -183,12 +183,31 @@ cleanit/
 
 ## Development Workflows
 
+### Docker Compose Development
+```bash
+# Start development environment
+docker compose up -d
+
+# Start with rebuild
+docker compose up -d --build
+
+# Stop services
+docker compose down
+
+# View logs
+docker compose logs -f
+
+# Utility scripts in bin/
+./bin/cleanit-bash flask      # Open shell in container
+./bin/cleanit-log flask       # View container logs
+./bin/cleanit-copy <src> <dst> # Copy files into container
+./bin/cleanit-clean-volumes   # Clean up containers and volumes
+```
+
+### Local Development (Without Docker)
 ```bash
 # First activate the virtual environment
 source .venv/bin/activate
-```
-### Running the Application
-```bash
 
 # Development mode with debug
 python app.py
