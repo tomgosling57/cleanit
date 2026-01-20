@@ -9,6 +9,9 @@ PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
 cd "$PROJECT_ROOT"
 
+DOCKER_COMPOSE_CMD="docker compose"
+echo "📦 Using: $DOCKER_COMPOSE_CMD"
+
 # Default command
 CMD="${1:-help}"
 shift
@@ -16,47 +19,60 @@ shift
 case "$CMD" in
     start|up)
         echo "🚀 Starting CleanIt development environment..."
-        docker-compose -f docker-compose.yml -f docker-compose.dev.yml up --build "$@"
+        
+        # Check if --build flag is provided
+        if [[ " $* " =~ " --build " ]]; then
+            echo "🔨 Building containers..."
+            $DOCKER_COMPOSE_CMD -f docker-compose.yml up --build "$@"
+        else
+            echo "⚡ Starting without rebuild (use --build to force rebuild)"
+            $DOCKER_COMPOSE_CMD -f docker-compose.yml up "$@"
+        fi
         ;;
     
     stop|down)
         echo "🛑 Stopping CleanIt development environment..."
-        docker-compose -f docker-compose.yml -f docker-compose.dev.yml down "$@"
+        $DOCKER_COMPOSE_CMD -f docker-compose.yml down "$@"
         ;;
     
     restart)
         echo "🔄 Restarting CleanIt development environment..."
-        docker-compose -f docker-compose.yml -f docker-compose.dev.yml restart "$@"
+        $DOCKER_COMPOSE_CMD -f docker-compose.yml restart "$@"
         ;;
     
     logs)
         echo "📋 Showing logs..."
-        docker-compose -f docker-compose.yml -f docker-compose.dev.yml logs -f "$@"
+        $DOCKER_COMPOSE_CMD -f docker-compose.yml logs -f "$@"
         ;;
     
     shell)
         echo "🐚 Opening Flask shell..."
-        docker-compose -f docker-compose.yml -f docker-compose.dev.yml exec web flask shell
+        $DOCKER_COMPOSE_CMD -f docker-compose.yml -f docker-compose.dev.yml exec web flask shell
         ;;
     
     test)
         echo "🧪 Running tests..."
-        docker-compose -f docker-compose.yml -f docker-compose.dev.yml exec web pytest "$@"
+        $DOCKER_COMPOSE_CMD -f docker-compose.yml -f docker-compose.dev.yml exec web pytest "$@"
         ;;
     
     status|ps)
         echo "📊 Container status:"
-        docker-compose -f docker-compose.yml -f docker-compose.dev.yml ps
+        $DOCKER_COMPOSE_CMD -f docker-compose.yml ps
         ;;
     
     build)
         echo "🔨 Rebuilding containers..."
-        docker-compose -f docker-compose.yml -f docker-compose.dev.yml build "$@"
+        $DOCKER_COMPOSE_CMD -f docker-compose.yml build "$@"
+        ;;
+    
+    fast|quick)
+        echo "⚡ Starting CleanIt development environment (fast mode - no rebuild)..."
+        $DOCKER_COMPOSE_CMD -f docker-compose.yml up "$@"
         ;;
     
     clean)
         echo "🧹 Cleaning up (stopping and removing volumes)..."
-        docker-compose -f docker-compose.yml -f docker-compose.dev.yml down -v
+        $DOCKER_COMPOSE_CMD -f docker-compose.yml down -v
         ;;
     
     help|--help|-h)
@@ -65,7 +81,8 @@ case "$CMD" in
         echo "Usage: cleanit-dev [COMMAND] [OPTIONS]"
         echo ""
         echo "Commands:"
-        echo "  start, up     Start development environment"
+        echo "  start, up     Start development environment (with build if needed)"
+        echo "  fast, quick   Start without rebuilding containers"
         echo "  stop, down    Stop development environment"
         echo "  restart       Restart containers"
         echo "  logs          View logs (follow with -f)"
