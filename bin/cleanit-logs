@@ -1,4 +1,0 @@
-#!/bin/bash
-# View CleanIt development logs
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-"$SCRIPT_DIR/cleanit-dev" logs "$@"

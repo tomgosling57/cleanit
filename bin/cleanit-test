@@ -1,4 +1,0 @@
-#!/bin/bash
-# Run tests in CleanIt container
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-"$SCRIPT_DIR/cleanit-dev" test "$@"
