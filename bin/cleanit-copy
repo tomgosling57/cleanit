@@ -1,0 +1,14 @@
+#!/bin/bash
+# Copy files/directories into the flask container
+if [ -z "$1" ]; then
+  echo "Usage: $0 <source_path> [container_destination_path]"
+  echo "Example: $0 ./static/js /app/static/js"
+  exit 1
+fi
+
+SOURCE="$1"
+DEST="${2:-/app}"
+
+echo "Copying $SOURCE to cleanit-flask:$DEST"
+docker cp "$SOURCE" "cleanit-flask:$DEST"
+echo "CMD: docker cp $SOURCE cleanit-flask:$DEST"
