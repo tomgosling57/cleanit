@@ -14,6 +14,16 @@ DATETIME_FORMATS = {
 }
 
 class Config:
+    """
+    Base configuration class for CleanIt application.
+    
+    The FLASK_ENV environment variable determines which configuration is used:
+    - 'production': Default configuration (this class)
+    - 'debug': Debug configuration with auto-reloading and debug features
+    - 'testing': Testing configuration with temporary storage
+    
+    Environment variable FLASK_ENV must be one of: production, debug, testing
+    """
     SECRET_KEY = os.environ.get('SECRET_KEY') or secrets.token_bytes(32)
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or f'sqlite:///{os.path.join("instance", "cleanit.db")}'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
@@ -28,10 +38,36 @@ class Config:
     # For development/testing with local storage
     UPLOAD_FOLDER = os.getenv('UPLOAD_FOLDER', './uploads')
     
-    # Environment detection
+    # Environment detection - used to determine runtime configuration
+    # Valid values: 'production', 'debug', 'testing'
     ENV = os.getenv('FLASK_ENV', 'production')
 
+class DebugConfig(Config):
+    """
+    Debug configuration for development.
+    
+    Enabled when FLASK_ENV=debug. Features include:
+    - Auto-reloading on code changes
+    - Debug mode enabled
+    - Detailed error pages with stack traces
+    - Local storage for easier development
+    """
+    DEBUG = True
+    # Use local storage for development by default
+    STORAGE_PROVIDER = os.getenv('STORAGE_PROVIDER', 'local')
+    # Ensure upload folder exists for local storage
+    UPLOAD_FOLDER = os.getenv('UPLOAD_FOLDER', './uploads')
+
 class TestConfig(Config):
+    """
+    Testing configuration for automated tests.
+    
+    Enabled when FLASK_ENV=testing or TESTING=True.
+    Features include:
+    - Temporary storage that auto-cleans after tests
+    - Testing mode enabled
+    - Isolated database for test data
+    """
     TESTING = True
     STORAGE_PROVIDER = 'temp'  # Use temporary storage for tests
     UPLOAD_FOLDER = tempfile.mkdtemp(prefix='test_uploads_')  # Temporary directory for tests

@@ -4,7 +4,7 @@ import secrets
 from flask import Flask, redirect, url_for, request, Response, abort, jsonify
 from flask_wtf.csrf import CSRFProtect
 from flask_login import LoginManager
-from config import Config, TestConfig
+from config import Config, TestConfig, DebugConfig
 from database import init_db, get_db, teardown_db
 from routes.users import user_bp
 from routes.jobs import job_bp
@@ -23,22 +23,39 @@ def create_app(login_manager=LoginManager(), config_override=dict()):
     Args:
         login_manager (LoginManager, optional): The Flask-Login manager instance.
                                                Defaults to a new LoginManager().
-        test_config (dict, optional): A dictionary of configuration overrides for testing.
-                                      Defaults to None.
+        config_override (dict, optional): A dictionary of configuration overrides.
+                                          Defaults to empty dict.
 
     Returns:
         Flask: The configured Flask application instance.
     """
     app = Flask(__name__, instance_relative_config=True)
+    
+    # Determine which configuration to use based on FLASK_ENV or TESTING flag
+    # Priority: 1. config_override TESTING flag, 2. FLASK_ENV environment variable
+    env = os.getenv('FLASK_ENV', 'production').lower()
+    
     if config_override.get('TESTING', False):
+        # Backward compatibility: TESTING flag in config_override takes precedence
+        # This is used for unit/integration tests that use SQLite database
         app.config.from_object(TestConfig)
         populate_database(app.config['SQLALCHEMY_DATABASE_URI'])
+    elif env == 'testing':
+        # FLASK_ENV=testing (Docker deployment)
+        # Database population is handled by Docker command to avoid race conditions with multiple workers
+        app.config.from_object(TestConfig)
+    elif env == 'debug':
+        # FLASK_ENV=debug (Docker deployment)
+        # Database population is handled by Docker command to avoid race conditions with multiple workers
+        app.config.from_object(DebugConfig)
     else:
+        # Default: production (FLASK_ENV=production or not set)
         app.config.from_object(Config)
         if not app.config.get('SECRET_KEY'):
             abort(500, "SECRET_KEY is not set. Please set the SECRET_KEY environment variable for production.")
     
-    if app.config.get('TESTING', False):
+    # Configure logging for testing/debug environment
+    if app.config.get('TESTING', False) or env == 'testing' or env == 'debug':
         import logging
         import sys
         app.logger.setLevel(logging.DEBUG)
@@ -61,7 +78,6 @@ def create_app(login_manager=LoginManager(), config_override=dict()):
     # Initialize Libcloud storage driver
     from libcloud.storage.types import Provider
     from libcloud.storage.providers import get_driver
-    import os
     import tempfile
 
     storage_provider = app.config.get('STORAGE_PROVIDER', 's3')
@@ -142,6 +158,10 @@ def create_app(login_manager=LoginManager(), config_override=dict()):
     @app.route('/')
     def index():
         return redirect(url_for('user.login'))
+    
+    @app.route('/health')
+    def health():
+        return jsonify({"status": "healthy"}), 200
     
     app.register_blueprint(user_bp)
     app.register_blueprint(job_bp)

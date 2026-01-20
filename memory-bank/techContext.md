@@ -78,10 +78,15 @@ AWS_ACCESS_KEY_ID=your-access-key
 AWS_SECRET_ACCESS_KEY=your-secret-key
 
 # Development overrides
-FLASK_ENV=development
+FLASK_ENV=debug
 STORAGE_PROVIDER=local
 UPLOAD_FOLDER=./uploads
 ```
+
+**FLASK_ENV valid values:**
+- `production`: Default production configuration with S3 storage
+- `debug`: Development configuration with auto-reloading, debug mode, and local storage
+- `testing`: Testing configuration with temporary storage and test database
 
 ### Database Setup
 1. **Development (SQLite)**: Automatic creation in `instance/cleanit.db`

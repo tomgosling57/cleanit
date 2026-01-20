@@ -57,15 +57,21 @@ class JobService:
         if not user:
             return []
         
-        # Get all Assignment entries for this user
-        # Query for distinct Job objects directly, joining with Assignment and ordering
-        jobs = self.db_session.query(Job).options(joinedload(Job.property)).join(Assignment).filter(
+        # Subquery to get distinct job IDs that match the assignment criteria
+        job_ids_subquery = self.db_session.query(Assignment.job_id).join(
+            Job, Assignment.job_id == Job.id
+        ).filter(
             and_(
                 Job.date == date,
                 (Assignment.user_id == user_id) | (Assignment.team_id == team_id)
             )
-        ).order_by(Job.date, Job.time).group_by(Job.id).all() # Using group_by for distinct jobs and preserving order
-
+        ).distinct().subquery()
+        
+        # Now query jobs with properties using the subquery
+        jobs = self.db_session.query(Job).options(joinedload(Job.property)).filter(
+            Job.id.in_(job_ids_subquery)
+        ).order_by(Job.date, Job.time).all()
+        
         return jobs
 
     def create_job(self, job_data):
