@@ -90,6 +90,8 @@ The `bin/` directory contains basic utility scripts:
 # Clean up containers and volumes
 ./bin/cleanit-clean-volumes
 
+# Restart specific container
+./bin/cleanit-restart [container_name]
 # Copy files/directories into the flask container
 ./bin/cleanit-copy <source> [destination]
 
@@ -169,6 +171,7 @@ docker compose up -d
 # Or copy specific changed files
 
 # 4. Flask auto-reload will detect changes and restart
+# Alternatively rest out the container if needed: cleanit-restart web
 # 5. View logs if needed
 docker compose logs -f
 

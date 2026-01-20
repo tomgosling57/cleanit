@@ -1,0 +1,9 @@
+#!/bin/bash
+# Restart the specified container
+if [ -z "$1" ]; then
+  echo "Usage: $0 <container_name>"
+  exit 1
+fi
+
+docker restart "cleanit-$1"
+echo "CMD: docker restart cleanit-$1"

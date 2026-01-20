@@ -198,8 +198,8 @@ docker compose down
 docker compose logs -f
 
 # Utility scripts in bin/
-./bin/cleanit-bash flask      # Open shell in container
-./bin/cleanit-log flask       # View container logs
+./bin/cleanit-bash web      # Open shell in container
+./bin/cleanit-log web       # View container logs
 ./bin/cleanit-copy <src> <dst> # Copy files into container
 ./bin/cleanit-clean-volumes   # Clean up containers and volumes
 ```
