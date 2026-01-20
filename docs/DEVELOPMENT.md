@@ -9,7 +9,7 @@ The development environment uses Docker Compose with:
 - **S3 storage** via MinIO (production-like configuration)
 - **PostgreSQL database** (same as production)
 - **Source code mounting** for live reload during development
-- **Development scripts** for easy management
+- **Basic utility scripts** for common operations
 
 ## Quick Start
 
@@ -20,27 +20,25 @@ First set the environment variables using the set_env.py script:
 python set_env.py
 ```
 
-Then set up the development scripts:
+Then make the utility scripts executable:
 ```bash
 # Make scripts executable
 chmod +x bin/*
+```
 
-# Run setup script to make commands globally available
-./bin/setup-dev-scripts
-
-# If ~/bin is not in your PATH, add it to your shell profile:
-# export PATH="$HOME/bin:$PATH"
-# Then: source ~/.bashrc (or restart shell)
+Optionally, use the direnv setup script to add bin/ to your PATH when in the project directory:
+```bash
+./bin/setup-direnv
 ```
 
 ### 2. Start Development Environment
 
 ```bash
-# Start all services
-cleanit-up
+# Start all services in detached mode (background)
+docker compose up -d
 
-# Or start in detached mode (background)
-cleanit-up -d
+# Or start with rebuild if needed
+docker compose up -d --build
 ```
 
 ### 3. Access the Application
@@ -53,40 +51,52 @@ cleanit-up -d
 
 ### Main Commands
 
-
-The main command `cleanit-dev` supports all operations:
+Use standard Docker Compose commands for most operations:
 
 ```bash
-# Show help
-cleanit-dev help
+# Start services (detached mode)
+docker compose up -d
 
-# Start services (with build if needed)
-cleanit-dev start
-
-# Start without rebuilding (fast mode)
-cleanit-dev fast
-
-# Force rebuild and start
-cleanit-dev start --build
+# Start with rebuild
+docker compose up -d --build
 
 # Stop services
-cleanit-dev stop
+docker compose down
 
-# View logs
-cleanit-dev logs
+# View logs for all services
+docker compose logs
 
-# Run tests
-cleanit-dev test tests/test_media_service.py
-
-# Show container status
-cleanit-dev status
+# View logs for specific service
+docker compose logs [service_name]
 
 # Rebuild containers
-cleanit-dev build
+docker compose build
 
-# Clean up (remove volumes)
-cleanit-dev clean
+# Stop and remove volumes
+docker compose down -v
 ```
+
+### Utility Scripts
+
+The `bin/` directory contains basic utility scripts:
+
+```bash
+# Open bash shell in a container
+./bin/cleanit-bash [container_name]
+
+# View logs for a specific container (last 20 lines)
+./bin/cleanit-log [container_name]
+
+# Clean up containers and volumes
+./bin/cleanit-clean-volumes
+
+# Copy files/directories into the flask container
+./bin/cleanit-copy <source> [destination]
+
+# Setup direnv to add bin/ to PATH in this project
+./bin/setup-direnv
+```
+
 
 ## Development Features
 
@@ -138,18 +148,37 @@ MINIO_ROOT_PASSWORD=minioadmin
 
 ## Development Workflow
 
+### Development Philosophy
+**Keep the same Docker build for as long as possible** to avoid unnecessary rebuilding. The development workflow prioritizes copying updated files into running containers over rebuilding them. This approach saves time and maintains container state.
+
 ### Typical Development Session
 
 ```bash
 # 1. First time: Build and start environment
-cleanit-dev start  --build -d
+docker compose up -d --build
 
-# Subsequent starts: Fast start (no rebuild)
-cleanit-dev fast -d
+# Subsequent starts: Use existing containers
+docker compose up -d
 
 # 2. Make code changes
 # ... edit files ...
+
+# 3. Copy updated files into container (instead of rebuilding)
+./bin/cleanit-copy ./controllers /app/controllers
+./bin/cleanit-copy ./templates /app/templates
+# Or copy specific changed files
+
+# 4. Flask auto-reload will detect changes and restart
+# 5. View logs if needed
+docker compose logs -f
+
+# 6. Stop when done
+docker compose down
 ```
+
+### When to Rebuild vs Copy
+- **Copy files**: When changing application code (Python, templates, static files)
+- **Rebuild containers**: When changing dependencies (requirements.txt, Dockerfile, system packages)
 
 ### Running Tests
 
@@ -170,22 +199,22 @@ Currently tests have to be run outside of the docker configuration using pytest.
 2. **Docker build fails**
    ```bash
    # Clean build
-   docker-compose -f docker-compose.yml -f docker-compose.dev.yml build --no-cache
+   docker compose build --no-cache
    ```
 
 3. **Database connection issues**
    ```bash
    # Check if PostgreSQL is running
-   docker-compose -f docker-compose.yml -f docker-compose.dev.yml ps postgres
+   docker compose ps postgres
    
    # Restart database
-   docker-compose -f docker-compose.yml -f docker-compose.dev.yml restart postgres
+   docker compose restart postgres
    ```
 
 4. **MinIO not accessible**
    ```bash
    # Check MinIO logs
-   docker-compose -f docker-compose.yml -f docker-compose.dev.yml logs minio
+   docker compose logs minio
    
    # Wait for MinIO to initialize (takes ~30 seconds on first run)
    ```
@@ -194,7 +223,10 @@ Currently tests have to be run outside of the docker configuration using pytest.
 
 ```bash
 # Stop and remove containers, networks, and volumes
-cleanit-dev clean
+docker compose down -v
+
+# Or use the utility script
+./bin/cleanit-clean-volumes
 
 # Remove all Docker resources (careful!)
 docker system prune -a --volumes
@@ -204,35 +236,35 @@ docker system prune -a --volumes
 
 ### Available Scripts in `bin/`
 
-- `cleanit-dev` - Main command with all options
-- `cleanit-up` - Start development environment
-- `cleanit-down` - Stop development environment  
-- `cleanit-logs` - View container logs
-- `cleanit-shell` - Open Flask shell
-- `cleanit-test` - Run tests
-- `setup-dev-scripts` - Setup script for global access
+- `cleanit-bash` - Open bash shell in a container
+- `cleanit-log` - View logs for a specific container (last 20 lines)
+- `cleanit-clean-volumes` - Stop containers and remove volumes
+- `cleanit-copy` - Copy files/directories into the flask container
+- `setup-direnv` - Setup direnv to add bin/ to PATH in this project
 
-### Making Scripts Globally Available
+### Making Scripts Accessible
 
-1. Run the setup script:
-   ```bash
-   ./bin/setup-dev-scripts
-   ```
+Option 1: Use direnv (recommended)
+```bash
+./bin/setup-direnv
+# This adds bin/ to your PATH when in the project directory
+```
 
-2. Ensure `~/bin` is in your PATH:
-   ```bash
-   # Add to ~/.bashrc or ~/.zshrc
-   export PATH="$HOME/bin:$PATH"
-   
-   # Reload shell
-   source ~/.bashrc
-   ```
+Option 2: Add to PATH manually
+```bash
+# Add to ~/.bashrc or ~/.zshrc
+export PATH="$PWD/bin:$PATH"
 
-3. Verify installation:
-   ```bash
-   which cleanit-up
-   # Should show: /home/yourusername/bin/cleanit-up
-   ```
+# Reload shell
+source ~/.bashrc
+```
+
+Option 3: Use with ./ prefix
+```bash
+# Simply run scripts with ./ prefix
+./bin/cleanit-bash flask
+./bin/cleanit-copy ./static/js /app/static/js
+```
 
 ## Production vs Development
 
@@ -256,5 +288,5 @@ docker system prune -a --volumes
 For issues with the development environment:
 1. Check Docker and Docker Compose are installed and running
 2. Verify ports 5000, 5432, 9000, 9001 are available
-3. Check the logs: `cleanit-logs`
+3. Check the logs: `docker compose logs` or `./bin/cleanit-log [service]`
 4. Ensure `.env` file is properly configured
