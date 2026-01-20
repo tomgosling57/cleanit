@@ -57,6 +57,10 @@ COPY --from=builder /root/.local /home/appuser/.local
 # Copy application code
 COPY . .
 
+# Copy and make entrypoint script executable
+COPY docker-entrypoint.sh /app/docker-entrypoint.sh
+RUN chmod +x /app/docker-entrypoint.sh
+
 # Create necessary directories
 RUN mkdir -p instance uploads static && \
     chown -R appuser:appuser /app
@@ -71,6 +75,6 @@ EXPOSE 5000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')" || exit 1
 
-# Run the application with gunicorn
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "4", "--threads", "2", "app:app"]
+# Run the application with entrypoint script
+CMD ["/app/docker-entrypoint.sh"]
 
