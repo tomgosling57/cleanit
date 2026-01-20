@@ -1,0 +1,64 @@
+#!/bin/bash
+# Setup script to make CleanIt development scripts globally available
+
+set -e
+
+echo "🔧 Setting up CleanIt development scripts..."
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+
+# Make all scripts executable
+chmod +x "$SCRIPT_DIR"/*
+
+# Check if ~/bin exists, create if not
+if [ ! -d "$HOME/bin" ]; then
+    echo "📁 Creating ~/bin directory..."
+    mkdir -p "$HOME/bin"
+fi
+
+# Create symlinks in ~/bin
+echo "🔗 Creating symlinks in ~/bin..."
+for script in "$SCRIPT_DIR"/cleanit-*; do
+    if [ -f "$script" ]; then
+        script_name="$(basename "$script")"
+        ln -sf "$script" "$HOME/bin/$script_name"
+        echo "  ✅ $script_name"
+    fi
+done
+
+# Check if ~/bin is in PATH
+if [[ ":$PATH:" != *":$HOME/bin:"* ]]; then
+    echo ""
+    echo "⚠️  Warning: ~/bin is not in your PATH."
+    echo "Add this line to your shell profile (~/.bashrc, ~/.zshrc, etc.):"
+    echo ""
+    echo "  export PATH=\"\$HOME/bin:\$PATH\""
+    echo ""
+    echo "Then run: source ~/.bashrc (or restart your shell)"
+else
+    echo "✅ ~/bin is already in your PATH."
+fi
+
+echo ""
+echo "🎉 Setup complete!"
+echo ""
+echo "Available commands:"
+echo "  cleanit-up      - Start development environment"
+echo "  cleanit-down    - Stop development environment"
+echo "  cleanit-logs    - View logs"
+echo "  cleanit-shell   - Open Flask shell"
+echo "  cleanit-test    - Run tests"
+echo "  cleanit-dev     - Main command with all options"
+echo ""
+echo "Usage examples:"
+echo "  cleanit-up          # Start all services"
+echo "  cleanit-up -d       # Start in detached mode"
+echo "  cleanit-down        # Stop services"
+echo "  cleanit-logs -f     # Follow logs"
+echo "  cleanit-shell       # Open Flask shell"
+echo ""
+echo "First time setup:"
+echo "  1. Run: ./bin/setup-dev-scripts"
+echo "  2. Add ~/bin to PATH if needed"
+echo "  3. Run: cleanit-up"

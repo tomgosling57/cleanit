@@ -1,0 +1,93 @@
+#!/bin/bash
+# CleanIt Development Environment Manager
+# Main script that delegates to subcommands
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+
+cd "$PROJECT_ROOT"
+
+# Default command
+CMD="${1:-help}"
+shift
+
+case "$CMD" in
+    start|up)
+        echo "🚀 Starting CleanIt development environment..."
+        docker-compose -f docker-compose.yml -f docker-compose.dev.yml up --build "$@"
+        ;;
+    
+    stop|down)
+        echo "🛑 Stopping CleanIt development environment..."
+        docker-compose -f docker-compose.yml -f docker-compose.dev.yml down "$@"
+        ;;
+    
+    restart)
+        echo "🔄 Restarting CleanIt development environment..."
+        docker-compose -f docker-compose.yml -f docker-compose.dev.yml restart "$@"
+        ;;
+    
+    logs)
+        echo "📋 Showing logs..."
+        docker-compose -f docker-compose.yml -f docker-compose.dev.yml logs -f "$@"
+        ;;
+    
+    shell)
+        echo "🐚 Opening Flask shell..."
+        docker-compose -f docker-compose.yml -f docker-compose.dev.yml exec web flask shell
+        ;;
+    
+    test)
+        echo "🧪 Running tests..."
+        docker-compose -f docker-compose.yml -f docker-compose.dev.yml exec web pytest "$@"
+        ;;
+    
+    status|ps)
+        echo "📊 Container status:"
+        docker-compose -f docker-compose.yml -f docker-compose.dev.yml ps
+        ;;
+    
+    build)
+        echo "🔨 Rebuilding containers..."
+        docker-compose -f docker-compose.yml -f docker-compose.dev.yml build "$@"
+        ;;
+    
+    clean)
+        echo "🧹 Cleaning up (stopping and removing volumes)..."
+        docker-compose -f docker-compose.yml -f docker-compose.dev.yml down -v
+        ;;
+    
+    help|--help|-h)
+        echo "CleanIt Development Environment Manager"
+        echo ""
+        echo "Usage: cleanit-dev [COMMAND] [OPTIONS]"
+        echo ""
+        echo "Commands:"
+        echo "  start, up     Start development environment"
+        echo "  stop, down    Stop development environment"
+        echo "  restart       Restart containers"
+        echo "  logs          View logs (follow with -f)"
+        echo "  shell         Open Flask shell in container"
+        echo "  test          Run tests (pass pytest args)"
+        echo "  status, ps    Show container status"
+        echo "  build         Rebuild containers"
+        echo "  clean         Stop and remove volumes"
+        echo "  help          Show this help"
+        echo ""
+        echo "Examples:"
+        echo "  cleanit-dev start          # Start all services"
+        echo "  cleanit-dev start -d       # Start in detached mode"
+        echo "  cleanit-dev stop           # Stop services"
+        echo "  cleanit-dev logs -f web    # Follow web logs"
+        echo "  cleanit-dev test -v        # Run tests verbosely"
+        echo "  cleanit-dev shell          # Open Flask shell"
+        ;;
+    
+    *)
+        echo "❌ Unknown command: $CMD"
+        echo "Use 'cleanit-dev help' for usage information."
+        exit 1
+        ;;
+esac

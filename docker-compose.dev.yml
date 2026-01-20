@@ -1,0 +1,124 @@
+# Development-specific Docker Compose configuration
+# Use with: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+version: '3.8'
+
+services:
+  web:
+    # Override production settings for development
+    environment:
+      # Development configuration - Flask debug mode with auto-reload
+      FLASK_ENV: debug
+      FLASK_DEBUG: "1"
+      FLASK_APP: app.py
+      
+      # Keep S3 storage configuration for development (using MinIO)
+      STORAGE_PROVIDER: s3
+      S3_BUCKET: ${S3_BUCKET:-cleanit-media}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER:-minioadmin}
+      AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin}
+      S3_ENDPOINT_URL: http://minio:9000
+      S3_USE_HTTPS: "false"
+      S3_VERIFY_SSL: "false"
+      
+      # Development database (PostgreSQL for consistency with production)
+      DATABASE_URL: postgresql://${POSTGRES_USER:-cleanit_user}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-cleanit}
+      
+      # Enable detailed logging
+      LOG_LEVEL: DEBUG
+    
+    # Override command to run Flask development server (not gunicorn)
+    command: >
+      sh -c "
+        echo 'Waiting for services to be ready...' &&
+        sleep 10 &&
+        echo 'Initializing development database...' &&
+        python -c '
+import sys
+sys.path.append(\"/app\")
+from utils.populate_database import populate_database
+import os
+db_url = os.environ.get(\"DATABASE_URL\")
+if db_url:
+    try:
+        populate_database(db_url)
+        print(\"Development database populated successfully\")
+    except Exception as e:
+        print(f\"Error populating database: {e}\")
+else:
+    print(\"DATABASE_URL not set, skipping database initialization\")
+' &&
+        echo 'Starting Flask development server with auto-reload...' &&
+        python app.py --host=0.0.0.0 --port=5000
+      "
+    
+    # Mount source code for live reload - mount everything except large directories
+    volumes:
+      - ./uploads:/app/uploads
+      - ./static:/app/static
+      - ./instance:/app/instance
+      - ./controllers:/app/controllers
+      - ./routes:/app/routes
+      - ./services:/app/services
+      - ./templates:/app/templates
+      - ./utils:/app/utils
+      - ./tests:/app/tests
+      - ./app.py:/app/app.py
+      - ./app_factory.py:/app/app_factory.py
+      - ./config.py:/app/config.py
+      - ./database.py:/app/database.py
+      - ./requirements.txt:/app/requirements.txt
+      - ./docker-entrypoint.sh:/app/docker-entrypoint.sh
+      - ./docker-compose.yml:/app/docker-compose.yml
+      - ./docker-compose.dev.yml:/app/docker-compose.dev.yml
+      - ./Dockerfile:/app/Dockerfile
+      - ./README.md:/app/README.md
+      - ./set_env.py:/app/set_env.py
+    
+    # Development ports
+    ports:
+      - "5000:5000"      # Flask app
+      - "5678:5678"      # Optional: for Python debugger
+    
+    # Development-specific health check (more frequent)
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    
+    # Development restart policy
+    restart: unless-stopped
+    
+    # Enable stdin and tty for interactive debugging
+    stdin_open: true
+    tty: true
+    
+    # Development logging (verbose)
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Development tools container (optional)
+  dev-tools:
+    image: python:3.12-slim
+    container_name: cleanit-dev-tools
+    volumes:
+      - .:/app
+      - ./bin:/app/bin
+    working_dir: /app
+    networks:
+      - cleanit-network
+    command: tail -f /dev/null  # Keep container running for exec commands
+    profiles:
+      - dev-tools
+
+# Development network settings
+networks:
+  cleanit-network:
+    driver: bridge
+    name: cleanit-dev-network
