@@ -13,6 +13,6 @@ prototype1/
 docs/
 questions_for_lily.txt
 hours.txt
-.gitignore
+.env
 uploads/
 plans/
