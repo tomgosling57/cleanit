@@ -12,5 +12,6 @@ instance/
 questions_for_lily.txt
 hours.txt
 .env
+.envrc
 uploads/
 plans/
