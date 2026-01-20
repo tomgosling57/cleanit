@@ -84,12 +84,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-    command: >
-      sh -c "
-        echo 'Waiting for services to be ready...' &&
-        sleep 10 &&
-        gunicorn --bind 0.0.0.0:5000 --workers 4 --threads 2 app:app
-      "
+    command: /app/docker-entrypoint.sh
 
   # MinIO Client (optional, for bucket setup)
   mc:
