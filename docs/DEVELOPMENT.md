@@ -53,15 +53,6 @@ cleanit-up -d
 
 ### Main Commands
 
-| Command | Description | Example |
-|---------|-------------|---------|
-| `cleanit-up` | Start development environment | `cleanit-up -d` |
-| `cleanit-down` | Stop development environment | `cleanit-down` |
-| `cleanit-logs` | View container logs | `cleanit-logs -f web` |
-| `cleanit-shell` | Open Flask shell in container | `cleanit-shell` |
-| `cleanit-test` | Run tests in container | `cleanit-test -v` |
-
-### Advanced Usage with `cleanit-dev`
 
 The main command `cleanit-dev` supports all operations:
 
@@ -69,8 +60,14 @@ The main command `cleanit-dev` supports all operations:
 # Show help
 cleanit-dev help
 
-# Start services
+# Start services (with build if needed)
 cleanit-dev start
+
+# Start without rebuilding (fast mode)
+cleanit-dev fast
+
+# Force rebuild and start
+cleanit-dev start --build
 
 # Stop services
 cleanit-dev stop
@@ -83,6 +80,9 @@ cleanit-dev test tests/test_media_service.py
 
 # Show container status
 cleanit-dev status
+
+# Rebuild containers
+cleanit-dev build
 
 # Clean up (remove volumes)
 cleanit-dev clean
@@ -141,56 +141,19 @@ MINIO_ROOT_PASSWORD=minioadmin
 ### Typical Development Session
 
 ```bash
-# 1. Start development environment
-cleanit-up -d
+# 1. First time: Build and start environment
+cleanit-dev start  --build -d
+
+# Subsequent starts: Fast start (no rebuild)
+cleanit-dev fast -d
 
 # 2. Make code changes
 # ... edit files ...
-
-# 3. Check logs if needed
-cleanit-logs -f web
-
-# 4. Run tests
-cleanit-test
-
-# 5. Open Flask shell for debugging
-cleanit-shell
-
-# 6. Stop when done
-cleanit-down
 ```
 
 ### Running Tests
 
-```bash
-# Run all tests
-cleanit-test
-
-# Run specific test file
-cleanit-test tests/test_media_service.py
-
-# Run with verbose output
-cleanit-test -v
-
-# Run specific test function
-cleanit-test tests/test_media_service.py::test_upload_media
-```
-
-### Debugging
-
-```bash
-# Open Flask shell
-cleanit-shell
-
-# View application logs
-cleanit-logs -f web
-
-# Check container status
-cleanit-dev status
-
-# Restart just the web container
-docker-compose -f docker-compose.yml -f docker-compose.dev.yml restart web
-```
+Currently tests have to be run outside of the docker configuration using pytest.
 
 ## Troubleshooting
 
