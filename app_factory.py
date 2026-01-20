@@ -85,13 +85,42 @@ def create_app(login_manager=LoginManager(), config_override=dict()):
     if storage_provider == 's3':
         # Production: S3 Storage
         cls = get_driver(Provider.S3)
-        driver = cls(
-            app.config.get('AWS_ACCESS_KEY_ID'),
-            app.config.get('AWS_SECRET_ACCESS_KEY'),
-            region=app.config.get('AWS_REGION', 'us-east-1')
-        )
+        
+        # Get custom endpoint for S3-compatible services like MinIO
+        endpoint_url = app.config.get('S3_ENDPOINT_URL')
+        use_https = app.config.get('S3_USE_HTTPS', 'true').lower() == 'true'
+        verify_ssl = app.config.get('S3_VERIFY_SSL', 'true').lower() == 'true'
+        
+        # Prepare driver arguments
+        driver_args = {
+            'key': app.config.get('AWS_ACCESS_KEY_ID'),
+            'secret': app.config.get('AWS_SECRET_ACCESS_KEY'),
+            'region': app.config.get('AWS_REGION', 'us-east-1')
+        }
+        
+        # Add host parameter if custom endpoint is provided
+        if endpoint_url:
+            # Parse the endpoint URL to extract host
+            from urllib.parse import urlparse
+            parsed = urlparse(endpoint_url)
+            driver_args['host'] = parsed.hostname
+            if parsed.port:
+                driver_args['port'] = parsed.port
+            driver_args['secure'] = use_https
+        
+        driver = cls(**driver_args)
+        
+        # For S3-compatible services, we might need to handle SSL verification
+        if endpoint_url and not verify_ssl:
+            import warnings
+            import urllib3
+            warnings.filterwarnings('ignore', message='Unverified HTTPS request')
+            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+        
         container = driver.get_container(app.config.get('S3_BUCKET'))
         app.logger.info(f"Using S3 storage with bucket: {app.config.get('S3_BUCKET')}")
+        if endpoint_url:
+            app.logger.info(f"Using custom endpoint: {endpoint_url}")
     
     elif storage_provider == 'temp':
         # Testing: Temporary storage (auto-cleaned)
