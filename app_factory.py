@@ -37,14 +37,16 @@ def create_app(login_manager=LoginManager(), config_override=dict()):
     
     if config_override.get('TESTING', False):
         # Backward compatibility: TESTING flag in config_override takes precedence
+        # This is used for unit/integration tests that use SQLite database
         app.config.from_object(TestConfig)
         populate_database(app.config['SQLALCHEMY_DATABASE_URI'])
     elif env == 'testing':
-        # FLASK_ENV=testing
+        # FLASK_ENV=testing (Docker deployment)
+        # Database population is handled by Docker command to avoid race conditions with multiple workers
         app.config.from_object(TestConfig)
-        populate_database(app.config['SQLALCHEMY_DATABASE_URI'])
     elif env == 'debug':
-        # FLASK_ENV=debug
+        # FLASK_ENV=debug (Docker deployment)
+        # Database population is handled by Docker command to avoid race conditions with multiple workers
         app.config.from_object(DebugConfig)
     else:
         # Default: production (FLASK_ENV=production or not set)
