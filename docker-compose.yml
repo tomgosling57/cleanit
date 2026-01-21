@@ -32,7 +32,7 @@ services:
       - minio_data:/data
     ports:
       - "9000:9000"  # S3 API
-      - "9001:9001"  # Console UI
+      - "9090:9001"  # Console UI
     networks:
       - cleanit-network
     healthcheck:
