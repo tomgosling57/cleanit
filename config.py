@@ -35,6 +35,11 @@ class Config:
     AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID', 'your-access-key')
     AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY', 'your-secret-key')
     
+    # S3-compatible service configuration (for MinIO, etc.)
+    S3_ENDPOINT_URL = os.getenv('S3_ENDPOINT_URL')
+    S3_USE_HTTPS = os.getenv('S3_USE_HTTPS', 'true')
+    S3_VERIFY_SSL = os.getenv('S3_VERIFY_SSL', 'true')
+    
     # For development/testing with local storage
     UPLOAD_FOLDER = os.getenv('UPLOAD_FOLDER', './uploads')
     
@@ -54,7 +59,7 @@ class DebugConfig(Config):
     """
     DEBUG = True
     # Use local storage for development by default
-    STORAGE_PROVIDER = os.getenv('STORAGE_PROVIDER', 'local')
+    STORAGE_PROVIDER = os.getenv('STORAGE_PROVIDER', 's3')
     # Ensure upload folder exists for local storage
     UPLOAD_FOLDER = os.getenv('UPLOAD_FOLDER', './uploads')
 
