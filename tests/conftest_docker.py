@@ -18,6 +18,13 @@ from pathlib import Path
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
+# Load environment variables from .env file
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass  # dotenv not available, rely on environment variables
+
 from app_factory import create_app
 from flask_login import LoginManager
 from utils.populate_database import populate_database
@@ -55,9 +62,11 @@ def docker_app_config():
     - S3 storage provider (MinIO)
     - PostgreSQL database
     - Docker network endpoints
+    
+    Note: We don't set TESTING=True because that would trigger TestConfig
+    which uses temp storage. We want to test actual S3 storage.
     """
     return {
-        'TESTING': True,
         'STORAGE_PROVIDER': 's3',
         'S3_BUCKET': os.getenv('S3_BUCKET', 'cleanit-media'),
         'AWS_REGION': os.getenv('AWS_REGION', 'us-east-1'),
@@ -143,6 +152,7 @@ def docker_admin_client(docker_app_no_csrf):
     Uses the seeded database to find an admin user and logs in via the
     login endpoint. CSRF is disabled for easier API testing.
     """
+    # Import inside function to avoid circular imports
     from tests.conftest import login_admin_for_test
     
     client = docker_app_no_csrf.test_client()
@@ -158,6 +168,7 @@ def docker_regular_client(docker_app_no_csrf):
     Uses the seeded database to find a regular user and logs in via the
     login endpoint. CSRF is disabled for easier API testing.
     """
+    # Import inside function to avoid circular imports
     from tests.conftest import login_regular_for_test
     
     client = docker_app_no_csrf.test_client()
@@ -272,10 +283,51 @@ def verify_docker_environment():
 # Import shared fixtures from main conftest.py
 # These will be available to tests that use this fixture module
 from tests.conftest import (
-    seeded_test_data,
     admin_client_no_csrf,
     regular_client_no_csrf,
     admin_client,
     regular_client,
     # Add other shared fixtures as needed
 )
+
+@pytest.fixture(scope='function')
+def seeded_test_data(docker_app):
+    """
+    Fixture that provides easy access to seeded test data for Docker tests.
+    Uses the Docker app context to ensure database access works with Docker configuration.
+    """
+    from database import get_db, teardown_db, User, Property, Job, Team, Assignment
+    
+    with docker_app.app_context():
+        db_session = get_db()
+        try:
+            users = db_session.query(User).all()
+            properties = db_session.query(Property).all()
+            jobs = db_session.query(Job).all()
+            teams = db_session.query(Team).all()
+            assignments = db_session.query(Assignment).all()
+            
+            seeded_users = {user.email: user for user in users}
+            seeded_properties = {prop.address: prop for prop in properties}
+            seeded_jobs = {job.id: job for job in jobs}
+            seeded_teams = {team.name: team for team in teams}
+            seeded_assignments = {}
+            for assignment in assignments:
+                job_key = f"{assignment.job.property.address} {assignment.job.date.strftime('%Y-%m-%d')} {assignment.job.time.strftime('%H:%M')}"
+                if assignment.user:
+                    assignment_key = f"Job: {job_key} | User: {assignment.user.email}"
+                elif assignment.team:
+                    assignment_key = f"Job: {job_key} | Team: {assignment.team.name}"
+                else:
+                    continue # Should not happen in seeded data
+                seeded_assignments[assignment_key] = assignment
+            
+            return {
+                'users': seeded_users,
+                'properties': seeded_properties,
+                'jobs': seeded_jobs,
+                'teams': seeded_teams,
+                'assignments': seeded_assignments,
+            }
+        finally:
+            teardown_db()
