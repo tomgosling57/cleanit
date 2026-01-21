@@ -169,13 +169,16 @@ class PropertyController:
 
     def add_property_media(self, property_id):
         """
-        POST /properties/<property_id>/media - Add media to property (single or batch)
+        POST /properties/<property_id>/media - Upload and associate media with property
+        
+        This endpoint handles file uploads directly to property gallery.
+        Files are uploaded, stored, and automatically associated with the property.
         
         Args:
             property_id (int): The property ID
             
         Returns:
-            JSON response with success/error
+            JSON response with success/error and uploaded media details
         """
         if not current_user.is_authenticated or current_user.role != 'admin':
             return jsonify({'error': 'Unauthorized: Admin access required'}), 403
@@ -189,39 +192,140 @@ class PropertyController:
             if not property:
                 return jsonify({'error': 'Property not found'}), 404
             
-            # Get media IDs from request JSON
-            data = request.get_json()
-            if not data or 'media_ids' not in data:
-                return jsonify({'error': 'Missing media_ids in request body'}), 400
+            # Check content type - must be multipart/form-data for file uploads
+            content_type = request.content_type or ''
+            if 'multipart/form-data' not in content_type:
+                return jsonify({'error': 'Content type must be multipart/form-data for file uploads'}), 400
             
-            media_ids = data['media_ids']
-            if not isinstance(media_ids, list):
-                return jsonify({'error': 'media_ids must be a list'}), 400
+            # Check if files are present
+            if 'files[]' not in request.files and 'file' not in request.files:
+                return jsonify({'error': 'No files provided in request'}), 400
+            
+            # Get files - support both 'files[]' array and single 'file'
+            files = []
+            if 'files[]' in request.files:
+                files = request.files.getlist('files[]')
+            elif 'file' in request.files:
+                files = [request.files['file']]
+            
+            if not files or all(file.filename == '' for file in files):
+                return jsonify({'error': 'No selected files'}), 400
+            
+            # Get descriptions - support both 'descriptions[]' array and single 'description'
+            descriptions = []
+            if 'descriptions[]' in request.form:
+                descriptions = request.form.getlist('descriptions[]')
+            elif 'description' in request.form:
+                descriptions = [request.form['description']]
+            else:
+                # Use filenames as descriptions
+                descriptions = [file.filename for file in files]
+            
+            # Ensure we have enough descriptions
+            while len(descriptions) < len(files):
+                descriptions.append(files[len(descriptions)].filename)
+            
+            # Import media utilities
+            from utils.media_utils import (
+                identify_file_type,
+                validate_media,
+                upload_media_to_storage,
+                get_media_url,
+                extract_metadata
+            )
+            
+            uploaded_media = []
+            media_ids = []
+            
+            for i, file in enumerate(files):
+                try:
+                    if not file or file.filename == '':
+                        continue
+                    
+                    # Identify file type
+                    file.seek(0)
+                    media_type, mime_type = identify_file_type(file)
+                    
+                    # Validate media
+                    file.seek(0)
+                    validate_media(file, media_type)
+                    
+                    # Upload to storage
+                    file.seek(0)
+                    filename = upload_media_to_storage(file, file.filename, media_type)
+                    
+                    # Get file size
+                    file.seek(0, 2)  # Seek to end
+                    size_bytes = file.tell()
+                    file.seek(0)  # Reset
+                    
+                    # Extract metadata if available
+                    metadata = {}
+                    try:
+                        import tempfile
+                        import os
+                        with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(file.filename)[1]) as tmp:
+                            file.save(tmp.name)
+                            tmp_path = tmp.name
+                            metadata = extract_metadata(tmp_path, media_type)
+                            os.unlink(tmp_path)
+                    except Exception as e:
+                        # Metadata extraction is optional
+                        pass
+                    
+                    # Create media record
+                    description = descriptions[i] if i < len(descriptions) else file.filename
+                    media = self.media_service.add_media(
+                        file_name=file.filename,
+                        file_path=filename,
+                        media_type=media_type,
+                        mimetype=mime_type,
+                        size_bytes=size_bytes,
+                        description=description,
+                        metadata=metadata
+                    )
+                    
+                    uploaded_media.append(media)
+                    media_ids.append(media.id)
+                    
+                except ValueError as e:
+                    # Skip invalid files but continue with others
+                    continue
+                except Exception as e:
+                    # Skip files that fail to upload but continue with others
+                    continue
             
             if not media_ids:
-                return jsonify({'error': 'media_ids list cannot be empty'}), 400
+                return jsonify({'error': 'No files could be uploaded'}), 400
             
-            # Validate all media IDs exist
-            for media_id in media_ids:
-                try:
-                    self.media_service.get_media_by_id(media_id)
-                except Exception as e:
-                    return jsonify({
-                        'error': f'Media ID {media_id} not found or invalid: {str(e)}'
-                    }), 404
-            
-            # Batch associate media with property
+            # Associate uploaded media with property
             associations = self.media_service.associate_media_batch_with_property(
                 property_id, media_ids
             )
             
+            # Prepare response with uploaded media details
+            media_details = []
+            for media in uploaded_media:
+                media_url = get_media_url(media.file_path) if media.file_path else None
+                media_details.append({
+                    'id': media.id,
+                    'filename': media.filename,
+                    'url': media_url,
+                    'media_type': media.media_type,
+                    'mimetype': media.mimetype,
+                    'size_bytes': media.size_bytes,
+                    'description': media.description
+                })
+            
             return jsonify({
                 'success': True,
-                'message': f'Successfully associated {len(associations)} media items with property',
+                'message': f'Successfully uploaded and associated {len(uploaded_media)} files with property',
                 'property_id': property_id,
                 'media_ids': media_ids,
+                'media': media_details,
                 'association_count': len(associations)
             }), 200
+                
         except Exception as e:
             return jsonify({'error': f'Failed to add media to property: {str(e)}'}), 500
 

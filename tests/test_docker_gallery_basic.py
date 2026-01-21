@@ -42,10 +42,11 @@ class TestDockerGalleryBasic:
         Core test: upload a file to property gallery with S3/MinIO storage.
         
         This test verifies the complete flow:
-        1. Upload a file to S3/MinIO storage
-        2. Associate it with a property
-        3. Verify it appears in the property gallery
-        4. Clean up
+        1. Upload a file directly to property gallery endpoint (which uploads to S3/MinIO)
+        2. Verify it appears in the property gallery
+        3. Clean up
+        
+        Note: The new API uploads files directly to property endpoint, not via separate /media/upload
         """
         # Get a property from seeded data
         properties = seeded_test_data['properties']
@@ -59,9 +60,9 @@ class TestDockerGalleryBasic:
         test_file = io.BytesIO(b"fake image data for S3 integration test")
         test_file.name = "s3_integration_test.jpg"
         
-        # Step 1: Upload media file (admin only endpoint)
+        # Step 1: Upload file directly to property gallery endpoint
         upload_response = docker_admin_client.post(
-            '/media/upload',
+            f'/address-book/property/{property_id}/media',
             data={
                 'file': (test_file, 's3_integration_test.jpg'),
                 'description': 'S3 integration test image'
@@ -74,25 +75,13 @@ class TestDockerGalleryBasic:
             f"Upload failed: {upload_response.data.decode('utf-8')}"
         
         upload_data = json.loads(upload_response.data)
-        assert 'media_id' in upload_data
-        assert 'filename' in upload_data
-        media_id = upload_data['media_id']
+        assert upload_data.get('success') is True
+        assert 'media_ids' in upload_data
+        assert len(upload_data['media_ids']) > 0
         
-        # Step 2: Associate media with property using gallery endpoint
-        associate_response = docker_admin_client.post(
-            f'/address-book/property/{property_id}/media',
-            json={'media_ids': [media_id]},
-            content_type='application/json'
-        )
+        media_id = upload_data['media_ids'][0]
         
-        # The endpoint should return success
-        assert associate_response.status_code == 200, \
-            f"Association failed: {associate_response.data.decode('utf-8')}"
-        
-        associate_data = json.loads(associate_response.data)
-        assert associate_data.get('success') is True
-        
-        # Step 3: Get property gallery and verify file is included
+        # Step 2: Get property gallery and verify file is included
         gallery_response = docker_admin_client.get(
             f'/address-book/property/{property_id}/media'
         )
@@ -107,14 +96,14 @@ class TestDockerGalleryBasic:
         
         # Find our uploaded media in the gallery
         media_in_gallery = [
-            m for m in gallery_data['media'] 
+            m for m in gallery_data['media']
             if m.get('id') == media_id or m.get('filename') == 's3_integration_test.jpg'
         ]
         
         assert len(media_in_gallery) > 0, \
             f"Uploaded media not found in gallery. Gallery media: {gallery_data['media']}"
         
-        # Step 4: Clean up - remove media from gallery
+        # Step 3: Clean up - remove media from gallery
         cleanup_response = docker_admin_client.delete(
             f'/address-book/property/{property_id}/media',
             json={'media_ids': [media_id]},
@@ -125,7 +114,7 @@ class TestDockerGalleryBasic:
         assert cleanup_response.status_code in [200, 404], \
             f"Cleanup failed: {cleanup_response.data.decode('utf-8')}"
         
-        # Step 5: Delete the media file itself
+        # Step 4: Delete the media file itself
         delete_response = docker_admin_client.delete(f'/media/{media_id}')
         assert delete_response.status_code in [200, 404], \
             f"Media deletion failed: {delete_response.data.decode('utf-8')}"
