@@ -137,37 +137,6 @@ class TestMediaControllerIntegration:
             # Clean up - admin deletes it
             admin_client_no_csrf.delete(f'/media/{media_id}')
 
-    def test_associate_media_with_property_admin_success(self, admin_client_no_csrf, seeded_test_data):
-        """POST /properties/<property_id>/media/<media_id> should succeed for admin.
-        
-        DEPRECATED: This endpoint was removed in media refactoring.
-        Use POST /properties/<property_id>/gallery/add instead.
-        """
-        pytest.skip("DEPRECATED: Endpoint removed in media refactoring. Use property gallery endpoints.")
-
-    def test_associate_media_with_property_regular_user_forbidden(self, regular_client_no_csrf, admin_client_no_csrf, seeded_test_data):
-        """POST /properties/<property_id>/media/<media_id> should return 403 for regular user.
-        
-        DEPRECATED: This endpoint was removed in media refactoring.
-        Use POST /properties/<property_id>/gallery/add instead.
-        """
-        pytest.skip("DEPRECATED: Endpoint removed in media refactoring. Use property gallery endpoints.")
-
-    def test_disassociate_media_from_property_admin_success(self, admin_client_no_csrf, seeded_test_data):
-        """DELETE /properties/<property_id>/media/<media_id> should succeed for admin.
-        
-        DEPRECATED: This endpoint was removed in media refactoring.
-        Use POST /properties/<property_id>/gallery/remove instead.
-        """
-        pytest.skip("DEPRECATED: Endpoint removed in media refactoring. Use property gallery endpoints.")
-
-    def test_associate_media_with_job_admin_success(self, admin_client_no_csrf, seeded_test_data):
-        """POST /jobs/<job_id>/media/<media_id> should succeed for admin.
-        
-        DEPRECATED: This endpoint was removed in media refactoring.
-        Use POST /jobs/<job_id>/gallery/add instead.
-        """
-        pytest.skip("DEPRECATED: Endpoint removed in media refactoring. Use job gallery endpoints.")
 
     def test_serve_media_endpoint(self, admin_client_no_csrf):
         """GET /media/serve/<filename> should serve file or return appropriate error."""
@@ -226,13 +195,6 @@ class TestMediaControllerErrorHandling:
         assert 'error' in data
         assert 'Media not found' in data['error']
     
-    def test_associate_nonexistent_media_with_property_returns_404(self, admin_client_no_csrf, seeded_test_data):
-        """POST /properties/<property_id>/media/<non-existent-media_id> should return 404.
-        
-        DEPRECATED: This endpoint was removed in media refactoring.
-        Use POST /properties/<property_id>/gallery/add instead.
-        """
-        pytest.skip("DEPRECATED: Endpoint removed in media refactoring. Use property gallery endpoints.")
 
 
 # Tests for new property gallery endpoints
