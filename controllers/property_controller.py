@@ -189,13 +189,38 @@ class PropertyController:
             if not property:
                 return jsonify({'error': 'Property not found'}), 404
             
-            # TODO: Implement actual file upload logic here
-            # For now, return a placeholder response
+            # Get media IDs from request JSON
+            data = request.get_json()
+            if not data or 'media_ids' not in data:
+                return jsonify({'error': 'Missing media_ids in request body'}), 400
+            
+            media_ids = data['media_ids']
+            if not isinstance(media_ids, list):
+                return jsonify({'error': 'media_ids must be a list'}), 400
+            
+            if not media_ids:
+                return jsonify({'error': 'media_ids list cannot be empty'}), 400
+            
+            # Validate all media IDs exist
+            for media_id in media_ids:
+                try:
+                    self.media_service.get_media_by_id(media_id)
+                except Exception as e:
+                    return jsonify({
+                        'error': f'Media ID {media_id} not found or invalid: {str(e)}'
+                    }), 404
+            
+            # Batch associate media with property
+            associations = self.media_service.associate_media_batch_with_property(
+                property_id, media_ids
+            )
+            
             return jsonify({
                 'success': True,
-                'message': 'Media upload endpoint ready - implementation pending',
+                'message': f'Successfully associated {len(associations)} media items with property',
                 'property_id': property_id,
-                'note': 'This endpoint will handle single and batch uploads'
+                'media_ids': media_ids,
+                'association_count': len(associations)
             }), 200
         except Exception as e:
             return jsonify({'error': f'Failed to add media to property: {str(e)}'}), 500
