@@ -54,19 +54,61 @@ def create_app(login_manager=LoginManager(), config_override=dict()):
         if not app.config.get('SECRET_KEY'):
             abort(500, "SECRET_KEY is not set. Please set the SECRET_KEY environment variable for production.")
     
-    # Configure logging for testing/debug environment
-    if app.config.get('TESTING', False) or env == 'testing' or env == 'debug':
-        import logging
-        import sys
+    # Configure logging based on environment
+    import logging
+    import sys
+    
+    # Remove existing handlers to prevent duplicate logs
+    for handler in list(app.logger.handlers):
+        app.logger.removeHandler(handler)
+    
+    # Create a StreamHandler to direct logs to stderr
+    handler = logging.StreamHandler(sys.stderr)
+    
+    # Check if we should enable debug logging
+    # Debug logging should be enabled when:
+    # 1. FLASK_ENV is 'debug' or 'testing'
+    # 2. app.config['DEBUG'] is True
+    # 3. app.config['TESTING'] is True
+    enable_debug = (
+        env == 'debug' or
+        env == 'testing' or
+        app.config.get('DEBUG', False) or
+        app.config.get('TESTING', False)
+    )
+    if enable_debug:
         app.logger.setLevel(logging.DEBUG)
-        # Remove existing handlers to prevent duplicate logs in tests
-        for handler in list(app.logger.handlers):
-            app.logger.removeHandler(handler)
-        # Add a StreamHandler to direct logs to stderr, which pytest captures
-        handler = logging.StreamHandler(sys.stderr)
         handler.setLevel(logging.DEBUG)
-        app.logger.addHandler(handler)
-        app.logger.propagate = True
+        # Format for debug environment
+        formatter = logging.Formatter(
+            '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        )
+        handler.setFormatter(formatter)
+    else:
+        # Production environment - only show warnings and errors
+        app.logger.setLevel(logging.WARNING)
+        handler.setLevel(logging.WARNING)
+        # Simpler format for production
+        formatter = logging.Formatter(
+            '%(asctime)s - %(levelname)s - %(message)s'
+        )
+        handler.setFormatter(formatter)
+    
+    app.logger.addHandler(handler)
+    app.logger.propagate = True
+    
+    # Also configure werkzeug logger for request logging
+    werkzeug_logger = logging.getLogger('werkzeug')
+    if enable_debug:
+        werkzeug_logger.setLevel(logging.DEBUG)
+        # Add handler to werkzeug logger too
+        werkzeug_handler = logging.StreamHandler(sys.stderr)
+        werkzeug_handler.setLevel(logging.DEBUG)
+        werkzeug_handler.setFormatter(formatter)
+        werkzeug_logger.addHandler(werkzeug_handler)
+        app.logger.info(f"Debug logging enabled (FLASK_ENV={env}, DEBUG={app.config.get('DEBUG', False)}, TESTING={app.config.get('TESTING', False)})")
+    else:
+        werkzeug_logger.setLevel(logging.WARNING)
 
     app.config.update(config_override)
 
