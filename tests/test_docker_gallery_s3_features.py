@@ -11,6 +11,7 @@ import pytest
 import os
 import sys
 import json
+import requests
 import io
 
 # Add parent directory to path for imports
@@ -558,6 +559,94 @@ def test_minio_url_transformation():
         
     print("✓ MinIO URL transformation tests passed")
 
+def test_gallery_url_generation():
+    """Test that gallery images generate correct public URLs."""
+    
+    print("=== Testing Gallery URL Generation Fix ===")
+    
+    # Check environment variables
+    s3_endpoint = os.getenv('S3_ENDPOINT_URL', 'http://localhost:9000')
+    s3_public_host = os.getenv('S3_PUBLIC_HOST', 'localhost')
+    s3_public_port = os.getenv('S3_PUBLIC_PORT', '9000')
+    s3_bucket = os.getenv('S3_BUCKET', 'cleanit-media')
+    
+    print(f"Configuration:")
+    print(f"  - S3_ENDPOINT_URL: {s3_endpoint}")
+    print(f"  - S3_PUBLIC_HOST: {s3_public_host}")
+    print(f"  - S3_PUBLIC_PORT: {s3_public_port}")
+    print(f"  - S3_BUCKET: {s3_bucket}")
+    
+    # Check if web server is running
+    try:
+        response = requests.get('http://localhost:5000/health', timeout=5)
+        if response.status_code != 200:
+            print("✗ Web server health check failed")
+            return False
+        print("✓ Web server is running")
+    except requests.exceptions.ConnectionError:
+        print("✗ Web server not accessible at http://localhost:5000")
+        print("  Make sure Docker containers are running: docker compose up -d")
+        return False
+    
+    # Check if MinIO is accessible
+    try:
+        response = requests.get(f'http://{s3_public_host}:{s3_public_port}/minio/health/live', timeout=5)
+        if response.status_code != 200:
+            print(f"✗ MinIO health check failed at http://{s3_public_host}:{s3_public_port}")
+            return False
+        print(f"✓ MinIO is accessible at http://{s3_public_host}:{s3_public_port}")
+    except requests.exceptions.ConnectionError:
+        print(f"✗ MinIO not accessible at http://{s3_public_host}:{s3_public_port}")
+        print("  Make sure MinIO container is running")
+        return False
+    
+    # Test URL generation logic from utils/storage.py
+    print("\n=== Testing URL Generation Logic ===")
+    
+    # Import the storage module
+    try:
+        from utils.storage import get_file_url
+        
+        # Create a test Flask app context to test get_file_url
+        from flask import Flask
+        from app_factory import create_app
+        
+        app = create_app()
+        
+        with app.app_context():
+            # Configure app for S3 storage
+            app.config['STORAGE_PROVIDER'] = 's3'
+            app.config['S3_ENDPOINT_URL'] = s3_endpoint
+            app.config['S3_BUCKET'] = s3_bucket
+            app.config['S3_PUBLIC_HOST'] = s3_public_host
+            app.config['S3_PUBLIC_PORT'] = s3_public_port
+            
+            # Initialize storage driver (simplified for test)
+            # We'll just test the URL construction logic
+            
+            test_filename = "test_image_123.jpg"
+            
+            # Get the URL
+            url = get_file_url(test_filename)
+            
+            print(f"Generated URL for '{test_filename}': {url}")
+            
+            # Check URL format
+            expected_url = f"http://{s3_public_host}:{s3_public_port}/{s3_bucket}/{test_filename}"
+            
+            assert url == expected_url, f"Generated URL does not match expected format, expected: {expected_url}, got: {url}"
+            
+            # Verify it's NOT using internal hostname
+            assert "minio:9000" not in url, "URL contains internal hostname 'minio:9000'"
+            
+            # Verify it's NOT a presigned URL
+            assert not ("?" in url and ("AWSAccessKeyId" in url or "X-Amz-" in url)), "URL is a presigned URL with signature parameters"
+            
+            
+    except ImportError as e:
+        raise Exception(f"✗ Error importing modules: {e}")
+    except Exception as e:
+        raise Exception(f"✗ Error testing URL generation: {e}")
 
 if __name__ == "__main__":
     """
