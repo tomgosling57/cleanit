@@ -344,6 +344,54 @@ When running the application and uploading images to the gallery, images were up
 - **Custom**: Set `S3_PUBLIC_HOST` and `S3_PUBLIC_PORT` to match your deployment environment
 - **Production**: For real S3, use appropriate public endpoint or CDN URL
 
+## Docker-Specific Playwright Fixtures (NEW)
+
+### Comprehensive Docker Testing Infrastructure
+A complete set of Playwright fixtures has been implemented in [`tests/conftest_docker.py`](tests/conftest_docker.py) for testing the application in Docker environments with S3/MinIO storage and PostgreSQL database.
+
+### Key Fixtures Implemented
+
+#### Core Browser Fixtures
+- `docker_playwright_browser`: Session-scoped Playwright browser with Docker-appropriate arguments (`--no-sandbox`) and `--headed` flag support
+- `docker_browser_context`: Function-scoped browser context for test isolation
+- `docker_page`: Function-scoped page with 5-second navigation timeout
+- `docker_server_url`: Base URL from pytest-flask's `live_server` using `docker_app`
+
+#### Authentication Fixtures
+- `_create_docker_auth_state`: Helper function for creating authentication state with Docker-specific browser and server
+- `docker_admin_auth_state`, `docker_supervisor_auth_state`, `docker_user_auth_state`: Session-scoped authentication state fixtures for different user roles
+- `docker_admin_context`, `docker_supervisor_context`, `docker_user_context`: Authenticated browser contexts
+- `docker_admin_page`, `docker_supervisor_page`, `docker_user_page`: Pre-authenticated pages that navigate to `/jobs/`
+
+#### Utility Fixtures
+- `docker_goto`: Helper for navigating to paths within the Docker-based application
+- `docker_rollback_db_after_test`: Database isolation fixture that cleans up media and re-seeds data after each test
+
+### Design Decisions
+1. **Separate naming convention**: All fixtures use `docker_` prefix to avoid conflicts with existing fixtures in [`tests/conftest.py`](tests/conftest.py)
+2. **Docker-specific configuration**: Uses `docker_app` and `docker_app_no_csrf` for proper Docker environment setup with S3 storage
+3. **Proper test isolation**: Each test gets fresh browser contexts and pages
+4. **Database cleanup**: Media tables are cleaned and database is re-seeded after each test
+5. **Compatibility**: Works with pytest-flask's `live_server` fixture which automatically picks up `docker_app`
+6. **Headed browser support**: Respects pytest's `--headed` flag for visible browser windows during debugging
+
+### Usage
+Tests can use Docker fixtures by declaring:
+```python
+# Import Docker fixtures
+pytest_plugins = ["tests.conftest_docker"]
+
+def test_example(docker_admin_page):
+    # Test using Docker-specific fixtures
+    docker_admin_page.goto("/jobs/")
+```
+
+### Benefits
+- **Isolated Docker testing**: Tests run against actual S3/MinIO storage and PostgreSQL database
+- **Consistent authentication**: Pre-authenticated pages reduce test setup complexity
+- **Debugging support**: `--headed` flag works for visual debugging of Docker tests
+- **Database isolation**: Clean database state between tests ensures test reliability
+
 ## Dependencies and Constraints
 - **Database Schema**: No schema changes needed - existing media relationship models work
 - **Frontend Integration**: JavaScript gallery components need updating for new API
@@ -357,3 +405,4 @@ When running the application and uploading images to the gallery, images were up
 - **✅ Collection updates** properly handle additions and deletions
 - **✅ Frontend gallery** works seamlessly with new backend architecture (COMPLETED)
 - **✅ Gallery image display** fixed with configurable public hostnames (NEW)
+- **✅ Docker-specific Playwright fixtures** implemented for comprehensive Docker environment testing (NEW)
