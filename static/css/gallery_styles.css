@@ -129,10 +129,10 @@
 
 /* Media Description */
 .media-description {
-    padding: 16px 32px;
+    padding: 12px 24px;
     background-color: var(--background-color);
     border-bottom: 1px solid var(--border-color);
-    min-height: 50px;
+    min-height: 40px;
     flex-shrink: 0; /* Prevent description from shrinking */
 }
 
@@ -145,38 +145,36 @@
 
 /* Media Display Container */
 .media-display-container {
-    flex: 1;
+    flex: 1 1 0; /* Allow shrinking and set base to 0 */
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 24px;
-    min-height: 0; /* Important: allows flex item to shrink below content size */
+    padding: 16px;
+    min-height: 0; /* Critical: allows flex item to shrink */
     background-color: var(--background-color);
     position: relative;
-    overflow: hidden; /* Prevent overflow */
 }
 
 .media-display {
-    flex: 1;
+    flex: 1 1 0; /* Allow shrinking and set base to 0 */
     display: flex;
     align-items: center;
     justify-content: center;
-    max-height: 100%; /* Changed from 60vh to 100% to fit container */
-    max-width: 100%;
-    min-height: 0; /* Important: allows flex item to shrink */
-    width: 100%; /* Ensure full width */
-    height: 100%; /* Ensure full height */
+    min-height: 0; /* Critical: allows flex item to shrink */
+    min-width: 0; /* Also prevent width overflow */
+    max-height: 100%;
 }
 
 #gallery-image,
 #gallery-video {
     max-width: 100%;
-    max-height: 100%; /* Changed from 60vh to 100% */
+    max-height: 100%; /* Respect container height */
     width: auto; /* Maintain aspect ratio */
     height: auto; /* Maintain aspect ratio */
     object-fit: contain;
     border-radius: 8px;
     box-shadow: 0 4px 20px rgba(10, 126, 164, 0.15);
+    display: block; /* Remove inline spacing */
 }
 
 #media-placeholder {
@@ -230,26 +228,26 @@
 
 /* Thumbnail Strip */
 .thumbnail-strip {
-    padding: 20px 32px;
+    padding: 12px 24px;
     background-color: var(--card-background);
     border-top: 2px solid var(--border-color);
     overflow-x: auto;
     overflow-y: hidden;
     flex-shrink: 0; /* Prevent thumbnail strip from shrinking */
-    max-height: 140px; /* Limit thumbnail strip height */
+    max-height: 100px; /* Reduced from 140px */
 }
 
 .thumbnail-container {
     display: flex;
-    gap: 12px;
+    gap: 8px;
     padding: 4px 0;
 }
 
 /* Thumbnails */
 .thumbnail {
     position: relative;
-    width: 100px;
-    height: 100px;
+    width: 70px; /* Reduced from 100px */
+    height: 70px; /* Reduced from 100px */
     flex-shrink: 0;
     border-radius: 8px;
     overflow: hidden;
@@ -297,7 +295,7 @@
 
 /* Gallery Footer */
 .gallery-footer {
-    padding: 20px 32px;
+    padding: 12px 24px;
     background: linear-gradient(135deg, var(--card-background) 0%, var(--background-color) 100%);
     border-top: 2px solid var(--border-color);
     border-radius: 0 0 14px 14px;
@@ -305,18 +303,20 @@
     justify-content: space-between;
     align-items: center;
     flex-shrink: 0; /* Prevent footer from shrinking */
+    gap: 12px;
 }
 
 .media-info {
     display: flex;
-    gap: 16px;
+    gap: 8px;
     align-items: center;
     color: var(--text-light);
-    font-size: 14px;
+    font-size: 13px;
+    flex-wrap: wrap;
 }
 
 .media-info span {
-    padding: 6px 12px;
+    padding: 4px 10px;
     background-color: var(--background-color);
     border-radius: 6px;
     border: 1px solid var(--border-color);
@@ -330,18 +330,19 @@
 /* Gallery Actions */
 .gallery-actions {
     display: flex;
-    gap: 10px;
+    gap: 8px;
+    flex-wrap: wrap;
 }
 
 /* Buttons */
 .media-gallery-modal .button {
-    padding: 10px 20px;
+    padding: 8px 16px;
     border: 2px solid var(--primary-color);
     background-color: var(--primary-color);
     color: white;
     border-radius: 8px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 600;
     transition: all 0.2s ease;
     text-transform: uppercase;
@@ -418,7 +419,7 @@
         flex-direction: column;
         align-items: flex-start;
         gap: 12px;
-        padding: 20px;
+        padding: 16px 20px;
     }
 
     .gallery-header-controls {
@@ -427,7 +428,8 @@
     }
 
     .media-display-container {
-        padding: 16px;
+        padding: 12px;
+        min-height: 200px;
     }
 
     .nav-button {
@@ -443,24 +445,36 @@
 
     .gallery-footer {
         flex-direction: column;
-        gap: 16px;
+        gap: 12px;
         align-items: stretch;
-        padding: 16px 20px;
+        padding: 12px 16px;
     }
 
     .media-info {
         flex-wrap: wrap;
-        gap: 8px;
+        gap: 6px;
+        font-size: 12px;
     }
 
     .gallery-actions {
         flex-wrap: wrap;
         justify-content: center;
+        gap: 6px;
     }
 
     .thumbnail {
-        width: 80px;
-        height: 80px;
+        width: 60px;
+        height: 60px;
+    }
+
+    .thumbnail-strip {
+        padding: 8px 16px;
+        max-height: 80px;
+    }
+
+    .media-gallery-modal .button {
+        padding: 6px 12px;
+        font-size: 12px;
     }
 }
 
