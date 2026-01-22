@@ -3,7 +3,7 @@ from config import Config
 from database import User, init_db, insert_dummy_data
 
 
-def populate_database(database_uri: str):
+def populate_database(database_uri, force=True):
     """This function populates the database with dummy data for testing purposes.
     
     Args:
@@ -17,7 +17,7 @@ def populate_database(database_uri: str):
             os.makedirs(database_dir)
 
     Session = init_db(database_uri)
-    if Session.query(User).filter_by(role='admin').first():
+    if not force and Session().query(User).filter_by(role='admin').first():
         print("Database already populated. Exiting.")
         return
     insert_dummy_data(Session)

@@ -64,7 +64,7 @@ import os
 db_url = os.environ.get('DATABASE_URL')
 if db_url:
     try:
-        populate_database(db_url)
+        populate_database(db_url, False)
         print('Database populated successfully')
     except Exception as e:
         print(f'Error populating database: {e}')
