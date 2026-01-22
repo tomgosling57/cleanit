@@ -108,8 +108,8 @@ class TestDockerGalleryPermissions:
         """
         Regular users should NOT be able to associate media with properties.
         
-        This test requires first uploading a file as admin, then trying to
-        associate it as a regular user.
+        This test tries to upload a file directly to property gallery as a regular user.
+        Regular users should get 403 Forbidden.
         """
         properties = seeded_test_data['properties']
         if not properties:
@@ -118,46 +118,28 @@ class TestDockerGalleryPermissions:
         property_obj = list(properties.values())[0]
         property_id = property_obj.id
         
-        # First, admin uploads a file
-        test_file = io.BytesIO(b"admin uploaded file for permission test")
-        test_file.name = "admin_uploaded.jpg"
+        # Regular user tries to upload a file directly to property gallery
+        test_file = io.BytesIO(b"regular user trying to upload to property")
+        test_file.name = "regular_user_upload.jpg"
         
-        upload_response = docker_admin_client.post(
-            '/media/upload',
+        associate_response = docker_regular_client.post(
+            f'/address-book/property/{property_id}/media',
             data={
-                'file': (test_file, 'admin_uploaded.jpg'),
-                'description': 'Admin uploaded for permission test'
+                'file': (test_file, 'regular_user_upload.jpg'),
+                'description': 'Regular user upload attempt'
             },
             content_type='multipart/form-data'
         )
         
-        if upload_response.status_code != 200:
-            pytest.skip("Could not upload test file as admin")
+        # Should be 403 Forbidden
+        assert associate_response.status_code == 403, \
+            "Regular user should not be able to associate media with property"
         
-        upload_data = json.loads(upload_response.data)
-        media_id = upload_data['media_id']
-        
-        try:
-            # Regular user tries to associate media with property
-            associate_response = docker_regular_client.post(
-                f'/address-book/property/{property_id}/media',
-                json={'media_ids': [media_id]},
-                content_type='application/json'
-            )
-            
-            # Should be 403 Forbidden
-            assert associate_response.status_code == 403, \
-                "Regular user should not be able to associate media with property"
-            
-            # Verify error message
-            if associate_response.status_code == 403:
-                data = json.loads(associate_response.data)
-                assert 'error' in data
-                assert 'Unauthorized' in data['error']
-        
-        finally:
-            # Clean up - admin deletes the file
-            docker_admin_client.delete(f'/media/{media_id}')
+        # Verify error message
+        if associate_response.status_code == 403:
+            data = json.loads(associate_response.data)
+            assert 'error' in data
+            assert 'Unauthorized' in data['error']
     
     def test_regular_user_cannot_remove_media_from_gallery(self, docker_regular_client, docker_admin_client, seeded_test_data):
         """
@@ -173,12 +155,12 @@ class TestDockerGalleryPermissions:
         property_obj = list(properties.values())[0]
         property_id = property_obj.id
         
-        # Admin uploads and associates a file
+        # Admin uploads a file directly to property gallery
         test_file = io.BytesIO(b"file for removal permission test")
         test_file.name = "removal_test.jpg"
         
         upload_response = docker_admin_client.post(
-            '/media/upload',
+            f'/address-book/property/{property_id}/media',
             data={
                 'file': (test_file, 'removal_test.jpg'),
                 'description': 'For removal permission test'
@@ -187,22 +169,15 @@ class TestDockerGalleryPermissions:
         )
         
         if upload_response.status_code != 200:
-            pytest.skip("Could not upload test file as admin")
+            pytest.skip("Could not upload test file to property gallery as admin")
         
         upload_data = json.loads(upload_response.data)
-        media_id = upload_data['media_id']
+        media_id = upload_data['media_ids'][0] if upload_data.get('media_ids') else None
+        
+        if not media_id:
+            pytest.skip("Could not get media ID from upload response")
         
         try:
-            # Admin associates media with property
-            associate_response = docker_admin_client.post(
-                f'/address-book/property/{property_id}/media',
-                json={'media_ids': [media_id]},
-                content_type='application/json'
-            )
-            
-            if associate_response.status_code != 200:
-                pytest.skip("Could not associate media with property")
-            
             # Regular user tries to remove media from gallery
             remove_response = docker_regular_client.delete(
                 f'/address-book/property/{property_id}/media',
@@ -227,6 +202,7 @@ class TestDockerGalleryPermissions:
                 json={'media_ids': [media_id]},
                 content_type='application/json'
             )
+            # Also delete the media file itself
             docker_admin_client.delete(f'/media/{media_id}')
     
     def test_unauthenticated_user_cannot_access_gallery(self, docker_client, seeded_test_data):
