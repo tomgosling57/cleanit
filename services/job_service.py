@@ -68,8 +68,9 @@ class JobService:
         ).distinct().subquery()
         
         # Now query jobs with properties using the subquery
+        # Use .select() to explicitly convert subquery to select() for IN() clause
         jobs = self.db_session.query(Job).options(joinedload(Job.property)).filter(
-            Job.id.in_(job_ids_subquery)
+            Job.id.in_(job_ids_subquery.select())
         ).order_by(Job.date, Job.time).all()
         
         return jobs
