@@ -73,8 +73,51 @@ def get_file_url(filename):
     storage_provider = current_app.config.get('STORAGE_PROVIDER', 's3')
 
     if storage_provider == 's3':
-        obj = container.get_object(filename)
-        return driver.get_object_cdn_url(obj)
+        # For S3/MinIO storage, construct appropriate URL
+        s3_endpoint_url = current_app.config.get('S3_ENDPOINT_URL', '')
+        s3_bucket = current_app.config.get('S3_BUCKET', 'cleanit-media')
+        
+        # Check if we should use direct public URLs (for MinIO in development)
+        # This avoids presigned URLs with internal hostnames
+        if s3_endpoint_url:
+            from urllib.parse import urlparse
+            
+            # Get public hostname and port from environment variables
+            # These should be set in docker-compose or environment
+            public_host = current_app.config.get('S3_PUBLIC_HOST')
+            public_port = current_app.config.get('S3_PUBLIC_PORT')
+            
+            # If not explicitly set, try to derive from S3_ENDPOINT_URL
+            if not public_host or not public_port:
+                parsed_endpoint = urlparse(s3_endpoint_url)
+                internal_host = parsed_endpoint.hostname
+                internal_port = parsed_endpoint.port or 9000
+                
+                # Default mapping for common Docker scenarios
+                # If internal host is 'minio', use 'localhost' as public host
+                if internal_host == 'minio':
+                    public_host = public_host or 'localhost'
+                    public_port = public_port or 9000
+                else:
+                    # For other hosts, use the same hostname
+                    public_host = public_host or internal_host
+                    public_port = public_port or internal_port
+            
+            # Construct public URL directly (bucket is public)
+            # Format: http://{public_host}:{public_port}/{s3_bucket}/{filename}
+            if public_port == 80:
+                public_url = f"http://{public_host}/{s3_bucket}/{filename}"
+            elif public_port == 443:
+                public_url = f"https://{public_host}/{s3_bucket}/{filename}"
+            else:
+                public_url = f"http://{public_host}:{public_port}/{s3_bucket}/{filename}"
+            
+            current_app.logger.debug(f"Constructed public S3/MinIO URL: {public_url}")
+            return public_url
+        else:
+            # For real S3 or other providers without endpoint URL, use the driver's CDN URL
+            obj = container.get_object(filename)
+            return driver.get_object_cdn_url(obj)
     else:
         # For 'local' and 'temp' providers, use the Flask route to serve files
         return url_for('media.serve_media', filename=filename, _external=True)

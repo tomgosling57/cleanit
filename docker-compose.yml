@@ -66,6 +66,8 @@ services:
       AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER:-minioadmin}
       AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin}
       S3_ENDPOINT_URL: http://minio:9000
+      S3_PUBLIC_HOST: ${S3_PUBLIC_HOST:-localhost}
+      S3_PUBLIC_PORT: ${S3_PUBLIC_PORT:-9000}
       S3_USE_HTTPS: "false"
       S3_VERIFY_SSL: "false"
       
