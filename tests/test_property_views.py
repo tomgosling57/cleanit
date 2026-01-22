@@ -1,13 +1,7 @@
 from playwright.sync_api import expect
-import pytest
 from tests.helpers import (
     get_first_property_card, 
-    login_admin, 
-    login_supervisor, 
-    login_user,
     open_address_book, 
-    open_property_card_gallery,
-    assert_gallery_modal_content,
     open_property_creation_modal,
     fill_property_form,
     submit_property_creation_form,
@@ -17,7 +11,6 @@ from tests.helpers import (
     delete_property,
     assert_property_card_content
 )
-from tests.test_utils import get_future_date, get_future_time
 
 def test_address_book(admin_page) -> None:
     open_address_book(admin_page)
