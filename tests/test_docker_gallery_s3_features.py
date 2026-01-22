@@ -482,26 +482,16 @@ def test_docker_s3_environment():
     print("=== Docker S3 Environment Check ===")
     
     # Check Docker containers
-    if not docker_containers_running():
-        print("✗ Docker containers not running")
-        print("  Run: docker compose up -d")
-        return False
-    
+    assert docker_containers_running(), "Docker containers not running. Run: docker compose up -d"
     print("✓ Docker containers are running")
     
     # Check MinIO accessibility
-    if not check_minio_accessible():
-        print("✗ MinIO not accessible")
-        return False
-    
+    assert check_minio_accessible(), "MinIO not accessible"
     print("✓ MinIO is accessible")
     
     # Check environment variables
     storage_provider = os.getenv('STORAGE_PROVIDER', 's3')
-    if storage_provider != 's3':
-        print(f"✗ STORAGE_PROVIDER should be 's3', got '{storage_provider}'")
-        return False
-    
+    assert storage_provider == 's3', f"STORAGE_PROVIDER should be 's3', got '{storage_provider}'"
     print(f"✓ STORAGE_PROVIDER={storage_provider}")
     
     s3_endpoint = os.getenv('S3_ENDPOINT_URL', 'http://localhost:9000')
@@ -512,8 +502,6 @@ def test_docker_s3_environment():
     
     print("\n✓ All Docker S3 environment checks passed")
     print("  Run full test suite with: pytest tests/test_docker_gallery_*.py -v")
-    
-    return True
 # --- Test MinIO URL transformation logic ---
 def test_minio_url_transformation():
     """
@@ -579,26 +567,18 @@ def test_gallery_url_generation():
     # Check if web server is running
     try:
         response = requests.get('http://localhost:5000/health', timeout=5)
-        if response.status_code != 200:
-            print("✗ Web server health check failed")
-            return False
+        assert response.status_code == 200, "Web server health check failed"
         print("✓ Web server is running")
     except requests.exceptions.ConnectionError:
-        print("✗ Web server not accessible at http://localhost:5000")
-        print("  Make sure Docker containers are running: docker compose up -d")
-        return False
+        pytest.fail("Web server not accessible at http://localhost:5000. Make sure Docker containers are running: docker compose up -d")
     
     # Check if MinIO is accessible
     try:
         response = requests.get(f'http://{s3_public_host}:{s3_public_port}/minio/health/live', timeout=5)
-        if response.status_code != 200:
-            print(f"✗ MinIO health check failed at http://{s3_public_host}:{s3_public_port}")
-            return False
+        assert response.status_code == 200, f"MinIO health check failed at http://{s3_public_host}:{s3_public_port}"
         print(f"✓ MinIO is accessible at http://{s3_public_host}:{s3_public_port}")
     except requests.exceptions.ConnectionError:
-        print(f"✗ MinIO not accessible at http://{s3_public_host}:{s3_public_port}")
-        print("  Make sure MinIO container is running")
-        return False
+        pytest.fail(f"MinIO not accessible at http://{s3_public_host}:{s3_public_port}. Make sure MinIO container is running")
     
     # Test URL generation logic from utils/storage.py
     print("\n=== Testing URL Generation Logic ===")
@@ -644,9 +624,9 @@ def test_gallery_url_generation():
             
             
     except ImportError as e:
-        raise Exception(f"✗ Error importing modules: {e}")
+        pytest.fail(f"Error importing modules: {e}")
     except Exception as e:
-        raise Exception(f"✗ Error testing URL generation: {e}")
+        pytest.fail(f"Error testing URL generation: {e}")
 
 if __name__ == "__main__":
     """
@@ -655,5 +635,12 @@ if __name__ == "__main__":
     Usage: python tests/test_docker_gallery_s3_features.py
     """
     import sys
-    success = test_docker_s3_environment()
-    sys.exit(0 if success else 1)
+    try:
+        test_docker_s3_environment()
+        sys.exit(0)
+    except AssertionError as e:
+        print(f"\n✗ Test failed: {e}")
+        sys.exit(1)
+    except Exception as e:
+        print(f"\n✗ Unexpected error: {e}")
+        sys.exit(1)

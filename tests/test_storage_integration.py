@@ -5,30 +5,26 @@ Quick test to verify Apache Libcloud integration.
 import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+import pytest
 
 def test_imports():
     try:
         from utils.storage import upload_flask_file, get_file_url, delete_file, validate_and_upload, file_exists
         print("✓ utils.storage imports succeeded")
     except Exception as e:
-        print(f"✗ utils.storage imports failed: {e}")
-        return False
+        pytest.fail(f"utils.storage imports failed: {e}")
 
     try:
         from routes.media import media_bp
         print("✓ routes.media imports succeeded")
     except Exception as e:
-        print(f"✗ routes.media imports failed: {e}")
-        return False
+        pytest.fail(f"routes.media imports failed: {e}")
 
     try:
         from app_factory import create_app
         print("✓ app_factory import succeeded")
     except Exception as e:
-        print(f"✗ app_factory import failed: {e}")
-        return False
-
-    return True
+        pytest.fail(f"app_factory import failed: {e}")
 
 def test_config():
     """Check that config has storage settings."""
@@ -37,12 +33,8 @@ def test_config():
     required = ['STORAGE_PROVIDER', 'S3_BUCKET', 'AWS_REGION', 'AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'UPLOAD_FOLDER']
     for key in required:
         val = getattr(config, key, None)
-        if val is None:
-            print(f"✗ Config missing {key}")
-            return False
-        else:
-            print(f"✓ Config {key} = {val}")
-    return True
+        assert val is not None, f"Config missing {key}"
+        print(f"✓ Config {key} = {val}")
 
 def test_app_factory():
     """Test creating app with minimal config."""
@@ -62,31 +54,24 @@ def test_app_factory():
         app = create_app(config_override={'TESTING': True})
         print("✓ App creation succeeded")
         # Check that storage driver and container are set
-        if 'STORAGE_DRIVER' in app.config and 'STORAGE_CONTAINER' in app.config:
-            print("✓ Storage driver and container configured")
-        else:
-            print("✗ Storage driver/container missing")
-            return False
+        assert 'STORAGE_DRIVER' in app.config and 'STORAGE_CONTAINER' in app.config, "Storage driver/container missing"
+        print("✓ Storage driver and container configured")
     except Exception as e:
-        print(f"✗ App creation failed: {e}")
-        return False
+        pytest.fail(f"App creation failed: {e}")
     finally:
         shutil.rmtree(tmpdir, ignore_errors=True)
-    return True
 
 if __name__ == '__main__':
     print("Testing Apache Libcloud integration...")
-    success = True
-    if not test_imports():
-        success = False
-    if not test_config():
-        success = False
-    if not test_app_factory():
-        success = False
-
-    if success:
+    try:
+        test_imports()
+        test_config()
+        test_app_factory()
         print("\nAll integration tests passed.")
         sys.exit(0)
-    else:
-        print("\nIntegration tests failed.")
+    except AssertionError as e:
+        print(f"\n✗ Test failed: {e}")
+        sys.exit(1)
+    except Exception as e:
+        print(f"\n✗ Unexpected error: {e}")
         sys.exit(1)
