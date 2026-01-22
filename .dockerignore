@@ -2,7 +2,5 @@
 __pycache__/
 bin/
 memory-bank/
-instance/
 plans/
-uploads/
 set_env.py
