@@ -295,13 +295,21 @@ from typing import Generator
 from playwright.sync_api import Page, BrowserContext, sync_playwright
 
 @pytest.fixture(scope="session")
-def docker_playwright_browser():
+def docker_playwright_browser(pytestconfig):
     """
     Session-scoped Playwright browser for Docker tests.
     Launches a browser instance that can be used across multiple tests.
+    Respects the --headed flag for visible browser windows.
     """
     playwright = sync_playwright().start()
-    browser = playwright.chromium.launch(headless=True, args=["--no-sandbox"])
+    
+    # Check if --headed flag is set
+    headed = pytestconfig.getoption("--headed", False)
+    
+    browser = playwright.chromium.launch(
+        headless=not headed,  # Show browser window if --headed flag is used
+        args=["--no-sandbox"]
+    )
     yield browser
     browser.close()
     playwright.stop()
