@@ -290,6 +290,210 @@ from tests.conftest import (
     # Add other shared fixtures as needed
 )
 
+# Playwright fixtures for Docker environment
+from typing import Generator
+from playwright.sync_api import Page, BrowserContext, sync_playwright
+
+@pytest.fixture(scope="session")
+def docker_playwright_browser():
+    """
+    Session-scoped Playwright browser for Docker tests.
+    Launches a browser instance that can be used across multiple tests.
+    """
+    playwright = sync_playwright().start()
+    browser = playwright.chromium.launch(headless=True, args=["--no-sandbox"])
+    yield browser
+    browser.close()
+    playwright.stop()
+
+@pytest.fixture
+def docker_browser_context(docker_playwright_browser) -> Generator[BrowserContext, None, None]:
+    """
+    Function-scoped browser context for Docker tests.
+    Creates a new context per test for isolation.
+    """
+    ctx = docker_playwright_browser.new_context()
+    yield ctx
+    ctx.close()
+
+@pytest.fixture
+def docker_page(docker_browser_context) -> Generator[Page, None, None]:
+    """
+    Function-scoped page for Docker tests.
+    Creates a new page within the browser context with appropriate timeouts.
+    """
+    page = docker_browser_context.new_page()
+    page.set_default_navigation_timeout(5000)  # 5 seconds in milliseconds
+    yield page
+
+@pytest.fixture(scope="session")
+def docker_server_url(live_server):
+    """
+    Get the base URL from the live server for Docker tests.
+    Uses pytest-flask's live_server which picks up docker_app from this module.
+    """
+    return live_server.url()
+
+@pytest.fixture
+def docker_goto(docker_page, docker_server_url):
+    """
+    Helper fixture that navigates to a path within the Docker-based application.
+    """
+    def _goto(path="/", _page=None):
+        if _page is None:
+            _page = docker_page
+        return _page.goto(f"{docker_server_url}{path}")
+    return _goto
+
+def _create_docker_auth_state(docker_playwright_browser, docker_server_url, email, password):
+    """
+    Generic helper for creating authentication state for Docker tests.
+    Uses the Docker-specific browser and server URL.
+    """
+    context = docker_playwright_browser.new_context()
+    page = context.new_page()
+
+    page.goto(f"{docker_server_url}/")
+    page.wait_for_load_state("networkidle")
+
+    page.locator('input[name="email"]').fill(email)
+    page.locator('input[name="password"]').fill(password)
+
+    with page.expect_response("**/user/login**"):
+        page.locator('button[type="submit"]').click()
+
+    page.wait_for_load_state("networkidle")
+
+    assert any(k in page.url.lower() for k in ("jobs", "timetable")), "Login failed"
+
+    state = context.storage_state()
+    context.close()
+    return state
+
+@pytest.fixture(scope="session")
+def docker_admin_auth_state(docker_playwright_browser, docker_server_url):
+    """
+    Creates and returns authentication state (cookies, storage) for admin user in Docker tests.
+    """
+    return _create_docker_auth_state(
+        docker_playwright_browser,
+        docker_server_url,
+        "admin@example.com",
+        "admin_password",
+    )
+
+@pytest.fixture(scope="session")
+def docker_supervisor_auth_state(docker_playwright_browser, docker_server_url):
+    """
+    Creates and returns authentication state (cookies, storage) for supervisor user in Docker tests.
+    """
+    return _create_docker_auth_state(
+        docker_playwright_browser,
+        docker_server_url,
+        "supervisor@example.com",
+        "supervisor_password",
+    )
+
+@pytest.fixture(scope="session")
+def docker_user_auth_state(docker_playwright_browser, docker_server_url):
+    """
+    Creates and returns authentication state (cookies, storage) for regular user in Docker tests.
+    """
+    return _create_docker_auth_state(
+        docker_playwright_browser,
+        docker_server_url,
+        "user@example.com",
+        "user_password",
+    )
+
+@pytest.fixture
+def docker_admin_context(docker_playwright_browser, docker_admin_auth_state):
+    """
+    Creates a browser context with admin user already authenticated for Docker tests.
+    """
+    context = docker_playwright_browser.new_context(storage_state=docker_admin_auth_state)
+    yield context
+    context.close()
+
+@pytest.fixture
+def docker_admin_page(docker_admin_context, docker_server_url):
+    """
+    Creates a page with admin user already authenticated and navigates to jobs page for Docker tests.
+    """
+    page = docker_admin_context.new_page()
+    page.set_default_navigation_timeout(5000)
+    # Navigate to jobs page (where login redirects to)
+    page.goto(f"{docker_server_url}/jobs/")
+    page.wait_for_load_state('networkidle')
+    yield page
+
+@pytest.fixture
+def docker_supervisor_context(docker_playwright_browser, docker_supervisor_auth_state):
+    """
+    Creates a browser context with supervisor user already authenticated for Docker tests.
+    """
+    context = docker_playwright_browser.new_context(storage_state=docker_supervisor_auth_state)
+    yield context
+    context.close()
+
+@pytest.fixture
+def docker_supervisor_page(docker_supervisor_context, docker_server_url):
+    """
+    Creates a page with supervisor user already authenticated and navigates to jobs page for Docker tests.
+    """
+    page = docker_supervisor_context.new_page()
+    page.set_default_navigation_timeout(5000)
+    # Navigate to jobs page (where login redirects to)
+    page.goto(f"{docker_server_url}/jobs/")
+    page.wait_for_load_state('networkidle')
+    yield page
+
+@pytest.fixture
+def docker_user_context(docker_playwright_browser, docker_user_auth_state):
+    """
+    Creates a browser context with regular user already authenticated for Docker tests.
+    """
+    context = docker_playwright_browser.new_context(storage_state=docker_user_auth_state)
+    yield context
+    context.close()
+
+@pytest.fixture
+def docker_user_page(docker_user_context, docker_server_url):
+    """
+    Creates a page with regular user already authenticated and navigates to jobs page for Docker tests.
+    """
+    page = docker_user_context.new_page()
+    page.set_default_navigation_timeout(5000)
+    # Navigate to jobs page (where login redirects to)
+    page.goto(f"{docker_server_url}/jobs/")
+    page.wait_for_load_state('networkidle')
+    yield page
+
+@pytest.fixture(autouse=True)
+def docker_rollback_db_after_test(docker_app):
+    """
+    Rollback database changes after each Docker test to maintain isolation.
+    Uses docker_app for database cleanup and re-population.
+    """
+    yield  # Test runs here
+    
+    # After test completes, rollback any uncommitted changes
+    with docker_app.app_context():
+        from database import get_db, teardown_db, PropertyMedia, JobMedia, Media
+        # Delete any media and their associations to ensure clean state
+        db_session = get_db()
+        try:
+            db_session.query(PropertyMedia).delete()
+            db_session.query(JobMedia).delete()
+            db_session.query(Media).delete()
+            db_session.commit()
+        finally:
+            teardown_db()
+        
+        # Reseed data to initial state
+        from utils.populate_database import populate_database
+        populate_database(docker_app.config['SQLALCHEMY_DATABASE_URI'])
+
 @pytest.fixture(scope='function')
 def seeded_test_data(docker_app):
     """
