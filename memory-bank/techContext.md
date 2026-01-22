@@ -76,12 +76,25 @@ S3_BUCKET=your-bucket-name
 AWS_REGION=us-east-1
 AWS_ACCESS_KEY_ID=your-access-key
 AWS_SECRET_ACCESS_KEY=your-secret-key
+S3_ENDPOINT_URL=http://minio:9000  # For MinIO in Docker
+S3_PUBLIC_HOST=localhost           # Public hostname for browser access
+S3_PUBLIC_PORT=9000                # Public port for browser access
+S3_USE_HTTPS=false                 # Use HTTPS for S3 (true for production)
+S3_VERIFY_SSL=true                 # Verify SSL certificates
 
 # Development overrides
 FLASK_ENV=debug
 STORAGE_PROVIDER=local
 UPLOAD_FOLDER=./uploads
 ```
+
+**Important for Docker/MinIO Development:**
+When using MinIO in Docker, configure these variables:
+- `S3_ENDPOINT_URL=http://minio:9000` (internal Docker hostname for app access)
+- `S3_PUBLIC_HOST=localhost` (public hostname for browser access)
+- `S3_PUBLIC_PORT=9000` (public port mapped from Docker)
+
+This configuration ensures gallery images display correctly by generating URLs with the public hostname instead of internal Docker hostname.
 
 **FLASK_ENV valid values:**
 - `production`: Default production configuration with S3 storage

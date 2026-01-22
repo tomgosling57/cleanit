@@ -20,6 +20,14 @@
 - **Documentation**: Updated Dockerfile, docker-compose.yml, set_environment_variables.py, and techContext.md
 - **Testing**: Verified all three configurations work correctly with appropriate storage providers
 
+### ✅ Gallery Image Display Fix (NEW)
+- **Issue Resolved**: Gallery now displays actual images instead of "media could not be loaded" placeholder
+- **Root Cause**: Fixed Docker networking issue with MinIO internal vs. external hostnames
+- **Solution**: Updated `utils/storage.py` to use configurable `S3_PUBLIC_HOST` and `S3_PUBLIC_PORT` environment variables
+- **Configuration**: Added environment variables to `docker-compose.yml` for flexible deployment
+- **Testing**: Created comprehensive test `test_gallery_display_with_fixed_url_generation()` in `tests/test_docker_gallery_s3_features.py`
+- **Verification**: All tests passing, gallery images display correctly with public URLs like `http://localhost:9000/cleanit-media/{filename}`
+
 ### ✅ Planning Completed
 - **Comprehensive Media Refactoring Plan**: Created detailed plan in `plans/media_refactoring_final_comprehensive_plan.md`
 - **Architecture Analysis**: Identified scope violations and solution approach

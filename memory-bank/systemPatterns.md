@@ -124,8 +124,23 @@ Job (many) ──── (1) Property                    │
 - **Batch Operations**: Efficient batch upload/delete for gallery management
 - **Unique Filename Generation**: Prevent collisions and ensure security
 - **Path Resolution**: Abstract storage location from application logic
-- **URL Generation**: Dynamic URL construction for frontend access
+- **URL Generation**: Dynamic URL construction for frontend access with Docker/MinIO support
 - **Collection Management**: Entity-media relationship management within single service
+
+### Docker/MinIO URL Generation Pattern
+**Problem**: In Docker environments, MinIO runs at internal hostname `minio:9000` but browsers need public hostname `localhost:9000`
+
+**Solution**: Configurable public hostname pattern
+1. **Environment Variables**: `S3_PUBLIC_HOST` and `S3_PUBLIC_PORT` define public access point
+2. **URL Construction**: `get_file_url()` builds URLs like `http://{S3_PUBLIC_HOST}:{S3_PUBLIC_PORT}/{bucket}/{filename}`
+3. **Docker Compose Default**: `S3_PUBLIC_HOST=localhost`, `S3_PUBLIC_PORT=9000` (mapped port)
+4. **Production Flexibility**: Can be configured for any public endpoint or CDN
+
+**Benefits**:
+- ✅ Images display correctly in gallery (not placeholders)
+- ✅ No hardcoded hostnames - configurable via environment
+- ✅ Works with Docker port mapping and networking
+- ✅ Supports both development and production deployments
 
 #### Media Architecture Pattern
 ```

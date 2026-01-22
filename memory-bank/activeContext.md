@@ -302,6 +302,48 @@ Content-Type: application/json
 4. **Update error handling** to use global error container for gallery operations
 5. **Update templates** to trigger gallery with correct entity IDs and endpoints
 
+## Gallery Image Display Fix (NEW)
+
+### Issue Identified
+When running the application and uploading images to the gallery, images were uploaded successfully and filenames became visible, but the gallery displayed "media could not be loaded" placeholder instead of actual image content.
+
+### Root Cause Analysis
+1. **Docker Networking Issue**: The application uses MinIO (S3-compatible storage) in Docker development environment
+2. **Internal vs. External Hostnames**: Images were uploaded to MinIO at internal Docker hostname `minio:9000`
+3. **Presigned URL Problem**: `get_file_url()` returned presigned URLs with internal hostname `minio:9000`
+4. **Signature Invalidation**: Changing hostname to `localhost:9000` for browser access invalidated AWS signature in presigned URLs
+
+### Solution Implemented
+1. **Updated `utils/storage.py`** - Modified `get_file_url()` function to:
+   - Use configurable public hostname and port via `S3_PUBLIC_HOST` and `S3_PUBLIC_PORT` environment variables
+   - Construct direct public URLs for MinIO (e.g., `http://localhost:9000/{bucket}/{filename}`) instead of presigned URLs
+   - Fall back to intelligent defaults when environment variables aren't set
+
+2. **Updated `docker-compose.yml`** - Added environment variables:
+   ```yaml
+   S3_PUBLIC_HOST: ${S3_PUBLIC_HOST:-localhost}
+   S3_PUBLIC_PORT: ${S3_PUBLIC_PORT:-9000}
+   ```
+   This makes the public hostname configurable rather than hardcoded
+
+3. **Created comprehensive test** - Added `test_gallery_display_with_fixed_url_generation()` to `tests/test_docker_gallery_s3_features.py` that:
+   - Uploads test images from `tests/media/` directory
+   - Verifies URLs are correctly generated using configured public hostname
+   - Ensures URLs don't contain internal hostnames or signature parameters
+
+### Key Improvements
+- ✅ Images now display correctly in the gallery (not placeholders)
+- ✅ Public hostname is configurable via environment variables
+- ✅ No hardcoded `localhost` or `minio` hostnames
+- ✅ Works with Docker networking (internal vs. external hostnames)
+- ✅ Comprehensive test coverage for the fix
+- ✅ Backward compatible with existing configuration
+
+### Configuration Options
+- **Default**: `S3_PUBLIC_HOST=localhost`, `S3_PUBLIC_PORT=9000` (Docker Compose default mapping)
+- **Custom**: Set `S3_PUBLIC_HOST` and `S3_PUBLIC_PORT` to match your deployment environment
+- **Production**: For real S3, use appropriate public endpoint or CDN URL
+
 ## Dependencies and Constraints
 - **Database Schema**: No schema changes needed - existing media relationship models work
 - **Frontend Integration**: JavaScript gallery components need updating for new API
@@ -313,4 +355,5 @@ Content-Type: application/json
 - **✅ All media operations** work across all storage configurations
 - **✅ Job and property media** can be managed through unified API patterns
 - **✅ Collection updates** properly handle additions and deletions
-- **🚧 Frontend gallery** works seamlessly with new backend architecture (in progress)
+- **✅ Frontend gallery** works seamlessly with new backend architecture (COMPLETED)
+- **✅ Gallery image display** fixed with configurable public hostnames (NEW)
