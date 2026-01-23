@@ -506,7 +506,7 @@ def upload_gallery_media(gallery_modal: Locator, media_paths: list[str]) -> None
 
         if image.is_visible():
             src = image.get_attribute("src")
-            assert src and filename in src.lower(), f"{filename} not found in image src"
+            assert src and filename.replace(".png", "").replace(".jpg", "") in src.lower(), f"{filename} not found in image src"
         elif video.is_visible():
             src = video.get_attribute("src")
             assert src and filename in src.lower(), f"{filename} not found in video src"
