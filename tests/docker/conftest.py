@@ -306,10 +306,26 @@ def docker_playwright_browser(pytestconfig):
     
     # Check if --headed flag is set
     headed = pytestconfig.getoption("--headed", False)
+    print(f"DEBUG: --headed flag value: {headed}")
+    print(f"DEBUG: Launching browser with headless={not headed}")
+    
+    # Prepare launch arguments
+    launch_args = ["--no-sandbox"]
+    
+    # If running in headed mode, add window position and size arguments
+    # to ensure the browser window appears in a visible location
+    if headed:
+        launch_args.extend([
+            "--window-position=0,0",      # Position window at top-left of primary display
+            "--window-size=1280,720",     # Set window size to 1280x720
+            "--disable-dev-shm-usage",    # Prevent /dev/shm issues in Docker/WSL
+            "--disable-gpu"               # Disable GPU acceleration for stability
+        ])
+        print(f"DEBUG: Added window position/size arguments for headed mode")
     
     browser = playwright.chromium.launch(
         headless=not headed,  # Show browser window if --headed flag is used
-        args=["--no-sandbox"]
+        args=launch_args
     )
     yield browser
     browser.close()
