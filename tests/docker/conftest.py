@@ -65,19 +65,25 @@ def docker_app_config():
     which uses temp storage. We want to test actual S3 storage.
     """
     os.environ['FLASK_ENV'] = 'testing'  # Ensure testing config is used
-    return {
-        'STORAGE_PROVIDER': 's3',
-        'S3_BUCKET': os.getenv('S3_BUCKET', 'cleanit-media'),
-        'AWS_REGION': os.getenv('AWS_REGION', 'us-east-1'),
-        'AWS_ACCESS_KEY_ID': os.getenv('MINIO_ROOT_USER', 'minioadmin'),
-        'AWS_SECRET_ACCESS_KEY': os.getenv('MINIO_ROOT_PASSWORD', 'minioadmin'),
-        'S3_ENDPOINT_URL': os.getenv('S3_ENDPOINT_URL', 'http://localhost:9000'),
-        'S3_USE_HTTPS': 'false',
-        'S3_VERIFY_SSL': 'false',
-        'DATABASE_URL': os.getenv('DATABASE_URL', 'postgresql://cleanit_user@localhost:5432/cleanit'),
+    environment_variables = ['S3_BUCKET', 'AWS_REGION',
+                             'AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'S3_ENDPOINT_URL', 'S3_USE_HTTPS',
+                             'S3_VERIFY_SSL', 'DATABASE_URL']
+    config_override = {
         'SECRET_KEY': 'test-secret-key-for-docker-tests',
         'WTF_CSRF_ENABLED': False,  # Disable CSRF for API testing
+        'STORAGE_PROVIDER': 's3',
     }
+    from dotenv import load_dotenv
+    if not os.path.exists(".env"):
+        raise FileNotFoundError("ERROR: .env file not found. Have you set up the environment by running set_env.py?")
+    load_dotenv(".env")  # Load .env file    
+    # Add the environment variables to the config override, abort if they are not present
+    for var in environment_variables:
+        if var not in os.environ:
+            raise ValueError(f"ERROR: Required environment variable {var} is not set for Docker tests. Have you set up the environment by running set_env.py?")
+        config_override[var] = os.environ[var]
+
+    return config_override
 
 
 @pytest.fixture(scope="session")
