@@ -39,6 +39,17 @@
 - **Test Coverage**: pytest-cov (planned) for coverage reporting
 - **Test Data**: Factory pattern for test data generation
 - **Storage Testing**: Cross-provider testing for all storage backends
+- **Docker Testing**: Comprehensive Docker-based testing with S3/MinIO and PostgreSQL
+
+#### Docker Testing Configuration
+- **Configuration Files**:
+  - `pytest.docker.ini`: Docker-specific pytest configuration with environment variables for S3/MinIO and PostgreSQL
+  - `pytest.ini`: Standard pytest configuration for local testing (excludes Docker tests)
+- **Test Isolation**: Docker tests run in separate directory (`tests/docker/`) with dedicated fixtures
+- **Required Services**: PostgreSQL database, MinIO S3 storage, and Flask web application containers
+- **Environment Verification**: Automatic checks for running Docker containers before test execution
+- **Markers**: `@pytest.mark.docker` marker required for all Docker tests
+- **Fixtures**: Comprehensive fixture suite in `tests/docker/conftest.py` for Docker environment setup
 
 ### Development Tools
 - **Python Environment**: python-dotenv 1.0.1 for environment management
@@ -159,7 +170,10 @@ cleanit/
 ├── tests/                   # Test suite
 │   ├── conftest.py         # Test configuration and fixtures
 │   ├── helpers.py          # Test utilities
-│   └── test_*.py           # Test modules
+│   ├── test_*.py           # Test modules
+│   └── docker/             # Docker-based integration tests
+│       ├── conftest.py     # Docker-specific fixtures
+│       └── test_*.py       # Docker test modules
 │
 └── utils/                   # Utility modules
     ├── error_handlers.py   # Global error handling
@@ -231,7 +245,7 @@ gunicorn -w 4 -b 0.0.0.0:5000 app:app
 
 ### Running Tests
 ```bash
-# Run all tests
+# Run all tests (excluding Docker tests)
 pytest
 
 # Run specific test module
@@ -242,6 +256,15 @@ pytest --cov=.
 
 # Run end-to-end tests
 pytest tests/test_*.py -k "e2e" --headed
+
+# Run Docker tests (requires Docker containers running)
+pytest -c pytest.docker.ini
+
+# Run specific Docker test module
+pytest -c pytest.docker.ini tests/docker/test_gallery_views.py
+
+# Run Docker tests with specific marker
+pytest -c pytest.docker.ini -m "docker"
 ```
 
 ### Database Operations

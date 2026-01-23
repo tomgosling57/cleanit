@@ -3,11 +3,14 @@
 ## Current Work Focus
 **Media Service Refactoring and Gallery Implementation** - Comprehensive redesign to fix scope violations and implement proper media management with batch operations.
 
+**Docker Testing Configuration Enhancement** - Implementation of comprehensive Docker-based testing infrastructure with dedicated configuration files and fixtures for testing with PostgreSQL and S3/MinIO services.
+
 ## Key Decisions Made
 1. **Single Media Service Approach**: Keep existing Media Service (enhanced) rather than creating separate Gallery Service
 2. **Controller Scope Fix**: Move media operations from Media Controller to Job/Property controllers
 3. **Batch Operations**: Add batch upload and delete methods for efficient gallery management
 4. **Simplified Architecture**: Avoid over-engineering with two services when one can handle both storage and collections
+5. **Docker Testing Configuration**: Implement separate `pytest.docker.ini` configuration for Docker-based testing with dedicated fixtures in `tests/docker/conftest.py`
 
 ## Architecture Redesign Plan
 
@@ -104,6 +107,45 @@ Content-Type: application/json
 - **Progress tracking**: Handle large file uploads with progress indication
 - **Error handling**: Graceful failure with partial success support
 - **Validation**: File type, size, and security validation
+
+## Docker Testing Configuration Implementation
+
+### Configuration Files
+- **`pytest.docker.ini`**: Dedicated pytest configuration for Docker tests with:
+  - Environment variables for S3/MinIO and PostgreSQL
+  - Required `docker` marker for all tests
+  - Automatic container verification before test execution
+  - Test discovery limited to `tests/docker/` directory
+- **`pytest.ini`**: Standard configuration for local tests (excludes Docker tests via `norecursedirs = docker`)
+
+### Fixture Architecture
+- **`tests/docker/conftest.py`**: Comprehensive fixture suite including:
+  - `docker_app`: Flask app configured for Docker S3/MinIO storage and PostgreSQL
+  - `docker_app_no_csrf`: App with CSRF disabled for API testing
+  - `docker_admin_client`, `docker_regular_client`: Authenticated test clients
+  - `docker_playwright_browser`, `docker_page`: Playwright fixtures for browser automation
+  - `docker_admin_page`, `docker_supervisor_page`, `docker_user_page`: Pre-authenticated browser pages
+  - `docker_rollback_db_after_test`: Database cleanup and re-seeding fixture
+
+### Key Features
+1. **Service Verification**: Automatic checks for running Docker containers (PostgreSQL, MinIO, web)
+2. **Test Isolation**: Docker tests run in separate directory with dedicated configuration
+3. **Real Service Testing**: Tests interact with actual S3/MinIO storage instead of mocks
+4. **Browser Automation**: Playwright configured for Docker environment with proper networking
+5. **Database Cleanup**: Automatic rollback of database changes after each test
+6. **Configuration Profiles**: Support for different app configurations (production, debug, testing)
+
+### Test Execution
+```bash
+# Run Docker tests (requires Docker containers running)
+pytest -c pytest.docker.ini
+
+# Run specific Docker test module
+pytest -c pytest.docker.ini tests/docker/test_gallery_views.py
+
+# Run with headed browser for debugging
+pytest -c pytest.docker.ini --headed
+```
 
 ## Current Status
 - **✅ Phase 1: Media Service Enhancement**: COMPLETED

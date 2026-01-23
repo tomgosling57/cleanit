@@ -179,12 +179,25 @@ Client → Media Controller → Media Service → Storage
 2. **Integration Tests**: Controller and database interaction testing
 3. **End-to-End Tests**: Playwright for full user workflow testing
 4. **Storage Tests**: Cross-provider storage functionality verification
+5. **Docker Integration Tests**: Comprehensive testing with actual Docker services (PostgreSQL, MinIO S3, Flask app)
 
 ### Test Isolation Patterns
 - **Test Database**: Separate database instance for testing
 - **Temporary Storage**: Auto-cleaning storage for file operations
 - **Mock External Services**: Isolate tests from external dependencies
 - **Fixture Management**: Reusable test data setup
+
+### Docker Testing Patterns
+**Comprehensive Docker-based integration testing**
+- **Separate Configuration**: `pytest.docker.ini` for Docker-specific test configuration with environment variables for S3/MinIO and PostgreSQL
+- **Dedicated Fixtures**: `tests/docker/conftest.py` provides Docker-specific fixtures for app configuration, test clients, and browser automation
+- **Service Verification**: Automatic checks for running Docker containers (PostgreSQL, MinIO, web) before test execution
+- **Test Markers**: `@pytest.mark.docker` marker required for all Docker tests to prevent accidental execution
+- **Environment Isolation**: Docker tests run in separate directory (`tests/docker/`) with dedicated configuration
+- **Real Service Testing**: Tests interact with actual S3/MinIO storage and PostgreSQL database instead of mocks
+- **Browser Automation**: Playwright fixtures configured for Docker environment with proper networking and authentication
+- **Database Cleanup**: Automatic rollback of database changes and media cleanup after each test
+- **Configuration Profiles**: Different app configurations for Docker testing (production, debug, testing modes with S3 storage)
 
 ## Error Handling Patterns
 

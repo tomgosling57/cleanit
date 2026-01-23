@@ -9,7 +9,7 @@
 - **Property Management**: Property database with details and access codes
 - **Basic Media Functionality**: Initial media controller and service implementations
 - **Frontend Interface**: Responsive design, htmx interactions, drag-and-drop
-- **Testing Foundation**: pytest unit tests, some integration tests
+- **Testing Foundation**: pytest unit tests, integration tests, and comprehensive Docker-based testing infrastructure
 - **Gallery Components**: Frontend gallery modal and JavaScript components created
 - **Environmental Configuration**: Production, Debug, and Testing configurations with FLASK_ENV support
 
@@ -27,6 +27,19 @@
 - **Configuration**: Added environment variables to `docker-compose.yml` for flexible deployment
 - **Testing**: Created comprehensive test `test_gallery_display_with_fixed_url_generation()` in `tests/test_docker_gallery_s3_features.py`
 - **Verification**: All tests passing, gallery images display correctly with public URLs like `http://localhost:9000/cleanit-media/{filename}`
+
+### ✅ Docker Testing Configuration (NEW)
+- **Configuration Files**: Implemented `pytest.docker.ini` for Docker-specific testing with dedicated environment variables for S3/MinIO and PostgreSQL
+- **Test Isolation**: Docker tests run in separate `tests/docker/` directory with dedicated fixtures
+- **Fixture Architecture**: Comprehensive fixture suite in `tests/docker/conftest.py` including:
+  - `docker_app`: Flask app configured for Docker S3/MinIO storage and PostgreSQL
+  - `docker_admin_client`, `docker_regular_client`: Authenticated test clients
+  - `docker_playwright_browser`, `docker_page`: Playwright fixtures for browser automation
+  - `docker_admin_page`, `docker_supervisor_page`, `docker_user_page`: Pre-authenticated browser pages
+  - `docker_rollback_db_after_test`: Database cleanup and re-seeding fixture
+- **Service Verification**: Automatic checks for running Docker containers (PostgreSQL, MinIO, web) before test execution
+- **Test Execution**: Dedicated command `pytest -c pytest.docker.ini` for running Docker tests
+- **Documentation**: Updated memory bank with Docker testing configuration details in techContext.md, systemPatterns.md, and activeContext.md
 
 ### ✅ Planning Completed
 - **Comprehensive Media Refactoring Plan**: Created detailed plan in `plans/media_refactoring_final_comprehensive_plan.md`
