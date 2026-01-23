@@ -1,3 +1,4 @@
+from time import sleep
 from playwright.sync_api import expect
 from tests.helpers import (
     get_first_property_card, 
@@ -31,6 +32,7 @@ def test_create_property(admin_page) -> None:
     test_notes = "Test property for automated testing"
     
     fill_property_form(page, test_address, test_access_notes, test_notes)
+    sleep(.5)
     
     # Submit form
     submit_property_creation_form(page)
