@@ -44,7 +44,6 @@ def local_storage_app():
     temp_upload_dir = tempfile.mkdtemp(prefix='test_uploads_', dir=cwd)
     
     test_config = {
-        'TESTING': True,
         'STORAGE_PROVIDER': 'temp',
         'UPLOAD_FOLDER': temp_upload_dir,
         'SECRET_KEY': 'testsecret',
@@ -77,10 +76,9 @@ def app(request, test_db_path):
     
     # Check if test is marked with no_csrf
     no_csrf = request.node.get_closest_marker("no_csrf") is not None
-    
+
+    os.environ['FLASK_ENV'] = 'testing'  # Ensure testing config is used
     test_config = {
-        'TESTING': True,
-        'STORAGE_PROVIDER': 'temp',  # Use temporary storage for all tests
         'WTF_CSRF_ENABLED': not no_csrf,  # Disable CSRF only for marked tests
     }
     
@@ -97,9 +95,8 @@ def app_no_csrf(test_db_path):
     """
     login_manager = LoginManager()
     
+    os.environ['FLASK_ENV'] = 'testing'  # Ensure testing config is used
     test_config = {
-        'TESTING': True,
-        'STORAGE_PROVIDER': 'temp',
         'WTF_CSRF_ENABLED': False,  # Disable CSRF protection
     }
     

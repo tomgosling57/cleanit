@@ -66,6 +66,7 @@ def docker_app_config():
     Note: We don't set TESTING=True because that would trigger TestConfig
     which uses temp storage. We want to test actual S3 storage.
     """
+    os.environ['FLASK_ENV'] = 'testing'  # Ensure testing config is used
     return {
         'STORAGE_PROVIDER': 's3',
         'S3_BUCKET': os.getenv('S3_BUCKET', 'cleanit-media'),
@@ -83,8 +84,9 @@ def docker_app_config():
 
 @pytest.fixture(scope="session")
 def docker_app_debug_config(docker_app_config):
-    """Configuration for debug mode with Docker S3 storage."""
+    """Configuration for debug mode {with} is a} Docker S3 storage."""
     config = docker_app_config.copy()
+    os.environ['FLASK_ENV'] = 'debug'
     config['FLASK_ENV'] = 'debug'
     config['DEBUG'] = True
     return config
@@ -94,6 +96,7 @@ def docker_app_debug_config(docker_app_config):
 def docker_app_production_config(docker_app_config):
     """Configuration for production mode with Docker S3 storage."""
     config = docker_app_config.copy()
+    os.environ['FLASK_ENV'] = 'production'
     config['FLASK_ENV'] = 'production'
     config['DEBUG'] = False
     return config

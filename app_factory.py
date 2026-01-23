@@ -31,19 +31,16 @@ def create_app(login_manager=LoginManager(), config_override=dict()):
     """
     app = Flask(__name__, instance_relative_config=True)
     
-    # Determine which configuration to use based on FLASK_ENV or TESTING flag
-    # Priority: 1. config_override TESTING flag, 2. FLASK_ENV environment variable
-    env = os.getenv('FLASK_ENV', 'production').lower()
+    # Determine which configuration to use based on FLASK_ENV 
+    env = os.getenv('FLASK_ENV')
+    if not env:
+        raise ValueError("FLASK_ENV environment variable is not set. Please set it to 'production', 'debug', or 'testing' by running the set_env.py script.")
     
-    if config_override.get('TESTING', False):
-        # Backward compatibility: TESTING flag in config_override takes precedence
-        # This is used for unit/integration tests that use SQLite database
-        app.config.from_object(TestConfig)
-        populate_database(app.config['SQLALCHEMY_DATABASE_URI'])
-    elif env == 'testing':
+    if env == 'testing':
         # FLASK_ENV=testing (Docker deployment)
         # Database population is handled by Docker command to avoid race conditions with multiple workers
         app.config.from_object(TestConfig)
+        populate_database(app.config['SQLALCHEMY_DATABASE_URI'])
     elif env == 'debug':
         # FLASK_ENV=debug (Docker deployment)
         # Database population is handled by Docker command to avoid race conditions with multiple workers

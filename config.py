@@ -20,7 +20,7 @@ class Config:
     The FLASK_ENV environment variable determines which configuration is used:
     - 'production': Default configuration (this class)
     - 'debug': Debug configuration with auto-reloading and debug features
-    - 'testing': Testing configuration with temporary storage
+    - 'testing': Testing configuration that seeds the database after each test
     
     Environment variable FLASK_ENV must be one of: production, debug, testing
     """
@@ -40,7 +40,7 @@ class Config:
     S3_USE_HTTPS = os.getenv('S3_USE_HTTPS', 'true')
     S3_VERIFY_SSL = os.getenv('S3_VERIFY_SSL', 'true')
     
-    # For development/testing with local storage
+    # For development/testing with local and temporary storage
     UPLOAD_FOLDER = os.getenv('UPLOAD_FOLDER', './uploads')
     
     # Environment detection - used to determine runtime configuration
@@ -67,7 +67,7 @@ class TestConfig(Config):
     """
     Testing configuration for automated tests.
     
-    Enabled when FLASK_ENV=testing or TESTING=True.
+    Enabled when FLASK_ENV=testing
     Features include:
     - Temporary storage that auto-cleans after tests
     - Testing mode enabled
