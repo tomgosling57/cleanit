@@ -40,7 +40,6 @@ def create_app(login_manager=LoginManager(), config_override=dict()):
         # FLASK_ENV=testing (Docker deployment)
         # Database population is handled by Docker command to avoid race conditions with multiple workers
         app.config.from_object(TestConfig)
-        populate_database(app.config['SQLALCHEMY_DATABASE_URI'])
     elif env == 'debug':
         # FLASK_ENV=debug (Docker deployment)
         # Database population is handled by Docker command to avoid race conditions with multiple workers
