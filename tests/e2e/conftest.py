@@ -195,14 +195,39 @@ def user_page(user_context, live_server):
     page = user_context.new_page()
     page.set_default_navigation_timeout(5000)
     # Navigate to timetable page (where login redirects to)
-    page.goto(f"{live_server.url()}/jobs/")
+    page.goto(f"{server_url}/jobs/")
     page.wait_for_load_state('networkidle')
     yield page
 
 @pytest.fixture(autouse=True)
-def rollback_db_after_test(app):
+def rollback_db_after_test():
     """Rollback database changes after each test to maintain isolation."""
-    yield  # Test runs here
 
     # Use the reseed endpoint to reset the database state    
     get('http://localhost:5000/testing/reseed-database')
+
+# Skip if Docker containers not running
+# This will be handled by the conftest.py in tests/e2e/
+# but we add a safety check here too
+def pytest_collection_modifyitems(config, items):
+    """Skip all tests if Docker containers are not running."""
+    if os.getenv('FLASK_ENV') != 'testing':
+        skip_marker = pytest.mark.skip(reason="E2E tests require FLASK_ENV to be set to 'testing'")
+        for item in items:
+            item.add_marker(skip_marker)
+    if not docker_containers_running():
+        skip_marker = pytest.mark.skip(reason="Docker containers not running")
+        for item in items:
+            item.add_marker(skip_marker)
+    # Make sure the reseed database endpoint is available
+    reason = "Reseed database endpoint not available. Ensure the web container is running and FLASK_ENV is set to 'testing'."
+    try:
+        response = get('http://localhost:5000/testing/reseed-database')
+        if response.status_code != 200:
+            skip_marker = pytest.mark.skip(reason=reason)
+            for item in items:
+                item.add_marker(skip_marker)
+    except Exception as e:
+        skip_marker = pytest.mark.skip(reason=reason + f" (Error: {str(e)})")
+        for item in items:
+            item.add_marker(skip_marker)
