@@ -74,5 +74,4 @@ class TestConfig(Config):
     - Isolated database for test data
     """
     TESTING = True
-    STORAGE_PROVIDER = 'temp'  # Use temporary storage for tests
     UPLOAD_FOLDER = tempfile.mkdtemp(prefix='test_uploads_')  # Temporary directory for tests
