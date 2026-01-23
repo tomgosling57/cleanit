@@ -35,7 +35,6 @@ pytestmark = pytest.mark.skipif(
     not docker_containers_running(),
     reason="Docker containers (postgres, minio, web) must be running. Run 'docker compose up -d' first."
 )
-
 # Playwright fixtures for Docker environment
 from typing import Generator
 from playwright.sync_api import Page, BrowserContext, sync_playwright
@@ -48,12 +47,12 @@ def server_url() -> str:
     return "http://localhost:5000/"
 
 @pytest.fixture
-def goto(page, live_server):
+def goto(page, server_url):
     """Helper fixture that navigates to a path"""
     def _goto(path="/", _page=None):
         if _page is None:
             _page = page
-        return _page.goto(f"{live_server.url()}{path}")
+        return _page.goto(f"{server_url}{path}")
     return _goto
 
 @pytest.fixture
@@ -69,7 +68,7 @@ def page(context) -> Generator[Page, None, None]:
     yield page
 
 # Authorization state fixtures for Playwright tests
-def _create_auth_state(browser, live_server, email, password):
+def _create_auth_state(browser, server_url, email, password):
     """
     Generic helper for creating authentication state.
     Uses pytest-playwright's browser fixture to avoid nested async contexts.
@@ -77,7 +76,7 @@ def _create_auth_state(browser, live_server, email, password):
     context = browser.new_context()
     page = context.new_page()
 
-    page.goto(f"{live_server.url()}/")
+    page.goto(f"{server_url}/")
     page.wait_for_load_state("networkidle")
 
     page.locator('input[name="email"]').fill(email)
@@ -95,40 +94,40 @@ def _create_auth_state(browser, live_server, email, password):
     return state
 
 @pytest.fixture(scope="session")
-def admin_auth_state(browser, live_server):
+def admin_auth_state(browser, server_url):
     """
     Creates and returns authentication state (cookies, storage) for admin user.
     Uses CSRF-disabled server so authentication state can be saved and reused.
     """
     return _create_auth_state(
         browser,
-        live_server,
+        server_url,
         "admin@example.com",
         "admin_password",
     )
 
 @pytest.fixture(scope="session")
-def supervisor_auth_state(browser, live_server):
+def supervisor_auth_state(browser, server_url):
     """
     Creates and returns authentication state (cookies, storage) for supervisor user.
     Uses CSRF-disabled server so authentication state can be saved and reused.
     """
     return _create_auth_state(
         browser,
-        live_server,
+        server_url,
         "supervisor@example.com",
         "supervisor_password",
     )
 
 @pytest.fixture(scope="session")
-def user_auth_state(browser, live_server):
+def user_auth_state(browser, server_url):
     """
     Creates and returns authentication state (cookies, storage) for regular user.
     Uses CSRF-disabled server so authentication state can be saved and reused.
     """
     return _create_auth_state(
         browser,
-        live_server,
+        server_url,
         "user@example.com",
         "user_password",
     )
@@ -143,7 +142,7 @@ def admin_context(browser, admin_auth_state):
     context.close()
 
 @pytest.fixture
-def admin_page(admin_context, live_server):
+def admin_page(admin_context, server_url):
     """
     Creates a page with admin user already authenticated and navigates to timetable.
     Uses CSRF-disabled server.
@@ -151,7 +150,7 @@ def admin_page(admin_context, live_server):
     page = admin_context.new_page()
     page.set_default_navigation_timeout(5000)
     # Navigate to timetable page (where login redirects to)
-    page.goto(f"{live_server.url()}/jobs/")
+    page.goto(f"{server_url}/jobs/")
     page.wait_for_load_state('networkidle')
     yield page
 
@@ -165,7 +164,7 @@ def supervisor_context(browser, supervisor_auth_state):
     context.close()
 
 @pytest.fixture
-def supervisor_page(supervisor_context, live_server):
+def supervisor_page(supervisor_context, server_url):
     """
     Creates a page with supervisor user already authenticated and navigates to timetable.
     Uses CSRF-disabled server.
@@ -173,7 +172,7 @@ def supervisor_page(supervisor_context, live_server):
     page = supervisor_context.new_page()
     page.set_default_navigation_timeout(5000)
     # Navigate to timetable page (where login redirects to)
-    page.goto(f"{live_server.url()}/jobs/")
+    page.goto(f"{server_url}/jobs/")
     page.wait_for_load_state('networkidle')
     yield page
 
@@ -187,7 +186,7 @@ def user_context(browser, user_auth_state):
     context.close()
 
 @pytest.fixture
-def user_page(user_context, live_server):
+def user_page(user_context, server_url):
     """
     Creates a page with regular user already authenticated and navigates to timetable.
     Uses CSRF-disabled server.
