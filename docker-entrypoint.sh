@@ -74,10 +74,10 @@ else:
 fi
 
 # Choose server based on FLASK_ENV
-if [ "$FLASK_ENV" = "debug" ]; then
-    echo "Starting Flask development server with auto-reload..."
-    exec python app.py --host=0.0.0.0 --port=5000
-else
+if [ "$FLASK_ENV" = "production" ]; then
     echo "Starting gunicorn production server..."
     exec gunicorn --bind 0.0.0.0:5000 --workers 4 --threads 2 app:app
+else
+    echo "Starting Flask development server with auto-reload..."
+    exec python app.py --host=0.0.0.0 --port=5000
 fi
