@@ -60,10 +60,30 @@ ENV_VARS = [
         "required": True,
     },
     {
+        "name": "S3_ENDPOINT_URL",
+        "default": "http://minio:9000",
+        "random": False,
+        "required": True,
+    },
+    {
         "name": "AWS_REGION",
         "default": "us-east-1",
         "random": False,
         "required": True,
+    },
+    {
+        "name": "AWS_ACCESS_KEY_ID",
+        "default": "minioadmin",
+        "random": False,
+        "required": True,
+    },
+    {
+        "name": "AWS_SECRET_ACCESS_KEY",
+        "default": "minioadmin",
+        "random": True,
+        "required": True,
+        "validation": lambda x: len(x) > 0,
+        "validation_msg": "Secret key cannot be empty",
     },
     {
         "name": "FLASK_ENV",
