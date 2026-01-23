@@ -3,16 +3,18 @@
 Docker-specific fixtures for integration tests.
 
 This module provides fixtures for testing with Docker containers running
-(MinIO, PostgreSQL, Flask app). These fixtures are completely isolated
-from local test fixtures to prevent cross-contamination.
+(MinIO, PostgreSQL, Flask app). These fixtures are separate from the main
+conftest.py to keep it manageable and to isolate Docker-specific dependencies.
 """
 
 import pytest
 import os
+import sys
 import subprocess
 import tempfile
 import shutil
 from pathlib import Path
+
 
 # Load environment variables from .env file
 try:
@@ -33,7 +35,7 @@ def docker_containers_running():
             ['docker', 'compose', 'ps', '--services', '--filter', 'status=running'],
             capture_output=True,
             text=True,
-            cwd=os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+            cwd=os.path.dirname(os.path.dirname(__file__))
         )
         running_services = result.stdout.strip().split('\n')
         required_services = {'postgres', 'minio', 'web'}
@@ -47,15 +49,6 @@ pytestmark = pytest.mark.skipif(
     not docker_containers_running(),
     reason="Docker containers (postgres, minio, web) must be running. Run 'docker compose up -d' first."
 )
-
-
-# Add docker marker to all tests in this directory
-def pytest_collection_modifyitems(config, items):
-    """Add docker marker to all tests in this directory."""
-    for item in items:
-        # Only add marker if not already present
-        if not any(marker.name == 'docker' for marker in item.iter_markers()):
-            item.add_marker(pytest.mark.docker)
 
 
 @pytest.fixture(scope="session")
@@ -152,85 +145,6 @@ def docker_app_no_csrf(docker_app_config):
     yield app
 
 
-# Helper functions for authentication (copied from main conftest to avoid imports)
-def _login_user_for_test(client, email, password, debug=False):
-    """
-    Enhanced login helper with debugging and CSRF support.
-    Returns the client with an authenticated session.
-    """
-    import re
-    
-    # Get the correct login URL using the app's url_for
-    # The login endpoint is 'user.login' which maps to '/users/user/login'
-    login_url = '/users/user/login'
-    
-    # First, get the login page to extract CSRF token
-    login_page_response = client.get(login_url)
-    if debug:
-        print(f"Login page status: {login_page_response.status_code}")
-        print(f"Login page content length: {len(login_page_response.data)}")
-        if login_page_response.status_code != 200:
-            print(f"Login page response: {login_page_response.data.decode('utf-8')[:200]}")
-    
-    # Extract CSRF token from the HTML
-    csrf_token = None
-    if login_page_response.status_code == 200:
-        html = login_page_response.data.decode('utf-8')
-        # Look for <input type="hidden" name="csrf_token" value="..."/>
-        match = re.search(r'name="csrf_token"\s+value="([^"]+)"', html)
-        if match:
-            csrf_token = match.group(1)
-            if debug:
-                print(f"Extracted CSRF token: {csrf_token[:20]}...")
-        else:
-            if debug:
-                print("WARNING: No CSRF token found in login page")
-                # Try alternative pattern
-                match = re.search(r'csrf_token.*?value="([^"]+)"', html)
-                if match:
-                    csrf_token = match.group(1)
-                    print(f"Alternative CSRF token: {csrf_token[:20]}...")
-    else:
-        if debug:
-            print("ERROR: Could not load login page")
-    
-    # Prepare login data with CSRF token if found
-    login_data = {
-        'email': email,
-        'password': password
-    }
-    if csrf_token:
-        login_data['csrf_token'] = csrf_token
-    
-    # Perform login
-    response = client.post(login_url, data=login_data, follow_redirects=True)
-    
-    if debug:
-        print(f"Login POST status: {response.status_code}")
-        print(f"Login POST redirected to: {response.request.path if hasattr(response, 'request') else 'unknown'}")
-        
-        # Debug session
-        with client.session_transaction() as session:
-            session_dict = dict(session)
-            print(f"Session after login: {session_dict}")
-            if '_user_id' in session_dict:
-                print(f"User ID in session: {session_dict['_user_id']}")
-            else:
-                print("WARNING: No _user_id in session - login may have failed")
-    
-    return client
-
-
-def _login_admin_for_test(client, debug=False):
-    """Helper to log in as admin with correct password."""
-    return _login_user_for_test(client, "admin@example.com", "admin_password", debug=debug)
-
-
-def _login_regular_for_test(client, debug=False):
-    """Helper to log in as regular user with correct password."""
-    return _login_user_for_test(client, "user@example.com", "user_password", debug=debug)
-
-
 @pytest.fixture
 def docker_admin_client(docker_app_no_csrf):
     """
@@ -239,8 +153,11 @@ def docker_admin_client(docker_app_no_csrf):
     Uses the seeded database to find an admin user and logs in via the
     login endpoint. CSRF is disabled for easier API testing.
     """
+    # Import inside function to avoid circular imports
+    from tests.conftest import login_admin_for_test
+    
     client = docker_app_no_csrf.test_client()
-    _login_admin_for_test(client)
+    login_admin_for_test(client)
     yield client
 
 
@@ -252,8 +169,11 @@ def docker_regular_client(docker_app_no_csrf):
     Uses the seeded database to find a regular user and logs in via the
     login endpoint. CSRF is disabled for easier API testing.
     """
+    # Import inside function to avoid circular imports
+    from tests.conftest import login_regular_for_test
+    
     client = docker_app_no_csrf.test_client()
-    _login_regular_for_test(client)
+    login_regular_for_test(client)
     yield client
 
 
@@ -360,6 +280,16 @@ def verify_docker_environment():
     print(f"  - S3_ENDPOINT_URL: {os.getenv('S3_ENDPOINT_URL', 'http://localhost:9000')}")
     print(f"  - S3_BUCKET: {os.getenv('S3_BUCKET', 'cleanit-media')}")
 
+
+# Import shared fixtures from main conftest.py
+# These will be available to tests that use this fixture module
+from tests.conftest import (
+    admin_client_no_csrf,
+    regular_client_no_csrf,
+    admin_client,
+    regular_client,
+    # Add other shared fixtures as needed
+)
 
 # Playwright fixtures for Docker environment
 from typing import Generator
