@@ -236,6 +236,11 @@ def create_app(login_manager=LoginManager(), config_override=dict()):
     app.register_blueprint(teams_bp)
     app.register_blueprint(properties_bp)
     app.register_blueprint(media_bp)
+    if env == 'testing':
+        app.logger.info("Registering testing blueprint (FLASK_ENV=testing)")
+        # Register testing blueprint only in testing environment
+        from routes.testing import testing_bp
+        app.register_blueprint(testing_bp)
 
     # Register global error handlers
     register_media_error_handlers(app)
