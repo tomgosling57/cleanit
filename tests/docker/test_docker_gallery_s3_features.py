@@ -471,7 +471,7 @@ def test_docker_s3_environment():
     This can be run independently to check the environment before
     running the full test suite.
     """
-    from tests.conftest_docker import docker_containers_running, check_minio_accessible
+    from tests.docker.conftest import docker_containers_running, check_minio_accessible
     
     print("=== Docker S3 Environment Check ===")
     

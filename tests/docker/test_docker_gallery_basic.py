@@ -21,14 +21,14 @@ class TestDockerGalleryBasic:
     
     def test_docker_containers_available(self):
         """Verify Docker containers are running."""
-        from tests.conftest_docker import docker_containers_running
+        from tests.docker.conftest import docker_containers_running
         assert docker_containers_running(), (
             "Docker containers not running. Start with: docker compose up -d"
         )
     
     def test_minio_accessible(self):
         """Test that MinIO S3 endpoint is accessible."""
-        from tests.conftest_docker import check_minio_accessible
+        from tests.docker.conftest import check_minio_accessible
         assert check_minio_accessible(), "MinIO not accessible at S3_ENDPOINT_URL"
     
     def test_property_gallery_upload_s3_integration(self, docker_admin_client, seeded_test_data):
@@ -184,7 +184,7 @@ def test_docker_gallery_integration_summary():
     This test serves as a high-level verification that the Docker
     configuration with S3/MinIO storage works for property galleries.
     """
-    from tests.conftest_docker import docker_containers_running
+    from tests.docker.conftest import docker_containers_running
     # This is a placeholder test that will pass if Docker containers are running
     # and the other tests in this module pass
     assert docker_containers_running(), "Docker containers must be running"
