@@ -1,13 +1,12 @@
-from flask import url_for
 from playwright.sync_api import expect
 from datetime import datetime, time, timedelta
 from config import DATETIME_FORMATS
 from tests.helpers import (
-    assert_job_card_variables, login_admin,
+    assert_job_card_variables,
     get_first_job_card, open_job_details_modal, open_job_update_modal,
-    fill_job_modal_form, assert_job_details_modal_content, close_modal_and_assert_hidden, validate_csrf_token_in_modal, wait_for_modal
+    fill_job_modal_form, assert_job_details_modal_content, close_modal_and_assert_hidden, validate_csrf_token_in_modal, wait_for_modal,
+    get_future_date, get_future_time
 )
-from tests.test_utils import get_future_date, get_future_time
 
 def test_job_details(admin_page) -> None:
 

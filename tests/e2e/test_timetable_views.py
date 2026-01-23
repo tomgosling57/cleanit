@@ -1,8 +1,11 @@
 # tests/test_timetable.py
 import re
 from playwright.sync_api import expect
-from tests.helpers import get_csrf_token, assert_job_card_variables, mark_job_as_complete, assert_job_card_default_state, assert_job_not_found_htmx_error, assert_team_column_content, drag_to_and_wait_for_response, delete_job_and_confirm
-from tests.test_utils import get_future_date, get_future_time
+from tests.helpers import (
+    get_csrf_token, assert_job_card_variables, mark_job_as_complete, assert_job_card_default_state,
+    assert_job_not_found_htmx_error, assert_team_column_content, delete_job_and_confirm,
+    get_future_date,
+)
 
 
 def test_supervisors_timetable(supervisor_page) -> None:
