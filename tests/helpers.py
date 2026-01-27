@@ -242,7 +242,9 @@ def open_job_details_modal(page: Page, job_card: Locator, url_pattern: str) -> N
     with page.expect_response(url_pattern):
         page.wait_for_load_state('networkidle')
         job_card.get_by_role("button", name="View Details").click()
-    expect(page.locator("#job-modal")).to_be_visible()
+    job_modal = page.locator("#job-modal")
+    expect(job_modal).to_be_visible()
+    return job_modal
 
 def open_job_update_modal(page: Page, job_card: Locator, url_pattern: str) -> None:
     with page.expect_response(url_pattern):
@@ -370,6 +372,15 @@ def open_address_book(page: Page) -> None:
 
     page.wait_for_load_state('networkidle')
 
+def open_timetable(page: Page) -> None:
+    """Navigate to the timetable page"""
+    page.wait_for_selector("a[href='/jobs/']") 
+    with page.expect_response("**/jobs**"):
+        page.wait_for_load_state('networkidle')
+        page.get_by_text("My Jobs").click()
+
+    page.wait_for_load_state('networkidle')
+
 def get_first_property_card(page: Page) -> Locator:
     return page.locator(".property-card").first
 
@@ -384,13 +395,13 @@ def open_property_details(page: Page, property_card) -> None:
     page.wait_for_load_state('networkidle')
     expect(page.locator("#property-details-modal")).to_be_visible()
 
-def open_property_card_gallery(page: Page, property_card: Locator) -> None:
+def open_property_gallery(page: Page, parent: Locator) -> None:
     """Open the gallery modal from a property card"""
-    property_card.locator(".gallery-button").wait_for(state="attached")
-    property_id = property_card.get_attribute("data-id")
+    parent.locator(".gallery-button").wait_for(state="attached")
+    property_id = parent.get_attribute("data-id")
     with page.expect_response(f"**/address-book/property/{property_id}/media**"):
         page.wait_for_load_state('networkidle')
-        property_card.locator(".gallery-button").click()
+        parent.locator(".gallery-button").click()
 
     expect(page.locator("#media-gallery-modal")).to_be_visible()
 
