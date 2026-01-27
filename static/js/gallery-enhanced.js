@@ -134,6 +134,9 @@
      */
     function render() {
         console.debug('ENHANCED_GALLERY: render called');
+        console.debug('ENHANCED_GALLERY: isEditMode:', isEditMode);
+        console.debug('ENHANCED_GALLERY: selectedMediaIds before render:', Array.from(selectedMediaIds));
+        
         const itemCount = GalleryCore.getItemCount();
         const currentIndex = GalleryCore.getCurrentIndex();
         
@@ -178,6 +181,7 @@
         updateEditModeUI();
         
         console.debug('ENHANCED_GALLERY: Render completed');
+        console.debug('ENHANCED_GALLERY: selectedMediaIds after render:', Array.from(selectedMediaIds));
     }
 
     /**
@@ -443,14 +447,28 @@
      * @param {Event} event
      */
     function handleMediaSelection(event) {
+        console.debug('ENHANCED_GALLERY: handleMediaSelection called');
+        console.debug('ENHANCED_GALLERY: Checkbox event target:', event.target);
+        console.debug('ENHANCED_GALLERY: Checkbox checked state:', event.target.checked);
+        console.debug('ENHANCED_GALLERY: Checkbox mediaId:', event.target.dataset.mediaId);
+        
         const mediaId = parseInt(event.target.dataset.mediaId);
-        if (isNaN(mediaId)) return;
+        if (isNaN(mediaId)) {
+            console.error('ENHANCED_GALLERY: Invalid mediaId:', event.target.dataset.mediaId);
+            return;
+        }
+        
+        console.debug('ENHANCED_GALLERY: Current selectedMediaIds before update:', Array.from(selectedMediaIds));
         
         if (event.target.checked) {
             selectedMediaIds.add(mediaId);
+            console.debug('ENHANCED_GALLERY: Added mediaId', mediaId, 'to selectedMediaIds');
         } else {
             selectedMediaIds.delete(mediaId);
+            console.debug('ENHANCED_GALLERY: Removed mediaId', mediaId, 'from selectedMediaIds');
         }
+        
+        console.debug('ENHANCED_GALLERY: Current selectedMediaIds after update:', Array.from(selectedMediaIds));
         
         updateEditModeUI();
     }
