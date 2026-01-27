@@ -268,12 +268,21 @@
             checkboxContainer.className = 'thumbnail-checkbox';
             checkboxContainer.appendChild(checkbox);
             thumbnail.appendChild(checkboxContainer);
+            
+            // Prevent checkbox container clicks from triggering thumbnail navigation
+            checkboxContainer.addEventListener('click', (event) => {
+                event.stopPropagation();
+            });
         }
         
         // Add click handler for navigation
         thumbnail.addEventListener('click', (event) => {
-            // Don't navigate if clicking checkbox
-            if (event.target.type === 'checkbox') return;
+            // Don't navigate if clicking checkbox or checkbox container
+            if (event.target.type === 'checkbox' ||
+                event.target.classList.contains('thumbnail-checkbox') ||
+                event.target.closest('.thumbnail-checkbox')) {
+                return;
+            }
             goTo(index);
         });
         

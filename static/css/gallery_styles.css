@@ -294,6 +294,47 @@
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
 }
 
+/* Thumbnail Checkbox Styles */
+.thumbnail-checkbox {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    z-index: 10;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 4px;
+    border: 2px solid var(--primary-color);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s ease;
+}
+
+.thumbnail-checkbox:hover {
+    background-color: white;
+    transform: scale(1.1);
+}
+
+.media-checkbox {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    cursor: pointer;
+    accent-color: var(--primary-color);
+}
+
+.media-checkbox:checked {
+    background-color: var(--primary-color);
+}
+
+/* Prevent checkbox from interfering with thumbnail clicks */
+.thumbnail-checkbox,
+.media-checkbox {
+    pointer-events: auto;
+}
+
 /* Gallery Footer */
 .gallery-footer {
     padding: 12px 24px;
