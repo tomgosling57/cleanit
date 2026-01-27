@@ -443,6 +443,7 @@ const GalleryDOM = (function() {
         updateDescription,
         updateButtonStates,
         renderThumbnails,
+        markActiveThumbnail,
         updateMediaInfo,
         showModal,
         hideModal,

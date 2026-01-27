@@ -59,6 +59,9 @@
         // Use existing gallery elements
         GalleryDOM.cacheElements();
         
+        // Get DOM elements from GalleryDOM module
+        const domElements = GalleryDOM.getElements();
+        
         // Enhanced gallery specific elements
         elements.editToggle = document.getElementById('gallery-edit-toggle');
         elements.batchDeleteButton = document.getElementById('batch-delete-button');
@@ -67,6 +70,17 @@
         elements.entityInfo = document.getElementById('gallery-entity-info');
         elements.selectedCount = document.getElementById('selected-count');
         elements.mediaCheckboxes = null; // Will be populated during render
+        
+        // Copy essential DOM elements from GalleryDOM
+        elements.thumbnailContainer = domElements.thumbnailContainer;
+        elements.thumbnailTemplate = domElements.thumbnailTemplate;
+        
+        console.debug('ENHANCED_GALLERY: Cached elements:', {
+            hasThumbnailContainer: !!elements.thumbnailContainer,
+            hasThumbnailTemplate: !!elements.thumbnailTemplate,
+            thumbnailContainerId: elements.thumbnailContainer?.id,
+            thumbnailTemplateId: elements.thumbnailTemplate?.id
+        });
     }
 
     const elements = {};
@@ -119,10 +133,14 @@
      * Render the current state to the UI
      */
     function render() {
+        console.debug('ENHANCED_GALLERY: render called');
         const itemCount = GalleryCore.getItemCount();
         const currentIndex = GalleryCore.getCurrentIndex();
         
+        console.debug('ENHANCED_GALLERY: itemCount:', itemCount, 'currentIndex:', currentIndex);
+        
         if (itemCount === 0) {
+            console.debug('ENHANCED_GALLERY: No items, showing empty state');
             GalleryDOM.showEmptyState();
             updateEditModeUI();
             return;
@@ -130,10 +148,13 @@
 
         const currentItem = GalleryCore.getCurrentItem();
         if (!currentItem) {
+            console.error('ENHANCED_GALLERY: Current item is null');
             GalleryDOM.showErrorState();
             return;
         }
 
+        console.debug('ENHANCED_GALLERY: Current item:', currentItem);
+        
         // Update counter
         GalleryDOM.updateCounter(currentIndex, itemCount);
         
@@ -144,6 +165,7 @@
         showMedia(currentItem);
         
         // Update thumbnails with enhanced functionality
+        console.debug('ENHANCED_GALLERY: Calling renderEnhancedThumbnails');
         renderEnhancedThumbnails(GalleryCore.getState().items, currentIndex);
         
         // Update button states
@@ -154,6 +176,8 @@
         
         // Update edit mode UI
         updateEditModeUI();
+        
+        console.debug('ENHANCED_GALLERY: Render completed');
     }
 
     /**
@@ -162,10 +186,21 @@
      * @param {number} currentIndex
      */
     function renderEnhancedThumbnails(items, currentIndex) {
-        if (!elements.thumbnailContainer || !elements.thumbnailTemplate) return;
+        console.debug('ENHANCED_GALLERY: renderEnhancedThumbnails called with', items.length, 'items');
+        console.debug('ENHANCED_GALLERY: elements.thumbnailContainer:', elements.thumbnailContainer);
+        console.debug('ENHANCED_GALLERY: elements.thumbnailTemplate:', elements.thumbnailTemplate);
+        
+        if (!elements.thumbnailContainer || !elements.thumbnailTemplate) {
+            console.error('ENHANCED_GALLERY: Missing required DOM elements for thumbnails');
+            console.error('ENHANCED_GALLERY: thumbnailContainer:', elements.thumbnailContainer);
+            console.error('ENHANCED_GALLERY: thumbnailTemplate:', elements.thumbnailTemplate);
+            return;
+        }
         
         // Clear existing thumbnails
         elements.thumbnailContainer.innerHTML = '';
+        
+        console.debug('ENHANCED_GALLERY: Creating thumbnails for', items.length, 'items');
         
         // Create thumbnails for each item
         items.forEach((item, index) => {
@@ -174,6 +209,8 @@
                 elements.thumbnailContainer.appendChild(thumbnail);
             }
         });
+        
+        console.debug('ENHANCED_GALLERY: Created', elements.thumbnailContainer.children.length, 'thumbnails');
         
         // Mark active thumbnail
         GalleryDOM.markActiveThumbnail(currentIndex);
