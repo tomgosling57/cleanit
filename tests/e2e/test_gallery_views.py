@@ -5,9 +5,8 @@ from tests.helpers import (
     get_first_property_card, 
     open_address_book, 
     open_property_card_gallery,
-    assert_gallery_modal_content,
-    upload_gallery_media,
 )
+from tests.gallery_helpers import upload_gallery_media, assert_gallery_modal_content
 
 
 def jpg_media():
