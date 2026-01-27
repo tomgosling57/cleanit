@@ -83,14 +83,15 @@ def wait_for_gallery_uploads(gallery_modal: Locator, timeout: int = 60_000) -> N
 
 def verify_gallery_thumbnails(gallery_modal: Locator, expected_count: int) -> None:
     """Verifies thumbnail container is visible and has the expected number of thumbnails."""
+    thumbnail_container = gallery_modal.locator("#thumbnail-container")
+    thumbnail_container.wait_for(state="visible", timeout=30_000)
+    
     # Check placeholder image is not shown (image-not-found.png)
     placeholder = gallery_modal.locator("#media-placeholder")
     expect(placeholder).not_to_be_visible()
     expect(placeholder.locator('img[src*="image-not-found.png"]')).not_to_be_visible()
 
     # Checks that the thumbnails are visible
-    thumbnail_container = gallery_modal.locator("#thumbnail-container")
-    thumbnail_container.wait_for(state="visible", timeout=30_000)
     expect(thumbnail_container).to_be_visible()
     expect(thumbnail_container.locator(".thumbnail")).to_have_count(expected_count)
     checkboxes = thumbnail_container.locator(".thumbnail input.media-checkbox")

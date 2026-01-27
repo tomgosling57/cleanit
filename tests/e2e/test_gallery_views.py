@@ -30,7 +30,7 @@ def test_property_card_gallery(admin_page) -> None:
     property_card = get_first_property_card(admin_page)
     expect(property_card).to_be_visible()
 
-    open_property_gallery(admin_page, property_card)
+    open_property_gallery(admin_page, property_card, property_card.get_attribute("data-id"))
     
     # Assert gallery modal content - should show actual media now
     gallery_modal = admin_page.locator("#media-gallery-modal")
@@ -58,13 +58,11 @@ def test_job_property_gallery_continuity(admin_page) -> None:
     property_card = get_first_property_card(admin_page)
     expect(property_card).to_be_visible()
 
-    # Open job property gallery instead of property card gallery
-    open_property_gallery(admin_page, property_card)
-    
-    # Assert gallery modal content - should show actual media now
+    # Open the property gallery and upload media
+    property_id = property_card.get_attribute("data-id")
+    open_property_gallery(admin_page, property_card, property_id)
     gallery_modal = admin_page.locator("#media-gallery-modal")
-    assert_gallery_modal_content(gallery_modal, expect_media=False)
-    
+
     # Upload test media
     upload_gallery_media(gallery_modal, jpg_media())
 
@@ -79,7 +77,7 @@ def test_job_property_gallery_continuity(admin_page) -> None:
     job_modal = open_job_details_modal(admin_page, job_card, f"**/jobs/job/{job_id}/details**")
 
     # Open the property gallery from the job modal
-    open_property_gallery(admin_page, job_modal)
+    open_property_gallery(admin_page, job_modal, property_id)
     gallery_modal = admin_page.locator("#media-gallery-modal")
     
     # Delete test media

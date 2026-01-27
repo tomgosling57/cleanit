@@ -395,10 +395,9 @@ def open_property_details(page: Page, property_card) -> None:
     page.wait_for_load_state('networkidle')
     expect(page.locator("#property-details-modal")).to_be_visible()
 
-def open_property_gallery(page: Page, parent: Locator) -> None:
+def open_property_gallery(page: Page, parent: Locator, property_id) -> None:
     """Open the gallery modal from a property card"""
     parent.locator(".gallery-button").wait_for(state="attached")
-    property_id = parent.get_attribute("data-id")
     with page.expect_response(f"**/address-book/property/{property_id}/media**"):
         page.wait_for_load_state('networkidle')
         parent.locator(".gallery-button").click()
