@@ -6,7 +6,7 @@ from tests.helpers import (
     open_address_book, 
     open_property_card_gallery,
 )
-from tests.gallery_helpers import upload_gallery_media, assert_gallery_modal_content
+from tests.gallery_helpers import delete_all_gallery_media, upload_gallery_media, assert_gallery_modal_content
 
 
 def jpg_media():
@@ -33,3 +33,6 @@ def test_property_card_gallery(admin_page) -> None:
     
     # Upload test media
     upload_gallery_media(gallery_modal, jpg_media())
+
+    # Delete test media
+    delete_all_gallery_media(gallery_modal)
