@@ -118,7 +118,7 @@
                     <span class="icon">{{ svg_icons['pencil-solid-full'] | safe }}</span>Edit
                 </button>
             {% endif %}
-            <button onclick="ENHANCED_GALLERY.open({type: 'job', id: {{ job.id }}})"
+            <button onclick="ENHANCED_GALLERY.open({type: 'property', id: {{ job.property.id }}})"
                 class="button gallery-button">
                  <span class="icon">{{ svg_icons['gallery'] | safe }}</span>Gallery
             </button>
