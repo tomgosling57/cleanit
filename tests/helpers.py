@@ -495,7 +495,12 @@ def upload_gallery_media(gallery_modal: Locator, media_paths: list[str]) -> None
     placeholder = gallery_modal.locator("#media-placeholder")
     expect(placeholder).not_to_be_visible()
     expect(placeholder.locator('img[src*="image-not-found.png"]')).not_to_be_visible()
-    
+
+    # Checks that the thumbnails are visible
+    thumbnail_container = gallery_modal.locator("#thumbnail-container")
+    thumbnail_container.wait_for(state="visible", timeout=30_000)
+    expect(thumbnail_container).to_be_visible()
+    expect(thumbnail_container.locator(".thumbnail")).to_have_count(len(media_paths))    
     next_button = gallery_modal.locator(".next-button")
 
     for i, media_path in enumerate(media_paths):
