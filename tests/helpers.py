@@ -501,6 +501,8 @@ def upload_gallery_media(gallery_modal: Locator, media_paths: list[str]) -> None
     thumbnail_container.wait_for(state="visible", timeout=30_000)
     expect(thumbnail_container).to_be_visible()
     expect(thumbnail_container.locator(".thumbnail")).to_have_count(len(media_paths))    
+    checkboxes = thumbnail_container.locator(".thumbnail input.media-checkbox")
+    expect(checkboxes).to_have_count(len(media_paths))
     next_button = gallery_modal.locator(".next-button")
 
     for i, media_path in enumerate(media_paths):
