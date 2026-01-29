@@ -218,6 +218,27 @@ def pytest_collection_modifyitems(config, items):
         skip_marker = pytest.mark.skip(reason="Docker containers not running")
         for item in items:
             item.add_marker(skip_marker)
+    
+    # Check timezone configuration
+    expected_tz = os.environ.get('APP_TIMEZONE', 'UTC')
+    if expected_tz != 'UTC':
+        # For E2E tests, we should verify the container's timezone matches
+        try:
+            response = get('http://localhost:5000/testing/timezone/check')
+            if response.status_code == 200:
+                data = response.json()
+                container_tz = data.get('container_timezone')
+                
+                if container_tz != expected_tz:
+                    skip_marker = pytest.mark.skip(
+                        reason=f"Timezone mismatch: container is {container_tz}, expected {expected_tz}"
+                    )
+                    for item in items:
+                        item.add_marker(skip_marker)
+        except Exception as e:
+            # If we can't check, log but don't skip
+            print(f"Warning: Could not verify timezone configuration: {e}")
+    
     # Make sure the reseed database endpoint is available
     reason = "Reseed database endpoint not available. Ensure the web container is running and FLASK_ENV is set to 'testing'."
     try:
@@ -229,4 +250,4 @@ def pytest_collection_modifyitems(config, items):
     except Exception as e:
         skip_marker = pytest.mark.skip(reason=reason + f" (Error: {str(e)})")
         for item in items:
-            item.add_marker(skip_marker)
+            item.add_marker(skip_marker)    
