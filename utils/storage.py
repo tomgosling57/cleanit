@@ -5,6 +5,7 @@ from flask import url_for, current_app
 from werkzeug.utils import secure_filename
 from libcloud.storage.types import ObjectDoesNotExistError, ContainerDoesNotExistError
 from libcloud.storage.base import StorageDriver
+from .timezone import utc_now
 
 CHUNK_SIZE = 8192 # 8KB Practical Limit
 
@@ -34,7 +35,7 @@ def upload_flask_file(flask_file, filename=None):
     original_filename = filename or flask_file.filename
     name, ext = os.path.splitext(secure_filename(original_filename))
 
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    timestamp = utc_now().strftime('%Y%m%d_%H%M%S')
     unique_id = str(uuid.uuid4())[:8]
     unique_filename = f"{name}_{timestamp}_{unique_id}{ext}"
 

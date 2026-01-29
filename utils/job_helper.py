@@ -4,8 +4,8 @@ from config import DATETIME_FORMATS
 from services.job_service import JobService
 from services.assignment_service import AssignmentService
 from flask_login import current_user
-
 from services.team_service import TeamService
+from .timezone import today_in_app_tz
 
 
 class JobHelper:
@@ -143,7 +143,7 @@ class JobHelper:
         elif session.get('selected_date'): # Use session date if not none
             date = session['selected_date']
         else: # Else use today's date
-            session['selected_date'] = datetime.today().strftime(DATETIME_FORMATS["DATE_FORMAT"])
+            session['selected_date'] = today_in_app_tz().strftime(DATETIME_FORMATS["DATE_FORMAT"])
             date = session['selected_date']
         
         return date
