@@ -19,11 +19,13 @@
 - **Migration Strategy**: Alembic (planned) or manual schema updates
 
 ### Storage Layer
-- **Cloud Storage**: Amazon S3 via boto3 library
-- **Local Storage**: Filesystem storage for development (currently not in use)
-- **Temporary Storage**: Auto-cleaning temp directories for testing (Use this over local storage)
+- **Cloud Storage**: Amazon S3 via boto3 library (primary for all environments)
+- **Docker Development**: S3/MinIO storage configured via Docker Compose for development
+- **Production Mode**: S3 storage used in all environments (development, testing, production)
+- **Temporary Storage**: Auto-cleaning temp directories for testing only
 - **Abstraction Layer**: Apache Libcloud 3.8.0+ for unified storage interface
 - **File Processing**: Pillow 10.2.0 for image manipulation
+- **Configuration**: Use `set_env.py` script to configure S3/MinIO storage for development
 
 ### Frontend Technologies
 - **Templating**: Jinja2 with template inheritance and fragments
@@ -41,15 +43,15 @@
 - **Storage Testing**: Cross-provider testing for all storage backends
 - **Docker Testing**: Comprehensive Docker-based testing with S3/MinIO and PostgreSQL
 
-#### Docker Testing Configuration
+#### E2E Testing Configuration
 - **Configuration Files**:
-  - `pytest.docker.ini`: Docker-specific pytest configuration with environment variables for S3/MinIO and PostgreSQL
-  - `pytest.ini`: Standard pytest configuration for local testing (excludes Docker tests)
-- **Test Isolation**: Docker tests run in separate directory (`tests/docker/`) with dedicated fixtures
+  - `pytest.e2e.ini`: External E2E test configuration with environment variables for S3/MinIO and PostgreSQL
+  - `pytest.ini`: Standard pytest configuration for local testing (excludes E2E tests)
+- **Test Isolation**: E2E tests run in separate directory (`tests/e2e/`) with dedicated fixtures
 - **Required Services**: PostgreSQL database, MinIO S3 storage, and Flask web application containers
 - **Environment Verification**: Automatic checks for running Docker containers before test execution
-- **Markers**: `@pytest.mark.docker` marker required for all Docker tests
-- **Fixtures**: Comprehensive fixture suite in `tests/docker/conftest.py` for Docker environment setup
+- **Fixtures**: Comprehensive fixture suite in `tests/e2e/conftest.py` for external environment setup
+- **Note**: The older `tests/docker/` directory and `pytest.docker.ini` are deprecated in favor of this external E2E testing approach
 
 ### Development Tools
 - **Python Environment**: python-dotenv 1.0.1 for environment management
@@ -80,6 +82,7 @@
 SECRET_KEY=your-secret-key-here
 DATABASE_URL=postgresql://user:password@localhost/cleanit
 FLASK_ENV=production
+APP_TIMEZONE=UTC                   # Application timezone (IANA identifier)
 
 # Optional - S3 Storage Configuration
 STORAGE_PROVIDER=s3
@@ -97,7 +100,16 @@ S3_VERIFY_SSL=true                 # Verify SSL certificates
 FLASK_ENV=debug
 STORAGE_PROVIDER=local
 UPLOAD_FOLDER=./uploads
+APP_TIMEZONE=Australia/Melbourne   # Local timezone for development
 ```
+
+**Timezone Configuration:**
+- `APP_TIMEZONE`: IANA timezone identifier (e.g., `UTC`, `Australia/Melbourne`, `America/New_York`)
+- **Configuration**: Use `set_env.py` script to set timezone for all environments (development, testing, production)
+- **Default**: `Australia/Melbourne` for local development via `set_env.py` interactive setup
+- **Validation**: Must be valid IANA timezone identifier (checked by `utils/timezone.is_valid_timezone()`)
+- **Testing**: Always `UTC` for test consistency (configured in pytest configuration files)
+- **Universal Handler**: Timezone handling implemented as utility in `utils/timezone.py` with environment variable configuration
 
 **Important for Docker/MinIO Development:**
 When using MinIO in Docker, configure these variables:
@@ -179,6 +191,7 @@ cleanit/
     ├── error_handlers.py   # Global error handling
     ├── storage.py          # Storage abstraction utilities
     ├── media_utils.py      # Media processing utilities
+    ├── timezone.py         # Timezone handling utilities (NEW)
     └── [other utilities].py
 ```
 
@@ -200,6 +213,15 @@ cleanit/
   - Development flexibility with local storage
   - Test isolation with temporary storage
 
+### UTC-First Timezone Architecture
+- **Decision**: Implement UTC-first architecture with IANA timezone identifiers
+- **Rationale**:
+  - Deterministic behavior across all environments (development, testing, production)
+  - Proper handling of daylight savings time via IANA identifiers
+  - Docker-safe: Container timezone independent of host system
+  - Testable: Clear separation between internal UTC and presentation timezone
+  - Configurable: Timezone can be changed via environment variable without code changes
+
 ### Multi-Layer Testing Strategy
 - **Decision**: Combine pytest unit tests with Playwright E2E tests
 - **Rationale**:
@@ -207,6 +229,7 @@ cleanit/
   - Fast feedback with unit tests
   - Confidence with end-to-end workflow testing
   - Support for testing storage across all providers
+  - Timezone consistency validation across application layers
 
 ## Development Workflows
 
@@ -257,14 +280,14 @@ pytest --cov=.
 # Run end-to-end tests
 pytest tests/test_*.py -k "e2e" --headed
 
-# Run Docker tests (requires Docker containers running)
-pytest -c pytest.docker.ini
+# Run external E2E tests (requires Docker containers running)
+pytest -c pytest.e2e.ini
 
-# Run specific Docker test module
-pytest -c pytest.docker.ini tests/docker/test_gallery_views.py
+# Run specific E2E test module
+pytest -c pytest.e2e.ini tests/e2e/test_gallery_views.py
 
-# Run Docker tests with specific marker
-pytest -c pytest.docker.ini -m "docker"
+# Run E2E tests with specific marker
+pytest -c pytest.e2e.ini -m "e2e"
 ```
 
 ### Database Operations
