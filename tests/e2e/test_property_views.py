@@ -43,7 +43,7 @@ def test_create_property(admin_page) -> None:
     # Find the new property card (should be in the list)
     # We'll look for a property card with the test address
     new_property_card = page.locator(f'.property-card:has(h3:has-text("{test_address}"))')
-    expect(new_property_card).to_be_visible()
+    new_property_card.wait_for(state='visible', timeout=5000)
     
     # Assert card content
     assert_property_card_content(new_property_card, test_address, test_access_notes, test_notes)
