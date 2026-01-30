@@ -10,7 +10,7 @@ This module provides centralized timezone handling with the following principles
 
 import zoneinfo
 from datetime import datetime, timezone, timedelta
-from typing import Optional, Union
+from typing import Optional, Union, Tuple, Dict, Any
 from flask import current_app
 
 
@@ -202,3 +202,182 @@ def today_in_app_tz() -> datetime:
 def now_in_app_tz() -> datetime:
     """Get current datetime in application timezone."""
     return to_app_tz(utc_now())
+
+
+# Time comparison utilities for environment synchronization
+def compare_times(time1: datetime, time2: datetime, max_difference_seconds: float = 5.0) -> Dict[str, Any]:
+    """
+    Compare two datetime objects and determine if they're within acceptable difference.
+    
+    Args:
+        time1: First datetime (should be timezone-aware)
+        time2: Second datetime (should be timezone-aware)
+        max_difference_seconds: Maximum allowed difference in seconds
+        
+    Returns:
+        Dict with comparison results including:
+        - difference_seconds: Absolute time difference in seconds
+        - within_threshold: Boolean indicating if difference is within max_difference_seconds
+        - time1_ahead: Boolean indicating if time1 is ahead of time2
+        - time2_ahead: Boolean indicating if time2 is ahead of time1
+        - threshold_seconds: The maximum difference threshold used
+        
+    Example:
+        >>> utc_now1 = utc_now()
+        >>> utc_now2 = utc_now()
+        >>> result = compare_times(utc_now1, utc_now2, 5.0)
+        >>> result['within_threshold']
+        True
+    """
+    # Ensure both datetimes are timezone-aware
+    if time1.tzinfo is None:
+        time1 = time1.replace(tzinfo=timezone.utc)
+    if time2.tzinfo is None:
+        time2 = time2.replace(tzinfo=timezone.utc)
+    
+    # Convert both to UTC for comparison
+    time1_utc = time1.astimezone(timezone.utc)
+    time2_utc = time2.astimezone(timezone.utc)
+    
+    # Calculate difference
+    if time1_utc > time2_utc:
+        difference = time1_utc - time2_utc
+        time1_ahead = True
+        time2_ahead = False
+    else:
+        difference = time2_utc - time1_utc
+        time1_ahead = False
+        time2_ahead = True
+    
+    difference_seconds = difference.total_seconds()
+    within_threshold = difference_seconds <= max_difference_seconds
+    
+    return {
+        'difference_seconds': difference_seconds,
+        'within_threshold': within_threshold,
+        'time1_ahead': time1_ahead,
+        'time2_ahead': time2_ahead,
+        'threshold_seconds': max_difference_seconds,
+        'time1': time1_utc.isoformat(),
+        'time2': time2_utc.isoformat(),
+    }
+
+
+def compare_timezones(tz1: str, tz2: str) -> Dict[str, Any]:
+    """
+    Compare two timezone identifiers and check if they're equivalent.
+    
+    Args:
+        tz1: First IANA timezone identifier
+        tz2: Second IANA timezone identifier
+        
+    Returns:
+        Dict with comparison results including:
+        - tz1_valid: Boolean indicating if tz1 is valid
+        - tz2_valid: Boolean indicating if tz2 is valid
+        - equivalent: Boolean indicating if timezones are equivalent (same identifier)
+        - tz1_offset: Current UTC offset for tz1
+        - tz2_offset: Current UTC offset for tz2
+        - offsets_match: Boolean indicating if current offsets match
+        
+    Example:
+        >>> result = compare_timezones("Australia/Sydney", "Australia/Melbourne")
+        >>> result['equivalent']
+        False
+    """
+    tz1_valid = is_valid_timezone(tz1)
+    tz2_valid = is_valid_timezone(tz2)
+    
+    equivalent = tz1_valid and tz2_valid and tz1 == tz2
+    
+    # Get current offsets
+    tz1_offset = get_timezone_offset(tz1) if tz1_valid else None
+    tz2_offset = get_timezone_offset(tz2) if tz2_valid else None
+    
+    offsets_match = tz1_offset == tz2_offset if (tz1_offset and tz2_offset) else False
+    
+    return {
+        'tz1': tz1,
+        'tz2': tz2,
+        'tz1_valid': tz1_valid,
+        'tz2_valid': tz2_valid,
+        'equivalent': equivalent,
+        'tz1_offset': str(tz1_offset) if tz1_offset else None,
+        'tz2_offset': str(tz2_offset) if tz2_offset else None,
+        'offsets_match': offsets_match,
+    }
+
+
+def compare_environment_times(
+    container_time: datetime,
+    testing_time: datetime,
+    container_tz: str,
+    testing_tz: str,
+    max_time_diff_seconds: float = 5.0
+) -> Dict[str, Any]:
+    """
+    Compare times between container application environment and testing environment.
+    
+    This is the main utility function for the pre-run sanity check to ensure
+    the container and testing environments are synchronized.
+    
+    Args:
+        container_time: Current time in container environment (should be timezone-aware)
+        testing_time: Current time in testing environment (should be timezone-aware)
+        container_tz: Timezone configured in container environment
+        testing_tz: Timezone configured in testing environment
+        max_time_diff_seconds: Maximum allowed time difference in seconds
+        
+    Returns:
+        Dict with comprehensive comparison results including:
+        - time_comparison: Results from compare_times()
+        - timezone_comparison: Results from compare_timezones()
+        - environments_synchronized: Boolean indicating if both time and timezone are synchronized
+        - issues: List of issues found (empty if synchronized)
+        
+    Example:
+        >>> container_now = utc_now()
+        >>> testing_now = utc_now()
+        >>> result = compare_environment_times(container_now, testing_now, "UTC", "UTC", 5.0)
+        >>> result['environments_synchronized']
+        True
+    """
+    # Compare times
+    time_comparison = compare_times(container_time, testing_time, max_time_diff_seconds)
+    
+    # Compare timezones
+    timezone_comparison = compare_timezones(container_tz, testing_tz)
+    
+    # Determine if environments are synchronized
+    time_synchronized = time_comparison['within_threshold']
+    timezone_synchronized = timezone_comparison['equivalent'] or timezone_comparison['offsets_match']
+    
+    environments_synchronized = time_synchronized and timezone_synchronized
+    
+    # Collect issues
+    issues = []
+    
+    if not time_synchronized:
+        diff_seconds = time_comparison['difference_seconds']
+        if time_comparison['time1_ahead']:
+            issues.append(f"Container time is {diff_seconds:.1f} seconds ahead of testing environment")
+        else:
+            issues.append(f"Container time is {diff_seconds:.1f} seconds behind testing environment")
+    
+    if not timezone_comparison['equivalent']:
+        if not timezone_comparison['tz1_valid']:
+            issues.append(f"Container timezone '{container_tz}' is invalid")
+        if not timezone_comparison['tz2_valid']:
+            issues.append(f"Testing timezone '{testing_tz}' is invalid")
+        if timezone_comparison['tz1_valid'] and timezone_comparison['tz2_valid'] and not timezone_comparison['equivalent']:
+            issues.append(f"Timezone mismatch: container uses '{container_tz}', testing uses '{testing_tz}'")
+    
+    return {
+        'time_comparison': time_comparison,
+        'timezone_comparison': timezone_comparison,
+        'environments_synchronized': environments_synchronized,
+        'issues': issues,
+        'container_timezone': container_tz,
+        'testing_timezone': testing_tz,
+        'max_allowed_time_difference_seconds': max_time_diff_seconds,
+    }
