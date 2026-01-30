@@ -5,11 +5,15 @@
 
 **Docker Testing Configuration Enhancement** - Implementation of comprehensive Docker-based testing infrastructure with dedicated configuration files and fixtures for testing with PostgreSQL and S3/MinIO services.
 
+**Job Report Feature Implementation** - Implementation of job report functionality allowing admin and supervisor users to add report text and media gallery when marking jobs as complete, following HTMX design patterns.
+
 ## Key Decisions Made
 1. **Media Controller and Services use Storage Utilities**: Separated the storage abstraction into utilities that are utilized by the media controller and services
-2. **Reusable Media gallery component**: The media gallery component will be used in both the property reference galleries (available from the job details/address book views) as well as the job report (available to team leaders and admins who are marking a job as complete - not implemented yet)
-3. **External Environment For E2E tests**: The end to end tests that are run using playwright (found in tests/e2e) will be executed outside of the docker application environment. They also have their own contest file and fixtures. 
+2. **Reusable Media gallery component**: The media gallery component is used in both the property reference galleries (available from the job details/address book views) as well as the job report (available to team leaders and admins who are marking a job as complete - NOW IMPLEMENTED)
+3. **External Environment For E2E tests**: The end to end tests that are run using playwright (found in tests/e2e) will be executed outside of the docker application environment. They also have their own contest file and fixtures.
 4. **Universal timezone handler**: Timezone handling has been implemented as a utility and is configured as part of the environment variables. For enter end testing and development or production they should be set using the set_env.py script.
+5. **Two-Step Job Completion Flow**: Implemented report entry → media gallery → submit flow instead of immediate completion, preserving existing reports/media when re-marking jobs as pending
+6. **HTMX-Only Frontend Updates**: All job report interactions use HTMX attributes, avoiding custom JavaScript AJAX calls that break HTMX patterns
 
 
 ## Implementation Status
@@ -37,6 +41,15 @@
 - **Configuration**: `APP_TIMEZONE` environment variable configures application timezone
 - **UTC-first approach**: All internal operations use UTC, conversion at presentation layer
 - **Testing**: Timezone validation endpoints in [`routes/testing.py`](routes/testing.py)
+
+### 5. Job Report Feature Implementation
+- **Backend endpoints**: Created `/job/<job_id>/mark_complete`, `/job/<job_id>/submit_report`, `/job/<job_id>/complete_final` in [`routes/jobs.py`](routes/jobs.py)
+- **Controller methods**: Added `mark_job_complete_with_report()`, `submit_job_report()`, `finalize_job_completion()` to [`controllers/jobs_controller.py`](controllers/jobs_controller.py)
+- **Service enhancement**: Added `update_job_report_and_completion()` to [`services/job_service.py`](services/job_service.py)
+- **Frontend templates**: Created [`templates/job_report_modal.html`](templates/job_report_modal.html) and [`templates/components/job_gallery_with_submit.html`](templates/components/job_gallery_with_submit.html)
+- **HTMX integration**: All interactions use proper HTMX attributes with `hx-on--after-request` for modal closing
+- **Role-based access**: Only admin and supervisor users can access job report features
+- **Skip functionality**: "Skip to Gallery" option for jobs with existing reports
 
 ## Current Status
 - **✅ Storage utilities** implemented and integrated with media controller and services
