@@ -69,6 +69,7 @@ class JobController:
         return response_html, 200
 
     def update_job_status(self, job_id):
+        """DEPRECATED: Use mark_job_complete or mark_job_pending instead."""
         if not current_user.is_authenticated or current_user.role not in ['admin', 'supervisor']:
             return jsonify({'error': 'Unauthorized'}), 401
 
@@ -85,6 +86,72 @@ class JobController:
             return response
 
         return self._handle_errors({'Job Not Found': ERRORS['Job Not Found']}, view_type=view_type)
+
+    def mark_job_complete_with_report(self, job_id):
+        """
+        POST /jobs/job/<job_id>/mark_complete - Triggers report entry modal
+        Opens modal for report text entry (first step)
+        """
+        if not current_user.is_authenticated or current_user.role not in ['admin', 'supervisor']:
+            return jsonify({'error': 'Unauthorized'}), 401
+
+        job = self.job_service.get_job_details(job_id)
+        if not job:
+            return self._handle_errors({'Job Not Found': ERRORS['Job Not Found']})
+
+        view_type = request.form.get('view_type') or request.args.get('view_type', 'normal')
+        
+        # Render report entry modal
+        return render_template('job_report_modal.html', job=job, view_type=view_type, DATETIME_FORMATS=DATETIME_FORMATS)
+
+    def submit_job_report(self, job_id):
+        """
+        POST /jobs/job/<job_id>/submit_report - Submits report text and opens gallery
+        Validates non-empty report text, updates job.report, and opens gallery modal
+        """
+        if not current_user.is_authenticated or current_user.role not in ['admin', 'supervisor']:
+            return jsonify({'error': 'Unauthorized'}), 401
+
+        report_text = request.form.get('report_text', '').strip()
+        if not report_text:
+            # Return error response
+            job = self.job_service.get_job_details(job_id)
+            if not job:
+                return self._handle_errors({'Job Not Found': ERRORS['Job Not Found']})
+            
+            view_type = request.form.get('view_type') or request.args.get('view_type', 'normal')
+            return render_template('job_report_modal.html', job=job, view_type=view_type,
+                                  DATETIME_FORMATS=DATETIME_FORMATS, error='Report text is required')
+
+        # Update job with report and mark as complete
+        job = self.job_service.update_job_report_and_completion(job_id, report_text, is_complete=True)
+        if not job:
+            return self._handle_errors({'Job Not Found': ERRORS['Job Not Found']})
+
+        view_type = request.form.get('view_type') or request.args.get('view_type', 'normal')
+        
+        # Render gallery modal with submit button
+        return render_template('components/job_gallery_with_submit.html', job=job, view_type=view_type, DATETIME_FORMATS=DATETIME_FORMATS)
+
+    def mark_job_pending(self, job_id):
+        """
+        POST /jobs/job/<job_id>/mark_pending - Marks job as pending
+        Sets job.is_complete = False (report and media remain associated)
+        """
+        if not current_user.is_authenticated or current_user.role not in ['admin', 'supervisor']:
+            return jsonify({'error': 'Unauthorized'}), 401
+
+        job = self.job_service.update_job_completion_status(job_id, is_complete=False)
+        
+        if job:
+            # Accessing job.property to eagerly load it before the session is torn down
+            # This prevents DetachedInstanceError when rendering the template
+            _ = job.property.address
+            view_type = request.form.get('view_type') or request.args.get('view_type', 'normal')
+            response = render_template_string('{% include "job_status_fragment.html" %} {% include "job_card.html" %}', job=job, is_oob_swap=True, view_type=view_type, DATETIME_FORMATS=DATETIME_FORMATS)
+            return response
+
+        return self._handle_errors({'Job Not Found': ERRORS['Job Not Found']})
 
 
     def get_job_details(self, job_id):
