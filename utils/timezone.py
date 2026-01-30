@@ -6,12 +6,14 @@ This module provides centralized timezone handling with the following principles
 2. Conversion to/from application timezone happens only at presentation layer
 3. Uses IANA timezone identifiers (e.g., 'Australia/Melbourne', 'UTC')
 4. Provides helper functions to avoid direct datetime.now() calls
+5. Does not depend on Flask application context - can be used in tests and scripts
 """
 
+import os
 import zoneinfo
 from datetime import datetime, timezone, timedelta
 from typing import Optional, Union, Tuple, Dict, Any
-from flask import current_app
+import warnings
 
 
 def get_app_timezone() -> zoneinfo.ZoneInfo:
@@ -24,12 +26,13 @@ def get_app_timezone() -> zoneinfo.ZoneInfo:
     Raises:
         zoneinfo.ZoneInfoNotFoundError: If the configured timezone is invalid
     """
-    tz_name = current_app.config.get('APP_TIMEZONE', 'UTC')
+    # Read directly from environment variable to avoid Flask context dependency
+    tz_name = os.getenv('APP_TIMEZONE', 'UTC')
     try:
         return zoneinfo.ZoneInfo(tz_name)
     except zoneinfo.ZoneInfoNotFoundError:
         # Fall back to UTC if configured timezone is invalid
-        current_app.logger.warning(f"Invalid timezone '{tz_name}' configured, falling back to UTC")
+        warnings.warn(f"Invalid timezone '{tz_name}' configured, falling back to UTC", RuntimeWarning)
         return zoneinfo.ZoneInfo('UTC')
 
 
