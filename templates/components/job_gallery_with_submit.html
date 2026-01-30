@@ -25,9 +25,13 @@
     
     <div class="gallery-submit-actions">
         <button class="button primary-button"
-                onclick="submitJobCompletion({{ job.id }}, '{{ view_type }}')"
+                hx-post="{{ url_for('job.finalize_job_completion', job_id=job.id) }}"
+                hx-target="#job-{{ job.id }}"
+                hx-swap="outerHTML"
+                hx-vals='{"view_type": "{{ view_type }}"}'
+                hx-on--after-request="if(event.detail.successful) { document.getElementById('job-modal').style.display='none'; }"
                 id="gallery-submit-button">
-            <img src="{{ url_for('static', filename='icons/check-solid-full.svg') }}" alt="Submit" class="icon"> Submit & Complete Job
+            <span class="icon" alt="Checkmark">{{ svg_icons['check-solid-full'] | safe }}</span> Submit & Complete Job
         </button>
         <button type="button" class="button cancel-button"
                 onclick="document.getElementById('job-modal').style.display='none'">
@@ -35,57 +39,6 @@
         </button>
     </div>
 </div>
-
-<script>
-// Initialize the enhanced gallery for this job
-document.addEventListener('DOMContentLoaded', function() {
-    // Open the gallery for this job
-    ENHANCED_GALLERY.open({type: 'job', id: {{ job.id }}});
-    
-    // Add custom styling for the submit button in gallery footer
-    const galleryFooter = document.querySelector('.gallery-footer');
-    if (galleryFooter) {
-        const submitButton = document.createElement('button');
-        submitButton.className = 'button primary-button gallery-submit-footer';
-        submitButton.innerHTML = '<img src="{{ url_for(\"static\", filename=\"icons/check-solid-full.svg\") }}" alt="Submit" class="icon"> Submit';
-        submitButton.onclick = function() {
-            submitJobCompletion({{ job.id }}, '{{ view_type }}');
-        };
-        galleryFooter.querySelector('.gallery-actions').appendChild(submitButton);
-    }
-});
-
-function submitJobCompletion(jobId, viewType) {
-    // Close the gallery modal
-    ENHANCED_GALLERY.close();
-    
-    // Close the job modal
-    document.getElementById('job-modal').style.display = 'none';
-    
-    // Trigger HTMX request to update the job card
-    const jobCard = document.getElementById('job-' + jobId);
-    if (jobCard) {
-        // Use HTMX to trigger a re-render of the job card
-        htmx.ajax('POST', '/jobs/job/' + jobId + '/mark_complete?view_type=' + viewType, {
-            target: '#job-' + jobId,
-            swap: 'outerHTML'
-        });
-    } else {
-        // Fallback: reload the job list
-        if (viewType === 'team') {
-            htmx.ajax('GET', '/jobs/teams/?date=' + new Date().toISOString().split('T')[0], {
-                target: '#team-columns-container',
-                swap: 'innerHTML'
-            });
-        } else {
-            htmx.ajax('GET', '/jobs/?date=' + new Date().toISOString().split('T')[0], {
-                target: '#job-list',
-                swap: 'innerHTML'
-            });
-        }
-    }
-}
-</script>
 
 <style>
 .job-gallery-wrapper {

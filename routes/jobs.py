@@ -78,6 +78,13 @@ def mark_job_pending(job_id):
     controller = get_job_controller()
     return controller.mark_job_pending(job_id)
 
+@job_bp.route('/job/<int:job_id>/complete_final', methods=['POST'])
+@login_required
+def finalize_job_completion(job_id):
+    """POST /jobs/job/<job_id>/complete_final - Finalizes job completion after gallery"""
+    controller = get_job_controller()
+    return controller.finalize_job_completion(job_id)
+
 @job_bp.route('/job/<int:job_id>/update', methods=['GET', 'PUT'])
 @login_required
 def update_job(job_id):

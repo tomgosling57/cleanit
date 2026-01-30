@@ -108,12 +108,28 @@ class JobController:
         """
         POST /jobs/job/<job_id>/submit_report - Submits report text and opens gallery
         Validates non-empty report text, updates job.report, and opens gallery modal
+        Supports skip_gallery parameter to bypass report entry when job already has report
         """
         if not current_user.is_authenticated or current_user.role not in ['admin', 'supervisor']:
             return jsonify({'error': 'Unauthorized'}), 401
 
+        # Check if skip_gallery parameter is present (from hx-vals or form)
+        skip_gallery = request.form.get('skip_gallery', '').lower() == 'true'
+        
+        # Get report text from form
         report_text = request.form.get('report_text', '').strip()
-        if not report_text:
+        
+        # If skip_gallery is true but no report_text provided, try to get existing report
+        if skip_gallery and not report_text:
+            job = self.job_service.get_job_details(job_id)
+            if job and job.report:
+                report_text = job.report
+            else:
+                # No existing report, cannot skip gallery
+                skip_gallery = False
+        
+        # Validate report text (unless skipping gallery with existing report)
+        if not report_text and not skip_gallery:
             # Return error response
             job = self.job_service.get_job_details(job_id)
             if not job:
@@ -152,6 +168,34 @@ class JobController:
             return response
 
         return self._handle_errors({'Job Not Found': ERRORS['Job Not Found']})
+
+    def finalize_job_completion(self, job_id):
+        """
+        POST /jobs/job/<job_id>/complete_final - Finalizes job completion after gallery
+        Job is already marked complete with report, this just closes modal and updates UI
+        """
+        if not current_user.is_authenticated or current_user.role not in ['admin', 'supervisor']:
+            return jsonify({'error': 'Unauthorized'}), 401
+
+        # Get the job to ensure it exists and is complete
+        job = self.job_service.get_job_details(job_id)
+        if not job:
+            return self._handle_errors({'Job Not Found': ERRORS['Job Not Found']})
+        
+        # Job should already be complete from the report step, but ensure it is
+        if not job.is_complete:
+            job = self.job_service.update_job_completion_status(job_id, is_complete=True)
+            if not job:
+                return self._handle_errors({'Job Not Found': ERRORS['Job Not Found']})
+
+        # Accessing job.property to eagerly load it before the session is torn down
+        # This prevents DetachedInstanceError when rendering the template
+        _ = job.property.address
+        view_type = request.form.get('view_type') or request.args.get('view_type', 'normal')
+        
+        # Return updated job card and status fragment to refresh UI
+        response = render_template_string('{% include "job_status_fragment.html" %} {% include "job_card.html" %}', job=job, is_oob_swap=True, view_type=view_type, DATETIME_FORMATS=DATETIME_FORMATS)
+        return response
 
 
     def get_job_details(self, job_id):
