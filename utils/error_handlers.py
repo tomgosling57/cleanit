@@ -9,6 +9,7 @@ from flask import current_app, request, Response, jsonify, render_template, send
 from flask_wtf.csrf import CSRFError
 from services.media_service import MediaNotFound
 from config import DATETIME_FORMATS
+from .timezone import format_in_app_tz, utc_now
 
 
 def register_media_error_handlers(app):
@@ -130,7 +131,7 @@ def register_general_error_handlers(app, login_manager):
         # UI response - render dedicated 404 page for authenticated users
         return render_template('not_found.html',
                                debug=app.debug,
-                               now=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                               now=format_in_app_tz(utc_now(), "%Y-%m-%d %H:%M:%S"),
                                suggestion="Check the URL for typos or navigate using the links above.",
                                DATETIME_FORMATS=DATETIME_FORMATS), 404
     

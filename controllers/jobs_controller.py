@@ -10,6 +10,7 @@ from services.media_service import MediaService
 from datetime import date, datetime
 from collections import defaultdict
 from utils.job_helper import JobHelper
+from utils.timezone import today_in_app_tz
 
 ERRORS = {'Job Not Found': 'Something went wrong! That job no longer exists.',
           'Missing Reassignment Details': "Missing job_id or new_team_id"}
@@ -98,7 +99,7 @@ class JobController:
             cleaners = self.assignment_service.get_users_for_job(job_id)
             teams = self.assignment_service.get_teams_for_job(job_id)
 
-            selected_date = session.get('selected_date', datetime.today().date())
+            selected_date = session.get('selected_date', today_in_app_tz())
             view_type = request.args.get('view_type', 'normal')
             return render_template('job_details_modal.html', job=job, job_cleaners=cleaners, job_teams=teams, DATETIME_FORMATS=DATETIME_FORMATS, selected_date=selected_date, view_type=view_type)
 
@@ -112,9 +113,9 @@ class JobController:
         teams = self.team_service.get_all_teams()
         properties = self.property_service.get_all_properties()
         
-        selected_date_obj = session.get('selected_date', datetime.today().date())
+        selected_date_obj = session.get('selected_date', today_in_app_tz())
         
-        return render_template('job_creation_modal.html', users=users, teams=teams, properties=properties, DATETIME_FORMATS=DATETIME_FORMATS, today=datetime.today(), selected_date=selected_date_obj)
+        return render_template('job_creation_modal.html', users=users, teams=teams, properties=properties, DATETIME_FORMATS=DATETIME_FORMATS, today=today_in_app_tz(), selected_date=selected_date_obj)
             
     def timetable(self, date: str = None):
         date = self.job_helper.process_selected_date(date)
@@ -284,7 +285,7 @@ class JobController:
         job_teams = self.assignment_service.get_teams_for_job(job_id)
         properties = self.property_service.get_all_properties()
         if job:
-            selected_date = session.get('selected_date', datetime.today().date())
+            selected_date = session.get('selected_date', today_in_app_tz())
             return render_template('job_update_modal.html', job=job, users=users, job_cleaners=job_users, properties=properties, teams=teams, job_teams=job_teams, DATETIME_FORMATS=DATETIME_FORMATS, selected_date=selected_date)
         return self._handle_errors({'Job Not Found': ERRORS['Job Not Found']})
 

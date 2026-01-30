@@ -113,10 +113,11 @@ Job (many) ──── (1) Property                    │
 ## Storage Architecture Patterns
 
 ### Cloud-First Storage Strategy
-1. **Primary Storage**: S3 for production environments
-2. **Fallback Storage**: Local filesystem for development
-3. **Test Storage**: Temporary directories that auto-clean
+1. **Primary Storage**: S3 for all environments (production, development, testing)
+2. **Docker Development**: S3/MinIO storage configured via Docker Compose for development
+3. **Test Storage**: Temporary directories that auto-clean (for testing only)
 4. **Unified Interface**: Libcloud abstraction layer
+5. **Configuration**: Use `set_env.py` script to configure S3/MinIO storage
 
 ### Media Management Patterns
 - **Single Service Responsibility**: Media Service handles both storage AND collection management
@@ -172,6 +173,54 @@ Client → Media Controller → Media Service → Storage
 - **Form Handling**: Enhanced form submission with validation feedback
 - **Modal Management**: Dynamic modal content loading
 
+## Timezone Handling Patterns
+
+### UTC-First Architecture Pattern
+**Core Principle**: All internal operations use UTC, conversion happens only at presentation layer
+
+#### Implementation Pattern
+1. **Database Storage**: All timestamps stored as UTC in database
+2. **Business Logic**: All datetime comparisons and calculations use UTC
+3. **Presentation Layer**: Convert to configured application timezone only for display
+4. **Input Processing**: Parse user input in application timezone, convert to UTC immediately
+
+#### Key Components
+- **Centralized Timezone Utilities**: `utils/timezone.py` provides all datetime operations
+- **Environment Configuration**: `APP_TIMEZONE` environment variable configures presentation timezone
+- **IANA Timezone Identifiers**: Use proper identifiers (e.g., `Australia/Melbourne`) not fixed offsets
+- **Validation**: Pre-run sanity checks ensure timezone consistency across environments
+
+#### Helper Functions Pattern
+```python
+# Always use these instead of direct datetime calls
+from utils.timezone import utc_now, to_app_tz, from_app_tz, format_in_app_tz
+
+# Get current UTC time (timezone-aware)
+now = utc_now()
+
+# Convert to application timezone for display
+local_time = to_app_tz(now)
+
+# Format in application timezone
+formatted = format_in_app_tz(now, "%Y-%m-%d %H:%M")
+
+# Parse user input and convert to UTC
+utc_time = parse_to_utc(user_input, "%Y-%m-%d %H:%M", source_tz="Australia/Melbourne")
+```
+
+#### Testing Pattern
+- **Internal Tests**: Use UTC for all internal assertions
+- **Presentation Tests**: Explicitly convert to application timezone for display assertions
+- **Pre-run Validation**: Check `APP_TIMEZONE` environment variable matches expected value
+- **Docker Consistency**: Verify container timezone matches application configuration
+
+### Benefits
+- ✅ **Deterministic**: UTC ensures consistent behavior across environments
+- ✅ **DST-safe**: IANA identifiers handle daylight savings time correctly
+- ✅ **Docker-safe**: Container timezone independent of host system
+- ✅ **Testable**: Clear separation between internal UTC and presentation timezone
+- ✅ **Configurable**: Timezone can be changed via environment variable
+
 ## Testing Patterns
 
 ### Multi-Layer Testing Strategy
@@ -180,24 +229,27 @@ Client → Media Controller → Media Service → Storage
 3. **End-to-End Tests**: Playwright for full user workflow testing
 4. **Storage Tests**: Cross-provider storage functionality verification
 5. **Docker Integration Tests**: Comprehensive testing with actual Docker services (PostgreSQL, MinIO S3, Flask app)
+6. **Timezone Consistency Tests**: Verify UTC-first architecture and timezone conversion correctness
 
 ### Test Isolation Patterns
 - **Test Database**: Separate database instance for testing
 - **Temporary Storage**: Auto-cleaning storage for file operations
 - **Mock External Services**: Isolate tests from external dependencies
 - **Fixture Management**: Reusable test data setup
+- **Timezone Configuration**: Consistent `APP_TIMEZONE=UTC` for all tests
 
-### Docker Testing Patterns
-**Comprehensive Docker-based integration testing**
-- **Separate Configuration**: `pytest.docker.ini` for Docker-specific test configuration with environment variables for S3/MinIO and PostgreSQL
-- **Dedicated Fixtures**: `tests/docker/conftest.py` provides Docker-specific fixtures for app configuration, test clients, and browser automation
+### E2E Testing Patterns
+**Comprehensive external E2E testing**
+- **Separate Configuration**: `pytest.e2e.ini` for external E2E test configuration with environment variables for S3/MinIO and PostgreSQL
+- **Dedicated Fixtures**: `tests/e2e/conftest.py` provides external environment fixtures for app configuration, test clients, and browser automation
 - **Service Verification**: Automatic checks for running Docker containers (PostgreSQL, MinIO, web) before test execution
-- **Test Markers**: `@pytest.mark.docker` marker required for all Docker tests to prevent accidental execution
-- **Environment Isolation**: Docker tests run in separate directory (`tests/docker/`) with dedicated configuration
+- **Environment Isolation**: E2E tests run in separate directory (`tests/e2e/`) with dedicated configuration, executed outside of the Docker application environment
 - **Real Service Testing**: Tests interact with actual S3/MinIO storage and PostgreSQL database instead of mocks
-- **Browser Automation**: Playwright fixtures configured for Docker environment with proper networking and authentication
+- **Browser Automation**: Playwright fixtures configured for external environment with proper networking and authentication
 - **Database Cleanup**: Automatic rollback of database changes and media cleanup after each test
-- **Configuration Profiles**: Different app configurations for Docker testing (production, debug, testing modes with S3 storage)
+- **Configuration Profiles**: Different app configurations for external testing (production, debug, testing modes with S3 storage)
+- **Timezone Validation**: Pre-run checks verify environment timezone matches application configuration
+- **Note**: The older `tests/docker/` directory and `pytest.docker.ini` are deprecated in favor of this external E2E testing approach
 
 ## Error Handling Patterns
 

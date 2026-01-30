@@ -93,6 +93,14 @@ ENV_VARS = [
         "validation": lambda x: x in ["production", "debug", "testing"],
         "validation_msg": "FLASK_ENV must be one of: production, debug, testing",
     },
+    {
+        "name": "APP_TIMEZONE",
+        "default": "UTC",
+        "random": False,
+        "required": True,
+        "validation": lambda x: len(x) > 0,
+        "validation_msg": "Timezone cannot be empty (use IANA identifier like 'UTC', 'Australia/Melbourne')",
+    },
 ]
 
 

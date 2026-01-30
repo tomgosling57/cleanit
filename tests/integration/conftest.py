@@ -78,6 +78,11 @@ def app(request, test_db_path):
     no_csrf = request.node.get_closest_marker("no_csrf") is not None
 
     os.environ['FLASK_ENV'] = 'testing'  # Ensure testing config is used
+    
+    # Ensure APP_TIMEZONE is set for tests
+    if 'APP_TIMEZONE' not in os.environ:
+        os.environ['APP_TIMEZONE'] = 'UTC'
+    
     test_config = {
         'WTF_CSRF_ENABLED': not no_csrf,  # Disable CSRF only for marked tests
     }

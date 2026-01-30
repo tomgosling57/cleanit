@@ -28,24 +28,34 @@
 - **Testing**: Created comprehensive test `test_gallery_display_with_fixed_url_generation()` in `tests/test_docker_gallery_s3_features.py`
 - **Verification**: All tests passing, gallery images display correctly with public URLs like `http://localhost:9000/cleanit-media/{filename}`
 
-### ✅ Docker Testing Configuration (NEW)
-- **Configuration Files**: Implemented `pytest.docker.ini` for Docker-specific testing with dedicated environment variables for S3/MinIO and PostgreSQL
-- **Test Isolation**: Docker tests run in separate `tests/docker/` directory with dedicated fixtures
-- **Fixture Architecture**: Comprehensive fixture suite in `tests/docker/conftest.py` including:
-  - `docker_app`: Flask app configured for Docker S3/MinIO storage and PostgreSQL
-  - `docker_admin_client`, `docker_regular_client`: Authenticated test clients
-  - `docker_playwright_browser`, `docker_page`: Playwright fixtures for browser automation
-  - `docker_admin_page`, `docker_supervisor_page`, `docker_user_page`: Pre-authenticated browser pages
-  - `docker_rollback_db_after_test`: Database cleanup and re-seeding fixture
+### ✅ E2E Testing Configuration (NEW)
+- **Configuration Files**: Implemented `pytest.e2e.ini` for external E2E testing with dedicated environment variables for S3/MinIO and PostgreSQL
+- **Test Isolation**: E2E tests run in separate `tests/e2e/` directory with dedicated fixtures, executed outside of the Docker application environment
+- **Fixture Architecture**: Comprehensive fixture suite in `tests/e2e/conftest.py` including:
+  - `app`: Flask app configured for external S3/MinIO storage and PostgreSQL
+  - `admin_client`, `regular_client`: Authenticated test clients
+  - `playwright_browser`, `page`: Playwright fixtures for browser automation
+  - `admin_page`, `supervisor_page`, `user_page`: Pre-authenticated browser pages
+  - `rollback_db_after_test`: Database cleanup and re-seeding fixture using testing endpoints
 - **Service Verification**: Automatic checks for running Docker containers (PostgreSQL, MinIO, web) before test execution
-- **Test Execution**: Dedicated command `pytest -c pytest.docker.ini` for running Docker tests
-- **Documentation**: Updated memory bank with Docker testing configuration details in techContext.md, systemPatterns.md, and activeContext.md
+- **Test Execution**: Dedicated command `pytest -c pytest.e2e.ini` for running external E2E tests
+- **Documentation**: Updated memory bank with E2E testing configuration details in techContext.md, systemPatterns.md, and activeContext.md
+- **Note**: The older `tests/docker/` directory and `pytest.docker.ini` are deprecated in favor of this external E2E testing approach
 
-### ✅ Planning Completed
-- **Comprehensive Media Refactoring Plan**: Created detailed plan in `plans/media_refactoring_final_comprehensive_plan.md`
-- **Architecture Analysis**: Identified scope violations and solution approach
-- **API Design**: Designed batch upload/delete endpoints and response formats
-- **Implementation Roadmap**: 5-phase plan with clear milestones
+### ✅ Robust Timezone Handling Implementation (NEW)
+- **UTC-first Architecture**: All internal operations use UTC, conversion happens only at presentation layer
+- **IANA Timezone Identifiers**: Using identifiers like `Australia/Melbourne`, `America/New_York` instead of fixed offsets
+- **Centralized Utilities**: Created comprehensive `utils/timezone.py` module with helper functions:
+  - `utc_now()`, `to_app_tz()`, `from_app_tz()`, `format_in_app_tz()`, `today_in_app_tz()`
+- **Configuration**: Added `APP_TIMEZONE` environment variable support to `config.py` and `set_env.py`
+- **Testing Endpoints**: Added `/testing/timezone/check` and `/testing/timezone/validate` endpoints for validation
+- **Codebase Updates**: Updated all datetime usage to use UTC helpers:
+  - `utils/error_handlers.py`, `utils/storage.py`, `utils/job_helper.py`
+  - `controllers/jobs_controller.py`, `tests/helpers.py`, `tests/e2e/test_job_views.py`
+- **Testing Configuration**: Updated all pytest config files (`pytest.ini`, `pytest.docker.ini`, `pytest.e2e.ini`) with `APP_TIMEZONE=UTC`
+- **Pre-run Sanity Checks**: Added timezone validation to `tests/e2e/conftest.py` and `tests/integration/conftest.py`
+- **Validation**: Created comprehensive test script `test_timezone_validation.py` that verifies all components work correctly
+- **Benefits**: Deterministic, DST-safe, Docker-safe, testable, and configurable timezone handling
 
 ### ✅ Media Refactoring Implementation (COMPLETED)
 - **Phase 1: Media Service Enhancement**: ✅ COMPLETED

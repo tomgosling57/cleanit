@@ -438,6 +438,63 @@ def create_initial_properties_and_jobs(session, admin, user, initial_team, alpha
     print("Initial jobs created and assigned for deterministic testing.")
     return property1, property_alpha
 
+def _fix_postgres_sequences(session):
+    """
+    Fix PostgreSQL sequences after inserting data with explicit IDs.
+    This ensures that the next auto-generated ID will be higher than any existing ID.
+    
+    Args:
+        session: SQLAlchemy session
+    """
+    from sqlalchemy import text
+    
+    # Check if we're using PostgreSQL by looking at the bind's dialect
+    bind = session.bind
+    if bind is None:
+        return
+    
+    dialect_name = bind.dialect.name
+    if dialect_name != 'postgresql':
+        return  # Only needed for PostgreSQL
+    
+    print("Fixing PostgreSQL sequences after inserting data with explicit IDs...")
+    
+    # List of tables and their primary key columns
+    tables = [
+        ('users', 'id'),
+        ('teams', 'id'),
+        ('properties', 'id'),
+        ('jobs', 'id'),
+        ('assignments', 'id'),
+        ('media', 'id'),
+        ('property_media', 'id'),
+        ('job_media', 'id'),
+    ]
+    
+    for table_name, id_column in tables:
+        try:
+            # Get the maximum ID in the table
+            max_id_result = session.execute(
+                text(f'SELECT COALESCE(MAX({id_column}), 0) FROM {table_name}')
+            ).scalar()
+            max_id = max_id_result or 0
+            
+            if max_id > 0:
+                # Fix the sequence
+                sequence_name = f'{table_name}_{id_column}_seq'
+                session.execute(
+                    text(f"SELECT setval('{sequence_name}', :max_id, true)"),
+                    {'max_id': max_id}
+                )
+                print(f"  Fixed sequence for {table_name}.{id_column}: set to {max_id}")
+            else:
+                print(f"  No data in {table_name}, skipping sequence fix")
+        except Exception as e:
+            print(f"  Warning: Could not fix sequence for {table_name}.{id_column}: {e}")
+    
+    session.commit()
+
+
 def insert_dummy_data(Session):
     """
     Populates the database with a consistent set of deterministic test data.
@@ -549,5 +606,8 @@ def insert_dummy_data(Session):
     # Delta Team job
     _create_job(session, today, time(15, 0), time(17, 0), 'Delta Team Job: Driveway pressure wash.', property1, team_obj=delta_team, job_id=7)
     print("Initial jobs created and assigned for deterministic testing.")
+    
+    # Fix PostgreSQL sequences if needed
+    _fix_postgres_sequences(session)
     
     session.close()

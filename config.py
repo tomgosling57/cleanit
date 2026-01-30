@@ -13,6 +13,26 @@ DATETIME_FORMATS = {
     "TIME_FORMAT_FLATPICKR": "H:i"
 }
 
+# Common IANA timezone identifiers for validation
+COMMON_TIMEZONES = [
+    "UTC",
+    "Australia/Sydney",
+    "Australia/Melbourne",
+    "Australia/Brisbane",
+    "Australia/Adelaide",
+    "Australia/Perth",
+    "America/New_York",
+    "America/Chicago",
+    "America/Denver",
+    "America/Los_Angeles",
+    "Europe/London",
+    "Europe/Paris",
+    "Europe/Berlin",
+    "Asia/Tokyo",
+    "Asia/Singapore",
+    "Asia/Hong_Kong",
+]
+
 class Config:
     """
     Base configuration class for CleanIt application.
@@ -46,6 +66,10 @@ class Config:
     # Environment detection - used to determine runtime configuration
     # Valid values: 'production', 'debug', 'testing'
     ENV = os.getenv('FLASK_ENV', 'production')
+    
+    # Timezone configuration
+    # Use IANA timezone identifier (e.g., 'Australia/Melbourne', 'UTC')
+    APP_TIMEZONE = os.getenv('APP_TIMEZONE', 'UTC')
 
 class DebugConfig(Config):
     """
