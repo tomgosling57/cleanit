@@ -53,8 +53,30 @@ def team_timetable():
 
 @job_bp.route('/job/<int:job_id>/update_status', methods=['POST'])
 def update_job_status(job_id):
+    """DEPRECATED: Use mark_job_complete or mark_job_pending instead."""
     controller = get_job_controller()
     return controller.update_job_status(job_id)
+
+@job_bp.route('/job/<int:job_id>/mark_complete', methods=['POST'])
+@login_required
+def mark_job_complete(job_id):
+    """POST /jobs/job/<job_id>/mark_complete - Triggers report entry modal"""
+    controller = get_job_controller()
+    return controller.mark_job_complete_with_report(job_id)
+
+@job_bp.route('/job/<int:job_id>/submit_report', methods=['POST'])
+@login_required
+def submit_job_report(job_id):
+    """POST /jobs/job/<job_id>/submit_report - Submits report text and opens gallery"""
+    controller = get_job_controller()
+    return controller.submit_job_report(job_id)
+
+@job_bp.route('/job/<int:job_id>/mark_pending', methods=['POST'])
+@login_required
+def mark_job_pending(job_id):
+    """POST /jobs/job/<job_id>/mark_pending - Marks job as pending"""
+    controller = get_job_controller()
+    return controller.mark_job_pending(job_id)
 
 @job_bp.route('/job/<int:job_id>/update', methods=['GET', 'PUT'])
 @login_required
