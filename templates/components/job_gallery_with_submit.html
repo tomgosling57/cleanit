@@ -1,0 +1,147 @@
+<!-- Job Gallery with Submit Button -->
+<div class="job-gallery-wrapper">
+    <h2>Job Completion - Add Media</h2>
+    <p class="modal-subtitle">Job #{{ job.id }} - {{ job.property.address }}</p>
+    
+    <div class="gallery-instructions">
+        <div class="instructions-card">
+            <div class="card-header">
+                <span class="card-icon"><img src="{{ url_for('static', filename='icons/gallery.svg') }}" alt="Gallery" class="icon"></span>
+                <span class="card-title">Media Gallery</span>
+            </div>
+            <div class="instructions-content">
+                <p><strong>Report submitted successfully.</strong> You can now add media to document the completed job.</p>
+                <ul>
+                    <li>Click <strong>"Upload Files"</strong> to add photos/videos</li>
+                    <li>Use <strong>"Edit Mode"</strong> to select and delete media</li>
+                    <li>Click <strong>"Submit"</strong> when finished to complete the job</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Include the existing gallery modal -->
+    {% include 'components/media_gallery_modal.html' %}
+    
+    <div class="gallery-submit-actions">
+        <button class="button primary-button"
+                onclick="submitJobCompletion({{ job.id }}, '{{ view_type }}')"
+                id="gallery-submit-button">
+            <img src="{{ url_for('static', filename='icons/check-solid-full.svg') }}" alt="Submit" class="icon"> Submit & Complete Job
+        </button>
+        <button type="button" class="button cancel-button"
+                onclick="document.getElementById('job-modal').style.display='none'">
+            Cancel
+        </button>
+    </div>
+</div>
+
+<script>
+// Initialize the enhanced gallery for this job
+document.addEventListener('DOMContentLoaded', function() {
+    // Open the gallery for this job
+    ENHANCED_GALLERY.open({type: 'job', id: {{ job.id }}});
+    
+    // Add custom styling for the submit button in gallery footer
+    const galleryFooter = document.querySelector('.gallery-footer');
+    if (galleryFooter) {
+        const submitButton = document.createElement('button');
+        submitButton.className = 'button primary-button gallery-submit-footer';
+        submitButton.innerHTML = '<img src="{{ url_for(\"static\", filename=\"icons/check-solid-full.svg\") }}" alt="Submit" class="icon"> Submit';
+        submitButton.onclick = function() {
+            submitJobCompletion({{ job.id }}, '{{ view_type }}');
+        };
+        galleryFooter.querySelector('.gallery-actions').appendChild(submitButton);
+    }
+});
+
+function submitJobCompletion(jobId, viewType) {
+    // Close the gallery modal
+    ENHANCED_GALLERY.close();
+    
+    // Close the job modal
+    document.getElementById('job-modal').style.display = 'none';
+    
+    // Trigger HTMX request to update the job card
+    const jobCard = document.getElementById('job-' + jobId);
+    if (jobCard) {
+        // Use HTMX to trigger a re-render of the job card
+        htmx.ajax('POST', '/jobs/job/' + jobId + '/mark_complete?view_type=' + viewType, {
+            target: '#job-' + jobId,
+            swap: 'outerHTML'
+        });
+    } else {
+        // Fallback: reload the job list
+        if (viewType === 'team') {
+            htmx.ajax('GET', '/jobs/teams/?date=' + new Date().toISOString().split('T')[0], {
+                target: '#team-columns-container',
+                swap: 'innerHTML'
+            });
+        } else {
+            htmx.ajax('GET', '/jobs/?date=' + new Date().toISOString().split('T')[0], {
+                target: '#job-list',
+                swap: 'innerHTML'
+            });
+        }
+    }
+}
+</script>
+
+<style>
+.job-gallery-wrapper {
+    padding: 20px;
+}
+
+.gallery-instructions {
+    margin-bottom: 20px;
+}
+
+.instructions-card {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 15px;
+    border-left: 4px solid #007bff;
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.card-icon {
+    margin-right: 10px;
+}
+
+.card-icon .icon {
+    width: 20px;
+    height: 20px;
+}
+
+.card-title {
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.instructions-content ul {
+    margin: 10px 0;
+    padding-left: 20px;
+}
+
+.instructions-content li {
+    margin-bottom: 5px;
+}
+
+.gallery-submit-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #dee2e6;
+}
+
+.gallery-submit-footer {
+    margin-left: 10px;
+}
+</style>
