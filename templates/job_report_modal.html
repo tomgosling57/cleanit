@@ -1,27 +1,25 @@
-<form id="job-report-form" 
+<form id="job-report-form"
       hx-post="{{ url_for('job.submit_job_report', job_id=job.id) }}"
       hx-target="#job-modal-content"
-      hx-swap="innerHTML"
-      hx-on--after-request="if(event.detail.successful) { handleReportSubmitted({{ job.id }}); }">
+      hx-swap="innerHTML">
    <h2>Complete Job Report</h2>
    <p class="modal-subtitle">Job #{{ job.id }} - {{ job.property.address }}</p>
-   
+    
    {% include '_form_response.html' %}
    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
    <input type="hidden" name="view_type" value="{{ view_type }}">
-   <input type="hidden" name="is_complete" value="True">
-   
+    
    <div class="job-report-compact">
-        <!-- Step 1: Report Text Entry -->
-        <div class="form-group">
+         <!-- Step 1: Report Text Entry -->
+         <div class="form-group">
             <div class="form-card report-card">
                 <div class="card-header">
                     <span class="card-icon"><img src="{{ url_for('static', filename='icons/clipboard.svg') }}" alt="Report" class="icon"></span>
                     <span class="card-title">Job Report</span>
                 </div>
                 <div class="form-field">
-                    <label for="report">Report Details <span class="required">*</span></label>
-                    <textarea id="report" name="report" rows="6" placeholder="Enter detailed report of the completed job. Include any issues, observations, or notes for future reference." required>{{ job.report if job.report else '' }}</textarea>
+                    <label for="report_text">Report Details <span class="required">*</span></label>
+                    <textarea id="report_text" name="report_text" rows="6" placeholder="Enter detailed report of the completed job. Include any issues, observations, or notes for future reference." required>{{ job.report if job.report else '' }}</textarea>
                     <div class="field-help">Required field. Describe the work completed, any issues encountered, and recommendations.</div>
                 </div>
             </div>
@@ -57,7 +55,7 @@
             </div>
         </div>
    </div>
-   
+    
    <div class="form-actions">
         <button type="submit" class="button save-button">
             <img src="{{ url_for('static', filename='icons/arrow-right.svg') }}" alt="Next" class="icon"> Next: Add Media
@@ -66,31 +64,14 @@
             Cancel
         </button>
         {% if job.is_complete and job.report %}
-        <button type="button" class="button secondary-button" 
-                onclick="skipToGallery({{ job.id }})"
+        <button type="button" class="button secondary-button"
+                hx-post="{{ url_for('job.submit_job_report', job_id=job.id) }}"
+                hx-target="#job-modal-content"
+                hx-swap="innerHTML"
+                hx-vals='{"report_text": "{{ job.report }}", "skip_gallery": "true"}'
                 style="margin-left: auto;">
             Skip to Gallery
         </button>
         {% endif %}
    </div>
 </form>
-
-<script>
-function handleReportSubmitted(jobId) {
-    // After report is submitted, load the gallery modal
-    loadJobGallery(jobId);
-}
-
-function loadJobGallery(jobId) {
-    // Open the enhanced gallery for this job
-    ENHANCED_GALLERY.open({type: 'job', id: jobId});
-    
-    // Close the current modal
-    document.getElementById('job-modal').style.display = 'none';
-}
-
-function skipToGallery(jobId) {
-    // Skip report entry and go directly to gallery
-    loadJobGallery(jobId);
-}
-</script>
