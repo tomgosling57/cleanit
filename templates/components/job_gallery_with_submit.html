@@ -20,8 +20,31 @@
         </div>
     </div>
     
-    <!-- Include the existing gallery modal -->
-    {% include 'components/media_gallery_modal.html' %}
+    <!-- Gallery will be opened automatically via JavaScript -->
+    <div class="gallery-controls">
+        <button type="button" class="button secondary-button" onclick="ENHANCED_GALLERY.open({type: 'job', id: {{ job.id }}})">
+            <span class="icon">{{ svg_icons['gallery'] | safe if svg_icons else '🖼️' }}</span> Open Media Gallery
+        </button>
+        <p class="small-note">The gallery will open automatically. If it doesn't, click the button above.</p>
+    </div>
+    
+    <script>
+        // Open gallery automatically when component loads
+        if (typeof ENHANCED_GALLERY !== 'undefined') {
+            ENHANCED_GALLERY.open({type: 'job', id: {{ job.id }}});
+        } else {
+            // Wait for gallery to load
+            document.addEventListener('ENHANCED_GALLERY_READY', function() {
+                ENHANCED_GALLERY.open({type: 'job', id: {{ job.id }}});
+            });
+            // Fallback timeout
+            setTimeout(function() {
+                if (typeof ENHANCED_GALLERY !== 'undefined') {
+                    ENHANCED_GALLERY.open({type: 'job', id: {{ job.id }}});
+                }
+            }, 500);
+        }
+    </script>
     
     <div class="gallery-submit-actions">
         <button class="button primary-button"
