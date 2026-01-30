@@ -75,7 +75,7 @@ def test_update_job(admin_page) -> None:
     new_start_time = get_future_time(hours=-1) # 8:00 AM
     new_end_time = get_future_time(hours=0) # 9:00 AM
     new_arrival_datetime = datetime.combine(
-        today_in_app_tz().date() + timedelta(days=1), time(10, 0)
+        today_in_app_tz() + timedelta(days=1), time(10, 0)
     ).strftime(DATETIME_FORMATS["DATETIME_FORMAT_JOBS_PY"])
     
     fill_job_modal_form(
