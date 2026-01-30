@@ -36,6 +36,19 @@ class JobService:
             return job
         return None
 
+    def update_job_report_and_completion(self, job_id, report_text, is_complete=True):
+        """
+        Update job report text and completion status
+        """
+        job = self.db_session.query(Job).filter_by(id=job_id).first()
+        if job:
+            job.report = report_text
+            job.is_complete = is_complete
+            self.db_session.commit()
+            self.db_session.refresh(job)
+            return job
+        return None
+
     def get_job_details(self, job_id):
         job = self.db_session.query(Job).options(joinedload(Job.property)).filter(Job.id == job_id).first()
         return job
