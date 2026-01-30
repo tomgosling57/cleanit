@@ -27,13 +27,24 @@
         <div class="job-status-actions">
             {% if current_user.is_authenticated and current_user.role in ['admin', 'supervisor'] %}
             <div class="job-actions" id="job-actions-{{ job.id }}">
-                <button hx-post="{{ url_for('job.update_job_status', job_id=job.id) }}?date={{ selected_date }}"
-                        hx-vals='{"is_complete": "{{ not job.is_complete }}" }'
+                {% if job.is_complete %}
+                <!-- Mark Pending button - immediate action -->
+                <button hx-post="{{ url_for('job.mark_job_pending', job_id=job.id) }}?date={{ selected_date }}&view_type={{ view_type }}"
                         hx-target="#job-{{ job.id }}"
                         hx-swap="outerHTML"
                         class="button">
-                    <span id="job-update-status-{{ job.id }}">{% if job.is_complete %}Mark Pending{% else %}Mark Complete{% endif %}</span>
+                    <span id="job-update-status-{{ job.id }}">Mark Pending</span>
                 </button>
+                {% else %}
+                <!-- Mark Complete button - triggers report modal -->
+                <button hx-post="{{ url_for('job.mark_job_complete', job_id=job.id) }}?date={{ selected_date }}&view_type={{ view_type }}"
+                        hx-target="#job-modal-content"
+                        hx-swap="innerHTML"
+                        hx-on--after-request="document.getElementById('job-modal').style.display='block'"
+                        class="button">
+                    <span id="job-update-status-{{ job.id }}">Mark Complete</span>
+                </button>
+                {% endif %}
                 <button hx-get="{{ url_for('job.get_job_details', job_id=job.id, view_type=view_type) }}"
                         hx-target="#job-modal-content"
                         hx-trigger="click"

@@ -106,6 +106,9 @@
             {% if job.description %}
             <div class="job-status-badge red">See Notes</div>
             {% endif %}
+            {% if job.report and job.is_complete %}
+            <div class="job-status-badge green">Report Submitted</div>
+            {% endif %}
         </div>
         <!-- Job actions buttons container added by llm -->
         <div class="job-action-buttons">
@@ -118,10 +121,18 @@
                     <span class="icon">{{ svg_icons['pencil-solid-full'] | safe }}</span>Edit
                 </button>
             {% endif %}
-            <button onclick="ENHANCED_GALLERY.open({type: 'property', id: {{ job.property.id }}})"
-                class="button gallery-button">
-                 <span class="icon">{{ svg_icons['gallery'] | safe }}</span>Gallery
+            <!-- Property Reference Gallery Button -->
+            <button onclick="ENHANCED_GALLERY.open({type: 'property', id: '{{ job.property.id }}'})"
+                class="button gallery-button property-gallery-button">
+                 <span class="icon">{{ svg_icons['gallery'] | safe }}</span>Property Gallery
             </button>
+            <!-- Job Report Gallery Button (only shown when job is complete with report) -->
+            {% if job.is_complete and job.report %}
+            <button onclick="ENHANCED_GALLERY.open({type: 'job', id: '{{ job.id }}'})"
+                class="button gallery-button job-report-gallery-button">
+                 <span class="icon">{{ svg_icons['clipboard'] | safe }}</span>Job Report Gallery
+            </button>
+            {% endif %}
         </div>
     </div>
 </div>
