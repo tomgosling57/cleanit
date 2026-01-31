@@ -521,9 +521,9 @@ class JobController:
         """
         from flask import current_app
         
-        if not current_user.is_authenticated or current_user.role != 'admin':
+        if not current_user.is_authenticated or current_user.role not in ['admin', 'supervisor']:
             current_app.logger.warning(f"Unauthorized attempt to add media to job {job_id} by user {current_user.id if current_user.is_authenticated else 'anonymous'}")
-            return jsonify({'error': 'Unauthorized: Admin access required'}), 403
+            return jsonify({'error': 'Unauthorized: Admin or Supervisor access required'}), 403
         
         if not self.media_service:
             current_app.logger.error("Media service not available in job controller")
@@ -715,8 +715,8 @@ class JobController:
         Returns:
             JSON response with success/error
         """
-        if not current_user.is_authenticated or current_user.role != 'admin':
-            return jsonify({'error': 'Unauthorized: Admin access required'}), 403
+        if not current_user.is_authenticated or current_user.role not in ['admin', 'supervisor']:
+            return jsonify({'error': 'Unauthorized: Admin or Supervisor access required'}), 403
         
         if not self.media_service:
             return jsonify({'error': 'Media service not available'}), 500
