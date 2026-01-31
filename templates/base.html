@@ -60,16 +60,38 @@
     
     <script src="https://unpkg.com/htmx.org@1.9.10"></script> 
     <script>
-        // Keyboard shortcuts
-        document.addEventListener('keydown', function(event) {
-            if (event.key === "Escape") {
-                event.preventDefault();
-                const modals = document.getElementsByClassName('modal')
-                for (let i = 0; i < modals.length; i++) {
-                    modals[i].style.display = 'none';
+    document.addEventListener('keydown', function(event) {
+        if (event.key === "Escape") {
+            event.preventDefault();
+
+            const modals = Array.from(document.getElementsByClassName('modal'))
+                .filter(m => getComputedStyle(m).display !== 'none');
+
+            if (modals.length === 0) return;
+
+            let topModal = modals[0];
+            let topZ = parseInt(getComputedStyle(topModal).zIndex) || 0;
+
+            for (const modal of modals) {
+                const z = parseInt(getComputedStyle(modal).zIndex) || 0;
+                
+                // Skip modals that contain a job gallery
+                if (modal.getElementsByClassName('job-gallery-wrapper').length > 0) {
+                    console.log('Cannot close modal on Escape key ' + modal.id);
+                    return;
+                }
+
+                if (z > topZ) {
+                    topZ = z;
+                    topModal = modal;
                 }
             }
-        })
+
+            topModal.style.display = 'none';
+            console.log('Closed modal on Escape key ' + topModal.id);
+        }
+    });
     </script>
+
 </body>
 </html>
