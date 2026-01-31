@@ -91,6 +91,18 @@
   - Leverages `utils.timezone.utc_now()` for consistent UTC time comparison
   - Returns 403 with descriptive JSON error when restriction violated
 
+### Fix for Timezone Comparison Bug in Media Deletion
+- **Issue**: Supervisors attempting to delete old media encountered `TypeError: can't compare offset-naive and offset-aware datetimes` because `media.upload_date` (naive UTC) was compared with `cutoff_time` (aware UTC).
+- **Solution**: Updated `_is_media_too_old_for_supervisor()` to convert naive `upload_date` to aware UTC using `datetime.timezone.utc` before comparison.
+- **Changes**:
+  1. Added `timezone` import to `controllers/jobs_controller.py`.
+  2. Modified comparison logic: if `upload_date.tzinfo` is `None`, replace with `timezone.utc`.
+  3. Removed flash messages from `remove_job_media()` as they were not being displayed in AJAX responses.
+  4. Enhanced frontend error handling in `static/js/gallery-enhanced.js` to use the global AlertManager for toast notifications.
+  5. Added AlertManager script to `templates/base.html` to ensure toast notifications are available.
+  6. Updated E2E test expectation to match the JSON error message (removed "some" from flash text).
+- **Result**: Supervisors now see appropriate toast error messages when attempting to delete media older than 48 hours, and the datetime comparison works correctly across all environments.
+
 ## Next Steps
 1. **Complete frontend integration** of reusable gallery component across all views
 2. **Expand E2E test coverage** for all critical user workflows
