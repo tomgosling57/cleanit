@@ -6,7 +6,7 @@
     <div class="gallery-instructions">
         <div class="instructions-card">
             <div class="card-header">
-                <span class="card-icon"><img src="{{ url_for('static', filename='icons/gallery.svg') }}" alt="Gallery" class="icon"></span>
+                <span class="card-icon"><span class="icon">{{ svg_icons['gallery'] | safe if svg_icons else '🖼️' }}</span></span>
                 <span class="card-title">Media Gallery</span>
             </div>
             <div class="instructions-content">
@@ -14,6 +14,7 @@
                 <ul>
                     <li>Click <strong>"Upload Files"</strong> to add photos/videos</li>
                     <li>Use <strong>"Edit Mode"</strong> to select and delete media</li>
+                    <li>Close the popup after uploading, <strong> images will save automatically</strong>.</li>
                     <li>Click <strong>"Submit"</strong> when finished to complete the job</li>
                 </ul>
             </div>
