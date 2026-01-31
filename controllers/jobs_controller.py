@@ -1,4 +1,4 @@
-from flask import render_template, render_template_string, redirect, url_for, flash, request, jsonify, Response, session
+from flask import render_template, render_template_string, redirect, url_for, flash, request, jsonify, Response, session, current_app
 from flask_login import current_user
 from config import DATETIME_FORMATS
 from services.job_service import JobService
@@ -7,17 +7,38 @@ from services.user_service import UserService
 from services.property_service import PropertyService
 from services.assignment_service import AssignmentService
 from services.media_service import MediaService
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from collections import defaultdict
 from utils.job_helper import JobHelper
-from utils.timezone import today_in_app_tz
+from utils.timezone import today_in_app_tz, utc_now
 
 ERRORS = {'Job Not Found': 'Something went wrong! That job no longer exists.',
           'Missing Reassignment Details': "Missing job_id or new_team_id"}
 
+# Time limit for media deletion by supervisors (in hours)
+# Media older than this cannot be deleted by supervisors (admins can always delete)
+MEDIA_DELETION_TIME_LIMIT_HOURS = 48
+
 
 class JobController:
     """Controller class for job-related operations with dependency injection."""
+    
+    def _is_media_too_old_for_supervisor(self, media):
+        """
+        Check if media is too old for supervisor to delete.
+        
+        Args:
+            media: Media object with upload_date field
+            
+        Returns:
+            bool: True if media is too old for supervisor deletion, False otherwise
+        """
+        if not media or not media.upload_date:
+            # If no upload date, assume it's old (shouldn't happen)
+            return True
+            
+        cutoff_time = utc_now() - timedelta(hours=MEDIA_DELETION_TIME_LIMIT_HOURS)
+        return media.upload_date < cutoff_time
     
     def __init__(self, job_service: JobService, team_service: TeamService,
                  user_service: UserService, property_service: PropertyService,
@@ -736,11 +757,39 @@ class JobController:
             if not isinstance(media_ids, list):
                 return jsonify({'error': 'media_ids must be a list'}), 400
             
+            # For supervisors (not admins), check if any media is too old to delete
+            if current_user.role == 'supervisor':
+                from database import Media
+                # Query all media objects to check their upload dates
+                media_items = self.media_service.db_session.query(Media).filter(
+                    Media.id.in_(media_ids)
+                ).all()
+                
+                # Check each media item
+                too_old_media = []
+                for media in media_items:
+                    if self._is_media_too_old_for_supervisor(media):
+                        too_old_media.append({
+                            'id': media.id,
+                            'filename': media.filename,
+                            'upload_date': media.upload_date.isoformat() if media.upload_date else None
+                        })
+                
+                if too_old_media:
+                    return jsonify({
+                        'error': 'Cannot delete media: some items are too old',
+                        'details': f'Media older than {MEDIA_DELETION_TIME_LIMIT_HOURS} hours cannot be deleted by supervisors',
+                        'too_old_items': too_old_media,
+                        'total_requested': len(media_ids),
+                        'too_old_count': len(too_old_media)
+                    }), 403
+            
             # Batch disassociate media from job
             result = self.media_service.disassociate_media_batch_from_job(job_id, media_ids)
             
             return jsonify(result), 200
         except Exception as e:
+            current_app.logger.error(f"Failed to remove media from job {job_id}: {str(e)}", exc_info=True)
             return jsonify({'error': f'Failed to remove media from job: {str(e)}'}), 500
 
     def remove_single_job_media(self, job_id, media_id):
@@ -754,8 +803,8 @@ class JobController:
         Returns:
             JSON response with success/error
         """
-        if not current_user.is_authenticated or current_user.role != 'admin':
-            return jsonify({'error': 'Unauthorized: Admin access required'}), 403
+        if not current_user.is_authenticated or current_user.role not in ['admin', 'supervisor']:
+            return jsonify({'error': 'Unauthorized: Admin or Supervisor access required'}), 403
         
         if not self.media_service:
             return jsonify({'error': 'Media service not available'}), 500
@@ -765,6 +814,26 @@ class JobController:
             job = self.job_service.get_job_details(job_id)
             if not job:
                 return jsonify({'error': 'Job not found'}), 404
+            
+            # For supervisors (not admins), check if media is too old to delete
+            if current_user.role == 'supervisor':
+                from database import Media
+                # Query the media object to check its upload date
+                media = self.media_service.db_session.query(Media).filter(
+                    Media.id == media_id
+                ).first()
+                
+                if not media:
+                    return jsonify({'error': 'Media not found'}), 404
+                
+                if self._is_media_too_old_for_supervisor(media):
+                    return jsonify({
+                        'error': 'Cannot delete media: item is too old',
+                        'details': f'Media older than {MEDIA_DELETION_TIME_LIMIT_HOURS} hours cannot be deleted by supervisors',
+                        'media_id': media_id,
+                        'filename': media.filename,
+                        'upload_date': media.upload_date.isoformat() if media.upload_date else None
+                    }), 403
             
             # Remove single association
             success = self.media_service.remove_association_from_job(media_id, job_id)
@@ -782,6 +851,7 @@ class JobController:
                     'error': 'Association not found'
                 }), 404
         except Exception as e:
+            current_app.logger.error(f"Failed to remove single media {media_id} from job {job_id}: {str(e)}", exc_info=True)
             return jsonify({'error': f'Failed to remove media from job: {str(e)}'}), 500
 
     def _format_media_response(self, media):

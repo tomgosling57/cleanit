@@ -71,8 +71,29 @@
   - `services/media_service.py` – Added duplicate filename handling with suffix retry logic.
 - **Result**: Users can now upload images to job galleries and see them appear immediately.
 
+## Implementation Updates (Continued)
+
+### Time-Based Media Deletion Restriction
+- **Issue**: Supervisors could delete job media regardless of age, potentially tampering with past evidence.
+- **Solution**: Implemented time-based restriction preventing supervisors from deleting media older than 48 hours.
+- **Changes**:
+  1. Added `MEDIA_DELETION_TIME_LIMIT_HOURS = 48` constant to `controllers/jobs_controller.py`
+  2. Added `_is_media_too_old_for_supervisor()` helper method to check media age
+  3. Modified `remove_job_media()` to check each media's upload date for supervisors
+  4. Updated `remove_single_job_media()` to allow supervisors (previously admin-only) with same time restriction
+  5. Added proper error responses with details about too-old media items
+- **Permission Logic**:
+  - **Admins**: Can always delete media regardless of age
+  - **Supervisors**: Can only delete media uploaded within last 48 hours
+  - **Users**: No delete permissions (unchanged)
+- **Technical Details**:
+  - Uses `upload_date` field from Media model (UTC timestamp)
+  - Leverages `utils.timezone.utc_now()` for consistent UTC time comparison
+  - Returns 403 with descriptive JSON error when restriction violated
+
 ## Next Steps
 1. **Complete frontend integration** of reusable gallery component across all views
 2. **Expand E2E test coverage** for all critical user workflows
 3. **Validate timezone handling** in production deployment scenarios
 4. **Document storage utility usage** patterns for future development
+5. **Design test for time-based media deletion**: Create E2E test that adds media, manually adjusts upload date in database/S3, and verifies deletion restrictions work correctly using Playwright patterns
