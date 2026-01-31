@@ -56,6 +56,20 @@
 - **✅ Media gallery component** available for reuse across job and property contexts
 - **✅ E2E test environment** configured with external execution and dedicated fixtures
 - **✅ Timezone handling** implemented with UTC-first architecture and environment configuration
+- **✅ Job media upload functionality** implemented and duplicate filename handling added
+
+## Implementation Updates
+
+### Job Media Upload Fix
+- **Issue**: Job report gallery rendered zero items immediately after uploading an image because the job media upload endpoint (`POST /jobs/<job_id>/media`) was a placeholder that didn't actually upload files.
+- **Root Cause**: The `add_job_media` method in `JobController` returned a placeholder response instead of processing file uploads.
+- **Fix**:
+  1. Implemented full file upload logic in `JobController.add_job_media` mirroring the property controller's `add_property_media` method.
+  2. Enhanced `MediaService.add_media` to handle duplicate filenames by appending numeric suffixes when unique constraint violations occur.
+- **Files Modified**:
+  - `controllers/jobs_controller.py` – Added complete upload logic with logging and error handling.
+  - `services/media_service.py` – Added duplicate filename handling with suffix retry logic.
+- **Result**: Users can now upload images to job galleries and see them appear immediately.
 
 ## Next Steps
 1. **Complete frontend integration** of reusable gallery component across all views
