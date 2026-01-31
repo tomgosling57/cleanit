@@ -1,6 +1,24 @@
 
 from pathlib import Path
-from playwright.sync_api import Locator, expect
+from playwright.sync_api import Locator, expect, Page
+
+def open_property_gallery(page: Page, parent: Locator, property_id) -> None:
+    """Open the gallery modal from a property card"""
+    parent.locator(".property-gallery-button").wait_for(state="attached")
+    with page.expect_response(f"**/address-book/property/{property_id}/media**"):
+        page.wait_for_load_state('networkidle')
+        parent.locator(".property-gallery-button").click()
+
+    expect(page.locator("#media-gallery-modal")).to_be_visible()
+
+def open_report_gallery(page: Page, parent: Locator, property_id) -> None:
+    """Open the report gallery modal from a job modal"""
+    parent.locator(".job-report-gallery-button").wait_for(state="attached")
+    with page.expect_response(f"**/jobs/{property_id}/media**"):
+        page.wait_for_load_state('networkidle')
+        parent.locator(".job-report-gallery-button").click()
+
+    expect(page.locator("#media-gallery-modal")).to_be_visible()
 
 def assert_gallery_modal_content(gallery_modal, expect_media=False) -> None:
     """

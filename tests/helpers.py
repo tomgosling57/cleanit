@@ -242,6 +242,8 @@ def get_first_job_card(page: Page) -> Locator:
 def open_job_details_modal(page: Page, job_card: Locator, url_pattern: str) -> None:
     with page.expect_response(url_pattern):
         page.wait_for_load_state('networkidle')
+        # Hover over the job card to ensure buttons are clickable (especially for completed jobs)
+        job_card.hover()
         job_card.get_by_role("button", name="View Details").click()
     job_modal = page.locator("#job-modal")
     expect(job_modal).to_be_visible()
@@ -395,15 +397,6 @@ def open_property_details(page: Page, property_card) -> None:
     
     page.wait_for_load_state('networkidle')
     expect(page.locator("#property-details-modal")).to_be_visible()
-
-def open_property_gallery(page: Page, parent: Locator, property_id) -> None:
-    """Open the gallery modal from a property card"""
-    parent.locator(".gallery-button").wait_for(state="attached")
-    with page.expect_response(f"**/address-book/property/{property_id}/media**"):
-        page.wait_for_load_state('networkidle')
-        parent.locator(".gallery-button").click()
-
-    expect(page.locator("#media-gallery-modal")).to_be_visible()
 
 def open_property_creation_modal(page: Page) -> None:
     """Open the create property modal"""

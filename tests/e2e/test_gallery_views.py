@@ -5,12 +5,12 @@ from tests.helpers import (
     get_first_property_card, 
     open_address_book,
     open_job_details_modal, 
-    open_property_gallery,
     open_timetable,
     get_first_job_card,
 )
 from tests.gallery_helpers import (
     delete_all_gallery_media, upload_gallery_media, assert_gallery_modal_content,
+    open_property_gallery, open_report_gallery, ensure_gallery_edit_mode
 )
 from tests.job_helpers import (
     open_job_report,
@@ -109,14 +109,17 @@ def test_job_report_gallery_submission(admin_page) -> None:
     gallery_modal.press("Escape")
     expect(gallery_modal).not_to_be_visible()
 
-    # Submit the Job Report and Media
-    gallery_modal.click("#gallery-submit-button")
+    # Submit the Job Report and Media, marking the job is complete
+    job_modal.locator("#gallery-submit-button").click()
+    job_modal.wait_for(state="hidden")
 
+    # Open the gallery for the job report from the job details modal
     job_modal = open_job_details_modal(admin_page, job_card, f"**/jobs/job/{job_id}/details**")
 
     # Open the property gallery from the job modal
-    open_property_gallery(admin_page, job_modal, property_id)
+    open_report_gallery(admin_page, job_modal, job_id)
     gallery_modal = admin_page.locator("#media-gallery-modal")
+    gallery_modal.wait_for(state="visible")
     
     # Delete test media
     delete_all_gallery_media(gallery_modal)
