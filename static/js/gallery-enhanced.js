@@ -505,21 +505,42 @@
                 body: JSON.stringify({ media_ids: mediaIds })
             });
             
+            const data = await response.json();
+            
             if (!response.ok) {
-                throw new Error(`Delete failed: ${response.status}`);
+                // Show error using AlertManager
+                const errorMsg = data.error || `Delete failed with status ${response.status}`;
+                if (window.showError) {
+                    window.showError(errorMsg, { details: data.details });
+                } else {
+                    alert(errorMsg);
+                }
+                return;
             }
             
-            const data = await response.json();
             if (data.success) {
                 // Refresh gallery
                 fetchEntityMedia(currentEntity);
                 selectedMediaIds.clear();
+                // Show success toast
+                if (window.showSuccess) {
+                    window.showSuccess(data.message || 'Media deleted successfully');
+                }
             } else {
-                alert('Failed to delete media: ' + (data.error || 'Unknown error'));
+                const errorMsg = data.error || 'Unknown error';
+                if (window.showError) {
+                    window.showError('Failed to delete media: ' + errorMsg);
+                } else {
+                    alert('Failed to delete media: ' + errorMsg);
+                }
             }
         } catch (error) {
             console.error('Error deleting media:', error);
-            alert('Error deleting media. Please try again.');
+            if (window.showError) {
+                window.showError('Error deleting media. Please try again.');
+            } else {
+                alert('Error deleting media. Please try again.');
+            }
         }
     }
 

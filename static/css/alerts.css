@@ -1,0 +1,210 @@
+/* 
+ * Global Alert System Styles
+ * Provides toast-style notifications for success, error, warning, and info messages
+ */
+
+:root {
+    --alert-success-bg: #3ea872; /* Fresh Green */
+    --alert-success-text: #ffffff;
+    --alert-error-bg: #dc3545; /* Standard Red */
+    --alert-error-text: #ffffff;
+    --alert-warning-bg: #ffc107; /* Warning Yellow */
+    --alert-warning-text: #212529;
+    --alert-info-bg: #4fb3bf; /* Aqua Blue */
+    --alert-info-text: #ffffff;
+    --alert-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    --alert-border-radius: 8px;
+    --alert-spacing: 1rem;
+}
+
+#global-alerts {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    max-width: 400px;
+    width: 100%;
+    pointer-events: none;
+}
+
+#global-alerts * {
+    pointer-events: auto;
+}
+
+.alert {
+    padding: 1rem 1.25rem;
+    margin-bottom: 0.75rem;
+    border-radius: var(--alert-border-radius);
+    box-shadow: var(--alert-shadow);
+    animation: alertSlideIn 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.alert:hover {
+    transform: translateY(-2px);
+}
+
+.alert.alert-exiting {
+    animation: alertSlideOut 0.3s ease forwards;
+}
+
+.alert-content {
+    flex: 1;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+
+.alert-icon {
+    font-size: 1.25rem;
+    line-height: 1;
+    margin-top: 0.125rem;
+    flex-shrink: 0;
+}
+
+.alert-message {
+    font-size: 0.95rem;
+    line-height: 1.4;
+    font-weight: 500;
+}
+
+.alert-details {
+    font-size: 0.85rem;
+    margin-top: 0.25rem;
+    opacity: 0.9;
+}
+
+.alert-dismiss {
+    background: transparent;
+    border: none;
+    color: inherit;
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+    margin-left: 0.5rem;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+.alert-dismiss:hover {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.alert-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.3);
+    animation: alertProgress linear forwards;
+}
+
+/* Alert Type Variations */
+.alert-success {
+    background-color: var(--alert-success-bg);
+    color: var(--alert-success-text);
+    border-left: 4px solid darken(var(--alert-success-bg), 10%);
+}
+
+.alert-error {
+    background-color: var(--alert-error-bg);
+    color: var(--alert-error-text);
+    border-left: 4px solid darken(var(--alert-error-bg), 10%);
+}
+
+.alert-warning {
+    background-color: var(--alert-warning-bg);
+    color: var(--alert-warning-text);
+    border-left: 4px solid darken(var(--alert-warning-bg), 10%);
+}
+
+.alert-info {
+    background-color: var(--alert-info-bg);
+    color: var(--alert-info-text);
+    border-left: 4px solid darken(var(--alert-info-bg), 10%);
+}
+
+/* Animations */
+@keyframes alertSlideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes alertSlideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+@keyframes alertProgress {
+    from {
+        width: 100%;
+    }
+    to {
+        width: 0%;
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    #global-alerts {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+        max-width: none;
+    }
+    
+    .alert {
+        padding: 0.875rem 1rem;
+    }
+    
+    .alert-message {
+        font-size: 0.9rem;
+    }
+}
+
+/* Accessibility */
+.alert[role="alert"] {
+    outline: none;
+}
+
+.alert:focus {
+    outline: 2px solid rgba(255, 255, 255, 0.5);
+    outline-offset: 2px;
+}
+
+/* Dark mode support (if needed in future) */
+@media (prefers-color-scheme: dark) {
+    .alert {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+    
+    .alert-warning {
+        background-color: #e0a800;
+    }
+}
