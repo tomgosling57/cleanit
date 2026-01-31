@@ -52,6 +52,9 @@ class MediaService:
         Returns:
             Media: The created Media object
         """
+        from sqlalchemy.exc import IntegrityError
+        import os
+        
         cleaned_file_name = self._clean_filename(file_name)
         # Unpack metadata if provided
         width = metadata.get('width') if metadata else None
@@ -62,25 +65,40 @@ class MediaService:
         codec = metadata.get('codec') if metadata else None
         aspect_ratio = metadata.get('aspect_ratio') if metadata else None
 
-        new_media = Media(
-            filename=cleaned_file_name,
-            file_path=file_path,
-            media_type=media_type,
-            mimetype=mimetype,
-            size_bytes=size_bytes,
-            description=description,
-            width=width,
-            height=height,
-            duration_seconds=duration_seconds,
-            thumbnail_url=thumbnail_url,
-            resolution=resolution,
-            codec=codec,
-            aspect_ratio=aspect_ratio
-        )
-        self.db_session.add(new_media)
-        self.db_session.commit()
-        self.db_session.refresh(new_media)
-        return new_media
+        # Try to insert with original cleaned filename, if duplicate, append suffix
+        base_name, ext = os.path.splitext(cleaned_file_name)
+        for i in range(10):  # Try up to 10 variations
+            if i == 0:
+                attempt_filename = cleaned_file_name
+            else:
+                attempt_filename = f"{base_name}_{i}{ext}"
+            
+            new_media = Media(
+                filename=attempt_filename,
+                file_path=file_path,
+                media_type=media_type,
+                mimetype=mimetype,
+                size_bytes=size_bytes,
+                description=description,
+                width=width,
+                height=height,
+                duration_seconds=duration_seconds,
+                thumbnail_url=thumbnail_url,
+                resolution=resolution,
+                codec=codec,
+                aspect_ratio=aspect_ratio
+            )
+            self.db_session.add(new_media)
+            try:
+                self.db_session.commit()
+                self.db_session.refresh(new_media)
+                return new_media
+            except IntegrityError:
+                self.db_session.rollback()
+                continue
+        
+        # If all attempts fail, raise an exception
+        raise ValueError(f"Could not create media record for {cleaned_file_name} after multiple attempts")
 
     def get_media_by_id(self, media_id):
         """
