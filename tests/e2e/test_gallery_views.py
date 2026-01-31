@@ -123,3 +123,10 @@ def test_job_report_gallery_submission(admin_page) -> None:
     
     # Delete test media
     delete_all_gallery_media(gallery_modal)
+
+def test_supervisor_job_report_gallery_submission(supervisor_page) -> None:
+    """
+    Test that the job report gallery with submit modal opens and shows expected content for a supervisor user.
+    Uses test media from tests/media directory with temporary storage configuration.
+    """
+    test_job_report_gallery_submission(supervisor_page)
