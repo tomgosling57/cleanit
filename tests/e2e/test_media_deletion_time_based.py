@@ -37,23 +37,23 @@ def get_job_media_ids(job_id):
     finally:
         session.close()
 
-def test_supervisor_cannot_delete_old_media(admin_page, supervisor_page):
+def test_supervisor_cannot_delete_old_media(supervisor_page):
     """
     Test that a supervisor cannot delete media older than 48 hours.
     Steps:
-    1. Admin uploads media to a job report.
+    1. Supervisor uploads media to a job report.
     2. Manually adjust media upload date to be older than 48 hours.
     3. Supervisor attempts to delete the media via gallery UI.
     4. Verify deletion is blocked (error message) and media still exists.
     """
-    # Step 1: Admin uploads media to a job report
-    open_timetable(admin_page)
-    job_card = get_first_job_card(admin_page)
+    # Step 1: Supervisor uploads media to a job report
+    open_timetable(supervisor_page)
+    job_card = get_first_job_card(supervisor_page)
     job_id = job_card.get_attribute('data-job-id')
     
     # Open job report and upload media
-    job_modal = open_job_report(admin_page, job_card, job_id)
-    gallery_modal = fill_job_report_and_submit(admin_page, job_modal, job_id)
+    job_modal = open_job_report(supervisor_page, job_card, job_id)
+    gallery_modal = fill_job_report_and_submit(supervisor_page, job_modal, job_id)
     assert_gallery_modal_content(gallery_modal, expect_media=False)
     
     upload_gallery_media(gallery_modal, jpg_media())
@@ -61,7 +61,9 @@ def test_supervisor_cannot_delete_old_media(admin_page, supervisor_page):
     # Close gallery modal
     gallery_modal.press("Escape")
     expect(gallery_modal).not_to_be_visible()
-    
+
+    # Submit their report and close the job modal
+    job_modal.locator("#gallery-submit-button").click()
     # Get the uploaded media ID
     media_ids = get_job_media_ids(job_id)
     assert len(media_ids) == 1, f"Expected 1 media, got {len(media_ids)}"
@@ -71,13 +73,9 @@ def test_supervisor_cannot_delete_old_media(admin_page, supervisor_page):
     success = make_media_old(media_id, hours_older=49)
     assert success, "Failed to update media upload date"
     
-    # Step 3: Supervisor attempts to delete the media
-    open_timetable(supervisor_page)
-    supervisor_job_card = supervisor_page.locator(f'[data-job-id="{job_id}"]')
-    expect(supervisor_job_card).to_be_visible()
-    
-    # Open job details modal (supervisor can view)
-    job_modal = open_job_details_modal(supervisor_page, supervisor_job_card, f"**/jobs/job/{job_id}/details**")
+    # Step 3: Supervisor attempts to delete the media (reopen gallery)
+    # Reopen job details modal
+    job_modal = open_job_details_modal(supervisor_page, job_card, f"**/jobs/job/{job_id}/details**")
     
     # Open report gallery
     open_report_gallery(supervisor_page, job_modal, job_id)
@@ -90,23 +88,22 @@ def test_supervisor_cannot_delete_old_media(admin_page, supervisor_page):
     # Attempt to delete all media (should fail with error)
     # We'll intercept the DELETE request and check response status
     delete_blocked = False
+    error_message = None
     def handle_response(response):
-        nonlocal delete_blocked
+        nonlocal delete_blocked, error_message
         if "/media" in response.url and "DELETE" in response.request.method:
             if response.status == 403:
                 delete_blocked = True
-                # Verify error message contains restriction info
                 try:
                     json = response.json()
-                    assert "too old" in json.get('error', '').lower()
+                    error_message = json.get('error', '')
                 except:
-                    pass
+                    error_message = response.text()
     
     supervisor_page.on("response", handle_response)
     
     # Click delete button
-    delete_button = gallery_modal.locator("#batch-delete-button")
-    delete_button.click()
+    delete_all_gallery_media(gallery_modal)
     
     # Confirm deletion (if confirmation dialog appears)
     if supervisor_page.locator("text=Confirm").is_visible():
@@ -115,17 +112,18 @@ def test_supervisor_cannot_delete_old_media(admin_page, supervisor_page):
     # Wait a moment for response
     supervisor_page.wait_for_timeout(1000)
     
+    # Remove listener
+    supervisor_page.remove_listener("response", handle_response)
+    
     # Verify deletion was blocked
     assert delete_blocked, "Supervisor should have received 403 error for old media deletion"
+    assert error_message and "too old" in error_message.lower(), f"Error message should mention 'too old', got: {error_message}"
     
     # Verify media still exists in database
     media_ids_after = get_job_media_ids(job_id)
     assert len(media_ids_after) == 1, "Media should still be associated with job"
     
-    # Cleanup: admin can delete the media
-    # (We'll do this in a separate test or at the end)
-    # For now, we'll leave it for admin bypass test
-    
+    # Cleanup: delete media as admin (we'll do in admin test)
     # Close modals
     gallery_modal.press("Escape")
     job_modal.press("Escape")

@@ -6,18 +6,49 @@ import os
 from datetime import datetime, timedelta
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from database import Media, init_db
+from database import Media
 
 def get_db_session():
     """
     Create a SQLAlchemy session using the DATABASE_URL from environment.
     Used for E2E tests that need direct database access.
     """
+    import urllib.parse
     database_url = os.environ.get('DATABASE_URL')
     if not database_url:
-        # Fallback to default from pytest.e2e.ini
-        database_url = 'postgresql://cleanit_user@localhost:5432/cleanit'
-    Session = init_db(database_url)
+        raise EnvironmentError("DATABASE_URL not set in environment variables.")
+    
+    # Parse URL to check if password is missing
+    parsed = urllib.parse.urlparse(database_url)
+    if parsed.password is None or parsed.password == '':
+        # Need to add password
+        password = os.environ.get('POSTGRES_PASSWORD')
+        if not password:
+            # Try to load from .env file in project root
+            env_path = os.path.join(os.path.dirname(__file__), '..', '.env')
+            if os.path.exists(env_path):
+                try:
+                    with open(env_path, 'r') as f:
+                        for line in f:
+                            if line.startswith('POSTGRES_PASSWORD='):
+                                password = line.split('=', 1)[1].strip()
+                                break
+                except Exception:
+                    pass
+        if password:
+            # Reconstruct URL with password
+            netloc = f'{parsed.username}:{password}@{parsed.hostname}'
+            if parsed.port:
+                netloc += f':{parsed.port}'
+            database_url = urllib.parse.urlunparse(
+                (parsed.scheme, netloc, parsed.path, parsed.params, parsed.query, parsed.fragment)
+            )
+        else:
+            raise EnvironmentError("Password required for database connection but POSTGRES_PASSWORD not set.")
+    
+    # Use existing engine without creating tables
+    engine = create_engine(database_url)
+    Session = sessionmaker(bind=engine)
     return Session()
 
 def update_media_upload_date(media_id, new_upload_date):
