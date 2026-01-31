@@ -508,35 +508,201 @@ class JobController:
 
     def add_job_media(self, job_id):
         """
-        POST /jobs/<job_id>/media - Add media to job (single or batch)
+        POST /jobs/<job_id>/media - Upload and associate media with job
+        
+        This endpoint handles file uploads directly to job gallery.
+        Files are uploaded, stored, and automatically associated with the job.
         
         Args:
             job_id (int): The job ID
             
         Returns:
-            JSON response with success/error
+            JSON response with success/error and uploaded media details
         """
+        from flask import current_app
+        
         if not current_user.is_authenticated or current_user.role != 'admin':
+            current_app.logger.warning(f"Unauthorized attempt to add media to job {job_id} by user {current_user.id if current_user.is_authenticated else 'anonymous'}")
             return jsonify({'error': 'Unauthorized: Admin access required'}), 403
         
         if not self.media_service:
+            current_app.logger.error("Media service not available in job controller")
             return jsonify({'error': 'Media service not available'}), 500
         
         try:
             # Check if job exists
             job = self.job_service.get_job_details(job_id)
             if not job:
+                current_app.logger.warning(f"Job {job_id} not found")
                 return jsonify({'error': 'Job not found'}), 404
             
-            # TODO: Implement actual file upload logic here
-            # For now, return a placeholder response
+            # Check content type - must be multipart/form-data for file uploads
+            content_type = request.content_type or ''
+            current_app.logger.debug(f"Content-Type: {content_type}")
+            current_app.logger.debug(f"Request method: {request.method}")
+            current_app.logger.debug(f"Request headers: {dict(request.headers)}")
+            
+            if 'multipart/form-data' not in content_type:
+                current_app.logger.warning(f"Invalid content type for job {job_id} upload: {content_type}")
+                return jsonify({'error': 'Content type must be multipart/form-data for file uploads'}), 400
+            
+            # Check if files are present
+            current_app.logger.debug(f"Request files keys: {list(request.files.keys())}")
+            current_app.logger.debug(f"Request form keys: {list(request.form.keys())}")
+            
+            if 'files[]' not in request.files and 'file' not in request.files:
+                current_app.logger.warning(f"No files provided in request for job {job_id}")
+                return jsonify({'error': 'No files provided in request'}), 400
+            
+            # Get files - support both 'files[]' array and single 'file'
+            files = []
+            if 'files[]' in request.files:
+                files = request.files.getlist('files[]')
+                current_app.logger.debug(f"Found {len(files)} files in 'files[]' array")
+            elif 'file' in request.files:
+                files = [request.files['file']]
+                current_app.logger.debug(f"Found single file 'file'")
+            
+            if not files or all(file.filename == '' for file in files):
+                current_app.logger.warning(f"No selected files for job {job_id}")
+                return jsonify({'error': 'No selected files'}), 400
+            
+            current_app.logger.debug(f"Processing {len(files)} files for job {job_id}")
+            
+            # Get descriptions - support both 'descriptions[]' array and single 'description'
+            descriptions = []
+            if 'descriptions[]' in request.form:
+                descriptions = request.form.getlist('descriptions[]')
+                current_app.logger.debug(f"Found {len(descriptions)} descriptions in 'descriptions[]' array")
+            elif 'description' in request.form:
+                descriptions = [request.form['description']]
+                current_app.logger.debug(f"Found single description 'description'")
+            else:
+                # Use filenames as descriptions
+                descriptions = [file.filename for file in files]
+                current_app.logger.debug(f"Using filenames as descriptions")
+            
+            # Ensure we have enough descriptions
+            while len(descriptions) < len(files):
+                descriptions.append(files[len(descriptions)].filename)
+            
+            # Import media utilities
+            from utils.media_utils import (
+                identify_file_type,
+                validate_media,
+                upload_media_to_storage,
+                get_media_url,
+                extract_metadata
+            )
+            
+            uploaded_media = []
+            media_ids = []
+            
+            for i, file in enumerate(files):
+                try:
+                    if not file or file.filename == '':
+                        current_app.logger.debug(f"Skipping empty file at index {i}")
+                        continue
+                    
+                    current_app.logger.debug(f"Processing file {i}: {file.filename}, size: {file.content_length}")
+                    
+                    # Identify file type
+                    file.seek(0)
+                    media_type, mime_type = identify_file_type(file)
+                    current_app.logger.debug(f"File {file.filename} identified as {media_type} ({mime_type})")
+                    
+                    # Validate media
+                    file.seek(0)
+                    validate_media(file, media_type)
+                    current_app.logger.debug(f"File {file.filename} validation passed")
+                    
+                    # Upload to storage
+                    file.seek(0)
+                    filename = upload_media_to_storage(file, file.filename, media_type)
+                    current_app.logger.debug(f"File {file.filename} uploaded to storage as {filename}")
+                    
+                    # Get file size
+                    file.seek(0, 2)  # Seek to end
+                    size_bytes = file.tell()
+                    file.seek(0)  # Reset
+                    current_app.logger.debug(f"File {file.filename} size: {size_bytes} bytes")
+                    
+                    # Extract metadata if available
+                    metadata = {}
+                    try:
+                        import tempfile
+                        import os
+                        with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(file.filename)[1]) as tmp:
+                            file.save(tmp.name)
+                            tmp_path = tmp.name
+                            metadata = extract_metadata(tmp_path, media_type)
+                            os.unlink(tmp_path)
+                        current_app.logger.debug(f"Extracted metadata for {file.filename}: {metadata}")
+                    except Exception as e:
+                        # Metadata extraction is optional
+                        current_app.logger.debug(f"Metadata extraction failed for {file.filename}: {str(e)}")
+                    
+                    # Create media record
+                    description = descriptions[i] if i < len(descriptions) else file.filename
+                    media = self.media_service.add_media(
+                        file_name=file.filename,
+                        file_path=filename,
+                        media_type=media_type,
+                        mimetype=mime_type,
+                        size_bytes=size_bytes,
+                        description=description,
+                        metadata=metadata
+                    )
+                    
+                    uploaded_media.append(media)
+                    media_ids.append(media.id)
+                    current_app.logger.debug(f"Created media record ID {media.id} for {file.filename}")
+                    
+                except ValueError as e:
+                    # Skip invalid files but continue with others
+                    current_app.logger.warning(f"File {file.filename if file else 'unknown'} validation failed: {str(e)}")
+                    continue
+                except Exception as e:
+                    # Skip files that fail to upload but continue with others
+                    current_app.logger.error(f"File {file.filename if file else 'unknown'} upload failed: {str(e)}")
+                    continue
+            
+            if not media_ids:
+                current_app.logger.error(f"No files could be uploaded for job {job_id}")
+                return jsonify({'error': 'No files could be uploaded'}), 400
+            
+            # Associate uploaded media with job
+            associations = self.media_service.associate_media_batch_with_job(
+                job_id, media_ids
+            )
+            current_app.logger.debug(f"Associated {len(associations)} media items with job {job_id}")
+            
+            # Prepare response with uploaded media details
+            media_details = []
+            for media in uploaded_media:
+                media_url = get_media_url(media.file_path) if media.file_path else None
+                media_details.append({
+                    'id': media.id,
+                    'filename': media.filename,
+                    'url': media_url,
+                    'media_type': media.media_type,
+                    'mimetype': media.mimetype,
+                    'size_bytes': media.size_bytes,
+                    'description': media.description
+                })
+            
+            current_app.logger.info(f"Successfully uploaded and associated {len(uploaded_media)} files with job {job_id}")
             return jsonify({
                 'success': True,
-                'message': 'Media upload endpoint ready - implementation pending',
+                'message': f'Successfully uploaded and associated {len(uploaded_media)} files with job',
                 'job_id': job_id,
-                'note': 'This endpoint will handle single and batch uploads'
+                'media_ids': media_ids,
+                'media': media_details,
+                'association_count': len(associations)
             }), 200
+                
         except Exception as e:
+            current_app.logger.error(f"Failed to add media to job {job_id}: {str(e)}", exc_info=True)
             return jsonify({'error': f'Failed to add media to job: {str(e)}'}), 500
 
     def remove_job_media(self, job_id):
