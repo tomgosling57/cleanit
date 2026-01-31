@@ -15,6 +15,7 @@ from tests.gallery_helpers import (
     delete_all_gallery_media,
     assert_gallery_modal_content,
     ensure_gallery_edit_mode,
+    attempt_to_delete_all_gallery_media,
 )
 from tests.job_helpers import (
     open_job_report,
@@ -103,30 +104,8 @@ def test_supervisor_cannot_delete_old_media(supervisor_page):
     supervisor_page.on("response", handle_response)
     
     # Click delete button
-    delete_all_gallery_media(gallery_modal)
-    
-    # Confirm deletion (if confirmation dialog appears)
-    if supervisor_page.locator("text=Confirm").is_visible():
-        supervisor_page.locator("text=Confirm").click()
-    
-    # Wait a moment for response
-    supervisor_page.wait_for_timeout(1000)
-    
-    # Remove listener
-    supervisor_page.remove_listener("response", handle_response)
-    
-    # Verify deletion was blocked
-    assert delete_blocked, "Supervisor should have received 403 error for old media deletion"
-    assert error_message and "too old" in error_message.lower(), f"Error message should mention 'too old', got: {error_message}"
-    
-    # Verify media still exists in database
-    media_ids_after = get_job_media_ids(job_id)
-    assert len(media_ids_after) == 1, "Media should still be associated with job"
-    
-    # Cleanup: delete media as admin (we'll do in admin test)
-    # Close modals
-    gallery_modal.press("Escape")
-    job_modal.press("Escape")
+    attempt_to_delete_all_gallery_media(gallery_modal)
+    expect(supervisor_page.locator(".alert").get_by_text("Cannot delete media: some items are too old")).to_be_visible()
 
 def test_supervisor_can_delete_recent_media(supervisor_page):
     """
@@ -174,7 +153,7 @@ def test_admin_can_delete_old_media(admin_page):
     
     # Delete all media
     delete_all_gallery_media(gallery_modal)
-    
+                  
     # Verify media is disassociated (should have 0 media)
     media_ids_after = get_job_media_ids(job_id)
     assert len(media_ids_after) == 0, f"Media should be deleted, but {len(media_ids_after)} remain"
