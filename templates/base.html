@@ -52,13 +52,16 @@
     <!-- Include gallery modal -->
     {% include 'components/media_gallery_modal.html' %}
     
+    <!-- Alert Manager -->
+    <script src="/static/js/alerts.js"></script>
+    
     <!-- Gallery JavaScript -->
     <script src="/static/js/gallery-core.js"></script>
     <script src="/static/js/gallery-dom-events.js"></script>
     <script src="/static/js/gallery.js"></script>
     <script src="/static/js/gallery-enhanced.js"></script>
     
-    <script src="https://unpkg.com/htmx.org@1.9.10"></script> 
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <script>
     document.addEventListener('keydown', function(event) {
         if (event.key === "Escape") {
