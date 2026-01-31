@@ -7,7 +7,7 @@ from services.user_service import UserService
 from services.property_service import PropertyService
 from services.assignment_service import AssignmentService
 from services.media_service import MediaService
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from collections import defaultdict
 from utils.job_helper import JobHelper
 from utils.timezone import today_in_app_tz, utc_now
@@ -38,7 +38,11 @@ class JobController:
             return True
             
         cutoff_time = utc_now() - timedelta(hours=MEDIA_DELETION_TIME_LIMIT_HOURS)
-        return media.upload_date < cutoff_time
+        # Ensure upload_date is timezone-aware (UTC) for comparison
+        upload_date = media.upload_date
+        if upload_date.tzinfo is None:
+            upload_date = upload_date.replace(tzinfo=timezone.utc)
+        return upload_date < cutoff_time
     
     def __init__(self, job_service: JobService, team_service: TeamService,
                  user_service: UserService, property_service: PropertyService,
@@ -740,12 +744,14 @@ class JobController:
             return jsonify({'error': 'Unauthorized: Admin or Supervisor access required'}), 403
         
         if not self.media_service:
+            flash('Media service not available', 'error')
             return jsonify({'error': 'Media service not available'}), 500
         
         try:
             # Check if job exists
             job = self.job_service.get_job_details(job_id)
             if not job:
+                flash('Job not found', 'error')
                 return jsonify({'error': 'Job not found'}), 404
             
             # Get media IDs from request JSON
