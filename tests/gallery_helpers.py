@@ -170,8 +170,8 @@ def upload_gallery_media(gallery_modal: Locator, media_paths: list[str]) -> None
     # 7. Navigate through media items
     navigate_through_media(gallery_modal, media_paths)
 
-def delete_all_gallery_media(gallery_modal: Locator) -> None:
-    """Deletes all media items in the gallery using batch delete."""
+def attempt_to_delete_all_gallery_media(gallery_modal: Locator) -> None:
+    """Attempts to delete all media items in the gallery using batch delete."""
     # Ensure Edit Mode
     ensure_gallery_edit_mode(gallery_modal)
     
@@ -190,8 +190,13 @@ def delete_all_gallery_media(gallery_modal: Locator) -> None:
     # Click batch delete button
     delete_button = gallery_modal.locator("#batch-delete-button")
     delete_button.click()
+
+def delete_all_gallery_media(gallery_modal: Locator) -> None:
+    """Deletes all media items in the gallery using batch delete."""
+    attempt_to_delete_all_gallery_media(gallery_modal)    
     
     # Wait for network idle after deletion
+    page = gallery_modal.page
     page.wait_for_load_state("networkidle")
 
     # Ensure that the images are no longer visible
@@ -200,4 +205,5 @@ def delete_all_gallery_media(gallery_modal: Locator) -> None:
     expect(gallery_modal.locator("#gallery-video")).not_to_be_visible()
     
     # Verify no thumbnails remain
+    thumbnail_container = gallery_modal.locator("#thumbnail-container")
     expect(thumbnail_container.locator(".thumbnail")).to_have_count(0)
