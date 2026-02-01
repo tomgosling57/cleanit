@@ -1,5 +1,7 @@
 # tests/helpers.py
+from math import floor
 import re
+from time import sleep
 from playwright.sync_api import expect, Page, Locator
 from typing import Optional
 from datetime import timedelta
@@ -581,6 +583,8 @@ def assert_element_is_not_draggable(page: Page, element: Locator, drop_target: L
     
     # 2. Verify it doesn't have draggable visual feedback
     element.hover()
+    # This pause is essential for test flakiness
+    page.wait_for_timeout(500)  # Wait a moment to ensure any animations would take place
     cursor = element.evaluate("el => getComputedStyle(el).cursor")
     # Should not have draggable cursor styles
     # assert "move" not in cursor and "grab" not in cursor, \
@@ -589,7 +593,13 @@ def assert_element_is_not_draggable(page: Page, element: Locator, drop_target: L
     # 3. Test that drag doesn't work (element position doesn't change)
     initial_pos = element.bounding_box()
     assert initial_pos is not None, "Element should have bounding box"
-    
+    initial_pos_alt = element.evaluate("el => el.getBoundingClientRect().toJSON()")
+    init_x = floor(initial_pos['x'])
+    init_y = floor(initial_pos['y'])
+    init_alt_x = floor(initial_pos_alt['x'])
+    init_alt_y = floor(initial_pos_alt['y'])
+    assert init_alt_x == init_x and init_alt_y == init_y, f"Inconsistent initial position {init_x},{init_y} vs {init_alt_x},{init_alt_y}"
+        
     # Attempt to drag (this might not work if element is not draggable)
     try:
         element.drag_to(drop_target)
@@ -597,13 +607,20 @@ def assert_element_is_not_draggable(page: Page, element: Locator, drop_target: L
         # If drag fails, that's expected for non-draggable elements
         pass
     
+    page.wait_for_timeout(1000)  # Wait a moment to ensure any drag effects would take place
     # Check position hasn't changed (or changed very little due to attempted drag)
     final_pos = element.bounding_box()
     assert final_pos is not None, "Element should still have bounding box after drag attempt"
-    
+    final_pos_alt = element.evaluate("el => el.getBoundingClientRect().toJSON()")
+    final_x = floor(final_pos['x'])
+    final_y = floor(final_pos['y'])
+    final_alt_x = floor(final_pos_alt['x'])
+    final_alt_y = floor(final_pos_alt['y'])
+    assert final_alt_x == final_x and final_alt_y == final_y, f"Inconsistent final position {final_x},{final_y} vs {final_alt_x},{final_alt_y}"
+
     # Element should not have moved significantly
     # Allow for tiny differences due to rendering/measurement
-    x_diff = abs(initial_pos['x'] - final_pos['x'])
-    y_diff = abs(initial_pos['y'] - final_pos['y'])
+    x_diff = abs(init_x - final_x)
+    y_diff = abs(init_y - final_y)
     assert x_diff < 5 and y_diff < 5, \
-        f"Non-draggable element should not move during drag attempt (moved x:{x_diff}, y:{y_diff})"
+        f"Non-draggable element should not move during drag attempt (moved x:{x_diff}, y:{y_diff}, initial: {init_x},{init_y}, final: {final_x},{final_y})"
