@@ -13,24 +13,24 @@
     </div>
     
     <div class="team-members">
+        {% if team.members %}
         <ul class="members-list">
-            {% if team.members %}
-                {% for member in team.members %}
-                    <li class="member-item {% if member.id == team.team_leader_id %}team-leader-member{% endif %}" data-member-id="{{ member.id }}" >
-                        <span class="member-name">{{ member.first_name }} {{member.last_name}}
-                            {% if member.id == team.team_leader_id %}
-                                <span class="badge leader-badge"><img src="{{ url_for('static', filename='icons/crown.svg') }}" alt="Leader" class="icon"></span>
-                            {% endif %}
-                        </span>
-                        <span class="delete-button" hx-delete="/teams/team/{{ team.id }}/member/remove/{{ member.id }}"
-                                   hx-target=".teams-grid"
-                                   hx-swap="innerHTML">&times;</span>
-                    </li>
-                {% endfor %}
-            {% else %}
-                <p class="no-members">No members in this team</p>
-            {% endif %}
+            {% for member in team.members %}
+                <li class="member-item {% if member.id == team.team_leader_id %}team-leader-member{% endif %}" data-member-id="{{ member.id }}" >
+                    <span class="member-name">{{ member.first_name }} {{member.last_name}}
+                        {% if member.id == team.team_leader_id %}
+                            <span class="badge leader-badge"><img src="{{ url_for('static', filename='icons/crown.svg') }}" alt="Leader" class="icon"></span>
+                        {% endif %}
+                    </span>
+                    <span class="delete-button" hx-delete="/teams/team/{{ team.id }}/member/remove/{{ member.id }}"
+                                hx-target=".teams-grid"
+                                hx-swap="innerHTML">&times;</span>
+                </li>
+            {% endfor %}
         </ul>
+        {% else %}
+            <p class="no-members">No members in this team</p>
+        {% endif %}
     </div>
     {{ render_card_actions([
         {
