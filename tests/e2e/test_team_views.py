@@ -1,5 +1,6 @@
 # tests/test_team_views.py
 import re
+import pytest
 from tests.helpers import login_admin, wait_for_modal, setup_team_page, get_all_team_cards, assert_modal_title, close_modal, click_and_wait_for_response, drag_to_and_wait_for_response, simulate_htmx_delete_and_expect_response, assert_element_is_draggable, assert_element_is_not_draggable
 from playwright.sync_api import expect
 
@@ -113,7 +114,13 @@ def test_delete_team_error_handling(page, goto, server_url) -> None:
     expect(errors_container).to_be_visible()
     expect(errors_container).to_contain_text("Team not found")
 
-def test_draggable_elements(admin_page) -> None:
+def test_draggable_elements(admin_page, request) -> None:
+    """Tests that team members are draggable and 'No members in this team' message is not draggable."""
+    # # Skip this test if not running in headed mode
+    # # The --headed flag is passed to pytest-playwright
+    # if not request.config.option.headed:
+    #     pytest.skip("test_draggable_elements requires --headed flag to run")
+    
     page = admin_page
     setup_team_page(page)
 
