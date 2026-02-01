@@ -15,7 +15,12 @@ function initDragula(containers, dropHandler) {
 
     if (containers.length === 0) return;
 
-    const drake = dragula(containers);
+    const drake = dragula(containers, {
+        moves: function(el, source, handle, sibling) {
+            // Prevent dragging if element has 'no-drag' class
+            return !el.classList.contains('no-drag');
+        }
+    });
 
     drake.on('drop', dropHandler);
 
