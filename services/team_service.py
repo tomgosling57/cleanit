@@ -9,7 +9,10 @@ class TeamService:
         self.job_service = JobService(self.db_session)
         self.user_service = UserService(self.db_session)
     def get_all_teams(self):
-        teams = self.db_session.query(Team).options(joinedload(Team.members), joinedload(Team.team_leader)).all()
+        teams = self.db_session.query(Team)\
+            .options(joinedload(Team.members), joinedload(Team.team_leader))\
+            .order_by(Team.id.asc())\
+            .all()
         return teams
         
     def get_team(self, team_id):
