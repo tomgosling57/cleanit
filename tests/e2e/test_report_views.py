@@ -1,5 +1,5 @@
 """
-E2E tests for time-based media deletion restrictions.
+E2E tests for job report views.
 Tests that supervisors cannot delete media older than 48 hours, while admins can.
 """
 import pytest
