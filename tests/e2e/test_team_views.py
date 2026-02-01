@@ -1,5 +1,6 @@
 # tests/test_team_views.py
-from tests.helpers import login_admin, wait_for_modal, setup_team_page, get_all_team_cards, assert_modal_title, close_modal, click_and_wait_for_response, drag_to_and_wait_for_response, simulate_htmx_delete_and_expect_response
+import re
+from tests.helpers import login_admin, wait_for_modal, setup_team_page, get_all_team_cards, assert_modal_title, close_modal, click_and_wait_for_response, drag_to_and_wait_for_response, simulate_htmx_delete_and_expect_response, assert_element_is_draggable, assert_element_is_not_draggable
 from playwright.sync_api import expect
 
 def test_team_cards(page, goto, server_url) -> None:
@@ -97,3 +98,57 @@ def test_delete_team_error_handling(page, goto, server_url) -> None:
     expect(errors_container).to_be_visible()
     expect(errors_container).to_contain_text("Team not found")
 
+def test_draggable_elements(admin_page) -> None:
+    page = admin_page
+    setup_team_page(page)
+
+    # Get all team cards
+    team_cards = get_all_team_cards(page)
+    expect(team_cards).to_have_count(5)
+    
+    # First team card - should have draggable members
+    first_team = team_cards.first
+    first_team_members = first_team.locator('.members-list li.member-item')
+    expect(first_team_members).to_have_count(2)  # Should have 2 members based on test data
+    
+    # Check that team members are draggable by verifying they don't have the no-drag class
+    for i in range(first_team_members.count()):
+        member = first_team_members.nth(i)
+        expect(member).not_to_have_class('no-drag')
+    
+    # Test that team members are actually draggable using our new helper
+    # First, test one member is draggable (visual feedback and basic drag)
+    second_team = team_cards.nth(1)
+    second_team_members_list = second_team.locator('.members-list')
+    first_member = first_team_members.first
+    
+    # Use the helper to assert the element is draggable
+    assert_element_is_draggable(page, first_member, second_team_members_list)
+    
+    # Now test the full drag with network request (which also tests the API integration)
+    second_team_id = second_team.get_attribute('data-team-id')
+    drag_to_and_wait_for_response(
+        page,
+        first_member,
+        second_team_members_list,
+        f"**/teams/team/{second_team_id}/member/add**"
+    )
+    
+    # Third team card - should have "no members" message
+    third_team = team_cards.nth(2)  # 0-based index
+    no_members_message = third_team.locator('.no-members.no-drag')
+    expect(no_members_message).to_be_visible()
+    expect(no_members_message).to_have_text('No members in this team')
+    
+    # Verify the "no members" message has the no-drag class
+    expect(no_members_message).to_have_class(re.compile(r'no-drag'))
+    
+    # Test that the "no members" message is NOT draggable using our new helper
+    # First, get a reference to a target (another team's member list)
+    fourth_team = team_cards.nth(3)
+    fourth_team_members_list = fourth_team.locator('.members-list')
+    
+    # Use the helper to assert the element is not draggable
+    assert_element_is_not_draggable(page, no_members_message, fourth_team_members_list)
+    
+    
