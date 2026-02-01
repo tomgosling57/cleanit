@@ -31,7 +31,7 @@ def test_property_card_gallery(admin_page) -> None:
     expect(admin_page.get_by_text("All Properties")).to_be_visible()
 
     property_card = get_first_property_card(admin_page)
-    expect(property_card).to_be_visible()
+    property_card.wait_for(state="visible")
 
     open_property_gallery(admin_page, property_card, property_card.get_attribute("data-id"))
     
