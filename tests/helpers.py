@@ -529,3 +529,81 @@ def validate_csrf_token_in_modal(modal: Locator) -> None:
     csrf_input = modal.locator("input[name=csrf_token]")
     csrf_input.wait_for(state="attached")
     assert csrf_input.input_value(), "CSRF token input is empty in modal"
+
+def assert_element_is_draggable(page: Page, draggable: Locator, drop_target: Locator) -> None:
+    """
+    Test if an element is draggable by checking visual feedback and actual drag functionality.
+    
+    Args:
+        page: Playwright Page object
+        draggable: Locator for the element that should be draggable
+        drop_target: Locator for the drop target/zone
+    """
+    # 1. Verify the element is visible and interactable
+    expect(draggable).to_be_visible()
+    
+    # 2. Verify visual feedback (cursor style)
+    draggable.hover()
+    cursor = draggable.evaluate("el => getComputedStyle(el).cursor")
+    assert "move" in cursor or "grab" in cursor or "pointer" in cursor, \
+        f"Element should have draggable cursor, got: {cursor}"
+    
+    # 3. Test actual drag functionality
+    initial_pos = draggable.bounding_box()
+    assert initial_pos is not None, "Draggable element should have bounding box"
+    
+    # Perform the drag
+    draggable.drag_to(drop_target)
+    
+    # Check if position changed (element should have moved during drag)
+    # Note: After drag, the element might return to original position or stay in new position
+    # depending on the drag implementation. We'll check that at least the drag operation
+    # was attempted successfully.
+    final_pos = draggable.bounding_box()
+    assert final_pos is not None, "Draggable element should still have bounding box after drag"
+    
+    # The element should have moved during the drag operation
+    # (even if it snaps back, the drag operation itself should cause movement)
+    assert initial_pos['x'] != final_pos['x'] or initial_pos['y'] != final_pos['y'], \
+        "Element should have moved during drag operation"
+
+def assert_element_is_not_draggable(page: Page, element: Locator, drop_target: Locator) -> None:
+    """
+    Test if an element is NOT draggable by checking visual feedback and attempting drag.
+    
+    Args:
+        page: Playwright Page object
+        element: Locator for the element that should NOT be draggable
+        drop_target: Locator for a potential drop target
+    """
+    # 1. Verify the element is visible
+    expect(element).to_be_visible()
+    
+    # 2. Verify it doesn't have draggable visual feedback
+    element.hover()
+    cursor = element.evaluate("el => getComputedStyle(el).cursor")
+    # Should not have draggable cursor styles
+    assert "move" not in cursor and "grab" not in cursor, \
+        f"Non-draggable element should not have draggable cursor, got: {cursor}"
+    
+    # 3. Test that drag doesn't work (element position doesn't change)
+    initial_pos = element.bounding_box()
+    assert initial_pos is not None, "Element should have bounding box"
+    
+    # Attempt to drag (this might not work if element is not draggable)
+    try:
+        element.drag_to(drop_target)
+    except Exception as e:
+        # If drag fails, that's expected for non-draggable elements
+        pass
+    
+    # Check position hasn't changed (or changed very little due to attempted drag)
+    final_pos = element.bounding_box()
+    assert final_pos is not None, "Element should still have bounding box after drag attempt"
+    
+    # Element should not have moved significantly
+    # Allow for tiny differences due to rendering/measurement
+    x_diff = abs(initial_pos['x'] - final_pos['x'])
+    y_diff = abs(initial_pos['y'] - final_pos['y'])
+    assert x_diff < 5 and y_diff < 5, \
+        f"Non-draggable element should not move during drag attempt (moved x:{x_diff}, y:{y_diff})"
