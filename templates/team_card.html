@@ -27,11 +27,10 @@
                                    hx-swap="innerHTML">&times;</span>
                     </li>
                 {% endfor %}
+            {% else %}
+                <p class="no-members">No members in this team</p>
             {% endif %}
         </ul>
-        {% if not team.members %}
-            <p class="no-members">No members in this team</p>
-        {% endif %}
     </div>
     {{ render_card_actions([
         {
