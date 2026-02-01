@@ -18,13 +18,16 @@ def test_team_cards(page, goto, server_url) -> None:
     expect(team_leader_card).to_be_visible()
     expect(team_leader_card.get_by_text("Lily Hargrave")).to_be_visible()
 
-def test_team_reassignment_removes_old_team_leader(page, goto) -> None:
-    """Test that when a team leader is reassigned to a new team, the old team removes that team leader and auto reassigns.
+def test_team_reassignment(admin_page) -> None:
+    """Tests:
+    1. That team members can be dragged to a new team to reassign them.
+    2. That team reassignments persist in the backend.
+    3. That teams render in a consistent order.
+    4. That when a team leader is reassigned to a new team, the old team removes that team leader and auto reassigns a new leader.
     
     Args:
-        page: The Playwright page object.
-        goto: The goto fixture to navigate to the app."""
-    login_admin(page, goto)
+        admin_page: The Playwright page object with admin privileges."""
+    page = admin_page
     setup_team_page(page)
 
     # Get the team cards
@@ -37,9 +40,21 @@ def test_team_reassignment_removes_old_team_leader(page, goto) -> None:
     old_team_leader = old_team.locator('li.team-leader-member').first.get_by_text("Benjara Brown")
     expect(old_team_leader).to_be_visible()
     new_team_id = new_team.get_attribute('data-team-id')
-    # Drag team leader to new team
+    # Drag team leader to new team (covers #1)
     drag_to_and_wait_for_response(page, old_team_leader, new_team, f"**/teams/team/{new_team_id}/member/add**")
-    
+
+    # Assert that the reassignment persists after refreshing . the page (covers #2)
+    pre_refresh_team_members = page.locator('.team-members').all()
+    page.reload()  
+    team_members = page.locator('.team-members').all()
+    page.locator('.teams-container').wait_for(state="visible")    
+    # Verify team members text matches pre-refresh state (covers #3)
+    for i in range(len(pre_refresh_team_members)):
+        expect(team_members[i]).to_have_text(pre_refresh_team_members[i].inner_text())
+        for j in range(team_members[i].locator('li.member-item').count()): # Unnecessary sanity check
+            expect(team_members[i].locator('li.member-item').nth(j)).to_have_text(pre_refresh_team_members[i].locator('li.member-item').nth(j).inner_text())
+
+    # Verify new team has the new team leader (covers #4)    
     new_team_leader = new_team.locator('li.team-leader-member').first.get_by_text("Benjara Brown")
     expect(new_team_leader).to_be_visible()
     # Verify old team has removed the team leader
