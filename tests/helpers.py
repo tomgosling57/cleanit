@@ -2,9 +2,11 @@
 import re
 from playwright.sync_api import expect, Page, Locator
 from typing import Optional
-from datetime import datetime, timedelta, time
+from datetime import timedelta
 from config import DATETIME_FORMATS
-from utils.timezone import utc_now, today_in_app_tz
+from tests.job_helpers import fill_job_report_and_submit, open_job_report
+from tests.gallery_helpers import assert_gallery_modal_content
+from utils.timezone import utc_now
 
 def get_future_date(days: int) -> str:
     future_date = utc_now() + timedelta(days=days)
@@ -142,10 +144,23 @@ def mark_job_as_complete(page, job_card) -> None:
     Returns:
         None
     """
-    with page.expect_response(f"**/jobs/job/{job_card.get_attribute('data-job-id')}/update_status**"):    
-        page.wait_for_load_state('networkidle')
-        job_card.get_by_role("button", name="Mark Complete").click()
-        
+    job_id = job_card.get_attribute('data-job-id')
+    job_modal = open_job_report(page, job_card, job_id)    
+    # Fill the job report in and open the media gallery
+    gallery_modal = fill_job_report_and_submit(page, job_modal, job_id)
+    assert_gallery_modal_content(gallery_modal, expect_media=False)
+    
+
+    # Close the gallery modal with the escape key
+    gallery_modal.press("Escape")
+    expect(gallery_modal).not_to_be_visible()
+
+    # Submit the Job Report and Media, marking the job is complete
+    job_modal.locator("#gallery-submit-button").click()
+    job_modal.wait_for(state="hidden")    
+    
+    # Hover over the job card to ensure buttons are clickable (especially for completed jobs)
+    job_card.hover()
     expect(job_card.get_by_text("Mark Pending")).to_be_visible()
     expect(job_card).to_have_class(re.compile(r"completed"))
 
