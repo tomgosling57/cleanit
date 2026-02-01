@@ -137,6 +137,8 @@ def test_admin_can_delete_old_media(admin_page):
     # Close gallery modal
     gallery_modal.press("Escape")
     expect(gallery_modal).not_to_be_visible()
+    job_modal.locator("#gallery-submit-button").click()
+    expect(job_modal).not_to_be_visible()
     
     # Get media ID and make it old
     media_ids = get_job_media_ids(job_id)
@@ -150,7 +152,7 @@ def test_admin_can_delete_old_media(admin_page):
     open_report_gallery(admin_page, job_modal, job_id)
     gallery_modal = admin_page.locator("#media-gallery-modal")
     gallery_modal.wait_for(state="visible")
-    
+
     # Delete all media
     delete_all_gallery_media(gallery_modal)
                   
