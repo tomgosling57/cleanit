@@ -568,12 +568,21 @@
         );
         
         if (validFiles.length === 0) {
-            alert('No valid files selected. Supported types: JPEG, PNG, GIF, MP4, WebM. Max size: 100MB.');
+            if (window.showAlert) {
+                window.showAlert('No valid files selected. Supported types: JPEG, PNG, GIF, MP4, WebM. Max size: 100MB.');
+            }
+            else {
+                alert('No valid files selected. Supported types: JPEG, PNG, GIF, MP4, WebM. Max size: 100MB.');
+            }
             return;
         }
         
         if (validFiles.length > config.batchOperations.maxFiles) {
-            alert(`Too many files. Maximum ${config.batchOperations.maxFiles} files allowed.`);
+            if (window.showAlert) {
+                window.showAlert(`Too many files. Maximum ${config.batchOperations.maxFiles} files allowed.`);
+            } else {
+                alert(`Too many files. Maximum ${config.batchOperations.maxFiles} files allowed.`);
+            }
             return;
         }
         
@@ -603,13 +612,25 @@
             if (data.success) {
                 // Refresh gallery
                 fetchEntityMedia(currentEntity);
-                alert(`Successfully uploaded ${validFiles.length} file(s)`);
+                if (window.showSuccess) {
+                    window.showSuccess(`Successfully uploaded ${validFiles.length} file(s)`);
+                } else {
+                    alert(`Successfully uploaded ${validFiles.length} file(s)`);
+                }
             } else {
-                alert('Upload failed: ' + (data.error || 'Unknown error'));
+                if (window.showError) {
+                    window.showError('Upload failed: ' + (data.error || 'Unknown error'));
+                } else {
+                    alert('Upload failed: ' + (data.error || 'Unknown error'));
+                }
             }
         } catch (error) {
             console.error('Error uploading files:', error);
-            alert('Error uploading files. Please try again.');
+            if (window.showError) {
+                window.showError('Error uploading files. Please try again.');
+            } else {
+                alert('Error uploading files. Please try again.');
+            }
         }
         
         // Reset file input
