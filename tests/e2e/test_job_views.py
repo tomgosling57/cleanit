@@ -184,7 +184,13 @@ def test_access_notes_visibility_team_leader(team_leader_page) -> None:
     assert_access_notes_visible(page, job_card)
 
 def test_access_notes_visibility_admin(admin_page) -> None:
-    pass
+    """Tests that the access notes are visible to admins within the job details."""
+    page = admin_page
+    job_card = get_first_job_card(page)
+    assert_access_notes_visible(page, job_card)
 
 def test_access_notes_visibility_user(user_page) -> None:
-    pass
+    """Tests that the access notes are not visible to regular users within the job details."""
+    page = user_page
+    job_card = get_first_job_card(page)
+    assert_access_notes_not_visible(page, job_card)
