@@ -254,7 +254,9 @@ def get_csrf_token(page: Page) -> str:
     return page.locator('body').get_attribute('data-csrf-token')
 
 def get_first_job_card(page: Page) -> Locator:
-    return page.locator(".job-card").first
+    page.locator(".job-list").wait_for(state="visible")
+    job_card = page.locator(".job-card").first
+    return job_card
 
 def open_job_details_modal(page: Page, job_card: Locator, url_pattern: str) -> None:
     with page.expect_response(url_pattern):
