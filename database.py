@@ -276,7 +276,10 @@ def create_initial_users(session):
     user = User(id=3, first_name='Tom', last_name='Gosling', email='user@example.com', role='user')
     user.set_password('user_password')
     session.add(user)
-    
+
+    team_leader = User(id=4, first_name='Alice', last_name='Smith', email='teamleader@example.com', role='team_leader')
+    team_leader.set_password('team_leader_password')
+    session.add(team_leader)
     session.commit()
     print("Initial users created for deterministic testing.")
     return admin, supervisor, user
