@@ -54,7 +54,7 @@ USER_DATA = {
         'first_name': 'Alice',
         'last_name': 'Smith',
         'email': 'teamleader@example.com',
-        'role': 'team_leader',
+        'role': 'user',
         'password': 'team_leader_password'
     }
 }

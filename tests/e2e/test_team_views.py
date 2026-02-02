@@ -4,8 +4,10 @@ import pytest
 from tests.helpers import login_admin, wait_for_modal, setup_team_page, get_all_team_cards, assert_modal_title, close_modal, click_and_wait_for_response, drag_to_and_wait_for_response, simulate_htmx_delete_and_expect_response, assert_element_is_draggable, assert_element_is_not_draggable
 from playwright.sync_api import expect
 
-def test_team_cards(page, goto, server_url) -> None:
-    login_admin(page, goto)
+from utils.populate_database import USER_DATA
+
+def test_team_cards(admin_page) -> None:
+    page = admin_page
     setup_team_page(page)
 
     # Get all of the team cards
@@ -17,8 +19,9 @@ def test_team_cards(page, goto, server_url) -> None:
     expect(team_card.get_by_text("Initial Team")).to_be_visible()
     team_leader_card = team_card.locator('li.team-leader-member')
     expect(team_leader_card).to_be_visible()
-    expect(team_leader_card.get_by_text("Lily Hargrave")).to_be_visible()
+    expect(team_leader_card.get_by_text(USER_DATA['admin']['first_name'] + " " + USER_DATA['admin']['last_name'])).to_be_visible()
 
+@pytest.mark.db_reset
 def test_team_reassignment(admin_page) -> None:
     """Tests:
     1. That team members can be dragged to a new team to reassign them.
@@ -33,12 +36,12 @@ def test_team_reassignment(admin_page) -> None:
 
     # Get the team cards
     team_cards = get_all_team_cards(page)
-    old_team = team_cards.nth(1)
-    new_team = team_cards.nth(2)
+    old_team = team_cards.nth(0)
+    new_team = team_cards.nth(3)
     expect(old_team).to_be_visible()
     expect(new_team).to_be_visible()
     # Verify initial team leader of old team
-    old_team_leader = old_team.locator('li.team-leader-member').first.get_by_text("Benjara Brown")
+    old_team_leader = old_team.locator('li.team-leader-member').first.get_by_text(USER_DATA['admin']['first_name'] + " " + USER_DATA['admin']['last_name'])
     expect(old_team_leader).to_be_visible()
     new_team_id = new_team.get_attribute('data-team-id')
     # Drag team leader to new team (covers #1)
@@ -56,7 +59,7 @@ def test_team_reassignment(admin_page) -> None:
             expect(team_members[i].locator('li.member-item').nth(j)).to_have_text(pre_refresh_team_members[i].locator('li.member-item').nth(j).inner_text())
 
     # Verify new team has the new team leader (covers #4)    
-    new_team_leader = new_team.locator('li.team-leader-member').first.get_by_text("Benjara Brown")
+    new_team_leader = new_team.locator('li.team-leader-member').first.get_by_text(USER_DATA['admin']['first_name'] + " " + USER_DATA['admin']['last_name'])
     expect(new_team_leader).to_be_visible()
     # Verify old team has removed the team leader
     expect(old_team_leader).to_be_hidden()
@@ -64,17 +67,16 @@ def test_team_reassignment(admin_page) -> None:
     modal = wait_for_modal(page, "#team-modal")
     expect(modal.locator("form")).to_have_attribute("data-team-leader-id", "None")
 
-
-def test_delete_team_error_handling(page, goto, server_url) -> None:
+@pytest.mark.db_reset
+def test_delete_team_error_handling(admin_page, server_url) -> None:
     """Test deleting a team and handling errors when trying to delete a non-existent team.
     
     Args:
-        page: The Playwright page object.
-        goto: The goto fixture to navigate to the app.
-        base_url: The base URL of the live server.
+        admin_page: The Playwright page object with admin privileges.
+        server_url: The base URL of the live server.
         """
-    login_admin(page, goto)
-    setup_team_page(page)
+    setup_team_page(admin_page)
+    page = admin_page
 
     # Get all team cards
     team_cards = get_all_team_cards(page)
@@ -114,6 +116,7 @@ def test_delete_team_error_handling(page, goto, server_url) -> None:
     expect(errors_container).to_be_visible()
     expect(errors_container).to_contain_text("Team not found")
 
+@pytest.mark.db_reset
 def test_draggable_elements(admin_page, request) -> None:
     """Tests that team members are draggable and 'No members in this team' message is not draggable."""
     # # Skip this test if not running in headed mode
