@@ -167,3 +167,9 @@ class TeamService:
             'on_a_different_team': on_a_different_team,
             'unassigned': unassigned
         }
+    
+    def is_team_leader(self, user_id, team_id):
+        team = self.get_team(team_id)
+        if team and team.team_leader_id == user_id:
+            return True
+        return False
