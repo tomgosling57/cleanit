@@ -120,7 +120,7 @@ class JobController:
         if not current_user.is_authenticated or current_user.role not in ['admin', 'supervisor']:
             return jsonify({'error': 'Unauthorized'}), 401
 
-        job = self.job_service.get_job_details(job_id)
+        job = self._get_job_details(job_id)
         if not job:
             return self._handle_errors({'Job Not Found': ERRORS['Job Not Found']})
 
@@ -146,7 +146,7 @@ class JobController:
         
         # If skip_gallery is true but no report_text provided, try to get existing report
         if skip_gallery and not report_text:
-            job = self.job_service.get_job_details(job_id)
+            job = self._get_job_details(job_id)
             if job and job.report:
                 report_text = job.report
             else:
@@ -156,7 +156,7 @@ class JobController:
         # Validate report text (unless skipping gallery with existing report)
         if not report_text and not skip_gallery:
             # Return error response
-            job = self.job_service.get_job_details(job_id)
+            job = self._get_job_details(job_id)
             if not job:
                 return self._handle_errors({'Job Not Found': ERRORS['Job Not Found']})
             
@@ -203,7 +203,7 @@ class JobController:
             return jsonify({'error': 'Unauthorized'}), 401
 
         # Get the job to ensure it exists and is complete
-        job = self.job_service.get_job_details(job_id)
+        job = self._get_job_details(job_id)
         if not job:
             return self._handle_errors({'Job Not Found': ERRORS['Job Not Found']})
         
@@ -222,20 +222,23 @@ class JobController:
         response = render_template_string('{% include "job_status_fragment.html" %} {% include "job_card.html" %}', job=job, is_oob_swap=True, view_type=view_type, DATETIME_FORMATS=DATETIME_FORMATS)
         return response
 
-
-    def get_job_details(self, job_id):
-        job_is_assigned_to_current_user = self.assignment_service.user_assigned_to_job(current_user.id, job_id)
-        job_is_assigned_to_current_user_team = self.assignment_service.team_assigned_to_job(current_user.team_id, job_id)
-        if current_user.role not in ['admin', 'supervisor'] and (current_user.role == 'user' and not (job_is_assigned_to_current_user or job_is_assigned_to_current_user_team)):
-            return jsonify({'error': 'Unauthorized'}), 403
-
+    def _get_job_details(self, job_id):
+        """Gets the job details from the service according to the users privileges"""
         access_notes_privilege = False
         if current_user.role in ['admin', 'supervisor']:
             access_notes_privilege = True
         elif self.team_service.is_team_leader(current_user.id, current_user.team_id):    
             access_notes_privilege = True
         job = self.job_service.get_job_details(job_id, include_access_notes=access_notes_privilege)
-        
+        return job
+    
+    def get_job_details(self, job_id):
+        job_is_assigned_to_current_user = self.assignment_service.user_assigned_to_job(current_user.id, job_id)
+        job_is_assigned_to_current_user_team = self.assignment_service.team_assigned_to_job(current_user.team_id, job_id)
+        if current_user.role not in ['admin', 'supervisor'] and (current_user.role == 'user' and not (job_is_assigned_to_current_user or job_is_assigned_to_current_user_team)):
+            return jsonify({'error': 'Unauthorized'}), 403
+
+        job = self._get_job_details(job_id)
         if job:
             cleaners = self.assignment_service.get_users_for_job(job_id)
             teams = self.assignment_service.get_teams_for_job(job_id)
@@ -296,7 +299,7 @@ class JobController:
         if current_user.role != 'admin':
             return jsonify({'error': 'Unauthorized'}), 403
 
-        job = self.job_service.get_job_details(job_id)
+        job = self._get_job_details(job_id)
         if not job:
             return self._handle_errors({'Job Not Found': ERRORS['Job Not Found']})
 
@@ -419,7 +422,7 @@ class JobController:
         if current_user.role != 'admin':
             return jsonify({'error': 'Unauthorized'}), 403
 
-        job = self.job_service.get_job_details(job_id)
+        job = self._get_job_details(job_id)
         teams = self.team_service.get_all_teams()
         users = self.user_service.get_all_users()
         job_users = self.assignment_service.get_users_for_job(job_id)
@@ -483,7 +486,7 @@ class JobController:
         if not current_user.is_authenticated or current_user.role != 'admin':
             return jsonify({'success': False, 'error': 'Unauthorized'}), 403
 
-        job = self.job_service.get_job_details(request.form.get('job_id'))
+        job = self._get_job_details(request.form.get('job_id'))
         view_type = request.form.get('view_type') or request.args.get('view_type', 'normal')
         if not job:
             return self._handle_errors({'Job Not Found': ERRORS['Job Not Found']}, view_type=view_type)
@@ -561,7 +564,7 @@ class JobController:
         
         try:
             # Check if job exists
-            job = self.job_service.get_job_details(job_id)
+            job = self._get_job_details(job_id)
             if not job:
                 current_app.logger.warning(f"Job {job_id} not found")
                 return jsonify({'error': 'Job not found'}), 404
@@ -754,7 +757,7 @@ class JobController:
         
         try:
             # Check if job exists
-            job = self.job_service.get_job_details(job_id)
+            job = self._get_job_details(job_id)
             if not job:
                 flash('Job not found', 'error')
                 return jsonify({'error': 'Job not found'}), 404
@@ -822,7 +825,7 @@ class JobController:
         
         try:
             # Check if job exists
-            job = self.job_service.get_job_details(job_id)
+            job = self._get_job_details(job_id)
             if not job:
                 return jsonify({'error': 'Job not found'}), 404
             
