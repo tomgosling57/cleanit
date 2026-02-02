@@ -187,7 +187,13 @@ select#edit-team-members, select#create-team-members {
     text-decoration: none;
     cursor: pointer;
 }
-
+.member-item .delete-button {
+    display: none;
+    position: static;
+}
+.member-item:hover .delete-button {
+    display: inline;
+}
 select optgroup[label="On a Different Team"] option {
     color: var(--placeholder-text-color);
 }
