@@ -25,8 +25,8 @@
             <p><strong>Property Address:</strong> {{ job.property.address }}</p>
         </div>
         <div class="job-status-actions">
-            {% if current_user.is_authenticated and current_user.role in ['admin', 'supervisor'] %}
             <div class="job-actions" id="job-actions-{{ job.id }}">
+                {% if current_user.is_authenticated and current_user.role in ['admin', 'supervisor'] %}
                 {% if job.is_complete %}
                 <!-- Mark Pending button - immediate action -->
                 <button hx-post="{{ url_for('job.mark_job_pending', job_id=job.id) }}?date={{ selected_date }}&view_type={{ view_type }}"
@@ -45,6 +45,7 @@
                     <span id="job-update-status-{{ job.id }}">Mark Complete</span>
                 </button>
                 {% endif %}
+                {% endif %}
                 <button hx-get="{{ url_for('job.get_job_details', job_id=job.id, view_type=view_type) }}"
                         hx-target="#job-modal-content"
                         hx-trigger="click"
@@ -53,7 +54,6 @@
                     View Details
                 </button>
             </div>
-            {% endif %}
             <div class="job-statuses">
                 {% if job.arrival_datetime and job.arrival_datetime.date() == job.date %}
                 <div class="job-status-badge red">Same Day Arrival</div>
