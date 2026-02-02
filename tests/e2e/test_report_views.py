@@ -38,6 +38,7 @@ def get_job_media_ids(job_id):
     finally:
         session.close()
 
+@pytest.mark.db_reset
 def test_supervisor_cannot_delete_old_media(supervisor_page):
     """
     Test that a supervisor cannot delete media older than 48 hours.
@@ -107,15 +108,7 @@ def test_supervisor_cannot_delete_old_media(supervisor_page):
     attempt_to_delete_all_gallery_media(gallery_modal)
     expect(supervisor_page.locator(".alert").get_by_text("Cannot delete media: some items are too old")).to_be_visible()
 
-def test_supervisor_can_delete_recent_media(supervisor_page):
-    """
-    Test that a supervisor CAN delete media uploaded within 48 hours.
-    """
-    # This test requires creating a job report as supervisor (if allowed)
-    # Since supervisors can mark jobs complete, we can use that flow.
-    # For simplicity, we'll skip for now and focus on the restriction test.
-    pass
-
+@pytest.mark.db_reset
 def test_admin_can_delete_old_media(admin_page):
     """
     Test that an admin can delete media regardless of age.
