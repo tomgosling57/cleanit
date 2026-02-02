@@ -1,5 +1,6 @@
 from time import sleep
 from playwright.sync_api import expect
+import pytest
 from tests.helpers import (
     get_first_property_card, 
     open_address_book, 
@@ -18,6 +19,7 @@ def test_address_book(admin_page) -> None:
     expect(admin_page.locator("#property-list")).to_be_visible()
     expect(admin_page.get_by_text("All Properties")).to_be_visible()
 
+@pytest.mark.db_reset
 def test_create_property(admin_page) -> None:
     """Test creating a new property"""
     page = admin_page
@@ -48,6 +50,7 @@ def test_create_property(admin_page) -> None:
     # Assert card content
     assert_property_card_content(new_property_card, test_address, test_access_notes, test_notes)
 
+@pytest.mark.db_reset
 def test_update_property(admin_page) -> None:
     """Test updating an existing property"""
     page = admin_page
@@ -80,6 +83,7 @@ def test_update_property(admin_page) -> None:
     # Assert updated content
     assert_property_card_content(updated_card, updated_address, updated_access_notes, updated_notes)
 
+@pytest.mark.db_reset
 def test_delete_property(admin_page) -> None:
     """Test deleting a property"""
     page = admin_page
