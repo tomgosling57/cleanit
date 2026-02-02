@@ -78,10 +78,12 @@ class PropertyController:
         # Pass jobs and DATETIME_FORMATS to the timetable fragment
         return render_template('property_jobs_modal.html',
                                property=property,
+                               property_id=property.id,
                                jobs=jobs,
                                DATETIME_FORMATS=DATETIME_FORMATS,
                                default_start_date=default_start_date_str,
                                default_end_date=default_end_date_str,
+                               show_date_dividers=True,
                                show_past=False,
                                show_completed=True,
                                filter_applied=False,
@@ -157,7 +159,8 @@ class PropertyController:
             jobs=jobs,
             show_date_dividers=True,
             property_id=property_id,
-            DATETIME_FORMATS=DATETIME_FORMATS
+            DATETIME_FORMATS=DATETIME_FORMATS,
+            view_type=None  # Ensure view_type is passed (optional)
         )
 
     def _get_app_timezone(self):
