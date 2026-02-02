@@ -152,7 +152,7 @@ def create_initial_teams(session, admin, supervisor_user, user, team_leader):
     print("Initial teams created for deterministic testing.")
     return initial_team, alpha_team, beta_team, charlie_team, delta_team
 
-def _create_job(session, date, time, end_time, description, property_obj, team_obj=None, user_obj=None, job_id=None, arrival_date_offset=0):
+def _create_job(session, date, time, end_time, description, property_obj, team_obj=None, user_obj=None, job_id=None, arrival_date_offset=0, complete=False):
     """
     Helper function to create a job with deterministic data.
 
@@ -167,6 +167,7 @@ def _create_job(session, date, time, end_time, description, property_obj, team_o
         user_obj (User, optional): The User object assigned to the job. Defaults to None.
         job_id (int, optional): The explicit ID for the job. If None, SQLAlchemy assigns one.
         arrival_date_offset (int): The number of days to offset the arrival date from the job date.
+        complete (bool): Whether the job is marked as complete. Defaults to False.
 
     Returns:
         Job: The created Job object.
@@ -180,7 +181,7 @@ def _create_job(session, date, time, end_time, description, property_obj, team_o
         arrival_datetime=datetime.combine(arrival_date_for_job, time),
         end_time=end_time,
         description=description,
-        is_complete=False,
+        is_complete=complete,
         property=property_obj
     )
     session.add(job)
@@ -247,6 +248,16 @@ def create_initial_jobs(session, anytown_property, teamville_property, admin, us
     _create_job(session, today, time(9, 0), time(11, 0), 'Full house clean, focus on kitchen and bathrooms.', anytown_property, team_obj=initial_team, user_obj=admin, job_id=1, arrival_date_offset=2)
     _create_job(session, today, time(12, 0), time(14, 0), '', anytown_property, team_obj=initial_team, job_id=2, arrival_date_offset=1)
     _create_job(session, today, time(14, 0), time(16, 0), '', anytown_property, team_obj=initial_team, job_id=3, arrival_date_offset=0)
+    # Future Jobs
+    _create_job(session, today + timedelta(days=3), time(10, 0), time(12, 0), 'Future job: Deep clean carpets.', anytown_property, team_obj=initial_team, job_id=12)
+    _create_job(session, today + timedelta(days=5), time(13, 0), time(15, 0), 'Future job: Window cleaning.', teamville_property, team_obj=initial_team, job_id=13)
+    _create_job(session, today + timedelta(days=7), time(9, 0), time(11, 0), 'Future job: Full house clean.', anytown_property, team_obj=initial_team, job_id=18)
+    _create_job(session, today + timedelta(days=10), time(15, 0), time(17, 0), 'Future job: Patio cleaning.', teamville_property, team_obj=initial_team, job_id=19)
+    # Past Jobs
+    _create_job(session, today - timedelta(days=3), time(9, 0), time(11, 0), 'Past job: Garden tidy-up.', teamville_property, team_obj=initial_team, job_id=14, complete=True)
+    _create_job(session, today - timedelta(days=5), time(14, 0), time(16, 0), 'Past job: Pool maintenance.', anytown_property, team_obj=initial_team, job_id=15, complete=True)
+    _create_job(session, today - timedelta(days=7), time(10, 0), time(12, 0), 'Past job: Roof inspection.', teamville_property, team_obj=initial_team, job_id=16, complete=True)
+    _create_job(session, today - timedelta(days=10), time(8, 0), time(10, 0), 'Past job: Driveway cleaning.', anytown_property, team_obj=initial_team, job_id=17, complete=True)
     
     # Alpha Team job
     _create_job(session, today, time(10, 0), time(12, 0), '', teamville_property, team_obj=alpha_team, job_id=4)
