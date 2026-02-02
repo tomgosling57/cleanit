@@ -13,8 +13,9 @@ import subprocess
 import datetime
 from typing import Generator
 from playwright.sync_api import Page, BrowserContext, sync_playwright
+from utils.populate_database import populate_database
 from utils.timezone import compare_times
-from requests import get
+from requests import get, session
 
 def docker_containers_running():
     """Check if required Docker containers are running."""
@@ -200,12 +201,27 @@ def user_page(user_context, server_url):
     page.wait_for_load_state('networkidle')
     yield page
 
-@pytest.fixture(autouse=True)
-def rollback_db_after_test():
-    """Rollback database changes after each test to maintain isolation."""
+import pytest
+from sqlalchemy import event
 
-    # Use the reseed endpoint to reset the database state    
-    get('http://localhost:5000/testing/reseed-database')
+@pytest.fixture(scope="session")
+def db_with_test_data():
+    """Populate database once for the entire test session."""
+    from tests.db_helpers import get_session_maker
+    
+    Session = get_session_maker()
+    populate_database(Session=Session)  # Your existing populate method
+    
+    yield
+    
+    # Optional: cleanup after all tests
+
+@pytest.fixture(autouse=True)
+def rollback_db_after_test(db_with_test_data):
+    """Rollback database changes after each test to maintain isolation."""
+    from tests.db_helpers import get_session_maker
+    yield
+    populate_database(Session=get_session_maker()) 
 
 # Skip if Docker containers not running
 # This will be handled by the conftest.py in tests/e2e/
