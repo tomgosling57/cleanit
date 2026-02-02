@@ -28,7 +28,7 @@
             <div class="group-item">
                 <span class="item-icon"><img src="{{ url_for('static', filename='icons/key.svg') }}" alt="Access Key" class="icon"></span>
                 <div class="item-content">
-                    <div class="primary-info">{{ job.property.access_notes }}</div>
+                    <div id="access-notes" class="primary-info">{{ job.property.access_notes }}</div>
                 </div>
             </div>
             {% endif %}
