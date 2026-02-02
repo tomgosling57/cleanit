@@ -159,9 +159,9 @@ def test_draggable_elements(admin_page, request) -> None:
         f"**/teams/team/{second_team_id}/member/add**"
     )
     
-    # Third team card - should have "no members" message
-    third_team = team_cards.nth(2)  # 0-based index
-    no_members_message = third_team.locator('.no-members.no-drag')
+    # Fourth team card - should have "no members" message
+    fourth_team = team_cards.nth(3)  # 0-based index
+    no_members_message = fourth_team.locator('.no-members.no-drag')
     expect(no_members_message).to_be_visible()
     expect(no_members_message).to_have_text('No members in this team')
     
