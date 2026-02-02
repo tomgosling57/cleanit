@@ -379,16 +379,20 @@ def delete_teams_users(session):
     session.commit()
     print("Deleted all teams and users from the database.")
 
-def insert_dummy_data(Session):
+def insert_dummy_data(session_maker=None, existing_session=None):
     """
     Populates the database with a consistent set of deterministic test data.
     This includes users, teams, properties, and jobs.
     This function clears existing data before seeding to ensure a clean state.
 
     Args:
-        Session: The SQLAlchemy session factory.
+        session_maker: The SQLAlchemy session factory.
+        existing_session: An existing SQLAlchemy session. If provided, this session will be used instead of creating a new one.
     """
-    session = Session()
+    if existing_session:
+        session = existing_session
+    else:
+        session = session_maker()
     
     # Clear existing data
     delete_jobs_assignments_properties(session)
