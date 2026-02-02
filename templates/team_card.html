@@ -49,6 +49,7 @@
             'label': 'Delete',
             'icon_name': 'trash-can-solid-full',
             'type': 'delete',
+            'class': 'delete-team-button',
             'htmx_attrs': {
                 'hx-delete': url_for('teams.delete_team', team_id=team.id),
                 'hx-target': '.teams-grid',
