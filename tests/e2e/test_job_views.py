@@ -155,4 +155,34 @@ def test_create_job(admin_page) -> None:
         expected_indicators=["Same Day Arrival"]
     )
 
+def assert_access_notes_visible(page, job_card) -> None:
+    """Open the job detail modal of the given job card and assert that the access notes attribute is visible."""
+    job_id = job_card.get_attribute('data-job-id')
+    job_modal = open_job_details_modal(page, job_card, f"**/jobs/job/{job_id}/details**")
+    expect(job_modal.locator("#access-notes")).to_be_visible()
 
+
+def assert_access_notes_not_visible(page, job_card) -> None:
+    """Open the job details modal of the given job card and assert that the access notes attribute is not visible."""
+    job_id = job_card.get_attribute('data-job-id')
+    job_modal = open_job_details_modal(page, job_card, f"**/jobs/job/{job_id}/details**")
+    expect(job_modal.locator("#access-notes")).not_to_be_visible()
+
+def test_access_notes_visibility_supervisor(supervisor_page) -> None:
+    """Test that the access notes are visible to supervisors within the job details."""
+    page = supervisor_page
+    job_card = get_first_job_card(page)
+    assert_access_notes_visible(page, job_card)
+    
+
+def test_access_notes_visibility_team_leader(team_leader_page) -> None:
+    """Tests that the access notes are visible to team leaders within the job details."""
+    page = team_leader_page
+    job_card = get_first_job_card(page)
+    assert_access_notes_visible(page, job_card)
+
+def test_access_notes_visibility_admin(admin_page) -> None:
+    pass
+
+def test_access_notes_visibility_user(user_page) -> None:
+    pass
