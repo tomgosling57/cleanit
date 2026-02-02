@@ -13,7 +13,7 @@ import subprocess
 import datetime
 from typing import Generator
 from playwright.sync_api import Page, BrowserContext, sync_playwright
-from utils.populate_database import populate_database
+from utils.populate_database import USER_DATA, populate_database
 from utils.timezone import compare_times
 from requests import get, session
 
@@ -105,8 +105,8 @@ def admin_auth_state(browser, server_url):
     return _create_auth_state(
         browser,
         server_url,
-        "admin@example.com",
-        "admin_password",
+        USER_DATA['admin']['email'],
+        USER_DATA['admin']['password'],
     )
 
 @pytest.fixture(scope="session")
@@ -118,8 +118,8 @@ def supervisor_auth_state(browser, server_url):
     return _create_auth_state(
         browser,
         server_url,
-        "supervisor@example.com",
-        "supervisor_password",
+        USER_DATA['supervisor']['email'],
+        USER_DATA['supervisor']['password'],
     )
 
 @pytest.fixture(scope="session")
@@ -131,8 +131,21 @@ def user_auth_state(browser, server_url):
     return _create_auth_state(
         browser,
         server_url,
-        "user@example.com",
-        "user_password",
+        USER_DATA['user']['email'],
+        USER_DATA['user']['password'],
+    )
+
+@pytest.fixture(scope="session")
+def team_leader_auth_state(browser, server_url):
+    """
+    Creates and returns authentication state (cookies, storage) for team leader user.
+    Uses CSRF-disabled server so authentication state can be saved and reused.
+    """
+    return _create_auth_state(
+        browser,
+        server_url,
+        USER_DATA['team_leader']['email'],
+        USER_DATA['team_leader']['password'],
     )
 
 @pytest.fixture
