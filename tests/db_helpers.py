@@ -13,6 +13,25 @@ def get_db_session():
     Create a SQLAlchemy session using the DATABASE_URL from environment.
     Used for E2E tests that need direct database access.
     """
+    Session = get_session_maker()
+    return Session()
+
+def get_session_maker():
+    """
+    Create a SQLAlchemy session maker using the DATABASE_URL from environment.
+    Used for E2E tests that need direct database access.
+    """
+    # Use existing engine without creating tables
+    database_url = get_database_url()
+    engine = create_engine(database_url)
+    Session = sessionmaker(bind=engine)
+    return Session
+
+def get_database_url():
+    """
+    Retrieve the database URL from environment variables.
+    Defaults to a local SQLite database for testing if not set.
+    """
     import urllib.parse
     database_url = os.environ.get('DATABASE_URL')
     if not database_url:
@@ -46,10 +65,13 @@ def get_db_session():
         else:
             raise EnvironmentError("Password required for database connection but POSTGRES_PASSWORD not set.")
     
-    # Use existing engine without creating tables
-    engine = create_engine(database_url)
-    Session = sessionmaker(bind=engine)
-    return Session()
+    return database_url
+
+def get_engine():
+    """
+    Create a SQLAlchemy engine using the DATABASE_URL from environment."""
+    database_url = get_database_url()
+    return create_engine(database_url)
 
 def update_media_upload_date(media_id, new_upload_date):
     """
