@@ -1,5 +1,7 @@
 from playwright.sync_api import expect
 from datetime import datetime, time, timedelta
+
+import pytest
 from config import DATETIME_FORMATS
 from tests.helpers import (
     assert_job_card_variables,
@@ -38,7 +40,7 @@ def test_job_details(admin_page) -> None:
 
     close_modal_and_assert_hidden(admin_page, "#job-modal")
 
-
+@pytest.mark.db_reset
 def test_update_job(admin_page) -> None:
     page = admin_page
     get_first_job_card(page).wait_for(state="attached")
@@ -106,6 +108,7 @@ def test_update_job(admin_page) -> None:
         expected_indicators=["Next Day Arrival"]
     )
 
+@pytest.mark.db_reset
 def test_create_job(admin_page) -> None:
     page = admin_page
 
@@ -162,7 +165,6 @@ def assert_access_notes_visible(page, job_card) -> None:
     job_modal = open_job_details_modal(page, job_card, f"**/jobs/job/{job_id}/details**")
     expect(job_modal.locator("#access-notes")).to_be_visible()
 
-
 def assert_access_notes_not_visible(page, job_card) -> None:
     """Open the job details modal of the given job card and assert that the access notes attribute is not visible."""
     job_id = job_card.get_attribute('data-job-id')
@@ -175,7 +177,6 @@ def test_access_notes_visibility_supervisor(supervisor_page) -> None:
     job_card = get_first_job_card(page)
     assert_access_notes_visible(page, job_card)
     
-
 def test_access_notes_visibility_team_leader(team_leader_page) -> None:
     """Tests that the access notes are visible to team leaders within the job details."""
     page = team_leader_page

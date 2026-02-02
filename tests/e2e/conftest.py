@@ -214,27 +214,59 @@ def user_page(user_context, server_url):
     page.wait_for_load_state('networkidle')
     yield page
 
-import pytest
-from sqlalchemy import event
+@pytest.fixture
+def team_leader_context(browser, team_leader_auth_state):
+    """
+    Creates a browser context with team leader user already authenticated.
+    """
+    context = browser.new_context(storage_state=team_leader_auth_state)
+    yield context
+    context.close()
 
+@pytest.fixture
+def team_leader_page(team_leader_context, server_url):
+    """
+    Creates a page with team leader user already authenticated and navigates to timetable.
+    Uses CSRF-disabled server.
+    """
+    page = team_leader_context.new_page()
+    page.set_default_navigation_timeout(5000)
+    # Navigate to timetable page (where login redirects to)
+    page.goto(f"{server_url}/jobs/")
+    page.wait_for_load_state('networkidle')
+    yield page
+    
 @pytest.fixture(scope="session")
 def db_with_test_data():
     """Populate database once for the entire test session."""
     from tests.db_helpers import get_session_maker
+    from utils.populate_database import populate_database
     
     Session = get_session_maker()
-    populate_database(Session=Session)  # Your existing populate method
+    populate_database(Session=Session)
     
     yield
-    
-    # Optional: cleanup after all tests
 
 @pytest.fixture(autouse=True)
-def rollback_db_after_test(db_with_test_data):
-    """Rollback database changes after each test to maintain isolation."""
-    from tests.db_helpers import get_session_maker
+def handle_db_reset(request, db_with_test_data):
+    """
+    Automatically reset database after tests marked with @pytest.mark.db_reset.
+    
+    Usage:
+        @pytest.mark.db_reset
+        def test_that_modifies_database():
+            # Test code that commits changes
+            pass
+    """
     yield
-    populate_database(Session=get_session_maker()) 
+    
+    # Check if the test has the db_reset marker
+    if request.node.get_closest_marker('db_reset'):
+        from tests.db_helpers import get_session_maker
+        from utils.populate_database import populate_database
+        
+        Session = get_session_maker()
+        populate_database(Session=Session)
 
 # Skip if Docker containers not running
 # This will be handled by the conftest.py in tests/e2e/
