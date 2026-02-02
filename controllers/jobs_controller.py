@@ -229,7 +229,12 @@ class JobController:
         if current_user.role not in ['admin', 'supervisor'] and (current_user.role == 'user' and not (job_is_assigned_to_current_user or job_is_assigned_to_current_user_team)):
             return jsonify({'error': 'Unauthorized'}), 403
 
-        job = self.job_service.get_job_details(job_id)
+        access_notes_privilege = False
+        if current_user.role in ['admin', 'supervisor']:
+            access_notes_privilege = True
+        elif self.team_service.is_team_leader(current_user.id, current_user.team_id):    
+            access_notes_privilege = True
+        job = self.job_service.get_job_details(job_id, include_access_notes=access_notes_privilege)
         
         if job:
             cleaners = self.assignment_service.get_users_for_job(job_id)
