@@ -1,20 +1,17 @@
 from flask import Blueprint, jsonify, current_app, request
-from utils.populate_database import populate_database
+from utils.populate_database import insert_dummy_data
 from utils.timezone import (
     utc_now, get_app_timezone, get_timezone_offset, is_valid_timezone,
     compare_times, compare_timezones, compare_environment_times
 )
-import os
-import platform
-import time
-import zoneinfo
+from database import get_db
 testing_bp = Blueprint('testing', __name__, url_prefix='/testing')
 
 
 @testing_bp.route('/reseed-database', methods=['GET'])
 def reseed_database():
     """Deletes all data in the database and reseeds it with deterministic test data"""
-    populate_database(os.environ['DATABASE_URL'])
+    insert_dummy_data(existing_session=get_db())
     return "Database reseeded", 200
 
 
