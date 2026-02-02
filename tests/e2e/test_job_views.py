@@ -7,6 +7,7 @@ from tests.helpers import (
     fill_job_modal_form, assert_job_details_modal_content, close_modal_and_assert_hidden, validate_csrf_token_in_modal, wait_for_modal,
     get_future_date, get_future_time
 )
+from utils.populate_database import USER_DATA
 from utils.timezone import today_in_app_tz
 
 def test_job_details(admin_page) -> None:
@@ -32,7 +33,7 @@ def test_job_details(admin_page) -> None:
         description="Full house clean, focus on kitchen and bathrooms.",
         property_address="123 Main St, Anytown",
         assigned_team="Initial Team",
-        assigned_cleaner="Lily Hargrave",
+        assigned_cleaner=USER_DATA['admin']['first_name'] + " " + USER_DATA['admin']['last_name'],
     )
 
     close_modal_and_assert_hidden(admin_page, "#job-modal")
