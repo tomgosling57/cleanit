@@ -51,6 +51,13 @@ def get_property_jobs_route(property_id):
     controller = get_property_controller()
     return controller.get_property_jobs_modal_content(property_id)
 
+@properties_bp.route('/property/<int:property_id>/jobs/filtered', methods=['GET'])
+@login_required
+def get_filtered_property_jobs_route(property_id):
+    """GET filtered jobs for a property with date range and other filters."""
+    controller = get_property_controller()
+    return controller.get_filtered_property_jobs(property_id)
+
 @properties_bp.route('/property/<int:property_id>/update', methods=['GET', 'PUT'])
 @login_required
 def update_property_route(property_id):

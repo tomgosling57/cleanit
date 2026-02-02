@@ -1,0 +1,98 @@
+<!-- Date Range Picker Component for Property Job Filtering -->
+<div class="date-filter-container" id="date-filter-container-{{ property_id }}">
+    <form class="date-filter-form"
+          hx-get="/address-book/property/{{ property_id }}/jobs/filtered"
+          hx-target="#job-list"
+          hx-swap="outerHTML"
+          hx-indicator="#filter-indicator-{{ property_id }}">
+        
+        <div class="filter-row">
+            <div class="filter-group">
+                <label for="start-date-{{ property_id }}">From:</label>
+                <input type="date" 
+                       id="start-date-{{ property_id }}" 
+                       name="start_date" 
+                       value="{{ default_start_date }}"
+                       class="date-input">
+            </div>
+            
+            <div class="filter-group">
+                <label for="end-date-{{ property_id }}">To:</label>
+                <input type="date" 
+                       id="end-date-{{ property_id }}" 
+                       name="end_date" 
+                       value="{{ default_end_date }}"
+                       class="date-input">
+            </div>
+            
+            <div class="filter-group checkbox-group">
+                <label class="checkbox-label">
+                    <input type="checkbox" 
+                           name="show_past" 
+                           value="true"
+                           {% if not show_past %}checked{% endif %}
+                           class="checkbox-input">
+                    Hide Past Jobs
+                </label>
+            </div>
+            
+            <div class="filter-group checkbox-group">
+                <label class="checkbox-label">
+                    <input type="checkbox" 
+                           name="show_completed" 
+                           value="true"
+                           {% if show_completed %}checked{% endif %}
+                           class="checkbox-input">
+                    Show Completed
+                </label>
+            </div>
+        </div>
+        
+        <div class="filter-actions">
+            <button type="submit" class="btn btn-primary btn-sm">
+                <span class="btn-text">Apply Filters</span>
+                <span class="spinner-border spinner-border-sm htmx-indicator" 
+                      id="filter-indicator-{{ property_id }}"
+                      role="status" 
+                      aria-hidden="true"></span>
+            </button>
+            
+            <button type="button"
+                    class="btn btn-secondary btn-sm"
+                    onclick="resetDateFilters('{{ property_id }}')">
+                Reset
+            </button>
+        </div>
+    </form>
+    
+    <div class="filter-info" id="filter-info-{{ property_id }}" {% if filter_applied %}style="display:block;"{% else %}style="display:none;"{% endif %}>
+        {% if filter_applied %}
+        <small class="text-muted">
+            Showing jobs from {{ display_start_date }} to {{ display_end_date }}
+            {% if not show_past %}(past jobs hidden){% endif %}
+            {% if not show_completed %}(completed hidden){% endif %}
+        </small>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function resetDateFilters(propertyId) {
+    // Get today's date in YYYY-MM-DD format
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Calculate 30 days from now
+    const futureDate = new Date();
+    futureDate.setDate(futureDate.getDate() + 30);
+    const futureDateStr = futureDate.toISOString().split('T')[0];
+    
+    // Reset form inputs
+    document.getElementById('start-date-' + propertyId).value = today;
+    document.getElementById('end-date-' + propertyId).value = futureDateStr;
+    document.querySelector('#date-filter-container-' + propertyId + ' input[name="show_past"]').checked = false;
+    document.querySelector('#date-filter-container-' + propertyId + ' input[name="show_completed"]').checked = true;
+    
+    // Submit the form to refresh with default filters
+    document.querySelector('#date-filter-container-' + propertyId + ' form').dispatchEvent(new Event('submit'));
+}
+</script>

@@ -4,11 +4,11 @@
 This document outlines the patterns and best practices for writing end-to-end tests using Playwright and pytest for the CleanIt application. The patterns are derived from existing test implementations and helper functions.
 
 ## Test Database Configuration
-The testing environment uses a **local seeded test database** that is wiped and reseeded after each test. This ensures consistent, deterministic test data for reliable test execution.
+The testing environment uses a **local seeded test database**. Tests that modify the database state should be decorated with @pytest.mark.db_reset to ensure that the database is restored to its original state after the test. This ensures consistent, deterministic test data for reliable test execution.
 
 ### Key Characteristics:
 1. **Deterministic Data**: Test data is consistently seeded from `database.py` using the `insert_dummy_data()` function
-2. **Isolated Tests**: Database is reset between tests to prevent state leakage
+2. **Isolated Tests**: Database is reset at the beginning of the test session and after tests decorated with @pytest.mark.db_reset
 3. **Specific Object References**: Many test cases are tied to specific objects with known IDs:
    - Users: Admin (ID: 1), Supervisor (ID: 2), User (ID: 3)
    - Teams: Initial Team (ID: 1), Alpha Team (ID: 2), Beta Team (ID: 3), etc.
@@ -41,14 +41,12 @@ login_user(page, goto)  # Uses user@example.com / user_password
 ## Core Principles
 
 ### 1. Authentication First
-All tests must begin with authentication using the appropriate login helper function:
+Authentication is handled using stored authentication states defined in tests/e2e/conftest.py. These authentication states are used to setup page fixtures with the privileges of the used authentication state. All tests must use the appropriate page fixture from tests/e2e/conftest.py:
 
 ```python
-from tests.helpers import login_admin, login_supervisor, login_user
 
-def test_example(page, goto) -> None:
-    # Always start with authentication
-    login_admin(page, goto)  # or login_supervisor, login_user
+def test_example(admin_page) -> None:
+    # using admin_page for admin privileges
     # ... rest of test
 ```
 

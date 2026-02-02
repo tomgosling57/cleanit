@@ -1,4 +1,9 @@
 <h2>Timetable for {{ property.address }}</h2>
-<div class="timetable-container">
+
+<!-- Date Filtering Component -->
+{% include 'components/date_range_picker.html' %}
+
+<!-- Scrollable Job List Container -->
+<div class="property-jobs-container scrollable-container">
     {% include 'job_list_fragment.html' %}
 </div>

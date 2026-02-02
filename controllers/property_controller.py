@@ -49,14 +49,121 @@ class PropertyController:
         """
         Renders the modal content for displaying jobs associated with a property.
         """
+        from utils.timezone import today_in_app_tz
+        from datetime import timedelta
+        
         session['property_id'] = property_id
         property = self.property_service.get_property_by_id(property_id)
         if not property:
             return jsonify({'error': 'Property not found'}), 404
         
-        jobs = self.job_service.get_jobs_by_property_id(property_id)
+        # Calculate default dates (today to today+30 in application timezone)
+        today_app_tz = today_in_app_tz()
+        default_start_date = today_app_tz
+        default_end_date = today_app_tz + timedelta(days=30)
+        
+        # Format dates for HTML date inputs (YYYY-MM-DD)
+        default_start_date_str = default_start_date.strftime("%Y-%m-%d")
+        default_end_date_str = default_end_date.strftime("%Y-%m-%d")
+        
+        # Get jobs with default filters (hide past jobs, show completed)
+        jobs = self.job_service.get_filtered_jobs_by_property_id(
+            property_id=property_id,
+            start_date=default_start_date,
+            end_date=default_end_date,
+            show_past_jobs=False,
+            show_completed=True
+        )
+        
         # Pass jobs and DATETIME_FORMATS to the timetable fragment
-        return render_template('property_jobs_modal.html', property=property, jobs=jobs, DATETIME_FORMATS=DATETIME_FORMATS)
+        return render_template('property_jobs_modal.html',
+                               property=property,
+                               jobs=jobs,
+                               DATETIME_FORMATS=DATETIME_FORMATS,
+                               default_start_date=default_start_date_str,
+                               default_end_date=default_end_date_str,
+                               show_past=False,
+                               show_completed=True,
+                               filter_applied=False,
+                               display_start_date=default_start_date.strftime("%b %d, %Y"),
+                               display_end_date=default_end_date.strftime("%b %d, %Y"))
+
+    def get_filtered_property_jobs(self, property_id):
+        """
+        Renders filtered job list for a property based on query parameters.
+        
+        Supports:
+        - start_date: Start date in YYYY-MM-DD format (application timezone)
+        - end_date: End date in YYYY-MM-DD format (application timezone)
+        - show_past: Boolean flag to show past jobs (default: false)
+        - show_completed: Boolean flag to show completed jobs (default: true)
+        """
+        from utils.timezone import parse_to_utc, today_in_app_tz
+        from datetime import timedelta
+        
+        property = self.property_service.get_property_by_id(property_id)
+        if not property:
+            return jsonify({'error': 'Property not found'}), 404
+        
+        # Parse query parameters with defaults
+        start_date_str = request.args.get('start_date')
+        end_date_str = request.args.get('end_date')
+        show_past = request.args.get('show_past', 'false').lower() == 'true'
+        show_completed = request.args.get('show_completed', 'true').lower() == 'true'
+        
+        start_date = None
+        end_date = None
+        
+        # Parse dates from application timezone to UTC
+        if start_date_str:
+            try:
+                # Parse from app timezone to UTC, get date part
+                start_date_utc = parse_to_utc(
+                    start_date_str,
+                    "%Y-%m-%d",
+                    source_tz=self._get_app_timezone()
+                )
+                start_date = start_date_utc.date()
+            except ValueError:
+                return jsonify({'error': 'Invalid start_date format. Use YYYY-MM-DD'}), 400
+        
+        if end_date_str:
+            try:
+                end_date_utc = parse_to_utc(
+                    end_date_str,
+                    "%Y-%m-%d",
+                    source_tz=self._get_app_timezone()
+                )
+                end_date = end_date_utc.date()
+            except ValueError:
+                return jsonify({'error': 'Invalid end_date format. Use YYYY-MM-DD'}), 400
+        
+        # Validate date range
+        if start_date and end_date and start_date > end_date:
+            return jsonify({'error': 'start_date must be before or equal to end_date'}), 400
+        
+        # Get filtered jobs
+        jobs = self.job_service.get_filtered_jobs_by_property_id(
+            property_id=property_id,
+            start_date=start_date,
+            end_date=end_date,
+            show_past_jobs=show_past,
+            show_completed=show_completed
+        )
+        
+        # Render job list fragment with date divider context
+        return render_template(
+            'job_list_fragment.html',
+            jobs=jobs,
+            show_date_dividers=True,
+            property_id=property_id,
+            DATETIME_FORMATS=DATETIME_FORMATS
+        )
+
+    def _get_app_timezone(self):
+        """Helper to get application timezone from config."""
+        from flask import current_app
+        return current_app.config.get('APP_TIMEZONE', 'UTC')
 
     def get_property_creation_form(self):
         """

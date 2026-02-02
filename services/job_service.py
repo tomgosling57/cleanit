@@ -66,6 +66,47 @@ class JobService:
         jobs = self.db_session.query(Job).options(joinedload(Job.property)).filter(Job.property_id == property_id).order_by(Job.date, Job.time).all()
         return jobs
 
+    def get_filtered_jobs_by_property_id(self, property_id, start_date=None, end_date=None,
+                                         show_past_jobs=False, show_completed=True):
+        """
+        Retrieve filtered jobs for a specific property with optional date range and filters.
+        
+        Args:
+            property_id: ID of the property
+            start_date: Start date for filtering (datetime.date in UTC)
+            end_date: End date for filtering (datetime.date in UTC)
+            show_past_jobs: If True, include jobs before today (default: False)
+            show_completed: If True, include completed jobs (default: True)
+            
+        Returns:
+            List of Job objects matching the filters, ordered by date and time
+        """
+        from utils.timezone import utc_now, today_in_app_tz
+        from datetime import date as date_type
+        
+        query = self.db_session.query(Job).options(joinedload(Job.property)).filter(Job.property_id == property_id)
+        
+        # Apply date range filters
+        if start_date:
+            query = query.filter(Job.date >= start_date)
+        if end_date:
+            query = query.filter(Job.date <= end_date)
+        
+        # Apply past jobs filter
+        if not show_past_jobs:
+            # Get today's date in UTC for comparison
+            today_utc = utc_now().date()
+            query = query.filter(Job.date >= today_utc)
+        
+        # Apply completion status filter
+        if not show_completed:
+            query = query.filter(Job.is_complete == False)
+        
+        # Order by date and time
+        query = query.order_by(Job.date, Job.time)
+        
+        return query.all()
+
 
     def get_jobs_for_user_on_date(self, user_id, team_id, date: date):
         user = self.db_session.query(User).filter(User.id == user_id).first()
