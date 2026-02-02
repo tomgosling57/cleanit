@@ -1,29 +1,63 @@
 import os
 from config import Config
-from database import User, init_db, insert_dummy_data
+from database import User, init_db
 from database import Team, Property, Job, Assignment, Media, PropertyMedia, JobMedia
 from datetime import date, datetime, time, timedelta
 
 
-def populate_database(database_uri, force=True):
+def populate_database(database_uri=None, force=True, Session=None):
     """This function populates the database with dummy data for testing purposes.
     
     Args:
         database_uri (str): The database URI where the dummy data will be inserted.
+        force (bool): If True, forces re-population even if data exists. Defaults to True.
+        Session: An existing SQLAlchemy session factory. If None, a new one will be created.
     """
-    
-    if "sqlite:///" in database_uri:
-        database_path = database_uri.replace("sqlite:///", "")
-        database_dir = os.path.dirname(database_path)
-        if not os.path.exists(database_dir):
-            os.makedirs(database_dir)
+    if Session is None:    
+        if "sqlite:///" in database_uri:
+            database_path = database_uri.replace("sqlite:///", "")
+            database_dir = os.path.dirname(database_path)
+            if not os.path.exists(database_dir):
+                os.makedirs(database_dir)
 
-    Session = init_db(database_uri)
-    if not force and Session().query(User).filter_by(role='admin').first():
-        print("Database already populated. Exiting.")
+        Session = init_db(database_uri)
+        if not force and Session().query(User).filter_by(role='admin').first():
+            print("Database already populated. Exiting.")
         return
     insert_dummy_data(Session)
     print("Database populated with dummy data.")
+
+USER_DATA = {
+    'admin': {
+        'first_name': 'Ruby',
+        'last_name': 'Redmond',
+        'email': 'admin@example.com',
+        'phone': '12345678',
+        'role': 'admin',
+        'password': 'admin_password'
+    },
+    'supervisor': {
+        'first_name': 'Damo',
+        'last_name': 'Brown',
+        'email': 'supervisor@example.com',
+        'role': 'supervisor',
+        'password': 'supervisor_password'
+    },
+    'user': {
+        'first_name': 'Manchan',
+        'last_name': 'Fionn',
+        'email': 'user@example.com',
+        'role': 'user',
+        'password': 'user_password'
+    },
+    'team_leader': {
+        'first_name': 'Alice',
+        'last_name': 'Smith',
+        'email': 'teamleader@example.com',
+        'role': 'team_leader',
+        'password': 'team_leader_password'
+    }
+}
 
 def create_initial_users(session):
     """
@@ -39,20 +73,25 @@ def create_initial_users(session):
     session.query(User).delete()
     session.commit()
 
-    admin = User(id=1, first_name='Ruby', last_name='Redmond', email='admin@example.com', phone='12345678', role='admin')
-    admin.set_password('admin_password')
+    admin = User(id=1, first_name=USER_DATA['admin']['first_name'], last_name=USER_DATA['admin']['last_name'],
+                  email=USER_DATA['admin']['email'], phone=USER_DATA['admin']['phone'], role=USER_DATA['admin']['role'])
+    admin.set_password(USER_DATA['admin']['password'])
     session.add(admin)
 
-    supervisor = User(id=2, first_name='Damo', last_name="Brown", email='supervisor@example.com', role='supervisor')
-    supervisor.set_password('supervisor_password')
+    supervisor = User(id=2, first_name=USER_DATA['supervisor']['first_name'], last_name=USER_DATA['supervisor']['last_name'], 
+                      email=USER_DATA['supervisor']['email'], role=USER_DATA['supervisor']['role'])
+    supervisor.set_password(USER_DATA['supervisor']['password'])
     session.add(supervisor)
 
-    user = User(id=3, first_name='Manchan', last_name='Fionn', email='user@example.com', role='user')
-    user.set_password('user_password')
+    user = User(id=3, first_name=USER_DATA['user']['first_name'], last_name=USER_DATA['user']['last_name'],
+                 email=USER_DATA['user']['email'], role=USER_DATA['user']['role'])
+    user.set_password(USER_DATA['user']['password'])
     session.add(user)
 
-    team_leader = User(id=4, first_name='Alice', last_name='Smith', email='teamleader@example.com', role='team_leader')
-    team_leader.set_password('team_leader_password')
+    team_leader = User(id=4, first_name=USER_DATA['team_leader']['first_name'], 
+                       last_name=USER_DATA['team_leader']['last_name'], email=USER_DATA['team_leader']['email'], 
+                       role=USER_DATA['team_leader']['role'])
+    team_leader.set_password(USER_DATA['team_leader']['password'])
     session.add(team_leader)
     session.commit()
     print("Initial users created for deterministic testing.")
@@ -283,18 +322,14 @@ def _fix_postgres_sequences(session):
     
     session.commit()
 
-
-def insert_dummy_data(Session):
+def delete_jobs_assignments_properties(session):
     """
-    Populates the database with a consistent set of deterministic test data.
-    This includes users, teams, properties, and jobs.
-    This function clears existing data before seeding to ensure a clean state.
+    Deletes all jobs, assignments, properties and associated media from the database.
+    This is useful for resetting the database state before populating with new data.
 
     Args:
-        Session: The SQLAlchemy session factory.
+        session: The SQLAlchemy session.
     """
-    session = Session()
-    
     # Delete all data in correct order to avoid foreign key constraint violations
     # 1. Delete assignments first (references users, jobs, teams)
     session.query(Assignment).delete()
@@ -307,8 +342,17 @@ def insert_dummy_data(Session):
     session.query(Job).delete()
     # 5. Delete properties
     session.query(Property).delete()
-    
-    # 6. Before deleting teams, we need to handle foreign key constraints:
+    session.commit()
+    print("Deleted all jobs, assignments, and properties from the database.")
+
+def delete_teams_users(session):
+    """
+    Deletes all teams and users from the database.
+    Must be run after deleting all jobs assignments and properties.
+    Args:
+        session: The SQLAlchemy session.
+    """
+    # Before deleting teams, we need to handle foreign key constraints:
     #    - users.team_id references teams.id
     #    - teams.team_leader_id references users.id
     # So we need to set team_id to NULL for all users first
@@ -317,12 +361,27 @@ def insert_dummy_data(Session):
     session.query(Team).update({Team.team_leader_id: None})
     session.commit()
     
-    # 7. Now we can delete teams
+    # Now we can delete teams
     session.query(Team).delete()
-    # 8. Finally delete users
+    # Finally delete users
     session.query(User).delete()
-    
     session.commit()
+    print("Deleted all teams and users from the database.")
+
+def insert_dummy_data(Session):
+    """
+    Populates the database with a consistent set of deterministic test data.
+    This includes users, teams, properties, and jobs.
+    This function clears existing data before seeding to ensure a clean state.
+
+    Args:
+        Session: The SQLAlchemy session factory.
+    """
+    session = Session()
+    
+    # Clear existing data
+    delete_jobs_assignments_properties(session)
+    delete_teams_users(session)
     print("Cleared existing data for fresh population.")
     
     # Now create new data
