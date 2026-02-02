@@ -21,6 +21,45 @@ def test_team_cards(admin_page) -> None:
     expect(team_leader_card).to_be_visible()
     expect(team_leader_card.get_by_text(USER_DATA['admin']['first_name'] + " " + USER_DATA['admin']['last_name'])).to_be_visible()
 
+def delete_team_member(page, team_card, member_item) -> None:
+    """Helper function to delete a team member given the member item locator."""
+    delete_button = member_item.locator('.delete-button')
+    expect(delete_button).to_be_visible()
+    team_id = team_card.get_attribute('data-team-id')
+    click_and_wait_for_response(page, delete_button, f"**/teams/team/{team_id}/member/remove**")
+    expect(member_item).to_be_hidden()
+    assert team_id == team_card.get_attribute('data-team-id') # Sanity check that the team card is the same
+
+def delete_team(page, team_card) -> None:
+    """Helper function to delete a team given the team card locator."""
+    delete_button = team_card.locator('.delete-team-button')
+    expect(delete_button).to_be_visible()
+    team_id = team_card.get_attribute('data-team-id')
+    # Handle the confirmation dialog
+    page.once('dialog', lambda dialog: dialog.accept())
+    click_and_wait_for_response(page, delete_button, f"**/teams/team/{team_id}/delete**")
+    expect(page.locator(f'.team-card[data-team-id="{team_id}"]')).to_be_hidden()
+
+@pytest.mark.db_reset
+def test_delete_functions(admin_page) -> None:
+    """Tests that the admin can delete team members and teams. Team member delete buttons should only be visible when hovered on."""
+    setup_team_page(admin_page)
+    team_cards = get_all_team_cards(admin_page)
+    team_card = team_cards.first
+    expect(team_card).to_be_visible()
+    # Get the team leader member item
+    team_leader_item = team_card.locator('li.team-leader-member')
+    expect(team_leader_item).to_be_visible()
+    # Hover over the team leader to reveal delete button
+    delete_button = team_leader_item.locator('.delete-button')
+    expect(delete_button).not_to_be_visible()
+    team_leader_item.hover()
+    expect(delete_button).to_be_visible()
+    delete_team_member(admin_page, team_card, team_leader_item)
+
+    # Delete the Team
+    delete_team(admin_page, team_card)
+
 @pytest.mark.db_reset
 def test_team_reassignment(admin_page) -> None:
     """Tests:
