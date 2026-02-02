@@ -1,6 +1,8 @@
 from playwright.sync_api import expect
 from pathlib import Path
 
+import pytest
+
 from tests.helpers import (
     get_first_property_card, 
     open_address_book,
@@ -46,6 +48,7 @@ def test_property_card_gallery(admin_page) -> None:
     delete_all_gallery_media(gallery_modal)
     
 
+@pytest.mark.db_reset
 def test_job_property_gallery_continuity(admin_page) -> None:
     """
     Test that the property gallery modal open from the job details view shows the media for the property associated with the job. 
@@ -86,6 +89,7 @@ def test_job_property_gallery_continuity(admin_page) -> None:
     # Delete test media
     delete_all_gallery_media(gallery_modal)
 
+@pytest.mark.db_reset
 def test_job_report_gallery_submission(admin_page) -> None:
     """
     Test that the job report gallery with submit modal opens and shows expected content.
