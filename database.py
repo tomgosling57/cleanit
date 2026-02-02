@@ -265,15 +265,15 @@ def create_initial_users(session):
     session.query(User).delete()
     session.commit()
 
-    admin = User(id=1, first_name='Lily', last_name='Hargrave', email='admin@example.com', phone='12345678', role='admin')
+    admin = User(id=1, first_name='Ruby', last_name='Redmond', email='admin@example.com', phone='12345678', role='admin')
     admin.set_password('admin_password')
     session.add(admin)
 
-    supervisor = User(id=2, first_name='Benjara', last_name="Brown", email='supervisor@example.com', role='supervisor')
+    supervisor = User(id=2, first_name='Damo', last_name="Brown", email='supervisor@example.com', role='supervisor')
     supervisor.set_password('supervisor_password')
     session.add(supervisor)
 
-    user = User(id=3, first_name='Tom', last_name='Gosling', email='user@example.com', role='user')
+    user = User(id=3, first_name='Manchan', last_name='Fionn', email='user@example.com', role='user')
     user.set_password('user_password')
     session.add(user)
 
@@ -282,7 +282,7 @@ def create_initial_users(session):
     session.add(team_leader)
     session.commit()
     print("Initial users created for deterministic testing.")
-    return admin, supervisor, user
+    return admin, supervisor, user, team_leader
 
 def _create_team(session, team_name, team_leader_id=None, members=None, team_id=None):
     """
