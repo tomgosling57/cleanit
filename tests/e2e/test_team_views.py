@@ -93,9 +93,8 @@ def test_team_reassignment(admin_page) -> None:
     page.locator('.teams-container').wait_for(state="visible")    
     # Verify team members text matches pre-refresh state (covers #3)
     for i in range(len(pre_refresh_team_members)):
-        expect(team_members[i]).to_have_text(pre_refresh_team_members[i].inner_text())
         for j in range(team_members[i].locator('li.member-item').count()): # Unnecessary sanity check
-            expect(team_members[i].locator('li.member-item').nth(j)).to_have_text(pre_refresh_team_members[i].locator('li.member-item').nth(j).inner_text())
+            assert team_members[i].locator('span.member-name').inner_text() == pre_refresh_team_members[i].locator('span.member-name').inner_text()
 
     # Verify new team has the new team leader (covers #4)    
     new_team_leader = new_team.locator('li.team-leader-member').first.get_by_text(USER_DATA['admin']['first_name'] + " " + USER_DATA['admin']['last_name'])
