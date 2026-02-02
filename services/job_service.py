@@ -49,8 +49,10 @@ class JobService:
             return job
         return None
 
-    def get_job_details(self, job_id):
+    def get_job_details(self, job_id, include_access_notes=False):
         job = self.db_session.query(Job).options(joinedload(Job.property)).filter(Job.id == job_id).first()
+        if job and not include_access_notes:
+            job.property.access_notes = None
         return job
     
     def get_all_jobs(self):
