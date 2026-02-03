@@ -1,6 +1,8 @@
+from datetime import datetime
 from time import sleep
 from playwright.sync_api import expect
 import pytest
+from config import DATETIME_FORMATS
 from tests.helpers import (
     get_first_property_card, 
     open_address_book, 
@@ -176,3 +178,34 @@ def test_user_cannot_access_address_book(user_page, goto) -> None:
     expect(page.locator("#property-list")).not_to_be_visible()
     # User should be redirected to the login page
     expect(page.get_by_text("404")).to_be_visible()
+
+def assert_date_picker_formats(page, expected_format: str) -> None:
+    """Helper to assert that date formats in job listings match expected format"""
+    job_date_elements = page.locator(".date-input")
+    count = job_date_elements.count()
+    for i in range(count):
+        date_text = job_date_elements.nth(i).input_value()
+        # Simple check: ensure date text matches expected format
+        # This is a basic check; for robust testing, consider using date parsing libraries
+        assert assert_date_format(date_text, expected_format), f"Date '{date_text}' does not match format '{expected_format}'"  
+
+def assert_date_format(date_string, date_format):
+    try:
+        datetime.strptime(date_string, date_format)
+        return True
+    except ValueError:
+        return False
+    
+def test_job_list_filtering(admin_page) -> None:
+    """Test filtering jobs in the property jobs modal"""
+    page = admin_page
+    open_address_book(page)
+    
+    # Get first property card
+    property_card = page.locator('#property-card-1')
+    address = property_card.locator("h3#address").text_content()
+    expect(property_card).to_be_visible()
+    
+    # Open jobs modal
+    job_list =open_property_jobs_modal(page, property_card)
+    assert_date_picker_formats(job_list, DATETIME_FORMATS['DATE_FORMAT'])

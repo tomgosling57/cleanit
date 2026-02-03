@@ -484,6 +484,7 @@ def open_property_jobs_modal(page: Page, property_card: Locator) -> None:
 
     page.wait_for_load_state('networkidle')    
     expect(page.locator("#property-modal")).to_be_visible()
+    return page.locator("#property-modal")
 
 
 def delete_property(page: Page, property_card: Locator) -> None:
