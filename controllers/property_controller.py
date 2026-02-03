@@ -62,9 +62,9 @@ class PropertyController:
         default_start_date = today_app_tz
         default_end_date = today_app_tz + timedelta(days=30)
         
-        # Format dates for HTML date inputs (YYYY-MM-DD)
-        default_start_date_str = default_start_date.strftime("%Y-%m-%d")
-        default_end_date_str = default_end_date.strftime("%Y-%m-%d")
+        # Format dates for HTML date inputs (using configured DATE_FORMAT)
+        default_start_date_str = default_start_date.isoformat()
+        default_end_date_str = default_end_date.isoformat()
         
         # Get jobs with default filters (hide past jobs, show completed)
         jobs = self.job_service.get_filtered_jobs_by_property_id(
@@ -87,8 +87,8 @@ class PropertyController:
                                show_past=False,
                                show_completed=True,
                                filter_applied=False,
-                               display_start_date=default_start_date.strftime("%b %d, %Y"),
-                               display_end_date=default_end_date.strftime("%b %d, %Y"))
+                               display_start_date=default_start_date.strftime(DATETIME_FORMATS["DATE_FORMAT"]),
+                               display_end_date=default_end_date.strftime(DATETIME_FORMATS["DATE_FORMAT"]))
 
     def get_filtered_property_jobs(self, property_id):
         """
@@ -122,23 +122,23 @@ class PropertyController:
                 # Parse from app timezone to UTC, get date part
                 start_date_utc = parse_to_utc(
                     start_date_str,
-                    "%Y-%m-%d",
+                    DATETIME_FORMATS["ISO_DATE_FORMAT"],
                     source_tz=self._get_app_timezone()
                 )
                 start_date = start_date_utc.date()
             except ValueError:
-                return jsonify({'error': 'Invalid start_date format. Use YYYY-MM-DD'}), 400
+                return jsonify({'error': f'Invalid start_date format. Use {DATETIME_FORMATS["ISO_DATE_FORMAT"]}'}), 400
         
         if end_date_str:
             try:
                 end_date_utc = parse_to_utc(
                     end_date_str,
-                    "%Y-%m-%d",
+                    DATETIME_FORMATS["ISO_DATE_FORMAT"],
                     source_tz=self._get_app_timezone()
                 )
                 end_date = end_date_utc.date()
             except ValueError:
-                return jsonify({'error': 'Invalid end_date format. Use YYYY-MM-DD'}), 400
+                return jsonify({'error': f'Invalid end_date format. Use {DATETIME_FORMATS["ISO_DATE_FORMAT"]}'}), 400
         
         # Validate date range
         if start_date and end_date and start_date > end_date:
