@@ -1,5 +1,6 @@
 from datetime import datetime
 from time import sleep
+from xml.sax.xmlreader import Locator
 from playwright.sync_api import expect
 import pytest
 from config import DATETIME_FORMATS
@@ -179,16 +180,24 @@ def test_user_cannot_access_address_book(user_page, goto) -> None:
     # User should be redirected to the login page
     expect(page.get_by_text("404")).to_be_visible()
 
-def assert_date_picker_formats(page, expected_format: str) -> None:
-    """Helper to assert that date formats in job listings match expected format"""
-    job_date_elements = page.locator(".date-input")
-    count = job_date_elements.count()
-    for i in range(count):
-        date_text = job_date_elements.nth(i).input_value()
-        # Simple check: ensure date text matches expected format
-        # This is a basic check; for robust testing, consider using date parsing libraries
-        assert assert_date_format(date_text, expected_format), f"Date '{date_text}' does not match format '{expected_format}'"  
+def assert_date_picker_formats(expected_format: str, display_input: Locator, hidden_input: Locator) -> None:
+    """Helper to assert that date formats in date picker inputs match expected format"""
+    # Get values from inputs    
+    internal_date = hidden_input.input_value()
+    displayed_date = display_input.input_value()
+    # Check that the internal value is in ISO format
+    assert assert_iso_date_format(internal_date), f"Internal date value '{internal_date}' is not in ISO format"
+    # Check that the displayed text matches expected format
+    assert assert_date_format(displayed_date, expected_format), f"Displayed date '{displayed_date}' does not match format '{expected_format}'"  
 
+def assert_iso_date_format(date_string: str) -> bool:
+    """Check if a date string is in ISO format YYYY-MM-DD"""
+    try:
+        datetime.fromisoformat(date_string)
+        return True
+    except ValueError:
+        return False
+    
 def assert_date_format(date_string, date_format):
     try:
         datetime.strptime(date_string, date_format)
@@ -208,4 +217,6 @@ def test_job_list_filtering(admin_page) -> None:
     
     # Open jobs modal
     job_list =open_property_jobs_modal(page, property_card)
-    assert_date_picker_formats(job_list, DATETIME_FORMATS['DATE_FORMAT'])
+    # Verify the contents of the date pickers are formatted correctly 
+    assert_date_picker_formats(DATETIME_FORMATS['DATE_FORMAT'], job_list.locator("#start-date-display-1"), job_list.locator("#start-date-1"))  
+    assert_date_picker_formats(DATETIME_FORMATS['DATE_FORMAT'], job_list.locator("#end-date-display-1"), job_list.locator("#end-date-1"))
