@@ -186,11 +186,11 @@ def assert_date_picker_formats(expected_format: str, display_input: Locator, hid
     internal_date = hidden_input.input_value()
     displayed_date = display_input.input_value()
     # Check that the internal value is in ISO format
-    assert assert_iso_date_format(internal_date), f"Internal date value '{internal_date}' is not in ISO format"
+    assert validate_iso_date_format(internal_date), f"Internal date value '{internal_date}' is not in ISO format"
     # Check that the displayed text matches expected format
-    assert assert_date_format(displayed_date, expected_format), f"Displayed date '{displayed_date}' does not match format '{expected_format}'"  
+    assert validate_date_format(displayed_date, expected_format), f"Displayed date '{displayed_date}' does not match format '{expected_format}'"  
 
-def assert_iso_date_format(date_string: str) -> bool:
+def validate_iso_date_format(date_string: str) -> bool:
     """Check if a date string is in ISO format YYYY-MM-DD"""
     try:
         datetime.fromisoformat(date_string)
@@ -198,13 +198,13 @@ def assert_iso_date_format(date_string: str) -> bool:
     except ValueError:
         return False
     
-def assert_date_format(date_string, date_format):
+def validate_date_format(date_string, date_format):
     try:
         datetime.strptime(date_string, date_format)
         return True
     except ValueError:
         return False
-    
+
 def test_job_list_filtering(admin_page) -> None:
     """Test filtering jobs in the property jobs modal"""
     page = admin_page
