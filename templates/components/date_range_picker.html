@@ -9,22 +9,46 @@
         <div class="filter-row">
             <div class="filter-group">
                 <label for="start-date-{{ property_id }}">From:</label>
-                <input type="date" 
-                       id="start-date-{{ property_id }}" 
-                       name="start_date" 
-                       value="{{ default_start_date }}"
-                       class="date-input">
+                <div style="position: relative; display: block; width: 100%; cursor: pointer;" 
+                     onclick="document.getElementById('start-date-{{ property_id }}').showPicker()">
+                    <input type="text" 
+                        id="start-date-display-{{ property_id }}" 
+                        value="{{ display_start_date }}"
+                        placeholder="dd-mm-yyyy"
+                        class="date-input"
+                        readonly
+                        tabindex="-1"
+                        style="pointer-events: none; z-index: 1; width: 100%;">
+                    <input type="date" 
+                        id="start-date-{{ property_id }}" 
+                        name="start_date" 
+                        value="{{ default_start_date }}"
+                        style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; opacity: 0; z-index: 2;"
+                        onchange="updateDisplayDate('{{ property_id }}', 'start')">
+                </div>
             </div>
-            
+
             <div class="filter-group">
                 <label for="end-date-{{ property_id }}">To:</label>
-                <input type="date" 
-                       id="end-date-{{ property_id }}" 
-                       name="end_date" 
-                       value="{{ default_end_date }}"
-                       class="date-input">
+                <div style="position: relative; display: block; width: 100%; cursor: pointer;" 
+                     onclick="document.getElementById('end-date-{{ property_id }}').showPicker()">
+                    <input type="text" 
+                        id="end-date-display-{{ property_id }}" 
+                        value="{{ display_end_date }}"
+                        placeholder="dd-mm-yyyy"
+                        class="date-input"
+                        readonly
+                        tabindex="-1"
+                        style="pointer-events: none; z-index: 1; width: 100%;">
+                    <input type="date" 
+                        id="end-date-{{ property_id }}" 
+                        name="end_date" 
+                        value="{{ default_end_date }}"
+                        style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; opacity: 0; z-index: 2;"
+                        onchange="updateDisplayDate('{{ property_id }}', 'end')">
+                </div>
             </div>
-            
+                
             <div class="filter-group checkbox-group">
                 <label class="checkbox-label">
                     <input type="checkbox" 
@@ -78,21 +102,106 @@
 
 <script>
 function resetDateFilters(propertyId) {
-    // Get today's date in YYYY-MM-DD format
     const today = new Date().toISOString().split('T')[0];
     
-    // Calculate 30 days from now
     const futureDate = new Date();
     futureDate.setDate(futureDate.getDate() + 30);
     const futureDateStr = futureDate.toISOString().split('T')[0];
     
-    // Reset form inputs
+    // Reset hidden inputs
     document.getElementById('start-date-' + propertyId).value = today;
     document.getElementById('end-date-' + propertyId).value = futureDateStr;
-    document.querySelector('#date-filter-container-' + propertyId + ' input[name="show_past"]').checked = false;
+    
+    // Update display inputs
+    updateDisplayDate(propertyId, 'start');
+    updateDisplayDate(propertyId, 'end');
+    
+    // Reset checkboxes
+    document.querySelector('#date-filter-container-' + propertyId + ' input[name="show_past"]').checked = true;
     document.querySelector('#date-filter-container-' + propertyId + ' input[name="show_completed"]').checked = true;
     
-    // Submit the form to refresh with default filters
+    // Submit the form
     document.querySelector('#date-filter-container-' + propertyId + ' form').dispatchEvent(new Event('submit'));
 }
+
+function updateDisplayDate(propertyId, dateType) {
+    const hiddenInput = document.getElementById(dateType + '-date-' + propertyId);
+    const displayInput = document.getElementById(dateType + '-date-display-' + propertyId);
+    
+    if (hiddenInput.value) {
+        const [year, month, day] = hiddenInput.value.split('-');
+        displayInput.value = `${day}-${month}-${year}`;
+    }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const containers = document.querySelectorAll('[id^="date-filter-container-"]');
+    containers.forEach(container => {
+        const propertyId = container.id.replace('date-filter-container-', '');
+        updateDisplayDate(propertyId, 'start');
+        updateDisplayDate(propertyId, 'end');
+    });
+});
+
+
+function syncDisplayToHidden(propertyId, dateType) {
+    const displayInput = document.getElementById(dateType + '-date-display-' + propertyId);
+    
+    // Mark that user is actively typing
+    displayInput.dataset.typing = 'true';
+    
+    // Remove non-numeric and non-dash characters
+    let value = displayInput.value.replace(/[^\d-]/g, '');
+    
+    // Auto-format as user types: dd-mm-yyyy
+    if (value.length >= 2 && value.charAt(2) !== '-') {
+        value = value.slice(0, 2) + '-' + value.slice(2);
+    }
+    if (value.length >= 5 && value.charAt(5) !== '-') {
+        value = value.slice(0, 5) + '-' + value.slice(5);
+    }
+    
+    displayInput.value = value.slice(0, 10); // Limit to dd-mm-yyyy length
+}
+
+function validateAndSyncDate(propertyId, dateType) {
+    const displayInput = document.getElementById(dateType + '-date-display-' + propertyId);
+    const hiddenInput = document.getElementById(dateType + '-date-' + propertyId);
+    
+    // Clear typing flag
+    displayInput.dataset.typing = '';
+    
+    const value = displayInput.value;
+    const regex = /^(\d{2})-(\d{2})-(\d{4})$/;
+    const match = value.match(regex);
+    
+    if (match) {
+        const [, day, month, year] = match;
+        
+        // Validate the date
+        const date = new Date(year, month - 1, day);
+        if (date.getFullYear() == year && 
+            date.getMonth() == month - 1 && 
+            date.getDate() == day) {
+            
+            // Convert to ISO format for hidden input
+            hiddenInput.value = `${year}-${month}-${day}`;
+            displayInput.classList.remove('is-invalid');
+        } else {
+            // Invalid date
+            displayInput.classList.add('is-invalid');
+            hiddenInput.value = '';
+        }
+    } else if (value === '') {
+        // Empty is valid
+        hiddenInput.value = '';
+        displayInput.classList.remove('is-invalid');
+    } else {
+        // Invalid format
+        displayInput.classList.add('is-invalid');
+        hiddenInput.value = '';
+    }
+}
+
 </script>
