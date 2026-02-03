@@ -3,6 +3,7 @@ import os
 import tempfile
 
 DATETIME_FORMATS = {
+    "ISO_DATE_FORMAT": "%Y-%m-%d",  
     "DATE_FORMAT": "%d-%m-%Y",
     "DATE_FORMAT_FLATPICKR": "d-m-Y",
     "DATETIME_FORMAT": "%d-%m-%Y %H:%M",
