@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from time import sleep
 from xml.sax.xmlreader import Locator
 from playwright.sync_api import expect
@@ -18,7 +18,7 @@ from tests.helpers import (
     delete_property,
     assert_property_card_content
 )
-from utils.timezone import from_app_tz, utc_now
+from utils.timezone import from_app_tz, to_app_tz, utc_now
 
 def test_address_book(admin_page) -> None:
     open_address_book(admin_page)
@@ -202,8 +202,9 @@ def test_job_list_filtering(admin_page) -> None:
     assert validate_filtered_jobs(job_list) == True, "Filtered jobs do not match filter criteria"
 
     # Apply various filters and validate results
-    # 1. Set start date filter
-    set_filter_start_date(job_list, "2024-01-15")
+    # 1. Set start date filter to the past
+    filter_start_date = to_app_tz(utc_now()).date() - timedelta(days=10)
+    set_filter_start_date(job_list, filter_start_date.strftime(DATETIME_FORMATS['DATE_FORMAT']))
     assert validate_job_list_date_dividers(job_list) == True, "Job list date dividers do not match after setting start date filter"
     assert validate_filtered_jobs(job_list) == True, "Filtered jobs do not match after setting start date filter"
 
@@ -225,8 +226,8 @@ def tick_show_past_checkbox(job_list: Locator, disable=False) -> None:
 
 def set_filter_start_date(job_list: Locator, date_str: str) -> None:
     """Helper to set the start date in the job list filter"""
-    start_date_display = job_list.locator("#start-date-1")
-    start_date_hidden = job_list.locator("#start-date-hidden-1")
+    start_date_display, _ = get_filter_display_date_locators(job_list)
+    start_date_hidden, _ = get_filter_hidden_date_locators(job_list)    
     start_date_display.fill(date_str)
     # Trigger change event to update hidden input
     start_date_display.dispatch_event("change")
@@ -235,8 +236,9 @@ def set_filter_start_date(job_list: Locator, date_str: str) -> None:
 
 def set_filter_end_date(job_list: Locator, date_str: str) -> None:
     """Helper to set the end date in the job list filter"""
-    end_date_display = job_list.locator("#end-date-1")
-    end_date_hidden = job_list.locator("#end-date-hidden-1")
+    _, end_date_display = get_filter_display_date_locators(job_list)
+    _, end_date_hidden = get_filter_hidden_date_locators(job_list)
+    
     end_date_display.fill(date_str)
     # Trigger change event to update hidden input
     end_date_display.dispatch_event("change")
@@ -245,14 +247,14 @@ def set_filter_end_date(job_list: Locator, date_str: str) -> None:
 
 def get_filter_display_date_locators(job_list: Locator):
     """Helper to get the display date locators from the job list modal"""
-    display_start_date_locator = job_list.locator("#start-date-display-1")
-    display_end_date_locator = job_list.locator("#end-date-display-1")
+    display_start_date_locator = job_list.locator("#start-date-display")
+    display_end_date_locator = job_list.locator("#end-date-display")
     return display_start_date_locator, display_end_date_locator
 
 def get_filter_hidden_date_locators(job_list: Locator):
     """Helper to get the hidden date locators from the job list modal"""
-    hidden_start_date_locator = job_list.locator("#start-date-1")
-    hidden_end_date_locator = job_list.locator("#end-date-1")
+    hidden_start_date_locator = job_list.locator("#start-date")
+    hidden_end_date_locator = job_list.locator("#end-date")
     return hidden_start_date_locator, hidden_end_date_locator
 
 def assert_filtered_job_list_date_formats(job_list: Locator):
