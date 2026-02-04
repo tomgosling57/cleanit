@@ -73,7 +73,7 @@ def test_update_property(admin_page) -> None:
     updated_address = "123 Main St UPDATED, Anytown"
     updated_access_notes = "Updated: Key under doormat"
     updated_notes = "Updated notes for testing"
-    
+
     fill_property_form(property_modal, updated_address, updated_access_notes, updated_notes)
     
     # Submit form using update-specific helper
@@ -273,6 +273,11 @@ def validate_filtered_jobs(job_list: Locator) -> bool:
     filtered_jobs_locators = job_list.locator(".job-card")
     if filtered_jobs_locators.count() != len(expected_jobs):
         return False
+    for i in range(filtered_jobs_locators.count()):
+        job_locator = filtered_jobs_locators.nth(i)
+        job_id = int(job_locator.get_attribute("data-job-id"))
+        if job_id != expected_jobs[i].id:
+            return False
     return True
 
 def validate_job_list_date_dividers(job_list: Locator) -> bool:
