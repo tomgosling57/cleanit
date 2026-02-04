@@ -4,6 +4,7 @@ from xml.sax.xmlreader import Locator
 from playwright.sync_api import expect
 import pytest
 from config import DATETIME_FORMATS
+from services.job_service import JobService
 from tests.db_helpers import get_db_session
 from tests.helpers import (
     get_first_property_card, 
@@ -219,12 +220,11 @@ def test_job_list_filtering(admin_page) -> None:
     # Open jobs modal
     job_list =open_property_jobs_modal(page, property_card)
     # Verify the contents of the date pickers are formatted correctly 
-    validate_at_filtered_job_list_date_formats(job_list)
+    assert_filtered_job_list_date_formats(job_list)
     
-    # Extract checkbox filter values
-    show_completed = job_list.locator("#show-completed").is_checked()
-    show_past = job_list.locator("#show-past").is_checked()
-    validate_filtered_jobs(job_list)
+    # Validate that the jobs displayed match the filter criteria
+    assert validate_job_list_date_dividers(job_list) == True, "Job list date dividers do not match filter criteria"
+    assert validate_filtered_jobs(job_list) == True, "Filtered jobs do not match filter criteria"
 
 def get_filter_display_date_locators(job_list: Locator):
     """Helper to get the display date locators from the job list modal"""
@@ -238,7 +238,7 @@ def get_filter_hidden_date_locators(job_list: Locator):
     hidden_end_date_locator = job_list.locator("#end-date-1")
     return hidden_start_date_locator, hidden_end_date_locator
 
-def validate_at_filtered_job_list_date_formats(job_list: Locator):
+def assert_filtered_job_list_date_formats(job_list: Locator):
     """Validate that the date pickers in the filtered job list modal have correct formats"""
     display_start_date_locator, display_end_date_locator = get_filter_display_date_locators(job_list)
     hidden_start_date_locator, hidden_end_date_locator = get_filter_hidden_date_locators(job_list)
@@ -256,11 +256,34 @@ def validate_filtered_jobs(job_list: Locator) -> bool:
     hidden_start_date_locator, hidden_end_date_locator = get_filter_hidden_date_locators(job_list)
     start_date = convert_date_locator_to_datetime(hidden_start_date_locator, DATETIME_FORMATS['ISO_DATE_FORMAT'])
     end_date = convert_date_locator_to_datetime(hidden_end_date_locator, DATETIME_FORMATS['ISO_DATE_FORMAT'])
-    # Get all date dividers in the job list
-    date_dividers = job_list.locator(".date-divider")
+    # Extract checkbox filter values
+    show_completed = job_list.locator("#show-completed").is_checked()
+    show_past = job_list.locator("#show-past").is_checked()
     db = get_db_session()
+    job_service = JobService(db)
     start_date_utc = from_app_tz(start_date).date()
     end_date_utc = from_app_tz(end_date).date()
+    expected_jobs = job_service.get_filtered_jobs_by_property_id(
+        property_id=1,
+        start_date=start_date_utc,
+        end_date=end_date_utc,
+        show_past_jobs=show_past,
+        show_completed=show_completed
+    )
+    filtered_jobs_locators = job_list.locator(".job-card")
+    if filtered_jobs_locators.count() != len(expected_jobs):
+        return False
+    return True
+
+def validate_job_list_date_dividers(job_list: Locator) -> bool:
+    """Validate that the date dividers in the job list fall within the specified date range"""
+    hidden_start_date_locator, hidden_end_date_locator = get_filter_hidden_date_locators(job_list)
+    start_date = convert_date_locator_to_datetime(hidden_start_date_locator, DATETIME_FORMATS['ISO_DATE_FORMAT'])
+    end_date = convert_date_locator_to_datetime(hidden_end_date_locator, DATETIME_FORMATS['ISO_DATE_FORMAT'])
+    start_date_utc = from_app_tz(start_date).date()
+    end_date_utc = from_app_tz(end_date).date()
+    # Get all date dividers in the job list
+    date_dividers = job_list.locator(".date-divider")
     # Check that the job divider dates are within the given date range    
     for i in range(date_dividers.count()):
         divider_text = date_dividers.nth(i).text_content().strip().replace("\n", "")
