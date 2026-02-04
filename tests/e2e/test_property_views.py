@@ -219,37 +219,53 @@ def test_job_list_filtering(admin_page) -> None:
     # Open jobs modal
     job_list =open_property_jobs_modal(page, property_card)
     # Verify the contents of the date pickers are formatted correctly 
-    display_start_date_locator = job_list.locator("#start-date-display-1")
-    hidden_start_date_locator = job_list.locator("#start-date-1")
-    display_end_date_locator = job_list.locator("#end-date-display-1")
-    hidden_end_date_locator = job_list.locator("#end-date-1")
-    assert_date_picker_formats(DATETIME_FORMATS['DATE_FORMAT'], display_start_date_locator, hidden_start_date_locator)  
-    assert_date_picker_formats(DATETIME_FORMATS['DATE_FORMAT'], display_end_date_locator, hidden_end_date_locator)
-
-    # Convert date locators to date time objects
-    hidden_start_date = convert_date_locator_to_date_object(hidden_start_date_locator, DATETIME_FORMATS['DATE_FORMAT'])
-    hidden_end_date = convert_date_locator_to_date_object(hidden_end_date_locator, DATETIME_FORMATS['DATE_FORMAT'])
-    display_start_date = convert_date_locator_to_date_object(display_start_date_locator, DATETIME_FORMATS['DATE_FORMAT'])
-    display_end_date = convert_date_locator_to_date_object(display_end_date_locator, DATETIME_FORMATS['DATE_FORMAT'])
+    validate_at_filtered_job_list_date_formats(job_list)
+    
     # Extract checkbox filter values
     show_completed = job_list.locator("#show-completed").is_checked()
     show_past = job_list.locator("#show-past").is_checked()
+    validate_filtered_jobs(job_list)
 
-def  convert_date_locator_to_date_object(date_locator: Locator, date_format: str) -> datetime.date:
+def get_filter_display_date_locators(job_list: Locator):
+    """Helper to get the display date locators from the job list modal"""
+    display_start_date_locator = job_list.locator("#start-date-display-1")
+    display_end_date_locator = job_list.locator("#end-date-display-1")
+    return display_start_date_locator, display_end_date_locator
+
+def get_filter_hidden_date_locators(job_list: Locator):
+    """Helper to get the hidden date locators from the job list modal"""
+    hidden_start_date_locator = job_list.locator("#start-date-1")
+    hidden_end_date_locator = job_list.locator("#end-date-1")
+    return hidden_start_date_locator, hidden_end_date_locator
+
+def validate_at_filtered_job_list_date_formats(job_list: Locator):
+    """Validate that the date pickers in the filtered job list modal have correct formats"""
+    display_start_date_locator, display_end_date_locator = get_filter_display_date_locators(job_list)
+    hidden_start_date_locator, hidden_end_date_locator = get_filter_hidden_date_locators(job_list)
+    assert_date_picker_formats(DATETIME_FORMATS['DATE_FORMAT'], display_start_date_locator, hidden_start_date_locator)  
+    assert_date_picker_formats(DATETIME_FORMATS['DATE_FORMAT'], display_end_date_locator, hidden_end_date_locator)
+
+def  convert_date_locator_to_datetime(date_locator: Locator, date_format: str) -> datetime.date:
     """Convert a date locator's hidden input value to a date object"""
     date_str = date_locator.input_value()
-    return datetime.strptime(date_str, date_format).date()
+    return datetime.strptime(date_str, date_format)
 
-def validate_filtered_jobs(job_list: Locator, start_date: datetime.date, end_date: datetime.date) -> bool:
+def validate_filtered_jobs(job_list: Locator) -> bool:
     """Helper to validate that jobs in the job list fall within the specified date range"""
+    # Convert dates to datetime objects
+    hidden_start_date_locator, hidden_end_date_locator = get_filter_hidden_date_locators(job_list)
+    start_date = convert_date_locator_to_datetime(hidden_start_date_locator, DATETIME_FORMATS['ISO_DATE_FORMAT'])
+    end_date = convert_date_locator_to_datetime(hidden_end_date_locator, DATETIME_FORMATS['ISO_DATE_FORMAT'])
+    # Get all date dividers in the job list
     date_dividers = job_list.locator(".date-divider")
     db = get_db_session()
     start_date_utc = from_app_tz(start_date).date()
     end_date_utc = from_app_tz(end_date).date()
     # Check that the job divider dates are within the given date range    
     for i in range(date_dividers.count()):
-        divider_text = date_dividers.nth(i).text_content()
-        divider_date = datetime.strptime(divider_text, DATETIME_FORMATS['FULL_MONTH_DATE_FORMAT']).date()
-        if not (start_date <= divider_date <= end_date):
+        divider_text = date_dividers.nth(i).text_content().strip().replace("\n", "")
+        divider_date = datetime.strptime(divider_text, DATETIME_FORMATS['FULL_MONTH_DATE_FORMAT'])
+        divider_date_utc = from_app_tz(divider_date).date()
+        if not (start_date_utc <= divider_date_utc <= end_date_utc):
             return False
     return True
