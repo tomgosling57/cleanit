@@ -60,7 +60,7 @@
             <div class="filter-group checkbox-group">
                 <label class="checkbox-label">
                     <input type="checkbox" 
-                           name="show_past" 
+                           id="show-past"
                            value="true"
                            {% if not show_past %}checked{% endif %}
                            class="checkbox-input">
@@ -71,6 +71,7 @@
             <div class="filter-group checkbox-group">
                 <label class="checkbox-label">
                     <input type="checkbox" 
+                            id="show-completed"
                            name="show_completed" 
                            value="true"
                            {% if show_completed %}checked{% endif %}
