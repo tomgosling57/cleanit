@@ -1,5 +1,5 @@
 <!-- Date Range Picker Component for Property Job Filtering -->
-<div class="date-filter-container" id="date-filter-container-{{ property_id }}">
+<div class="date-filter-container" id="date-filter-container">
     <form class="date-filter-form"
           hx-get="/address-book/property/{{ property_id }}/jobs/filtered"
           hx-target="#job-list"
@@ -8,52 +8,52 @@
         
         <div class="filter-row">
             <div class="filter-group">
-                <label for="start-date-{{ property_id }}">From:</label>
+                <label for="start-date">From:</label>
                 <div class="date-picker-wrapper" data-property-id="{{ property_id }}" data-date-type="start" style="position: relative; display: block; width: 100%;">
                     <!-- Visible text input - always functional -->
                     <input type="text" 
-                        id="start-date-display-{{ property_id }}" 
+                        id="start-date-display" 
                         name="start_date_display"
                         value="{{ display_start_date }}"
                         placeholder="dd-mm-yyyy"
                         class="date-input date-display-input"
-                        oninput="syncDisplayToHidden('{{ property_id }}', 'start')"
-                        onblur="validateAndSyncDate('{{ property_id }}', 'start')"
+                        oninput="syncDisplayToHidden('start')"
+                        onblur="validateAndSyncDate('start')"
                         style="width: 100%;">
                     
                     <!-- Hidden date picker - only used when JS is enabled -->
                     <input type="date" 
-                        id="start-date-{{ property_id }}" 
+                        id="start-date" 
                         name="start_date" 
                         value="{{ default_start_date }}"
                         class="date-picker-input"
                         style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; opacity: 0; z-index: -1; pointer-events: none;"
-                        onchange="updateDisplayDate('{{ property_id }}', 'start')">
+                        onchange="updateDisplayDate('start')">
                 </div>
             </div>
 
             <div class="filter-group">
-                <label for="end-date-{{ property_id }}">To:</label>
+                <label for="end-date">To:</label>
                 <div class="date-picker-wrapper" data-property-id="{{ property_id }}" data-date-type="end" style="position: relative; display: block; width: 100%;">
                     <!-- Visible text input - always functional -->
                     <input type="text" 
-                        id="end-date-display-{{ property_id }}" 
+                        id="end-date-display" 
                         name="end_date_display"
                         value="{{ display_end_date }}"
                         placeholder="dd-mm-yyyy"
                         class="date-input date-display-input"
-                        oninput="syncDisplayToHidden('{{ property_id }}', 'end')"
-                        onblur="validateAndSyncDate('{{ property_id }}', 'end')"
+                        oninput="syncDisplayToHidden('end')"
+                        onblur="validateAndSyncDate('end')"
                         style="width: 100%;">
                     
                     <!-- Hidden date picker - only used when JS is enabled -->
                     <input type="date" 
-                        id="end-date-{{ property_id }}" 
+                        id="end-date" 
                         name="end_date" 
                         value="{{ default_end_date }}"
                         class="date-picker-input"
                         style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; opacity: 0; z-index: -1; pointer-events: none;"
-                        onchange="updateDisplayDate('{{ property_id }}', 'end')">
+                        onchange="updateDisplayDate('end')">
                 </div>
             </div>
                 
@@ -85,20 +85,20 @@
             <button type="submit" class="btn btn-primary btn-sm">
                 <span class="btn-text">Apply Filters</span>
                 <span class="spinner-border spinner-border-sm htmx-indicator" 
-                      id="filter-indicator-{{ property_id }}"
+                      id="filter-indicator"
                       role="status" 
                       aria-hidden="true"></span>
             </button>
             
             <button type="button"
                     class="btn btn-secondary btn-sm"
-                    onclick="resetDateFilters('{{ property_id }}')">
+                    onclick="resetDateFilters()">
                 Reset
             </button>
         </div>
     </form>
     
-    <div class="filter-info" id="filter-info-{{ property_id }}" {% if filter_applied %}style="display:block;"{% else %}style="display:none;"{% endif %}>
+    <div class="filter-info" id="filter-info" {% if filter_applied %}style="display:block;"{% else %}style="display:none;"{% endif %}>
         {% if filter_applied %}
         <small class="text-muted">
             Showing jobs from {{ display_start_date }} to {{ display_end_date }}
@@ -121,10 +121,10 @@
             const propertyId = container.id.replace('date-filter-container-', '');
             
             // Make date picker inputs interactive
-            const startDatePicker = document.getElementById('start-date-' + propertyId);
-            const endDatePicker = document.getElementById('end-date-' + propertyId);
-            const startDisplay = document.getElementById('start-date-display-' + propertyId);
-            const endDisplay = document.getElementById('end-date-display-' + propertyId);
+            const startDatePicker = document.getElementById('start-date');
+            const endDatePicker = document.getElementById('end-date');
+            const startDisplay = document.getElementById('start-date-display');
+            const endDisplay = document.getElementById('end-date-display');
             
             if (startDatePicker && startDisplay) {
                 startDatePicker.style.zIndex = '2';
@@ -141,8 +141,8 @@
             }
             
             // Initialize display dates
-            updateDisplayDate(propertyId, 'start');
-            updateDisplayDate(propertyId, 'end');
+            updateDisplayDate('start');
+            updateDisplayDate('end');
         });
         
         // Add click handlers to wrappers using event delegation
@@ -153,7 +153,7 @@
             wrapper.addEventListener('click', function(e) {
                 const propertyId = this.dataset.propertyId;
                 const dateType = this.dataset.dateType;
-                const datePicker = document.getElementById(dateType + '-date-' + propertyId);
+                const datePicker = document.getElementById(dateType + '-date');
                 
                 if (datePicker) {
                     try {
@@ -167,7 +167,7 @@
         });
     }
     
-    function resetDateFilters(propertyId) {
+    function resetDateFilters() {
         const today = new Date().toISOString().split('T')[0];
         
         const futureDate = new Date();
@@ -175,24 +175,24 @@
         const futureDateStr = futureDate.toISOString().split('T')[0];
         
         // Reset hidden inputs
-        document.getElementById('start-date-' + propertyId).value = today;
-        document.getElementById('end-date-' + propertyId).value = futureDateStr;
+        document.getElementById('start-date').value = today;
+        document.getElementById('end-date').value = futureDateStr;
         
         // Update display inputs
-        updateDisplayDate(propertyId, 'start');
-        updateDisplayDate(propertyId, 'end');
+        updateDisplayDate('start');
+        updateDisplayDate('end');
         
         // Reset checkboxes
-        document.querySelector('#date-filter-container-' + propertyId + ' input[name="show_past"]').checked = true;
-        document.querySelector('#date-filter-container-' + propertyId + ' input[name="show_completed"]').checked = true;
+        document.querySelector('#date-filter-container input[name="show_past"]').checked = true;
+        document.querySelector('#date-filter-container input[name="show_completed"]').checked = true;
         
         // Submit the form
-        document.querySelector('#date-filter-container-' + propertyId + ' form').dispatchEvent(new Event('submit'));
+        document.querySelector('#date-filter-container form').dispatchEvent(new Event('submit'));
     }
     
-    function updateDisplayDate(propertyId, dateType) {
-        const hiddenInput = document.getElementById(dateType + '-date-' + propertyId);
-        const displayInput = document.getElementById(dateType + '-date-display-' + propertyId);
+    function updateDisplayDate(dateType) {
+        const hiddenInput = document.getElementById(dateType + '-date');
+        const displayInput = document.getElementById(dateType + '-date-display');
         
         if (hiddenInput.value) {
             const [year, month, day] = hiddenInput.value.split('-');
@@ -200,8 +200,8 @@
         }
     }
     
-    function syncDisplayToHidden(propertyId, dateType) {
-        const displayInput = document.getElementById(dateType + '-date-display-' + propertyId);
+    function syncDisplayToHidden(dateType) {
+        const displayInput = document.getElementById(dateType + '-date-display');
         
         // Mark that user is actively typing
         displayInput.dataset.typing = 'true';
@@ -220,9 +220,9 @@
         displayInput.value = value.slice(0, 10); // Limit to dd-mm-yyyy length
     }
     
-    function validateAndSyncDate(propertyId, dateType) {
-        const displayInput = document.getElementById(dateType + '-date-display-' + propertyId);
-        const hiddenInput = document.getElementById(dateType + '-date-' + propertyId);
+    function validateAndSyncDate(dateType) {
+        const displayInput = document.getElementById(dateType + '-date-display');
+        const hiddenInput = document.getElementById(dateType + '-date');
         
         // Clear typing flag
         displayInput.dataset.typing = '';
