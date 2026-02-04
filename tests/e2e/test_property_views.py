@@ -18,7 +18,7 @@ from tests.helpers import (
     delete_property,
     assert_property_card_content
 )
-from utils.timezone import from_app_tz
+from utils.timezone import from_app_tz, utc_now
 
 def test_address_book(admin_page) -> None:
     open_address_book(admin_page)
@@ -276,7 +276,16 @@ def validate_filtered_jobs(job_list: Locator) -> bool:
     for i in range(filtered_jobs_locators.count()):
         job_locator = filtered_jobs_locators.nth(i)
         job_id = int(job_locator.get_attribute("data-job-id"))
+        # Compare with expected jobs from service
         if job_id != expected_jobs[i].id:
+            return False
+        # Check that the job date is within the given range
+        job_date = expected_jobs[i].date
+        if not (start_date_utc <= job_date <= end_date_utc):
+            return False
+        if not show_completed and expected_jobs[i].is_completed:
+            return False
+        if not show_past and job_date < utc_now().date():
             return False
     return True
 
