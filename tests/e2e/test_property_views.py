@@ -29,18 +29,18 @@ def test_create_property(admin_page) -> None:
     open_address_book(page)
     
     # Open creation modal
-    open_property_creation_modal(page)
+    property_modal = open_property_creation_modal(page)
     
     # Fill form with test data
     test_address = "789 Test Street, Testville"
     test_access_notes = "Key in lockbox, code 5678"
     test_notes = "Test property for automated testing"
     
-    fill_property_form(page, test_address, test_access_notes, test_notes)
+    fill_property_form(property_modal, test_address, test_access_notes, test_notes)
     sleep(.5)
     
     # Submit form
-    submit_property_creation_form(page)
+    submit_property_creation_form(property_modal)
     
     # Wait for property list to update
     expect(page.locator("#property-list")).to_be_visible()
@@ -64,17 +64,17 @@ def test_update_property(admin_page) -> None:
     expect(property_card).to_be_visible()
     
     # Open update modal
-    open_property_update_modal(page, property_card)
+    property_modal = open_property_update_modal(page, property_card)
     
     # Update form fields
     updated_address = "123 Main St UPDATED, Anytown"
     updated_access_notes = "Updated: Key under doormat"
     updated_notes = "Updated notes for testing"
     
-    fill_property_form(page, updated_address, updated_access_notes, updated_notes)
+    fill_property_form(property_modal, updated_address, updated_access_notes, updated_notes)
     
     # Submit form using update-specific helper
-    submit_property_update_form(page, property_id=1)
+    submit_property_update_form(property_modal, property_id=1)
     
     # Wait for property list to update
     expect(page.locator("#property-list")).to_be_visible()
@@ -121,19 +121,18 @@ def test_view_property_jobs(admin_page) -> None:
     expect(property_card).to_be_visible()
     
     # Open jobs modal
-    open_property_jobs_modal(page, property_card)
+    property_modal = open_property_jobs_modal(page, property_card)
     
     # Verify modal is open and has content
-    modal = page.locator("#property-modal")
-    expect(modal).to_be_visible()
+    expect(property_modal).to_be_visible()
     
     # Check for jobs content in modal (specific structure depends on template)
     # At minimum, check modal is visible and has some content
-    expect(modal.locator("h2")).to_be_visible()
+    expect(property_modal.locator("h2")).to_be_visible()
     
     # Close modal - use first close button (modal close button)
-    modal.locator(".close-button").first.click()
-    expect(modal).not_to_be_visible()
+    property_modal.locator(".close-button").first.click()
+    expect(property_modal).not_to_be_visible()
 
 def test_admin_can_access_address_book(admin_page) -> None:
     """Test that admin can access the address book page"""

@@ -425,7 +425,7 @@ def open_property_creation_modal(page: Page) -> None:
         page.locator('button:has-text("Create Property")').click()
     
     expect(page.locator("#property-modal")).to_be_visible()
-
+    return page.locator("#property-modal")
 
 def fill_property_form(
     page: Page, 
@@ -444,23 +444,23 @@ def fill_property_form(
         page.locator("#notes").fill(notes)
 
 
-def submit_property_creation_form(page: Page) -> None:
+def submit_property_creation_form(property_modal: Locator) -> None:
     """Submit the property form (for creation)"""
-    page.locator("#property-modal button[type='submit']").wait_for(state="attached")
-    with page.expect_response("**/address-book/property/create**"):
-        page.wait_for_load_state('networkidle')
-        page.locator('#property-modal button[type="submit"]').click()
+    property_modal.locator('button.save-button').wait_for(state="visible", timeout=5000)
+    with property_modal.page.expect_response("**/address-book/property/create**"):
+        property_modal.page.wait_for_load_state('networkidle')
+        property_modal.locator('button.save-button').click()
     
-    page.wait_for_load_state('networkidle')
+    property_modal.page.wait_for_load_state('networkidle')
 
-def submit_property_update_form(page: Page, property_id: int) -> None:
+def submit_property_update_form(property_modal: Locator, property_id: int) -> None:
     """Submit the property update form"""
-    page.locator("#property-modal button[type='submit']").wait_for(state="attached")
-    with page.expect_response(f"**/address-book/property/{property_id}/update**"):
-        page.wait_for_load_state('networkidle')
-        page.locator('#property-modal button[type="submit"]').click()
+    property_modal.locator('button.save-button').wait_for(state="visible", timeout=5000)
+    with property_modal.page.expect_response(f"**/address-book/property/{property_id}/update**"):
+        property_modal.page.wait_for_load_state('networkidle')
+        property_modal.locator('button.save-button').click()
 
-    page.wait_for_load_state('networkidle')
+    property_modal.page.wait_for_load_state('networkidle')
 
 def open_property_update_modal(page: Page, property_card: Locator) -> None:
     """Open the update modal for a property"""
@@ -472,7 +472,7 @@ def open_property_update_modal(page: Page, property_card: Locator) -> None:
     
     page.wait_for_load_state('networkidle')
     expect(page.locator("#property-modal")).to_be_visible()
-
+    return page.locator("#property-modal")
 
 def open_property_jobs_modal(page: Page, property_card: Locator) -> None:
     """Open the view jobs modal for a property"""
