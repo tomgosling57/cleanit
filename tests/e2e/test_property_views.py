@@ -226,6 +226,48 @@ def test_job_list_filtering(admin_page) -> None:
     assert validate_job_list_date_dividers(job_list) == True, "Job list date dividers do not match filter criteria"
     assert validate_filtered_jobs(job_list) == True, "Filtered jobs do not match filter criteria"
 
+    # Apply various filters and validate results
+    # 1. Set start date filter
+    set_filter_start_date(job_list, "2024-01-15")
+    assert validate_job_list_date_dividers(job_list) == True, "Job list date dividers do not match after setting start date filter"
+    assert validate_filtered_jobs(job_list) == True, "Filtered jobs do not match after setting start date filter"
+
+def tick_show_completed_checkbox(job_list: Locator, disable=False) -> None:
+    """Helper to tick the 'Show Completed' checkbox in the job list modal. If disable is true it will disable the filter option."""
+    show_completed_checkbox = job_list.locator("#show-completed")
+    if not show_completed_checkbox.is_checked() and not disable:
+        show_completed_checkbox.check()
+    if show_completed_checkbox.is_checked() and disable:
+        show_completed_checkbox.uncheck()
+
+def tick_show_past_checkbox(job_list: Locator, disable=False) -> None:
+    """Helper to update the 'Show Past Jobs' checkbox in the job list modal. If disable is true it will disable the filter option."""
+    show_past_checkbox = job_list.locator("#show-past")
+    if not show_past_checkbox.is_checked() and not disable:
+        show_past_checkbox.check()
+    if show_past_checkbox.is_checked() and disable:
+        show_past_checkbox.uncheck()
+
+def set_filter_start_date(job_list: Locator, date_str: str) -> None:
+    """Helper to set the start date in the job list filter"""
+    start_date_display = job_list.locator("#start-date-1")
+    start_date_hidden = job_list.locator("#start-date-hidden-1")
+    start_date_display.fill(date_str)
+    # Trigger change event to update hidden input
+    start_date_display.dispatch_event("change")
+    # Wait for hidden input to update
+    expect(start_date_hidden).to_have_value(date_str)
+
+def set_filter_end_date(job_list: Locator, date_str: str) -> None:
+    """Helper to set the end date in the job list filter"""
+    end_date_display = job_list.locator("#end-date-1")
+    end_date_hidden = job_list.locator("#end-date-hidden-1")
+    end_date_display.fill(date_str)
+    # Trigger change event to update hidden input
+    end_date_display.dispatch_event("change")
+    # Wait for hidden input to update
+    expect(end_date_hidden).to_have_value(date_str)
+
 def get_filter_display_date_locators(job_list: Locator):
     """Helper to get the display date locators from the job list modal"""
     display_start_date_locator = job_list.locator("#start-date-display-1")
@@ -271,6 +313,7 @@ def validate_filtered_jobs(job_list: Locator) -> bool:
         show_completed=show_completed
     )
     filtered_jobs_locators = job_list.locator(".job-card")
+    # Compare the number of jobs displayed to the number returned from the service
     if filtered_jobs_locators.count() != len(expected_jobs):
         return False
     for i in range(filtered_jobs_locators.count()):
