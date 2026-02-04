@@ -182,31 +182,6 @@ def test_user_cannot_access_address_book(user_page, goto) -> None:
     # User should be redirected to the login page
     expect(page.get_by_text("404")).to_be_visible()
 
-def assert_date_picker_formats(expected_format: str, display_input: Locator, hidden_input: Locator) -> None:
-    """Helper to assert that date formats in date picker inputs match expected format"""
-    # Get values from inputs    
-    internal_date = hidden_input.input_value()
-    displayed_date = display_input.input_value()
-    # Check that the internal value is in ISO format
-    assert validate_iso_date_format(internal_date), f"Internal date value '{internal_date}' is not in ISO format"
-    # Check that the displayed text matches expected format
-    assert validate_date_format(displayed_date, expected_format), f"Displayed date '{displayed_date}' does not match format '{expected_format}'"  
-
-def validate_iso_date_format(date_string: str) -> bool:
-    """Check if a date string is in ISO format YYYY-MM-DD"""
-    try:
-        datetime.fromisoformat(date_string)
-        return True
-    except ValueError:
-        return False
-    
-def validate_date_format(date_string, date_format):
-    try:
-        datetime.strptime(date_string, date_format)
-        return True
-    except ValueError:
-        return False
-
 def test_job_list_filtering(admin_page) -> None:
     """Test filtering jobs in the property jobs modal"""
     page = admin_page
@@ -349,3 +324,28 @@ def validate_job_list_date_dividers(job_list: Locator) -> bool:
         if not (start_date_utc <= divider_date_utc <= end_date_utc):
             return False
     return True
+
+def assert_date_picker_formats(expected_format: str, display_input: Locator, hidden_input: Locator) -> None:
+    """Helper to assert that date formats in date picker inputs match expected format"""
+    # Get values from inputs    
+    internal_date = hidden_input.input_value()
+    displayed_date = display_input.input_value()
+    # Check that the internal value is in ISO format
+    assert validate_iso_date_format(internal_date), f"Internal date value '{internal_date}' is not in ISO format"
+    # Check that the displayed text matches expected format
+    assert validate_date_format(displayed_date, expected_format), f"Displayed date '{displayed_date}' does not match format '{expected_format}'"  
+
+def validate_iso_date_format(date_string: str) -> bool:
+    """Check if a date string is in ISO format YYYY-MM-DD"""
+    try:
+        datetime.fromisoformat(date_string)
+        return True
+    except ValueError:
+        return False
+    
+def validate_date_format(date_string, date_format):
+    try:
+        datetime.strptime(date_string, date_format)
+        return True
+    except ValueError:
+        return False
