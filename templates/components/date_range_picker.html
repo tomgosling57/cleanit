@@ -21,7 +21,6 @@
                         onblur="validateAndSyncDate('start')"
                         style="width: 100%;">
                     
-                    <!-- Hidden date picker - only used when JS is enabled -->
                     <input type="date" 
                         id="start-date" 
                         name="start_date" 
@@ -46,7 +45,6 @@
                         onblur="validateAndSyncDate('end')"
                         style="width: 100%;">
                     
-                    <!-- Hidden date picker - only used when JS is enabled -->
                     <input type="date" 
                         id="end-date" 
                         name="end_date" 
@@ -113,7 +111,6 @@
 (function() {
     'use strict';
     
-    // Enable JS-enhanced features
     function enhanceDatePickers() {
         const containers = document.querySelectorAll('[id^="date-filter-container-"]');
         
