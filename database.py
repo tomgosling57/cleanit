@@ -8,6 +8,9 @@ from flask import g, current_app
 from flask_login import UserMixin
 from datetime import date, time, timedelta, datetime
 
+from config import DATETIME_FORMATS
+from utils.timezone import to_app_tz
+
 # Define the base for declarative models
 Base = declarative_base()
 
@@ -116,6 +119,31 @@ class Job(Base):
     @arrival_time_only.expression
     def arrival_time_only(cls):
         return func.time(cls.arrival_datetime)
+
+    @hybrid_property
+    def display_date(self):
+        return to_app_tz(self.date).strftime(DATETIME_FORMATS['DATE_FORMAT'])
+    
+    @hybrid_property
+    def display_time(self):
+        return to_app_tz(self.time).strftime(DATETIME_FORMATS['TIME_FORMAT'])
+    
+    @hybrid_property
+    def display_end_time(self):
+        return to_app_tz(self.end_time).strftime(DATETIME_FORMATS['TIME_FORMAT'])
+    
+    @hybrid_property
+    def display_arrival_time(self):
+        return to_app_tz(self.arrival_datetime).strftime(DATETIME_FORMATS['TIME_FORMAT']) if self.arrival_datetime else None
+    
+    @hybrid_property
+    def display_arrival_date(self):
+        return to_app_tz(self.arrival_datetime).strftime(DATETIME_FORMATS['DATE_FORMAT']).date() if self.arrival_datetime else None
+    
+    @hybrid_property
+    def display_arrival_time(self):
+        return to_app_tz(self.arrival_datetime).strftime(DATETIME_FORMATS['DATETIME_FORMAT']).time() if self.arrival_datetime else None
+    
 
     def __repr__(self):
         return f"<Job(id={self.id}, date='{self.date}', time='{self.time}', arrival_datetime='{self.arrival_datetime}', end_time='{self.end_time}', is_complete='{self.is_complete}')>"
