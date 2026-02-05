@@ -1,6 +1,8 @@
 
 from datetime import datetime
 
+from utils.timezone import from_app_tz
+
 
 class TestJobServiceTimezoneHandling:
     
@@ -10,7 +12,7 @@ class TestJobServiceTimezoneHandling:
             'date': '2024-07-01',
             'time': '14:00',
             'end_time': '16:00',
-            'arrival_datetime': '2024-07-01 13:30',
+            'arrival_datetime': '2024-07-09 13:30',
             'property_id': 1, 
             'description': 'Test job with timezone'
         }
@@ -18,10 +20,15 @@ class TestJobServiceTimezoneHandling:
         
         # Verify that the job was created with the correct date and time in UTC
         assert new_job is not None
-        assert new_job.date == datetime.fromisoformat(job_data['date']).date()  # Date should be stored as is
-        assert new_job.time == datetime.strptime(job_data['time'], '%H:%M').time()  # Time should be stored as is                                
-        assert new_job.end_time == datetime.strptime(job_data['end_time'], '%H:%M').time()  # End time should be stored as is
-        assert new_job.arrival_datetime == datetime.fromisoformat(job_data['arrival_datetime'])  # Arrival datetime should be stored as is
+        expected_start_datetime = from_app_tz(datetime.fromisoformat(f"{job_data['date']}T{job_data['time']}"))
+        expected_end_datetime = from_app_tz(datetime.fromisoformat(f"{job_data['date']}T{job_data['end_time']}"))
+        expected_arrival_datetime = from_app_tz(datetime.fromisoformat(job_data['arrival_datetime']))
+        new_job_start_datetime = datetime.combine(new_job.date, new_job.time, tzinfo=expected_start_datetime.tzinfo)
+        new_job_end_datetime = datetime.combine(new_job.date, new_job.end_time, tzinfo=expected_start_datetime.tzinfo)
+        new_job_arrival_datetime = new_job.arrival_datetime.replace(tzinfo=expected_start_datetime.tzinfo)
+        assert new_job_start_datetime == expected_start_datetime, "New job start datetime does not match the expected value in UTC."
+        assert new_job_end_datetime == expected_end_datetime, "New job end datetime does not match the expected value in UTC."
+        assert new_job_arrival_datetime == expected_arrival_datetime, "New job arrival datetime does not match the expected value in UTC."
 
     def test_update_job_with_timezone(self, job_service):
         # Update a job with a specific date and time in the app's timezone
@@ -36,8 +43,23 @@ class TestJobServiceTimezoneHandling:
         updated_job = job_service.update_job(job_id, job_data)
         # Verify that the job was updated with the correct date and time in UTC
         assert updated_job is not None
-        assert updated_job.date == datetime.fromisoformat(job_data['date']).date()  # Date should be updated as is
-        assert updated_job.time == datetime.strptime(job_data['time'], '%H:%M').time()  # Time should be updated as is
-        assert updated_job.end_time == datetime.strptime(job_data['end_time'], '%H:%M').time()  # End time should be updated as is
-        assert updated_job.arrival_datetime == datetime.fromisoformat(job_data['arrival_datetime'])  # Arrival datetime should be updated as is
-        
+        expected_start_datetime = from_app_tz(datetime.fromisoformat(f"{job_data['date']}T{job_data['time']}"))
+        expected_end_datetime = from_app_tz(datetime.fromisoformat(f"{job_data['date']}T{job_data['end_time']}"))
+        expected_arrival_datetime = from_app_tz(datetime.fromisoformat(job_data['arrival_datetime']))
+        updated_job_start_datetime = datetime.combine(updated_job.date, updated_job.time, tzinfo=expected_start_datetime.tzinfo)
+        updated_job_end_datetime = datetime.combine(updated_job.date, updated_job.end_time, tzinfo=expected_start_datetime.tzinfo)
+        updated_job_arrival_datetime = updated_job.arrival_datetime.replace(tzinfo=expected_start_datetime.tzinfo)
+        assert updated_job_start_datetime == expected_start_datetime, "Updated job start datetime does not match the expected value in UTC."
+        assert updated_job_end_datetime == expected_end_datetime, "Updated job end datetime does not match the expected value in UTC."
+        assert updated_job_arrival_datetime == expected_arrival_datetime, "Updated job arrival datetime does not match the expected value in UTC."
+    
+    def test_get_job_for_user_on_date_with_timezone(self, job_service):
+        # Get jobs for a user on a specific date in the app's timezone
+        user_id = 1  # Assuming a user with ID 1 exists
+        team_id = 1  # Assuming a team with ID 1 exists
+        date_str = '2024-07-01'
+        jobs = job_service.get_jobs_for_user_on_date(user_id, team_id, datetime.fromisoformat(date_str).date())
+        # Verify that the returned jobs have the correct date and time in UTC
+        expected_date = from_app_tz(datetime.fromisoformat(date_str)).date()
+        for job in jobs:
+            assert job.date == expected_date, f"Job date {job.date} does not match the expected date {expected_date} in UTC."
