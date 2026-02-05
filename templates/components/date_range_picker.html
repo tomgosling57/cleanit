@@ -13,7 +13,6 @@
                     <!-- Visible text input - always functional -->
                     <input type="text" 
                         id="start-date-display" 
-                        name="start_date_display"
                         value="{{ display_start_date }}"
                         placeholder="dd-mm-yyyy"
                         class="date-input date-display-input"
@@ -37,7 +36,6 @@
                     <!-- Visible text input - always functional -->
                     <input type="text" 
                         id="end-date-display" 
-                        name="end_date_display"
                         value="{{ display_end_date }}"
                         placeholder="dd-mm-yyyy"
                         class="date-input date-display-input"
@@ -59,6 +57,7 @@
                 <label class="checkbox-label">
                     <input type="checkbox" 
                            id="show-past"
+                           name="show_past"
                            value="true"
                            {% if not show_past %}checked{% endif %}
                            class="checkbox-input">
