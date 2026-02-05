@@ -45,6 +45,8 @@ def test_filtered_property_jobs(property_id):
     JSON response containing the filtered list of jobs."""
     controller = get_property_controller()
     jobs = controller._get_filtered_property_jobs(property_id)
+    if isinstance(jobs, Exception):
+        return jsonify({'error': str(jobs)}), 400
     print(f"Filtered {len(jobs)} jobs for property {property_id}: {[job.to_dict() for job in jobs]}")  # Debug print
     return jsonify({
         'jobs': [job.to_dict() for job in jobs],
