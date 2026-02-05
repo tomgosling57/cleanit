@@ -36,7 +36,8 @@ def get_database_url():
     database_url = os.environ.get('DATABASE_URL')
     if not database_url:
         raise EnvironmentError("DATABASE_URL not set in environment variables.")
-    
+    if database_url.startswith('sqlite:///'):
+        return database_url  # No password needed for SQLite    
     # Parse URL to check if password is missing
     parsed = urllib.parse.urlparse(database_url)
     if parsed.password is None or parsed.password == '':
