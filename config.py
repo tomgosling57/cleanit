@@ -103,4 +103,4 @@ class TestConfig(Config):
     UPLOAD_FOLDER = tempfile.mkdtemp(prefix='test_uploads_')  # Temporary directory for tests
     if not os.getenv('STORAGE_PROVIDER'):
         STORAGE_PROVIDER = 'temp'
-        DATABASE_URL = 'sqlite:///instance/cleanit.db:'
+        DATABASE_URL = 'sqlite:///instance/cleanit.db'
