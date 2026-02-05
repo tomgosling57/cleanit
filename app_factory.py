@@ -2,6 +2,7 @@
 import os
 import secrets
 from flask import Flask, redirect, url_for, request, Response, abort, jsonify
+from dotenv import load_dotenv
 from flask_wtf.csrf import CSRFProtect
 from flask_login import LoginManager
 from config import Config, TestConfig, DebugConfig
@@ -29,6 +30,7 @@ def create_app(login_manager=LoginManager(), config_override=dict()):
     Returns:
         Flask: The configured Flask application instance.
     """
+    load_dotenv()  # Load environment variables from .env file if it exists
     app = Flask(__name__, instance_relative_config=True)
     
     # Determine which configuration to use based on FLASK_ENV 
