@@ -204,7 +204,9 @@ def test_job_list_filtering(admin_page) -> None:
     # Apply various filters and validate results
     # 1. Set start date filter to the past
     filter_start_date = to_app_tz(utc_now()).date() - timedelta(days=10)
-    set_filter_start_date(job_list, filter_start_date.strftime(DATETIME_FORMATS['DATE_FORMAT']))
+    set_filter_start_date(job_list, filter_start_date.isoformat())
+    job_list.locator(".filter-actions button.btn-primary").click()
+    page.pause()
     assert validate_job_list_date_dividers(job_list) == True, "Job list date dividers do not match after setting start date filter"
     assert validate_filtered_jobs(job_list) == True, "Filtered jobs do not match after setting start date filter"
 
@@ -225,21 +227,24 @@ def tick_show_past_checkbox(job_list: Locator, disable=False) -> None:
         show_past_checkbox.uncheck()
 
 def set_filter_start_date(job_list: Locator, date_str: str) -> None:
-    """Helper to set the start date in the job list filter"""
+    """Helper to set the start date in the job list filter. Expects date_str in ISO format YYYY-MM-DD"""
     start_date_display, _ = get_filter_display_date_locators(job_list)
     start_date_hidden, _ = get_filter_hidden_date_locators(job_list)    
-    start_date_display.fill(date_str)
+    formatted_date = datetime.fromisoformat(date_str).strftime(DATETIME_FORMATS['DATE_FORMAT'])
+    start_date_display.fill(formatted_date)
+    start_date_hidden.fill(date_str)
     # Trigger change event to update hidden input
     start_date_display.dispatch_event("change")
     # Wait for hidden input to update
     expect(start_date_hidden).to_have_value(date_str)
 
 def set_filter_end_date(job_list: Locator, date_str: str) -> None:
-    """Helper to set the end date in the job list filter"""
+    """Helper to set the end date in the job list filter. Expects date_str in ISO format YYYY-MM-DD"""
     _, end_date_display = get_filter_display_date_locators(job_list)
     _, end_date_hidden = get_filter_hidden_date_locators(job_list)
-    
-    end_date_display.fill(date_str)
+    formatted_date = datetime.fromisoformat(date_str).strftime(DATETIME_FORMATS['DATE_FORMAT'])                                 
+    end_date_display.fill(formatted_date)
+    end_date_hidden.fill(date_str)
     # Trigger change event to update hidden input
     end_date_display.dispatch_event("change")
     # Wait for hidden input to update
