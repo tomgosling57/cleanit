@@ -1,9 +1,12 @@
+from config import DATETIME_FORMATS
 from database import Job, Property, User, Assignment
 from services.property_service import PropertyService
 from services.assignment_service import AssignmentService
 from sqlalchemy import and_
 from sqlalchemy.orm import joinedload
 from datetime import date, datetime, timedelta
+
+from utils.timezone import from_app_tz, to_app_tz
 
 class JobService:
     def __init__(self, db_session):
@@ -13,12 +16,25 @@ class JobService:
         
     def update_job(self, job_id, job_data):
         job = self.db_session.query(Job).filter_by(id=job_id).first()
+        
         if not job:
             return None
-        job.date = job_data.get('date', job.date)
-        job.time = job_data.get('time', job.time)
-        job.arrival_datetime = job_data.get('arrival_datetime', job.arrival_datetime)
-        job.end_time = job_data.get('end_time', job.end_time)
+        
+        # Update job date time and handle times one conversion
+        job_date = job_data['date'] if 'date' in job_data else to_app_tz(job.date)
+        job_time = job_data['time'] if 'time' in job_data else to_app_tz(job.time)
+        job_end_time = job_data['end_time'] if 'end_time' in job_data else to_app_tz(job.end_time)
+        job_arrival_datetime = job_data['arrival_datetime'] if 'arrival_datetime' in job_data else to_app_tz(job.arrival_datetime)
+        # Combine date and time strings into a single datetime string in the app's timezone
+        start_datetime_str = f"{job_date} {job_time}"
+        end_datetime_str = f"{job_date} {job_end_time}"
+        # Convert to datetime object in app timezone, then store in UTC
+        start_datetime = from_app_tz(datetime.fromisoformat(start_datetime_str))
+        end_datetime = from_app_tz(datetime.fromisoformat(end_datetime_str))
+        job.date = start_datetime.date()
+        job.time = start_datetime.time()
+        job.arrival_datetime = from_app_tz(datetime.fromisoformat(job_arrival_datetime)) if 'arrival_datetime' in job_data else job.arrival_datetime
+        job.end_time = end_datetime.time()
         job.description = job_data.get('description', job.description)
         property_id = job_data.get('property_id')
         if property_id:
@@ -132,11 +148,18 @@ class JobService:
         return jobs
 
     def create_job(self, job_data):
+        # Combine date and time strings into a single datetime string in the app's timezone
+        start_datetime_str = f"{job_data['date']} {job_data['time']}"
+        end_datetime_str = f"{job_data['date']} {job_data['end_time']}"
+        # Convert to datetime object in app timezone, then store in UTC
+        start_datetime = from_app_tz(datetime.fromisoformat(start_datetime_str))
+        end_datetime = from_app_tz(datetime.fromisoformat(end_datetime_str))
+        arrival_datetime = from_app_tz(datetime.fromisoformat(job_data['arrival_datetime'])) if 'arrival_datetime' in job_data else None
         new_job = Job(
-            date=job_data['date'],
-            time=job_data['time'],
-            arrival_datetime=job_data.get('arrival_datetime'),
-            end_time=job_data['end_time'],
+            date=start_datetime.date(),
+            time=start_datetime.time(),
+            arrival_datetime=arrival_datetime,
+            end_time=end_datetime.time(),
             description=job_data.get('description'),
             is_complete=False,
             job_type=job_data.get('job_type'),
