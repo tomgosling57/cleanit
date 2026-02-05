@@ -11,7 +11,7 @@ This module provides centralized timezone handling with the following principles
 
 import os
 import zoneinfo
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone, timedelta, date, time
 from typing import Optional, Union, Tuple, Dict, Any
 import warnings
 
@@ -65,12 +65,18 @@ def to_app_tz(dt: datetime) -> datetime:
         >>> utc_dt = datetime(2024, 1, 1, 12, 0, tzinfo=timezone.utc)
         >>> app_dt = to_app_tz(utc_dt)
     """
-    if dt.tzinfo is None:
-        # Assume naive datetime is in UTC
-        dt = dt.replace(tzinfo=timezone.utc)
-    
     app_tz = get_app_timezone()
+
+    # date → datetime at midnight
+    if isinstance(dt, date) and not isinstance(dt, datetime):
+        dt = datetime.combine(dt, time.min)
+
+    # naive datetime → assume app timezone
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+
     return dt.astimezone(app_tz)
+
 
 
 def from_app_tz(dt: datetime) -> datetime:
@@ -87,11 +93,16 @@ def from_app_tz(dt: datetime) -> datetime:
         >>> app_dt = datetime(2024, 1, 1, 22, 0)  # Naive, assumed in app timezone
         >>> utc_dt = from_app_tz(app_dt)
     """
+    app_tz = get_app_timezone()
+
+    # date → datetime at midnight
+    if isinstance(dt, date) and not isinstance(dt, datetime):
+        dt = datetime.combine(dt, time.min)
+
+    # naive datetime → assume app timezone
     if dt.tzinfo is None:
-        # Assume naive datetime is in application timezone
-        app_tz = get_app_timezone()
         dt = dt.replace(tzinfo=app_tz)
-    
+
     return dt.astimezone(timezone.utc)
 
 

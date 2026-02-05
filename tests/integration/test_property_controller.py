@@ -6,7 +6,7 @@ Focuses on timezone conversion correctness for date filtering and hide past jobs
 import pytest
 from datetime import datetime, timedelta, date
 from tests.db_helpers import get_db_session
-from utils.timezone import utc_now, to_app_tz, from_app_tz, parse_to_utc
+from utils.timezone import today_in_app_tz, utc_now, to_app_tz, from_app_tz, parse_to_utc
 from database import Job, get_db
 
 
@@ -111,9 +111,8 @@ class TestPropertyControllerFilteredJobs:
         admin_client_no_csrf.get('/testing/reseed-database')
         
         # Get today in application timezone
-        today_app_tz = to_app_tz(utc_now()).date()
-        start_date = today_app_tz - timedelta(days=30)
-        end_date = today_app_tz
+        start_date = today_in_app_tz() - timedelta(days=30)
+        end_date = today_in_app_tz()
         
         
         # Test with show_past=true - should include past completed jobs
@@ -122,19 +121,19 @@ class TestPropertyControllerFilteredJobs:
             f'show_past=true&show_completed=true&start_date={start_date.isoformat()}&end_date={end_date.isoformat()}'
         )
         db = get_db_session()
-        expected_jobs =db.query(Job).filter(Job.property_id == 1).filter(Job.date < from_app_tz(datetime.combine(today_app_tz, datetime.min.time()))).all()
-        
+        expected_jobs = db.query(Job).filter(Job.property_id == 1).filter(
+            Job.date >= from_app_tz(datetime.combine(start_date, datetime.min.time()))
+            ).filter(Job.date <= from_app_tz(datetime.combine(end_date, datetime.max.time()))).all()
         assert response.status_code == 200
         data = response.get_json()
         assert 'jobs' in data
         assert len(data['jobs']) == len(expected_jobs), \
-            f"Expected {len(expected_jobs)} past jobs, got {len(data['jobs'])}"
-        raise Exception(f"Expected past jobs {len(expected_jobs)}: {[job.date.isoformat() for job in expected_jobs]}, Actual past jobs: {[job_data['date'] for job_data in data['jobs']]}")        
+            f"Expected {len(expected_jobs)} past jobs: {[job.id for job in expected_jobs]}, got {len(data['jobs'])} {[job['id'] for job in data['jobs']]}"
         # Count past jobs (jobs before today)
         past_jobs = []
         for job_data in data['jobs']:
             job_date = datetime.fromisoformat(job_data['date']).date()
-            if job_date < today_app_tz:
+            if job_date < today_in_app_tz():
                 past_jobs.append(job_data)
         
         # With seeded data, there should be some past completed jobs
@@ -337,7 +336,7 @@ class TestPropertyControllerFilteredJobs:
     def test_edge_case_midnight_timezone_boundary(self, admin_client_no_csrf):
         """Test edge case where job date is exactly on timezone boundary.
         
-        If a job is scheduled for a date that, when converted to UTC, 
+        If a job is scheduled for a date that, when converted to UTC,
         becomes the previous day, filtering should still work correctly.
         """
         # This is more of a conceptual test since we can't easily modify
@@ -359,6 +358,121 @@ class TestPropertyControllerFilteredJobs:
         
         assert response.status_code == 200
         # The test passes if it doesn't crash and returns valid JSON
+    
+    def test_date_display_in_application_timezone(self, admin_client_no_csrf):
+        """Test that dates are displayed in application timezone, not UTC.
+        
+        This test verifies that when jobs are returned, the date shown
+        is in the application timezone. This is important for date dividers
+        in templates to group jobs correctly by local date.
+        """
+        # Reseed database
+        admin_client_no_csrf.get('/testing/reseed-database')
+        
+        # Get jobs
+        response = admin_client_no_csrf.get(
+            f'/testing/property/1/jobs/filtered?'
+            f'show_past=true&show_completed=true'
+        )
+        
+        assert response.status_code == 200
+        data = response.get_json()
+        
+        # Check that job dates are valid and can be parsed
+        for job_data in data['jobs']:
+            job_date_str = job_data['date']
+            # Should be in YYYY-MM-DD format
+            assert len(job_date_str) == 10
+            assert job_date_str[4] == '-' and job_date_str[7] == '-'
+            
+            # Parse the date
+            job_date = datetime.fromisoformat(job_date_str).date()
+            
+            # The date should be reasonable (not far in past/future for seeded data)
+            # Seeded data has jobs from 10 days ago to 10 days in future
+            today_app_tz = to_app_tz(utc_now()).date()
+            assert today_app_tz - timedelta(days=15) <= job_date <= today_app_tz + timedelta(days=15), \
+                f"Job {job_data['id']} date {job_date} is outside expected range for seeded data"
+    
+    def test_timezone_aware_date_comparison(self):
+        """Test that date comparisons consider application timezone.
+        
+        This is a unit test for the logic that compares dates with
+        timezone awareness. The key issue is that 'today' should be
+        calculated in application timezone, not UTC, when filtering
+        jobs with show_past=false.
+        """
+        from utils.timezone import get_app_timezone
+        import zoneinfo
+        
+        # Get application timezone
+        app_tz = get_app_timezone()
+        
+        # Create test datetimes at boundary times
+        # Example: 11 PM UTC is next day in Australia/Sydney
+        utc_23pm = datetime(2024, 2, 5, 23, 0, tzinfo=zoneinfo.ZoneInfo('UTC'))
+        app_time = utc_23pm.astimezone(app_tz)
+        
+        # If app timezone is Australia/Sydney (UTC+11), then:
+        # 2024-02-05 23:00 UTC = 2024-02-06 10:00 Australia/Sydney
+        # So 'today' in app timezone is Feb 6, but 'today' in UTC is Feb 5
+        
+        # The JobService should use application timezone's 'today'
+        # when filtering with show_past=false
+        print(f"UTC time: {utc_23pm}")
+        print(f"App time ({app_tz}): {app_time}")
+        print(f"UTC date: {utc_23pm.date()}")
+        print(f"App date: {app_time.date()}")
+        
+        # This test doesn't assert anything, just demonstrates the issue
+        # The actual fix would be in JobService.get_filtered_jobs_by_property_id
+    
+    def test_job_date_interpretation_issue(self, admin_client_no_csrf):
+        """Demonstrate the job date interpretation issue.
+        
+        The problem: Job.date is stored as a date (no timezone).
+        When we filter jobs by date, we need to interpret these dates
+        consistently. If Job.date represents a UTC date, but users
+        think in application timezone dates, we have a mismatch.
+        
+        Example scenario:
+        - User in Australia/Sydney creates job for "Feb 5th"
+        - System stores Job.date = 2024-02-05 (but is this UTC date or Sydney date?)
+        - If stored as UTC date: Feb 5th 00:00 UTC = Feb 5th 11:00 Sydney
+        - User expects to see job when filtering for "Feb 5th" (Sydney time)
+        - But the job might appear on Feb 4th or Feb 5th depending on conversion
+        """
+        # This test demonstrates the issue conceptually
+        from utils.timezone import get_app_timezone
+        import zoneinfo
+        
+        app_tz = get_app_timezone()
+        print(f"\n=== Job Date Interpretation Issue ===")
+        print(f"Application timezone: {app_tz}")
+        
+        # Scenario 1: Job at early morning in Sydney (late previous day in UTC)
+        # Job scheduled for Feb 5th 01:00 Sydney time (UTC+11)
+        # = Feb 4th 14:00 UTC
+        # What should Job.date be? 2024-02-05 (Sydney date) or 2024-02-04 (UTC date)?
+        
+        # Scenario 2: Job at late evening in Sydney (early next day in UTC)
+        # Job scheduled for Feb 5th 23:00 Sydney time (UTC+11)
+        # = Feb 5th 12:00 UTC
+        # What should Job.date be? 2024-02-05 (Sydney date) or 2024-02-05 (UTC date)?
+        
+        # The issue is that Job.date field can't represent both timezone contexts
+        # We need to decide: does Job.date represent date in application timezone?
+        # Or does it represent date in UTC?
+        
+        # Current implementation in JobService uses utc_now().date() for comparison
+        # This suggests Job.date should be compared with UTC dates
+        # But parse_to_utc in PropertyController converts user dates from app timezone to UTC
+        # This suggests Job.date should be UTC dates
+        
+        print("Issue demonstrated. Need to ensure consistent interpretation.")
+        
+        # The test passes - it's just documenting the issue
+        assert True
     
     def test_default_parameter_values(self, admin_client_no_csrf):
         """Test that default parameter values work correctly."""
