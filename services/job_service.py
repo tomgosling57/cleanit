@@ -89,8 +89,8 @@ class JobService:
         
         Args:
             property_id: ID of the property
-            start_date: Start date for filtering (datetime.date in UTC)
-            end_date: End date for filtering (datetime.date in UTC)
+            start_date: Start date for filtering (datetime.date in app timezone)
+            end_date: End date for filtering (datetime.date in app timezone)
             show_past_jobs: If True, include jobs before today (default: False)
             show_completed: If True, include completed jobs (default: True)
             
@@ -103,6 +103,8 @@ class JobService:
         query = self.db_session.query(Job).options(joinedload(Job.property)).filter(Job.property_id == property_id)
         
         # Apply date range filters
+        start_date = from_app_tz(datetime.combine(start_date, datetime.min.time())) if start_date else None
+        end_date = from_app_tz(datetime.combine(end_date, datetime.max.time())) if end_date else None
         if start_date:
             query = query.filter(Job.date >= start_date)
         if end_date:
@@ -125,16 +127,20 @@ class JobService:
 
 
     def get_jobs_for_user_on_date(self, user_id, team_id, date: date):
+        
         user = self.db_session.query(User).filter(User.id == user_id).first()
         if not user:
             return []
+        
+        # Convert date from app timezone to UTC
+        date_utc = from_app_tz(datetime.fromisoformat(date)).date()
         
         # Subquery to get distinct job IDs that match the assignment criteria
         job_ids_subquery = self.db_session.query(Assignment.job_id).join(
             Job, Assignment.job_id == Job.id
         ).filter(
             and_(
-                Job.date == date,
+                Job.date == date_utc,
                 (Assignment.user_id == user_id) | (Assignment.team_id == team_id)
             )
         ).distinct().subquery()
