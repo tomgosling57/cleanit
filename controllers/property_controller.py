@@ -102,6 +102,12 @@ class PropertyController:
         - show_completed: Boolean flag to show completed jobs (default: true)
         """
         jobs = self._get_filtered_property_jobs(property_id)        
+        if isinstance(jobs, Exception):
+            errors = [str(jobs)]
+            jobs = None
+        else:
+            current_app.logger.debug(f"Filtered jobs for property {property_id} between {request.args.get('start_date')} and {request.args.get('end_date')}: {len(jobs)} found: {[job.date.isoformat() for job in jobs]}")
+            
         # Render job list fragment with date divider context
         return render_template(
             'job_list_fragment.html',
@@ -109,7 +115,8 @@ class PropertyController:
             show_date_dividers=True,
             property_id=property_id,
             DATETIME_FORMATS=DATETIME_FORMATS,
-            view_type=None  # Ensure view_type is passed (optional)
+            view_type=None,  # Ensure view_type is passed (optional)
+            errors=errors if 'errors' in locals() else None
         )
 
     def _get_filtered_property_jobs(self, property_id):
@@ -125,8 +132,14 @@ class PropertyController:
         show_completed = request.args.get('show_completed', 'true').lower() == 'true'
         
         # Parse dates in application timezone
-        start_date = parse_to_utc(start_date_str, DATETIME_FORMATS['ISO_DATE_FORMAT']) if start_date_str else None
-        end_date = parse_to_utc(end_date_str, DATETIME_FORMATS['ISO_DATE_FORMAT']) if end_date_str else None
+        try:
+            start_date = parse_to_utc(start_date_str, DATETIME_FORMATS['ISO_DATE_FORMAT']) if start_date_str else None
+        except ValueError:
+            return Exception(f"Invalid start_date format: {start_date_str}. Expected format: {DATETIME_FORMATS['ISO_DATE_FORMAT']}")
+        try:
+            end_date = parse_to_utc(end_date_str, DATETIME_FORMATS['ISO_DATE_FORMAT']) if end_date_str else None
+        except ValueError:
+            return Exception(f"Invalid end_date format: {end_date_str}. Expected format: {DATETIME_FORMATS['ISO_DATE_FORMAT']}")
         
         # Get filtered jobs from service
         jobs = self.job_service.get_filtered_jobs_by_property_id(
