@@ -1,3 +1,4 @@
+from datetime import datetime
 from flask import current_app, jsonify, render_template, session, url_for, request, flash, render_template_string, Response, abort
 from werkzeug.exceptions import NotFound
 from flask_login import current_user
@@ -133,11 +134,11 @@ class PropertyController:
         
         # Parse dates in application timezone
         try:
-            start_date = parse_to_utc(start_date_str, DATETIME_FORMATS['ISO_DATE_FORMAT']) if start_date_str else None
+            start_date = datetime.fromisoformat(start_date_str) if start_date_str else None
         except ValueError:
             return Exception(f"Invalid start_date format: {start_date_str}. Expected format: {DATETIME_FORMATS['ISO_DATE_FORMAT']}")
         try:
-            end_date = parse_to_utc(end_date_str, DATETIME_FORMATS['ISO_DATE_FORMAT']) if end_date_str else None
+            end_date = datetime.fromisoformat(end_date_str) if end_date_str else None
         except ValueError:
             return Exception(f"Invalid end_date format: {end_date_str}. Expected format: {DATETIME_FORMATS['ISO_DATE_FORMAT']}")
         
@@ -152,11 +153,6 @@ class PropertyController:
                 
         return jobs
     
-    def _get_app_timezone(self):
-        """Helper to get application timezone from config."""
-        from flask import current_app
-        return current_app.config.get('APP_TIMEZONE', 'UTC')
-
     def get_property_creation_form(self):
         """
         Renders the property creation form.
