@@ -120,6 +120,22 @@ class Job(Base):
     def __repr__(self):
         return f"<Job(id={self.id}, date='{self.date}', time='{self.time}', arrival_datetime='{self.arrival_datetime}', end_time='{self.end_time}', is_complete='{self.is_complete}')>"
 
+    def to_dict(self, include_report=False):
+        data = {
+            'id': self.id,
+            'date': self.date.isoformat(),
+            'time': self.time.isoformat(),
+            'arrival_datetime': self.arrival_datetime.isoformat() if self.arrival_datetime else None,
+            'end_time': self.end_time.isoformat(),
+            'description': self.description,
+            'is_complete': self.is_complete,
+            'job_type': self.job_type,
+            'property_id': self.property_id,
+        }
+        if include_report:
+            data['report'] = self.report
+        return data
+    
     @hybrid_property
     def duration(self):
         if self.time and self.end_time:
