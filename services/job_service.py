@@ -127,13 +127,13 @@ class JobService:
 
 
     def get_jobs_for_user_on_date(self, user_id, team_id, date: date):
-        
+
         user = self.db_session.query(User).filter(User.id == user_id).first()
         if not user:
             return []
         
         # Convert date from app timezone to UTC
-        date_utc = from_app_tz(datetime.fromisoformat(date)).date()
+        date_utc = from_app_tz(datetime.fromisoformat(date.isoformat())).date()
         
         # Subquery to get distinct job IDs that match the assignment criteria
         job_ids_subquery = self.db_session.query(Assignment.job_id).join(
