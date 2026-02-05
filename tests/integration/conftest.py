@@ -16,7 +16,7 @@ from services.job_service import JobService
 from services.property_service import PropertyService
 from services.user_service import UserService
 from services.media_service import MediaService
-from utils.populate_database import populate_database
+from utils.populate_database import insert_dummy_data, populate_database
 from database import Team, get_db, teardown_db, User, Property, Job, Assignment, Media, PropertyMedia, JobMedia
 
 @pytest.fixture(scope='session')
@@ -129,7 +129,7 @@ def rollback_db_after_test(app):
             teardown_db()
         
         # Reseed data to initial state
-        populate_database(app.config['SQLALCHEMY_DATABASE_URI'])
+        insert_dummy_data(existing_session=db_session)
 
 
 # User fixtures for authentication testing
