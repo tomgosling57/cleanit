@@ -81,7 +81,7 @@ def app(request, test_db_path):
     
     # Ensure APP_TIMEZONE is set for tests
     if 'APP_TIMEZONE' not in os.environ:
-        os.environ['APP_TIMEZONE'] = 'UTC'
+        os.environ['APP_TIMEZONE'] = 'Australia/Melbourne'
     
     test_config = {
         'WTF_CSRF_ENABLED': not no_csrf,  # Disable CSRF only for marked tests
