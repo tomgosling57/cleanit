@@ -1,10 +1,11 @@
-from flask import jsonify, render_template, session, url_for, request, flash, render_template_string, Response, abort
+from flask import current_app, jsonify, render_template, session, url_for, request, flash, render_template_string, Response, abort
 from werkzeug.exceptions import NotFound
 from flask_login import current_user
 from services.property_service import PropertyService
 from services.job_service import JobService
 from services.media_service import MediaService
 from config import DATETIME_FORMATS
+from utils.timezone import parse_to_utc
 
 
 class PropertyController:
@@ -100,59 +101,7 @@ class PropertyController:
         - show_past: Boolean flag to show past jobs (default: false)
         - show_completed: Boolean flag to show completed jobs (default: true)
         """
-        from utils.timezone import parse_to_utc, today_in_app_tz
-        from datetime import timedelta
-        
-        property = self.property_service.get_property_by_id(property_id)
-        if not property:
-            return jsonify({'error': 'Property not found'}), 404
-        
-        # Parse query parameters with defaults
-        start_date_str = request.args.get('start_date')
-        end_date_str = request.args.get('end_date')
-        show_past = request.args.get('show_past', 'false').lower() == 'true'
-        show_completed = request.args.get('show_completed', 'true').lower() == 'true'
-        
-        start_date = None
-        end_date = None
-        
-        # Parse dates from application timezone to UTC
-        if start_date_str:
-            try:
-                # Parse from app timezone to UTC, get date part
-                start_date_utc = parse_to_utc(
-                    start_date_str,
-                    DATETIME_FORMATS["ISO_DATE_FORMAT"],
-                    source_tz=self._get_app_timezone()
-                )
-                start_date = start_date_utc.date()
-            except ValueError:
-                return jsonify({'error': f'Invalid start_date format. Use {DATETIME_FORMATS["ISO_DATE_FORMAT"]}'}), 400
-        
-        if end_date_str:
-            try:
-                end_date_utc = parse_to_utc(
-                    end_date_str,
-                    DATETIME_FORMATS["ISO_DATE_FORMAT"],
-                    source_tz=self._get_app_timezone()
-                )
-                end_date = end_date_utc.date()
-            except ValueError:
-                return jsonify({'error': f'Invalid end_date format. Use {DATETIME_FORMATS["ISO_DATE_FORMAT"]}'}), 400
-        
-        # Validate date range
-        if start_date and end_date and start_date > end_date:
-            return jsonify({'error': 'start_date must be before or equal to end_date'}), 400
-        
-        # Get filtered jobs
-        jobs = self.job_service.get_filtered_jobs_by_property_id(
-            property_id=property_id,
-            start_date=start_date,
-            end_date=end_date,
-            show_past_jobs=show_past,
-            show_completed=show_completed
-        )
-        
+        jobs = self._get_filtered_property_jobs(property_id)        
         # Render job list fragment with date divider context
         return render_template(
             'job_list_fragment.html',
@@ -163,6 +112,33 @@ class PropertyController:
             view_type=None  # Ensure view_type is passed (optional)
         )
 
+    def _get_filtered_property_jobs(self, property_id):
+        """
+        Internal method to get filtered jobs for a property based on query parameters.
+        This method is used by both the modal content and the AJAX endpoint.
+        """
+        
+        # Get query parameters
+        start_date_str = request.args.get('start_date')
+        end_date_str = request.args.get('end_date')
+        show_past_jobs = request.args.get('show_past', 'false').lower() == 'true'
+        show_completed = request.args.get('show_completed', 'true').lower() == 'true'
+        
+        # Parse dates in application timezone
+        start_date = parse_to_utc(start_date_str, DATETIME_FORMATS['ISO_DATE_FORMAT']) if start_date_str else None
+        end_date = parse_to_utc(end_date_str, DATETIME_FORMATS['ISO_DATE_FORMAT']) if end_date_str else None
+        
+        # Get filtered jobs from service
+        jobs = self.job_service.get_filtered_jobs_by_property_id(
+            property_id=property_id,
+            start_date=start_date,
+            end_date=end_date,
+            show_past_jobs=show_past_jobs,
+            show_completed=show_completed
+        )
+                
+        return jobs
+    
     def _get_app_timezone(self):
         """Helper to get application timezone from config."""
         from flask import current_app
