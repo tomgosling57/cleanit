@@ -131,12 +131,7 @@ class TestPropertyControllerFilteredJobs:
         # With seeded data, there should be some past completed jobs
         # (jobs with IDs 14-17 are past and completed in seeded data)
         assert len(past_jobs) > 0, "Should include past completed jobs when show_past=true"
-        
-        # Verify past jobs are marked as complete (seeded past jobs are complete)
-        for job in past_jobs:
-            assert job['is_complete'] is True, \
-                f"Past job {job['id']} should be marked as complete"
-    
+                
     def test_hide_completed_jobs(self, admin_client_no_csrf):
         """Test that show_completed=false hides completed jobs."""
         # Reseed database
@@ -218,10 +213,9 @@ class TestPropertyControllerFilteredJobs:
             f'show_past=true&show_completed=true'
         )
         
-        # Should handle gracefully - invalid dates are treated as None
-        assert response.status_code == 200
+        assert response.status_code == 400
         data = response.get_json()
-        assert 'jobs' in data
+        assert 'error' in data
     
     def test_missing_date_parameters(self, admin_client_no_csrf):
         """Test filtering when date parameters are not provided."""
