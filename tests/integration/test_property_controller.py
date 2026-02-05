@@ -5,6 +5,7 @@ Focuses on timezone conversion correctness for date filtering and hide past jobs
 
 import pytest
 from datetime import datetime, timedelta, date
+from tests.db_helpers import get_db_session
 from utils.timezone import utc_now, to_app_tz, from_app_tz, parse_to_utc
 from database import Job, get_db
 
@@ -104,23 +105,31 @@ class TestPropertyControllerFilteredJobs:
             assert job_date >= today_app_tz, \
                 f"Job {job_data['id']} date {job_date} is in the past (today is {today_app_tz})"
     
-    def test_show_past_jobs_includes_completed(self, admin_client_no_csrf):
-        """Test that show_past=true includes completed past jobs."""
+    def test_show_past_jobs(self, admin_client_no_csrf):
+        """Test that show_past option correctly includes/excludes past jobs."""
         # Reseed database
         admin_client_no_csrf.get('/testing/reseed-database')
         
         # Get today in application timezone
         today_app_tz = to_app_tz(utc_now()).date()
+        start_date = today_app_tz - timedelta(days=30)
+        end_date = today_app_tz
+        
         
         # Test with show_past=true - should include past completed jobs
         response = admin_client_no_csrf.get(
             f'/testing/property/1/jobs/filtered?'
-            f'show_past=true&show_completed=true'
+            f'show_past=true&show_completed=true&start_date={start_date.isoformat()}&end_date={end_date.isoformat()}'
         )
+        db = get_db_session()
+        expected_jobs =db.query(Job).filter(Job.property_id == 1).filter(Job.date < from_app_tz(datetime.combine(today_app_tz, datetime.min.time()))).all()
         
         assert response.status_code == 200
         data = response.get_json()
-        
+        assert 'jobs' in data
+        assert len(data['jobs']) == len(expected_jobs), \
+            f"Expected {len(expected_jobs)} past jobs, got {len(data['jobs'])}"
+        raise Exception(f"Expected past jobs {len(expected_jobs)}: {[job.date.isoformat() for job in expected_jobs]}, Actual past jobs: {[job_data['date'] for job_data in data['jobs']]}")        
         # Count past jobs (jobs before today)
         past_jobs = []
         for job_data in data['jobs']:
