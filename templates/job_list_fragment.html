@@ -36,3 +36,11 @@
         <p class="no-jobs-message">No jobs found for the selected filters.</p>
     {% endif %}
 </div>
+<script>
+    {% if errors %}
+        // Display errors using Toastr
+        {% for error in errors %}
+            window.showError("{{ error }}");
+        {% endfor %}
+    {% endif %}
+</script>
