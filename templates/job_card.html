@@ -1,8 +1,8 @@
 <div data-view-type="{{ view_type }}" class="job-card
 {% if job.description %}red-outline
 {% endif %}
-{% if job.arrival_datetime and job.arrival_datetime.date() == job.date %}arrival-same-day
-{% elif job.arrival_datetime and (job.arrival_datetime.date() - job.date).days == 1 %}arrival-next-day
+{% if job.arrival_datetime and job.arrival_date == job.date %}arrival-same-day
+{% elif job.arrival_datetime and (job.arrival_date - job.date).days == 1 %}arrival-next-day
 {% endif %}
 {% if job.is_complete %}completed
 {% endif %}" id="job-{{ job.id }}" data-job-id="{{ job.id }}">
@@ -20,8 +20,9 @@
     
     <div class="job-card-details">
         <div class="job-info">
-            <p><strong>Time:</strong> {{ job.time.strftime(DATETIME_FORMATS['TIME_FORMAT']) }}</p>
-            <p><strong>Ends:</strong> {{ job.end_time.strftime(DATETIME_FORMATS['TIME_FORMAT']) }} ({{ job.duration }})</p>
+            <p><strong>Date:</strong> {{ job.display_date }}</p>
+            <p><strong>Time:</strong> {{ job.display_time }}</p>
+            <p><strong>Ends:</strong> {{ job.display_end_time }} ({{ job.duration }})</p>
             <p><strong>Property Address:</strong> {{ job.property.address }}</p>
         </div>
         <div class="job-status-actions">
@@ -55,9 +56,9 @@
                 </button>
             </div>
             <div class="job-statuses">
-                {% if job.arrival_datetime and job.arrival_datetime.date() == job.date %}
+                {% if job.arrival_datetime and job.arrival_date == job.date %}
                 <div class="job-status-badge red">Same Day Arrival</div>
-                {% elif job.arrival_datetime and (job.arrival_datetime.date() - job.date).days == 1 %}
+                {% elif job.arrival_datetime and (job.arrival_date - job.date).days == 1 %}
                 <div class="job-status-badge yellow">Next Day Arrival</div>
                 {% endif %}
                 {% if job.description %}

@@ -28,15 +28,15 @@ hx-swap="outerHTML"
                 <div class="form-row">
                     <div class="form-field">
                         <label for="time">Start Time</label>
-                        <input type="time" id="time" name="time" value="{{ job.time.strftime(DATETIME_FORMATS['TIME_FORMAT']) }}" required pattern="^([01]\d|2[0-3]):[0-5]\d$" title="Please enter start time in 24-hour format (HH:mm)">
+                        <input type="time" id="time" name="time" value="{{ job.display_time }}" required pattern="^([01]\d|2[0-3]):[0-5]\d$" title="Please enter start time in 24-hour format (HH:mm)">
                     </div>
                     <div class="form-field">
                         <label for="end_time">End Time</label>
-                        <input type="time" id="end_time" name="end_time" value="{{ job.end_time.strftime(DATETIME_FORMATS['TIME_FORMAT']) }}" required pattern="^([01]\d|2[0-3]):[0-5]\d$" title="Please enter end time in 24-hour format (HH:mm)">
+                        <input type="time" id="end_time" name="end_time" value="{{ job.display_end_time }}" required pattern="^([01]\d|2[0-3]):[0-5]\d$" title="Please enter end time in 24-hour format (HH:mm)">
                     </div>
                     <div class="form-field">
                         <label for="date">Date</label>
-                        <input type="date-local" id="date" name="date" value="{{ job.date.strftime(DATETIME_FORMATS['DATE_FORMAT']) }}" placeholder="Select Date">
+                        <input type="date-local" id="date" name="date" value="{{ job.display_date }}" placeholder="Select Date">
                     </div>
                 </div>
             </div>
@@ -73,7 +73,7 @@ hx-swap="outerHTML"
                 </div>
                 <div class="form-field">
                     <label for="arrival_datetime">Tenant Arrival Date & Time</label>
-                    <input type="text" id="arrival_datetime" name="arrival_datetime" value="{{ job.arrival_datetime.strftime(DATETIME_FORMATS['DATETIME_FORMAT']) if job.arrival_datetime else '' }}" placeholder="Select Date and Time" class="flatpickr">
+                    <input type="text" id="arrival_datetime" name="arrival_datetime" value="{{ job.display_arrival_datetime if job.arrival_datetime else '' }}" placeholder="Select Date and Time" class="flatpickr">
                 </div>
             </div>
             {% if job.property.access_notes %}
