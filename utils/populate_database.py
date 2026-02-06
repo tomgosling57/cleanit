@@ -1,8 +1,11 @@
 import os
+from zoneinfo import ZoneInfo
 from config import Config
 from database import User, init_db
 from database import Team, Property, Job, Assignment, Media, PropertyMedia, JobMedia
 from datetime import date, datetime, time, timedelta
+
+from utils.timezone import from_app_tz, get_app_timezone, today_in_app_tz, utc_now
 
 
 def populate_database(database_uri=None, force=True, Session=None):
@@ -172,14 +175,27 @@ def _create_job(session, date, time, end_time, description, property_obj, team_o
     Returns:
         Job: The created Job object.
     """
-    arrival_date_for_job = date + timedelta(days=arrival_date_offset)
+    app_tz = get_app_timezone()
+
+    start_dt = datetime.combine(date, time)
+    end_dt = datetime.combine(date, end_time)
+
+    # label as Melbourne
+    start_dt = start_dt.replace(tzinfo=app_tz)
+    end_dt = end_dt.replace(tzinfo=app_tz)
+
+    # convert to UTC for storage
+    start_dt = from_app_tz(start_dt)
+    end_dt = from_app_tz(end_dt)
+
+    arrival_date_for_job = start_dt.date() + timedelta(days=arrival_date_offset)
     
     job = Job(
         id=job_id,
-        date=date,
-        time=time,
-        arrival_datetime=datetime.combine(arrival_date_for_job, time),
-        end_time=end_time,
+        date=start_dt.date(),
+        time=start_dt.time(),
+        arrival_datetime=datetime.combine(arrival_date_for_job, start_dt.time()),
+        end_time=end_dt.time(),
         description=description,
         is_complete=complete,
         property=property_obj
@@ -242,7 +258,8 @@ def create_initial_jobs(session, anytown_property, teamville_property, admin, us
     session.query(Job).delete()
     session.commit()
 
-    today = date.today()
+    today = today_in_app_tz() - timedelta(days=1)
+
 
     # Initial jobs
     _create_job(session, today, time(9, 0), time(11, 0), 'Full house clean, focus on kitchen and bathrooms.', anytown_property, team_obj=initial_team, user_obj=admin, job_id=1, arrival_date_offset=2)
