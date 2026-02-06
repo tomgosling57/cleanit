@@ -233,10 +233,15 @@ class JobService:
     
     def push_uncompleted_jobs_to_next_day(self):
         """Push all uncompleted jobs with a date before today to the next day."""
-        today = utc_now().date()
+        # Get today's date in app timezone
+        today_app = today_in_app_tz()
+        # Convert to UTC datetime at start of day for comparison
+        today_start_utc = from_app_tz(datetime.combine(today_app, datetime.min.time()))
+        
+        # Find jobs where the job's start datetime (in UTC) is before today in app timezone
         uncompleted_jobs = self.db_session.query(Job).filter(
             and_(
-                Job.date < today,
+                datetime.combine(Job.date, Job.time) < today_start_utc,
                 Job.is_complete == False
             )
         ).all()
