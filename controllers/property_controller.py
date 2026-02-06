@@ -126,7 +126,7 @@ class PropertyController:
         # Get query parameters
         start_date_str = request.args.get('start_date')
         end_date_str = request.args.get('end_date')
-        show_completed = request.args.get('show_completed', 'true').lower() == 'true'
+        show_completed = request.args.get('show_completed', 'false').lower() == 'true'
         
         # Parse dates in application timezone
         try:
