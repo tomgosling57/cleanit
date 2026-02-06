@@ -179,7 +179,7 @@ class JobService:
         if not user:
             return []
         
-        # Convert app timezone date to UTC date range
+        # Convert app timezone date to UTC datetime range
         # A single app timezone day may span two UTC days
         start_of_day_app = datetime.combine(date_obj, datetime.min.time())
         end_of_day_app = datetime.combine(date_obj, datetime.max.time())
@@ -187,13 +187,19 @@ class JobService:
         start_of_day_utc = from_app_tz(start_of_day_app)
         end_of_day_utc = from_app_tz(end_of_day_app)
         
-        # Query jobs within this UTC range
+        # Query jobs where the job's start datetime (in app timezone) falls within the date
+        # We need to check if datetime.combine(Job.date, Job.time) converted to app timezone
+        # falls within the app timezone date range.
+        # Since we can't easily do timezone conversion in SQL, we filter by UTC datetime
+        # range that corresponds to the app timezone date.
         job_ids_subquery = self.db_session.query(Assignment.job_id).join(
             Job, Assignment.job_id == Job.id
         ).filter(
             and_(
-                Job.date >= start_of_day_utc.date(),
-                Job.date <= end_of_day_utc.date(),
+                # Create datetime from Job.date and Job.time (both in UTC)
+                # and check if it falls within the UTC datetime range
+                datetime.combine(Job.date, Job.time) >= start_of_day_utc,
+                datetime.combine(Job.date, Job.time) <= end_of_day_utc,
                 (Assignment.user_id == user_id) | (Assignment.team_id == team_id)
             )
         ).distinct().subquery()
