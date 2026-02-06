@@ -786,7 +786,7 @@ class JobController:
                         too_old_media.append({
                             'id': media.id,
                             'filename': media.filename,
-                            'upload_date': media.upload_date.isoformat() if media.upload_date else None
+                            'upload_date': media.display_upload_date if media.upload_date else None
                         })
                 
                 if too_old_media:
@@ -846,7 +846,7 @@ class JobController:
                         'details': f'Media older than {MEDIA_DELETION_TIME_LIMIT_HOURS} hours cannot be deleted by supervisors',
                         'media_id': media_id,
                         'filename': media.filename,
-                        'upload_date': media.upload_date.isoformat() if media.upload_date else None
+                        'upload_date': media.display_upload_date if media.upload_date else None
                     }), 403
             
             # Remove single association
@@ -897,5 +897,5 @@ class JobController:
             'resolution': media.resolution,
             'codec': media.codec,
             'aspect_ratio': media.aspect_ratio,
-            'upload_date': media.upload_date.isoformat() if media.upload_date else None
+            'upload_date': media.display_upload_date if media.upload_date else None
         }
