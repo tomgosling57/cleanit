@@ -119,7 +119,11 @@ class Job(Base):
     @arrival_time_only.expression
     def arrival_time_only(cls):
         return func.time(cls.arrival_datetime)
-
+    
+    @hybrid_property
+    def display_datetime(self):
+        return to_app_tz(datetime.combine(self.date, self.time))
+    
     @hybrid_property
     def display_date(self):
         # Instance-level: self.date is an actual date object
@@ -130,7 +134,7 @@ class Job(Base):
         # Class-level: For SQL queries, return the date column itself
         # The comparison should be done against the raw date, not the formatted string
         return cls.date
-
+    
     @hybrid_property
     def display_time(self):
         return to_app_tz(datetime.combine(self.date, self.time)).strftime(DATETIME_FORMATS['TIME_FORMAT'])
