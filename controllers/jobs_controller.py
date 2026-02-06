@@ -287,7 +287,7 @@ class JobController:
 
         self.job_service.push_uncompleted_jobs_to_next_day()
         all_teams = self.team_service.get_all_teams()
-        jobs_by_team = self.assignment_service.get_jobs_grouped_by_team_for_date(date_obj)
+        jobs_by_team = self.job_service.get_jobs_grouped_by_team_for_date(date_obj)
 
         selected_date = session['selected_date'] # Use the string directly from session
         current_user.selected_date = selected_date
