@@ -7,7 +7,7 @@ from sqlalchemy import and_
 from sqlalchemy.orm import joinedload
 from datetime import date, datetime, timedelta
 
-from utils.timezone import from_app_tz, to_app_tz, utc_now
+from utils.timezone import from_app_tz, to_app_tz, utc_now, today_in_app_tz
 
 class JobService:
     def __init__(self, db_session):
