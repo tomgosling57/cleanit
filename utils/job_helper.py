@@ -179,7 +179,7 @@ class JobHelper:
         """
         date_obj = datetime.strptime(date_str, DATETIME_FORMATS["DATE_FORMAT"]).date()
         all_teams = self.team_service.get_all_teams()
-        jobs_by_team = self.assignment_service.get_jobs_grouped_by_team_for_date(date_obj)
+        jobs_by_team = self.job_service.get_jobs_grouped_by_team_for_date(date_obj)
         
         team_leader_id = None
         if current_user.team_id:
