@@ -4,7 +4,7 @@
             {# Group jobs by date with dividers #}
             {% set ns = namespace(current_date=None, count=0) %}
             {% for job in jobs %}
-                {% set job_date = job.date %}
+                {% set job_date = job.display_date %}
                 {% if ns.current_date != job_date %}
                     {% if ns.current_date is not none %}
                         </div> {# Close previous date group #}
