@@ -16,3 +16,5 @@ apache-libcloud>=3.8.0
 boto3>=1.26.0
 fasteners>=0.20
 Pillow==10.2.0
+BeautifulSoup4==4.13.4
+soupsieve==2.8.3
