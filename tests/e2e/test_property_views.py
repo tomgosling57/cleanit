@@ -18,7 +18,7 @@ from tests.helpers import (
     delete_property,
     assert_property_card_content
 )
-from utils.timezone import from_app_tz, to_app_tz, today_in_app_tz, utc_now
+from utils.timezone import from_app_tz, get_app_timezone, to_app_tz, today_in_app_tz, utc_now
 
 def test_address_book(admin_page) -> None:
     open_address_book(admin_page)
@@ -196,18 +196,34 @@ def test_job_list_filtering(admin_page) -> None:
     job_list =open_property_jobs_modal(page, property_card)
     # Verify the contents of the date pickers are formatted correctly 
     assert_filtered_job_list_date_formats(job_list)
-    
     # Validate that the jobs displayed match the filter criteria
     assert validate_job_list_date_dividers(job_list) == True, "Job list date dividers do not match filter criteria"
     assert validate_filtered_jobs(job_list) == True, "Filtered jobs do not match filter criteria"
 
     # Apply various filters and validate results
-    # 1. Set start date filter to the past
-    filter_start_date = today_in_app_tz() - timedelta(days=10)
+    # 1. Set start date filter to the past, enable show completed jobs
+    filter_start_date = today_in_app_tz() - timedelta(days=30)
+    tick_show_completed_checkbox(job_list, disable=False)
     set_filter_start_date(job_list, filter_start_date.isoformat())
     job_list.locator(".filter-actions button.btn-primary").click()
     assert validate_job_list_date_dividers(job_list) == True, "Job list date dividers do not match after setting start date filter"
     assert validate_filtered_jobs(job_list) == True, "Filtered jobs do not match after setting start date filter"
+    # 2. Disable show completed jobs
+    tick_show_completed_checkbox(job_list, disable=True)
+    job_list.locator(".filter-actions button.btn-primary").click()
+    assert validate_job_list_date_dividers(job_list) == True, "Job list date dividers do not match after disabling show completed jobs"
+    assert validate_filtered_jobs(job_list) == True, "Filtered jobs do not match after disabling show completed jobs"
+    # 3. Set end date filter to the past
+    filter_end_date = today_in_app_tz() - timedelta(days=1)    
+    set_filter_end_date(job_list, filter_end_date.isoformat())
+    job_list.locator(".filter-actions button.btn-primary").click()
+    assert validate_job_list_date_dividers(job_list) == True, "Job list date dividers do not match after setting end date filter"
+    assert validate_filtered_jobs(job_list) == True, "Filtered jobs do not match after setting end date filter"
+    # 4. Enable show completed jobs
+    tick_show_completed_checkbox(job_list, disable=False)
+    job_list.locator(".filter-actions button.btn-primary").click()
+    assert validate_job_list_date_dividers(job_list) == True, "Job list date dividers do not match after enabling show completed jobs"
+    assert validate_filtered_jobs(job_list) == True, "Filtered jobs do not match after enabling show completed jobs"
 
 def tick_show_completed_checkbox(job_list: Locator, disable=False) -> None:
     """Helper to tick the 'Show Completed' checkbox in the job list modal. If disable is true it will disable the filter option."""
@@ -271,6 +287,8 @@ def validate_filtered_jobs(job_list: Locator) -> bool:
     hidden_start_date_locator, hidden_end_date_locator = get_filter_hidden_date_locators(job_list)
     start_date = convert_date_locator_to_datetime(hidden_start_date_locator, DATETIME_FORMATS['ISO_DATE_FORMAT'])
     end_date = convert_date_locator_to_datetime(hidden_end_date_locator, DATETIME_FORMATS['ISO_DATE_FORMAT'])
+    start_date = start_date.replace(tzinfo=get_app_timezone())
+    end_date = end_date.replace(tzinfo=get_app_timezone())
     # Extract checkbox filter values
     show_completed = job_list.locator("#show-completed").is_checked()
     db = get_db_session()
@@ -292,7 +310,7 @@ def validate_filtered_jobs(job_list: Locator) -> bool:
         if job_id != expected_jobs[i].id:
             return False
         # Check that the job date is within the given range
-        job_date = expected_jobs[i].date
+        job_date = expected_jobs[i].display_datetime
         if not (start_date <= job_date <= end_date):
             return False
         if not show_completed and expected_jobs[i].is_complete:
@@ -306,6 +324,8 @@ def validate_job_list_date_dividers(job_list: Locator) -> bool:
     end_date = convert_date_locator_to_datetime(hidden_end_date_locator, DATETIME_FORMATS['ISO_DATE_FORMAT'])
     # Get all date dividers in the job list
     date_dividers = job_list.locator(".date-divider")
+    if date_dividers.count() == 0:
+        return True  # No dividers to validate, so we consider it valid
     # Check that the job divider dates are within the given date range    
     for i in range(date_dividers.count()):
         divider_text = date_dividers.nth(i).text_content().strip().replace("\n", "")
