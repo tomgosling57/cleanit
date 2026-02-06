@@ -12,7 +12,7 @@
                     <div class="date-group" data-date="{{ job_date }}">
                         <div class="date-divider">
                             <span class="date-label">
-                                {{ job_date.strftime(DATETIME_FORMATS['DATE_FORMAT_JOBS_PY'] if DATETIME_FORMATS and 'DATE_FORMAT_JOBS_PY' in DATETIME_FORMATS else "%d %B %Y") }}
+                                {{ job_date.strftime(DATETIME_FORMATS['DATE_FORMAT'] if DATETIME_FORMATS and 'DATE_FORMAT_JOBS_PY' in DATETIME_FORMATS else "%d %B %Y") }}
                             </span>
                         </div>
                     {% set ns.current_date = job_date %}
