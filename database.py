@@ -141,7 +141,7 @@ class Job(Base):
         return to_app_tz(self.arrival_datetime).strftime(DATETIME_FORMATS['DATE_FORMAT']).date() if self.arrival_datetime else None
     
     @hybrid_property
-    def display_arrival_time(self):
+    def display_arrival_datetime(self):
         return to_app_tz(self.arrival_datetime).strftime(DATETIME_FORMATS['DATETIME_FORMAT']).time() if self.arrival_datetime else None
     
 
@@ -151,10 +151,10 @@ class Job(Base):
     def to_dict(self, include_report=False):
         data = {
             'id': self.id,
-            'date': self.date.isoformat(),
-            'time': self.time.isoformat(),
-            'arrival_datetime': self.arrival_datetime.isoformat() if self.arrival_datetime else None,
-            'end_time': self.end_time.isoformat(),
+            'date_utc': self.date.isoformat(),
+            'time_utc': self.time.isoformat(),
+            'arrival_datetime_utc': self.arrival_datetime.isoformat() if self.arrival_datetime else None,
+            'end_time_utc': self.end_time.isoformat(),
             'description': self.description,
             'is_complete': self.is_complete,
             'job_type': self.job_type,
@@ -235,6 +235,10 @@ class Media(Base):
     
     def __repr__(self):
         return f"<Media(id={self.id}, filename='{self.filename}', media_type='{self.media_type}')>"
+    
+    @hybrid_property
+    def display_upload_date(self):
+        return to_app_tz(self.upload_date).strftime(DATETIME_FORMATS['DATE_FORMAT'])
 
 class PropertyMedia(Base):
     __tablename__ = 'property_media'
