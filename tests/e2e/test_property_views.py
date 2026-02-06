@@ -18,7 +18,7 @@ from tests.helpers import (
     delete_property,
     assert_property_card_content
 )
-from utils.timezone import from_app_tz, to_app_tz, utc_now
+from utils.timezone import from_app_tz, to_app_tz, today_in_app_tz, utc_now
 
 def test_address_book(admin_page) -> None:
     open_address_book(admin_page)
@@ -203,7 +203,7 @@ def test_job_list_filtering(admin_page) -> None:
 
     # Apply various filters and validate results
     # 1. Set start date filter to the past
-    filter_start_date = to_app_tz(utc_now()).date() - timedelta(days=10)
+    filter_start_date = today_in_app_tz() - timedelta(days=10)
     set_filter_start_date(job_list, filter_start_date.isoformat())
     job_list.locator(".filter-actions button.btn-primary").click()
     assert validate_job_list_date_dividers(job_list) == True, "Job list date dividers do not match after setting start date filter"
@@ -275,12 +275,10 @@ def validate_filtered_jobs(job_list: Locator) -> bool:
     show_completed = job_list.locator("#show-completed").is_checked()
     db = get_db_session()
     job_service = JobService(db)
-    start_date_utc = from_app_tz(start_date).date()
-    end_date_utc = from_app_tz(end_date).date()
     expected_jobs = job_service.get_filtered_jobs_by_property_id(
         property_id=1,
-        start_date=start_date_utc,
-        end_date=end_date_utc,
+        start_date=start_date,
+        end_date=end_date,
         show_completed=show_completed
     )
     filtered_jobs_locators = job_list.locator(".job-card")
@@ -295,9 +293,9 @@ def validate_filtered_jobs(job_list: Locator) -> bool:
             return False
         # Check that the job date is within the given range
         job_date = expected_jobs[i].date
-        if not (start_date_utc <= job_date <= end_date_utc):
+        if not (start_date <= job_date <= end_date):
             return False
-        if not show_completed and expected_jobs[i].is_completed:
+        if not show_completed and expected_jobs[i].is_complete:
             return False
     return True
 
@@ -306,17 +304,14 @@ def validate_job_list_date_dividers(job_list: Locator) -> bool:
     hidden_start_date_locator, hidden_end_date_locator = get_filter_hidden_date_locators(job_list)
     start_date = convert_date_locator_to_datetime(hidden_start_date_locator, DATETIME_FORMATS['ISO_DATE_FORMAT'])
     end_date = convert_date_locator_to_datetime(hidden_end_date_locator, DATETIME_FORMATS['ISO_DATE_FORMAT'])
-    start_date_utc = from_app_tz(start_date).date()
-    end_date_utc = from_app_tz(end_date).date()
     # Get all date dividers in the job list
     date_dividers = job_list.locator(".date-divider")
     # Check that the job divider dates are within the given date range    
     for i in range(date_dividers.count()):
         divider_text = date_dividers.nth(i).text_content().strip().replace("\n", "")
         divider_date = datetime.strptime(divider_text, DATETIME_FORMATS['FULL_MONTH_DATE_FORMAT'])
-        divider_date_utc = from_app_tz(divider_date).date()
-        if not (start_date_utc <= divider_date_utc <= end_date_utc):
-            return False
+        if not (start_date <= divider_date <= end_date):
+            raise AssertionError(f"Date divider '{divider_text}' is outside of filter range {start_date} to {end_date}")
     return True
 
 def assert_date_picker_formats(expected_format: str, display_input: Locator, hidden_input: Locator) -> None:
