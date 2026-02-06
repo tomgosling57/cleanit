@@ -4,12 +4,40 @@ from config import DATETIME_FORMATS
 from database import Job, Property, Team, User, Assignment
 from services.property_service import PropertyService
 from services.assignment_service import AssignmentService
-from sqlalchemy import and_, func
+from sqlalchemy import DateTime, and_, cast, func
 from sqlalchemy.orm import joinedload
 from datetime import date, datetime, timedelta
 
 from utils.timezone import from_app_tz, to_app_tz, utc_now, today_in_app_tz
 
+def combine_date_time_sql(date_column, time_column):
+    """
+    Database-agnostic function to combine date and time columns in SQL.
+    
+    Args:
+        date_column: SQLAlchemy Date column
+        time_column: SQLAlchemy Time column
+    
+    Returns:
+        SQLAlchemy expression that combines date and time
+    """
+    db_uri = current_app.config.get('SQLALCHEMY_DATABASE_URI', '')
+    
+    # Detect database type from URI
+    if db_uri.startswith('sqlite'):
+        # SQLite: datetime(date, time)
+        return func.datetime(date_column, time_column)
+    elif 'postgresql' in db_uri or db_uri.startswith('postgres'):
+        # PostgreSQL: CAST(date AS timestamp) + time
+        return cast(date_column, DateTime) + time_column
+    elif 'mysql' in db_uri:
+        # MySQL: TIMESTAMP(CONCAT(date, ' ', time))
+        return func.timestamp(func.concat(date_column, ' ', time_column))
+    else:
+        # Default fallback (SQLite syntax)
+        return func.datetime(date_column, time_column)
+    
+    
 class JobService:
     def __init__(self, db_session):
         self.db_session = db_session
@@ -151,11 +179,11 @@ class JobService:
         # Filter by job start datetime (in UTC) falling within the date range
         if start_date:
             start_datetime_utc = from_app_tz(datetime.combine(start_date, datetime.min.time()))
-            query = query.filter(func.datetime(Job.date, Job.time) >= start_datetime_utc)
+            query = query.filter(combine_date_time_sql(Job.date, Job.time) >= start_datetime_utc)
         
         if end_date:
             end_datetime_utc = from_app_tz(datetime.combine(end_date, datetime.max.time()))
-            query = query.filter(func.datetime(Job.date, Job.time) <= end_datetime_utc)
+            query = query.filter(combine_date_time_sql(Job.date, Job.time) <= end_datetime_utc)
         
         if not show_completed:
             query = query.filter(Job.is_complete == False)
@@ -194,8 +222,8 @@ class JobService:
             and_(
                 # Create datetime from Job.date and Job.time (both in UTC)
                 # and check if it falls within the UTC datetime range
-                func.datetime(Job.date, Job.time) >= start_of_day_utc,
-                func.datetime(Job.date, Job.time) <= end_of_day_utc,
+                combine_date_time_sql(Job.date, Job.time) >= start_of_day_utc,
+                combine_date_time_sql(Job.date, Job.time) <= end_of_day_utc,
                 (Assignment.user_id == user_id) | (Assignment.team_id == team_id)
             )
         ).distinct().subquery()
@@ -234,7 +262,7 @@ class JobService:
         # Find jobs where the job's start datetime (in UTC) is before today in app timezone
         uncompleted_jobs = self.db_session.query(Job).filter(
             and_(
-                func.datetime(Job.date, Job.time) < today_start_utc,
+                combine_date_time_sql(Job.date, Job.time) < today_start_utc,
                 Job.is_complete == False
             )
         ).all()
@@ -265,8 +293,8 @@ class JobService:
             Team, Assignment.team_id == Team.id
         ).filter(
             and_(
-                func.datetime(Job.date, Job.time) >= start_of_day_utc,
-                func.datetime(Job.date, Job.time) <= end_of_day_utc
+                combine_date_time_sql(Job.date, Job.time) >= start_of_day_utc,
+                combine_date_time_sql(Job.date, Job.time) <= end_of_day_utc
             )
         ).all()
         
