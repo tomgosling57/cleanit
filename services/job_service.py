@@ -1,3 +1,4 @@
+from flask import current_app
 from config import DATETIME_FORMATS
 from database import Job, Property, User, Assignment
 from services.property_service import PropertyService
@@ -6,40 +7,97 @@ from sqlalchemy import and_
 from sqlalchemy.orm import joinedload
 from datetime import date, datetime, timedelta
 
-from utils.timezone import from_app_tz, to_app_tz
+from utils.timezone import from_app_tz, to_app_tz, utc_now
 
 class JobService:
     def __init__(self, db_session):
         self.db_session = db_session
         self.property_service = PropertyService(db_session)
         self.assignment_service = AssignmentService(db_session)
+    
+    def _parse_job_times(self, job_data):
+        """
+        Helper to convert app timezone date/time strings to UTC datetime objects.
         
+        Args:
+            job_data: Dict with 'date', 'time', 'end_time', and optionally 'arrival_datetime'
+        
+        Returns:
+            Dict with UTC date, time, end_time, and arrival_datetime
+        """
+        # Parse date and times in app timezone
+        start_datetime_str = f"{job_data['date']} {job_data['time']}"
+        end_datetime_str = f"{job_data['date']} {job_data['end_time']}"
+        
+        # Convert to UTC
+        start_datetime_utc = from_app_tz(datetime.fromisoformat(start_datetime_str))
+        end_datetime_utc = from_app_tz(datetime.fromisoformat(end_datetime_str))
+        
+        result = {
+            'date': start_datetime_utc.date(),
+            'time': start_datetime_utc.time(),
+            'end_time': end_datetime_utc.time(),
+        }
+        
+        # Handle optional arrival_datetime
+        if 'arrival_datetime' in job_data and job_data['arrival_datetime']:
+            arrival_datetime_utc = from_app_tz(datetime.fromisoformat(job_data['arrival_datetime']))
+            result['arrival_datetime'] = arrival_datetime_utc
+        
+        return result
+        
+    def create_job(self, job_data):
+        """
+        Create a new job. Expects job_data with date/time in app timezone.
+        """
+        # Convert times to UTC
+        utc_times = self._parse_job_times(job_data)
+        
+        # Create job with UTC times
+        new_job = Job(
+            date=utc_times['date'],
+            time=utc_times['time'],
+            end_time=utc_times['end_time'],
+            arrival_datetime=utc_times.get('arrival_datetime'),
+            description=job_data.get('description'),
+            is_complete=False,
+            job_type=job_data.get('job_type'),
+            property_id=job_data['property_id']
+        )
+        
+        self.db_session.add(new_job)
+        self.db_session.commit()
+        self.db_session.refresh(new_job)
+        
+        return new_job
+    
     def update_job(self, job_id, job_data):
+        """
+        Update an existing job. Expects job_data with date/time in app timezone.
+        """
         job = self.db_session.query(Job).filter_by(id=job_id).first()
         
         if not job:
             return None
         
-        # Update job date time and handle times one conversion
-        job_date = job_data['date'] if 'date' in job_data else to_app_tz(job.date)
-        job_time = job_data['time'] if 'time' in job_data else to_app_tz(job.time)
-        job_end_time = job_data['end_time'] if 'end_time' in job_data else to_app_tz(job.end_time)
-        job_arrival_datetime = job_data['arrival_datetime'] if 'arrival_datetime' in job_data else to_app_tz(job.arrival_datetime)
-        # Combine date and time strings into a single datetime string in the app's timezone
-        start_datetime_str = f"{job_date} {job_time}"
-        end_datetime_str = f"{job_date} {job_end_time}"
-        # Convert to datetime object in app timezone, then store in UTC
-        start_datetime = from_app_tz(datetime.fromisoformat(start_datetime_str))
-        end_datetime = from_app_tz(datetime.fromisoformat(end_datetime_str))
-        job.date = start_datetime.date()
-        job.time = start_datetime.time()
-        job.arrival_datetime = from_app_tz(datetime.fromisoformat(job_arrival_datetime)) if 'arrival_datetime' in job_data else job.arrival_datetime
-        job.end_time = end_datetime.time()
+        # Convert times to UTC
+        utc_times = self._parse_job_times(job_data)
+        
+        # Update job fields
+        job.date = utc_times['date']
+        job.time = utc_times['time']
+        job.end_time = utc_times['end_time']
+        
+        if 'arrival_datetime' in utc_times:
+            job.arrival_datetime = utc_times['arrival_datetime']
+        
         job.description = job_data.get('description', job.description)
-        property_id = job_data.get('property_id')
-        if property_id:
-            property_obj = self.property_service.get_property_by_id(property_id)
-            job.property_id = property_obj.id
+        
+        if 'property_id' in job_data:
+            property_obj = self.property_service.get_property_by_id(job_data['property_id'])
+            if property_obj:
+                job.property_id = property_obj.id
+        
         self.db_session.commit()
         return job
 
@@ -53,9 +111,6 @@ class JobService:
         return None
 
     def update_job_report_and_completion(self, job_id, report_text, is_complete=True):
-        """
-        Update job report text and completion status
-        """
         job = self.db_session.query(Job).filter_by(id=job_id).first()
         if job:
             job.report = report_text
@@ -76,110 +131,80 @@ class JobService:
         return jobs
     
     def get_jobs_by_property_id(self, property_id):
-        """
-        Retrieve all jobs for a specific property.
-        """
         jobs = self.db_session.query(Job).options(joinedload(Job.property)).filter(Job.property_id == property_id).order_by(Job.date, Job.time).all()
         return jobs
 
     def get_filtered_jobs_by_property_id(self, property_id, start_date=None, end_date=None,
                                          show_past_jobs=False, show_completed=True):
         """
-        Retrieve filtered jobs for a specific property with optional date range and filters.
+        Retrieve filtered jobs for a specific property.
         
         Args:
             property_id: ID of the property
-            start_date: Start date for filtering (datetime.date in app timezone)
-            end_date: End date for filtering (datetime.date in app timezone)
-            show_past_jobs: If True, include jobs before today (default: False)
-            show_completed: If True, include completed jobs (default: True)
-            
-        Returns:
-            List of Job objects matching the filters, ordered by date and time
+            start_date: Start date in app timezone (datetime.date)
+            end_date: End date in app timezone (datetime.date)
+            show_past_jobs: If True, include jobs before today
+            show_completed: If True, include completed jobs
         """
-        from utils.timezone import utc_now, today_in_app_tz
-        from datetime import date as date_type
-        
         query = self.db_session.query(Job).options(joinedload(Job.property)).filter(Job.property_id == property_id)
         
-        # Apply date range filters
-        start_date = from_app_tz(datetime.combine(start_date, datetime.min.time())) if start_date else None
-        end_date = from_app_tz(datetime.combine(end_date, datetime.max.time())) if end_date else None
+        # Convert app timezone dates to UTC for comparison
         if start_date:
-            query = query.filter(Job.date >= start_date)
-        if end_date:
-            query = query.filter(Job.date <= end_date)
+            start_datetime_utc = from_app_tz(datetime.combine(start_date, datetime.min.time()))
+            query = query.filter(Job.date >= start_datetime_utc.date())
         
-        # Apply past jobs filter
+        if end_date:
+            end_datetime_utc = from_app_tz(datetime.combine(end_date, datetime.max.time()))
+            query = query.filter(Job.date <= end_datetime_utc.date())
+        
         if not show_past_jobs:
-            # Get today's date in UTC for comparison
             today_utc = utc_now().date()
             query = query.filter(Job.date >= today_utc)
         
-        # Apply completion status filter
         if not show_completed:
             query = query.filter(Job.is_complete == False)
         
-        # Order by date and time
-        query = query.order_by(Job.date, Job.time)
+        return query.order_by(Job.date, Job.time).all()
+
+    def get_jobs_for_user_on_date(self, user_id, team_id, date_obj: date):
+        """
+        Get jobs for a user/team on a specific date.
         
-        return query.all()
-
-
-    def get_jobs_for_user_on_date(self, user_id, team_id, date: date):
-
+        Args:
+            user_id: User ID
+            team_id: Team ID
+            date_obj: Date in app timezone (datetime.date)
+        """
         user = self.db_session.query(User).filter(User.id == user_id).first()
         if not user:
             return []
         
-        # Convert date from app timezone to UTC
-        date_utc = from_app_tz(datetime.fromisoformat(date.isoformat())).date()
+        # Convert app timezone date to UTC date range
+        # A single app timezone day may span two UTC days
+        start_of_day_app = datetime.combine(date_obj, datetime.min.time())
+        end_of_day_app = datetime.combine(date_obj, datetime.max.time())
         
-        # Subquery to get distinct job IDs that match the assignment criteria
+        start_of_day_utc = from_app_tz(start_of_day_app)
+        end_of_day_utc = from_app_tz(end_of_day_app)
+        
+        # Query jobs within this UTC range
         job_ids_subquery = self.db_session.query(Assignment.job_id).join(
             Job, Assignment.job_id == Job.id
         ).filter(
             and_(
-                Job.date == date_utc,
+                Job.date >= start_of_day_utc.date(),
+                Job.date <= end_of_day_utc.date(),
                 (Assignment.user_id == user_id) | (Assignment.team_id == team_id)
             )
         ).distinct().subquery()
         
-        # Now query jobs with properties using the subquery
-        # Use .select() to explicitly convert subquery to select() for IN() clause
         jobs = self.db_session.query(Job).options(joinedload(Job.property)).filter(
             Job.id.in_(job_ids_subquery.select())
         ).order_by(Job.date, Job.time).all()
         
         return jobs
 
-    def create_job(self, job_data):
-        # Combine date and time strings into a single datetime string in the app's timezone
-        start_datetime_str = f"{job_data['date']} {job_data['time']}"
-        end_datetime_str = f"{job_data['date']} {job_data['end_time']}"
-        # Convert to datetime object in app timezone, then store in UTC
-        start_datetime = from_app_tz(datetime.fromisoformat(start_datetime_str))
-        end_datetime = from_app_tz(datetime.fromisoformat(end_datetime_str))
-        arrival_datetime = from_app_tz(datetime.fromisoformat(job_data['arrival_datetime'])) if 'arrival_datetime' in job_data else None
-        new_job = Job(
-            date=start_datetime.date(),
-            time=start_datetime.time(),
-            arrival_datetime=arrival_datetime,
-            end_time=end_datetime.time(),
-            description=job_data.get('description'),
-            is_complete=False,
-            job_type=job_data.get('job_type'),
-            property_id=job_data['property_id']
-        )
-        self.db_session.add(new_job)
-        self.db_session.commit()
-        # Reload job with property details for rendering
-        self.db_session.refresh(new_job)
-        new_job.property = self.db_session.query(Property).filter_by(id=new_job.property_id).first()
-        return new_job
-    
     def remove_team_from_jobs(self, team_id):
-
         assignments = self.db_session.query(Assignment).filter_by(team_id=team_id).all()
         for assignment in assignments:
             self.db_session.delete(assignment)
@@ -188,7 +213,6 @@ class JobService:
     def delete_job(self, job_id):
         job = self.db_session.query(Job).filter_by(id=job_id).first()
         if job:
-            # Delete all associated assignments first
             assignments = self.assignment_service.get_assignments_for_job(job_id)
             for assignment in assignments:
                 self.db_session.delete(assignment)
@@ -200,7 +224,7 @@ class JobService:
     
     def push_uncompleted_jobs_to_next_day(self):
         """Push all uncompleted jobs with a date before today to the next day."""
-        today = date.today()
+        today = utc_now().date()
         uncompleted_jobs = self.db_session.query(Job).filter(
             and_(
                 Job.date < today,
@@ -211,4 +235,5 @@ class JobService:
         for job in uncompleted_jobs:
             job.date += timedelta(days=1)
         
-        self.db_session.commit()    
+        self.db_session.commit()
+        current_app.logger.debug(f"Pushed {len(uncompleted_jobs)} uncompleted jobs to the next day.")
