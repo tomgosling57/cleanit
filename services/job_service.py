@@ -1,5 +1,5 @@
 from collections import defaultdict
-from flask import current_app
+from flask import current_app, has_app_context
 from config import DATETIME_FORMATS
 from database import Job, Property, Team, User, Assignment
 from services.property_service import PropertyService
@@ -8,6 +8,7 @@ from sqlalchemy import DateTime, and_, cast, func
 from sqlalchemy.orm import joinedload
 from datetime import date, datetime, timedelta
 
+from tests.db_helpers import get_database_url
 from utils.timezone import from_app_tz, to_app_tz, utc_now, today_in_app_tz
 
 def combine_date_time_sql(date_column, time_column):
@@ -21,7 +22,11 @@ def combine_date_time_sql(date_column, time_column):
     Returns:
         SQLAlchemy expression that combines date and time
     """
-    db_uri = current_app.config.get('SQLALCHEMY_DATABASE_URI', '')
+    if has_app_context():
+        db_uri = current_app.config.get('SQLALCHEMY_DATABASE_URI', '')
+    else:
+        from tests.db_helpers import get_database_url
+        db_uri = get_database_url()
     
     # Detect database type from URI
     if db_uri.startswith('sqlite'):
