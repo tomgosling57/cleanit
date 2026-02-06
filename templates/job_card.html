@@ -1,8 +1,8 @@
 <div data-view-type="{{ view_type }}" class="job-card
 {% if job.description %}red-outline
 {% endif %}
-{% if job.arrival_datetime and job.arrival_date == job.date %}arrival-same-day
-{% elif job.arrival_datetime and (job.arrival_date - job.date).days == 1 %}arrival-next-day
+{% if job.arrival_datetime and job.arrival_date_in_app_tz == job.date_in_app_tz %}arrival-same-day
+{% elif job.arrival_datetime and (job.arrival_date_in_app_tz - job.date_in_app_tz).days == 1 %}arrival-next-day
 {% endif %}
 {% if job.is_complete %}completed
 {% endif %}" id="job-{{ job.id }}" data-job-id="{{ job.id }}">
