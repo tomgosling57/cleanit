@@ -134,21 +134,14 @@ def rollback_db_after_test(app):
 
 # User fixtures for authentication testing
 @pytest.fixture
-def admin_user():
+def admin_user(app):
     """
-    A mock admin user object for testing.
+    An existing admin user object from the test database.
     """
-    user = User(
-        id=999,
-        email="admin@example.com",
-        first_name="Admin",
-        last_name="User",
-        role="admin",
-        is_active=True,
-        is_authenticated=True,
-        is_anonymous=False
-    )
-    return user
+    with app.app_context():
+        db_session = get_db()
+        user = db_session.query(User).filter_by(role="admin").first()
+        return user
 
 @pytest.fixture
 def regular_user():
