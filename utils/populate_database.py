@@ -258,7 +258,7 @@ def create_initial_jobs(session, anytown_property, teamville_property, admin, us
     session.query(Job).delete()
     session.commit()
 
-    today = today_in_app_tz() - timedelta(days=1)
+    today = today_in_app_tz()
 
 
     # Initial jobs
