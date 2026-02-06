@@ -148,18 +148,21 @@ class JobService:
         """
         query = self.db_session.query(Job).options(joinedload(Job.property)).filter(Job.property_id == property_id)
         
-        # Convert app timezone dates to UTC for comparison
+        # Convert app timezone dates to UTC datetime for comparison
+        # Filter by job start datetime (in UTC) falling within the date range
         if start_date:
             start_datetime_utc = from_app_tz(datetime.combine(start_date, datetime.min.time()))
-            query = query.filter(Job.date >= start_datetime_utc.date())
+            query = query.filter(datetime.combine(Job.date, Job.time) >= start_datetime_utc)
         
         if end_date:
             end_datetime_utc = from_app_tz(datetime.combine(end_date, datetime.max.time()))
-            query = query.filter(Job.date <= end_datetime_utc.date())
+            query = query.filter(datetime.combine(Job.date, Job.time) <= end_datetime_utc)
         
         if not show_past_jobs:
-            today_utc = utc_now().date()
-            query = query.filter(Job.date >= today_utc)
+            # Get today's date in app timezone, convert to UTC datetime at start of day
+            today_app = today_in_app_tz()
+            today_start_utc = from_app_tz(datetime.combine(today_app, datetime.min.time()))
+            query = query.filter(datetime.combine(Job.date, Job.time) >= today_start_utc)
         
         if not show_completed:
             query = query.filter(Job.is_complete == False)
