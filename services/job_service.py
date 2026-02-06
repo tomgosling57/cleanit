@@ -135,8 +135,7 @@ class JobService:
         jobs = self.db_session.query(Job).options(joinedload(Job.property)).filter(Job.property_id == property_id).order_by(Job.date, Job.time).all()
         return jobs
 
-    def get_filtered_jobs_by_property_id(self, property_id, start_date=None, end_date=None,
-                                         show_past_jobs=False, show_completed=True):
+    def get_filtered_jobs_by_property_id(self, property_id, start_date=None, end_date=None, show_completed=True):
         """
         Retrieve filtered jobs for a specific property.
         
@@ -144,7 +143,6 @@ class JobService:
             property_id: ID of the property
             start_date: Start date in app timezone (datetime.date)
             end_date: End date in app timezone (datetime.date)
-            show_past_jobs: If True, include jobs before today
             show_completed: If True, include completed jobs
         """
         query = self.db_session.query(Job).options(joinedload(Job.property)).filter(Job.property_id == property_id)
@@ -158,12 +156,6 @@ class JobService:
         if end_date:
             end_datetime_utc = from_app_tz(datetime.combine(end_date, datetime.max.time()))
             query = query.filter(func.datetime(Job.date, Job.time) <= end_datetime_utc)
-        
-        if not show_past_jobs:
-            # Get today's date in app timezone, convert to UTC datetime at start of day
-            today_app = today_in_app_tz()
-            today_start_utc = from_app_tz(datetime.combine(today_app, datetime.min.time()))
-            query = query.filter(func.datetime(Job.date, Job.time) >= today_start_utc)
         
         if not show_completed:
             query = query.filter(Job.is_complete == False)

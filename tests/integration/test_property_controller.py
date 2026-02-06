@@ -6,14 +6,12 @@ from bs4 import BeautifulSoup
 from utils.timezone import today_in_app_tz
 
 
-def apply_filters_and_test(property_id: int, start_date: date, end_date: date, show_completed: bool, show_past: bool, admin_client_no_csrf, job_service):
+def apply_filters_and_test(property_id: int, start_date: date, end_date: date, show_completed: bool, admin_client_no_csrf, job_service):
     url = (
         f'/address-book/property/{property_id}/jobs/filtered?'
         f'start_date={start_date.isoformat()}&end_date={end_date.isoformat()}'
     )
 
-    if show_past:
-        url += f'&show_past={str(show_past).lower()}'
     if show_completed:
         url += f'&show_completed={str(show_completed).lower()}'
     response = admin_client_no_csrf.get(url)
@@ -47,30 +45,16 @@ def apply_filters_and_test(property_id: int, start_date: date, end_date: date, s
         if not show_completed:
             assert job.is_complete is False, f"Job {job_id} should not be completed when show_completed=false"
 
-def test_job_filtering_for_property_hide_past_hide_completed(admin_client_no_csrf, job_service):
+def test_job_filtering_for_property_hide_completed(admin_client_no_csrf, job_service):
     """Test that the job filters for a property work correctly."""
     property_id = 1  # Assuming a property with ID 1 exists
     start_date = today_in_app_tz() - timedelta(days=30)
     end_date = today_in_app_tz()
-    apply_filters_and_test(property_id, start_date, end_date, False, False, admin_client_no_csrf, job_service)
+    apply_filters_and_test(property_id, start_date, end_date, False, admin_client_no_csrf, job_service)
 
-def test_job_filtering_for_property_hide_past_show_completed(admin_client_no_csrf, job_service):
+def test_job_filtering_for_property_show_completed(admin_client_no_csrf, job_service):
     """Test that the job filters for a property work correctly when show_completed=true."""
     property_id = 1  # Assuming a property with ID 1 exists
     start_date = today_in_app_tz() - timedelta(days=30)
     end_date = today_in_app_tz()
-    apply_filters_and_test(property_id, start_date, end_date, True, False, admin_client_no_csrf, job_service)
-
-def test_job_filtering_for_property_show_past_hide_completed(admin_client_no_csrf, job_service):
-    """Test that the job filters for a property work correctly when show_past=true."""
-    property_id = 1  # Assuming a property with ID 1 exists
-    start_date = today_in_app_tz() - timedelta(days=30)
-    end_date = today_in_app_tz()
-    apply_filters_and_test(property_id, start_date, end_date, False, True, admin_client_no_csrf, job_service)
-
-def test_job_filtering_for_property_show_past_show_completed(admin_client_no_csrf, job_service):
-    """Test that the job filters for a property work correctly when show_past=true and show_completed=true."""
-    property_id = 1  # Assuming a property with ID 1 exists
-    start_date = today_in_app_tz() - timedelta(days=30)
-    end_date = today_in_app_tz()
-    apply_filters_and_test(property_id, start_date, end_date, True, True, admin_client_no_csrf, job_service)
+    apply_filters_and_test(property_id, start_date, end_date, True, admin_client_no_csrf, job_service)

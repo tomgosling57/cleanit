@@ -206,7 +206,6 @@ def test_job_list_filtering(admin_page) -> None:
     filter_start_date = to_app_tz(utc_now()).date() - timedelta(days=10)
     set_filter_start_date(job_list, filter_start_date.isoformat())
     job_list.locator(".filter-actions button.btn-primary").click()
-    page.pause()
     assert validate_job_list_date_dividers(job_list) == True, "Job list date dividers do not match after setting start date filter"
     assert validate_filtered_jobs(job_list) == True, "Filtered jobs do not match after setting start date filter"
 
@@ -217,14 +216,6 @@ def tick_show_completed_checkbox(job_list: Locator, disable=False) -> None:
         show_completed_checkbox.check()
     if show_completed_checkbox.is_checked() and disable:
         show_completed_checkbox.uncheck()
-
-def tick_show_past_checkbox(job_list: Locator, disable=False) -> None:
-    """Helper to update the 'Show Past Jobs' checkbox in the job list modal. If disable is true it will disable the filter option."""
-    show_past_checkbox = job_list.locator("#show-past")
-    if not show_past_checkbox.is_checked() and not disable:
-        show_past_checkbox.check()
-    if show_past_checkbox.is_checked() and disable:
-        show_past_checkbox.uncheck()
 
 def set_filter_start_date(job_list: Locator, date_str: str) -> None:
     """Helper to set the start date in the job list filter. Expects date_str in ISO format YYYY-MM-DD"""
@@ -282,7 +273,6 @@ def validate_filtered_jobs(job_list: Locator) -> bool:
     end_date = convert_date_locator_to_datetime(hidden_end_date_locator, DATETIME_FORMATS['ISO_DATE_FORMAT'])
     # Extract checkbox filter values
     show_completed = job_list.locator("#show-completed").is_checked()
-    show_past = job_list.locator("#show-past").is_checked()
     db = get_db_session()
     job_service = JobService(db)
     start_date_utc = from_app_tz(start_date).date()
@@ -291,7 +281,6 @@ def validate_filtered_jobs(job_list: Locator) -> bool:
         property_id=1,
         start_date=start_date_utc,
         end_date=end_date_utc,
-        show_past_jobs=show_past,
         show_completed=show_completed
     )
     filtered_jobs_locators = job_list.locator(".job-card")
@@ -309,8 +298,6 @@ def validate_filtered_jobs(job_list: Locator) -> bool:
         if not (start_date_utc <= job_date <= end_date_utc):
             return False
         if not show_completed and expected_jobs[i].is_completed:
-            return False
-        if not show_past and job_date < utc_now().date():
             return False
     return True
 

@@ -73,7 +73,6 @@ class PropertyController:
             property_id=property_id,
             start_date=default_start_date,
             end_date=default_end_date,
-            show_past_jobs=False,
             show_completed=True
         )
         
@@ -86,7 +85,6 @@ class PropertyController:
                                default_start_date=default_start_date_str,
                                default_end_date=default_end_date_str,
                                show_date_dividers=True,
-                               show_past=False,
                                show_completed=True,
                                filter_applied=False,
                                display_start_date=default_start_date.strftime(DATETIME_FORMATS["DATE_FORMAT"]),
@@ -99,7 +97,6 @@ class PropertyController:
         Supports:
         - start_date: Start date in YYYY-MM-DD format (application timezone)
         - end_date: End date in YYYY-MM-DD format (application timezone)
-        - show_past: Boolean flag to show past jobs (default: false)
         - show_completed: Boolean flag to show completed jobs (default: true)
         """
         jobs = self._get_filtered_property_jobs(property_id)        
@@ -129,7 +126,6 @@ class PropertyController:
         # Get query parameters
         start_date_str = request.args.get('start_date')
         end_date_str = request.args.get('end_date')
-        show_past_jobs = request.args.get('show_past', 'false').lower() == 'true'
         show_completed = request.args.get('show_completed', 'true').lower() == 'true'
         
         # Parse dates in application timezone
@@ -147,7 +143,6 @@ class PropertyController:
             property_id=property_id,
             start_date=start_date,
             end_date=end_date,
-            show_past_jobs=show_past_jobs,
             show_completed=show_completed
         )
                 
