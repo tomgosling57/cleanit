@@ -122,28 +122,54 @@ class Job(Base):
 
     @hybrid_property
     def display_date(self):
-        return to_app_tz(self.date).strftime(DATETIME_FORMATS['DATE_FORMAT'])
-    
+        # Instance-level: self.date is an actual date object
+        return to_app_tz(datetime.combine(self.date, self.time)).strftime(DATETIME_FORMATS['DATE_FORMAT'])
+
+    @display_date.expression
+    def display_date(cls):
+        # Class-level: For SQL queries, return the date column itself
+        # The comparison should be done against the raw date, not the formatted string
+        return cls.date
+
     @hybrid_property
     def display_time(self):
-        return to_app_tz(self.time).strftime(DATETIME_FORMATS['TIME_FORMAT'])
-    
+        return to_app_tz(datetime.combine(self.date, self.time)).strftime(DATETIME_FORMATS['TIME_FORMAT'])
+
+    @display_time.expression
+    def display_time(cls):
+        return cls.time
+
     @hybrid_property
     def display_end_time(self):
-        return to_app_tz(self.end_time).strftime(DATETIME_FORMATS['TIME_FORMAT'])
-    
+        return to_app_tz(datetime.combine(self.date, self.end_time)).strftime(DATETIME_FORMATS['TIME_FORMAT'])
+
+    @display_end_time.expression
+    def display_end_time(cls):
+        return cls.end_time
+
     @hybrid_property
     def display_arrival_time(self):
         return to_app_tz(self.arrival_datetime).strftime(DATETIME_FORMATS['TIME_FORMAT']) if self.arrival_datetime else None
-    
+
+    @display_arrival_time.expression
+    def display_arrival_time(cls):
+        return func.time(cls.arrival_datetime)
+
     @hybrid_property
     def display_arrival_date(self):
-        return to_app_tz(self.arrival_datetime).strftime(DATETIME_FORMATS['DATE_FORMAT']).date() if self.arrival_datetime else None
-    
+        return to_app_tz(self.arrival_datetime).strftime(DATETIME_FORMATS['DATE_FORMAT']) if self.arrival_datetime else None
+
+    @display_arrival_date.expression
+    def display_arrival_date(cls):
+        return func.date(cls.arrival_datetime)
+
     @hybrid_property
     def display_arrival_datetime(self):
-        return to_app_tz(self.arrival_datetime).strftime(DATETIME_FORMATS['DATETIME_FORMAT']).time() if self.arrival_datetime else None
-    
+        return to_app_tz(self.arrival_datetime).strftime(DATETIME_FORMATS['DATETIME_FORMAT']) if self.arrival_datetime else None
+
+    @display_arrival_datetime.expression
+    def display_arrival_datetime(cls):
+        return cls.arrival_datetime
 
     def __repr__(self):
         return f"<Job(id={self.id}, date='{self.date}', time='{self.time}', arrival_datetime='{self.arrival_datetime}', end_time='{self.end_time}', is_complete='{self.is_complete}')>"
