@@ -1,5 +1,5 @@
 <!-- templates/team_timetable_fragment.html -->
-<div class="team-columns-container" id="team-columns-container">
+<div class="team-columns-container" id="team-columns-container" data-selected-date="{{ selected_date }}">
     {% for team in all_teams %}
         <div class="column-container">
             <h3 class="team-column-header">{{ team.name }}</h3>

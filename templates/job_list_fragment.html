@@ -1,4 +1,4 @@
-<div class="job-list" id="job-list" {% if is_oob_swap %}hx-swap-oob="outerHTML"{% endif %}>
+<div class="job-list" id="job-list" {% if is_oob_swap %}hx-swap-oob="outerHTML"{% endif %} data-selected-date="{{ selected_date }}">
     {% if jobs %}
         {% if show_date_dividers %}
             {# Group jobs by date with dividers #}

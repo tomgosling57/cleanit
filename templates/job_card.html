@@ -20,10 +20,10 @@
     
     <div class="job-card-details">
         <div class="job-info">
-            <p><strong>Date:</strong> {{ job.display_date }}</p>
-            <p><strong>Time:</strong> {{ job.display_time }}</p>
-            <p><strong>Ends:</strong> {{ job.display_end_time }} ({{ job.duration }})</p>
-            <p><strong>Property Address:</strong> {{ job.property.address }}</p>
+            <p><strong>Date:</strong> <span id="job-date-{{ job.id }}">{{ job.display_date }}</span></p>
+            <p><strong>Time:</strong> <span id="job-time-{{ job.id }}">{{ job.display_time }}</span></p>
+            <p><strong>Ends:</strong> <span id="job-end-time-{{ job.id }}">{{ job.display_end_time }}</span> (<span id="job-duration-{{ job.id }}">{{ job.duration }}</span>)</p>
+            <p><strong>Property Address:</strong> <span id="job-property-address-{{ job.id }}">{{ job.property.address }}</span></p>
         </div>
         <div class="job-status-actions">
             <div class="job-actions" id="job-actions-{{ job.id }}">
@@ -68,4 +68,5 @@
         </div>
     </div>
 </div>
+
 
