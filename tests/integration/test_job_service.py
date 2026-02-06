@@ -1,7 +1,8 @@
 
 from datetime import datetime
 
-from utils.timezone import from_app_tz
+from config import DATETIME_FORMATS
+from utils.timezone import from_app_tz, today_in_app_tz
 
 
 class TestJobServiceTimezoneHandling:
@@ -57,9 +58,9 @@ class TestJobServiceTimezoneHandling:
         # Get jobs for a user on a specific date in the app's timezone
         user_id = 1  # Assuming a user with ID 1 exists
         team_id = 1  # Assuming a team with ID 1 exists
-        date_str = '2024-07-01'
-        jobs = job_service.get_jobs_for_user_on_date(user_id, team_id, datetime.fromisoformat(date_str).date())
-        # Verify that the returned jobs have the correct date and time in UTC
-        expected_date = from_app_tz(datetime.fromisoformat(date_str)).date()
+        expected_date = today_in_app_tz()
+        expected_date_str = expected_date.strftime(DATETIME_FORMATS['DATE_FORMAT'])
+        jobs = job_service.get_jobs_for_user_on_date(user_id, team_id, expected_date)
+        # Verify that the returned jobs have the correct date and time in app timezone
         for job in jobs:
-            assert job.date == expected_date, f"Job date {job.date} does not match the expected date {expected_date} in UTC."
+            assert job.display_date == expected_date_str, f"Job date {job.display_date} does not match the expected date {expected_date.strftime(DATETIME_FORMATS['DATE_FORMAT'])} in app timezone."
