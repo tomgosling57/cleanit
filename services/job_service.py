@@ -252,3 +252,35 @@ class JobService:
         
         self.db_session.commit()
         current_app.logger.debug(f"Pushed {len(uncompleted_jobs)} uncompleted jobs to the next day.")
+    
+    def get_jobs_grouped_by_team_for_date(self, date_obj: date):
+        """
+        Get jobs grouped by team for a specific date.
+        
+        Args:
+            date_obj: Date in app timezone (datetime.date)
+        """        # Convert app timezone date to UTC datetime range
+        start_of_day_app = datetime.combine(date_obj, datetime.min.time())
+        end_of_day_app = datetime.combine(date_obj, datetime.max.time())
+        
+        start_of_day_utc = from_app_tz(start_of_day_app)
+        end_of_day_utc = from_app_tz(end_of_day_app)
+        
+        # Query jobs with their team assignments for the specified date
+        jobs_with_teams = self.db_session.query(Job, Team).join(
+            Assignment, Job.id == Assignment.job_id
+        ).join(
+            Team, Assignment.team_id == Team.id
+        ).filter(
+            and_(
+                func.datetime(Job.date, Job.time) >= start_of_day_utc,
+                func.datetime(Job.date, Job.time) <= end_of_day_utc
+            )
+        ).all()
+        
+        # Group jobs by team
+        jobs_by_team = defaultdict(list)
+        for job, team in jobs_with_teams:
+            jobs_by_team[team].append(job)
+        
+        return dict(jobs_by_team)
