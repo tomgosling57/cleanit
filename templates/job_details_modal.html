@@ -6,19 +6,19 @@
             <div class="group-item">
                 <span class="item-icon"><img src="{{ url_for('static', filename='icons/location-pin.svg') }}" alt="Location Pin" class="icon"></span>
                 <div class="item-content">
-                    <div class="primary-info">{{ job.property.address }}</div>
+                    <div class="primary-info"><span id="property_address" data-property-id="{{ job.property.id }}">{{ job.property.address }}</span></div>
                 </div>
             </div>
             <div class="group-item">
                 <span class="item-icon"><img src="{{ url_for('static', filename='icons/user.png') }}" alt="User Profile" class="icon user-icon"></span>
                 <div class="item-content">
                     {% if job.arrival_date %}
-                    <div class="primary-info">Arrives: {{ job.arrival_date.strftime(DATETIME_FORMATS['DATE_FORMAT']) }}</div>
+                    <div class="primary-info">Arrives: <span id="arrival_date">{{ job.display_arrival_date }}</span></div>
                     {% else %}
                     <div class="primary-info">Arrives: Not specified</div>
                     {% endif %}
                     {% if job.arrival_time_only %}
-                    <div class="secondary-info">Time: {{ job.arrival_time_only.strftime(DATETIME_FORMATS['TIME_FORMAT']) }}</div>
+                    <div class="secondary-info">Time: <span id="arrival_time">{{ job.display_arrival_time }}</span></div>
                     {% else %}
                     <div class="secondary-info">Time: Not specified</div>
                     {% endif %}
@@ -28,7 +28,7 @@
             <div class="group-item">
                 <span class="item-icon"><img src="{{ url_for('static', filename='icons/key.svg') }}" alt="Access Key" class="icon"></span>
                 <div class="item-content">
-                    <div id="access-notes" class="primary-info">{{ job.property.access_notes }}</div>
+                    <div id="access-notes" class="primary-info"><span id="access_notes">{{ job.property.access_notes }}</span></div>
                 </div>
             </div>
             {% endif %}
@@ -41,8 +41,9 @@
             <div class="group-item">
                 <span class="item-icon"><img src="{{ url_for('static', filename='icons/clock.svg') }}" alt="Time" class="icon"></span>
                 <div class="item-content">
-                    <div class="primary-info">Start: {{ job.time.strftime(DATETIME_FORMATS['TIME_FORMAT']) }}</div>
-                    <div class="secondary-info">End: {{ job.end_time.strftime(DATETIME_FORMATS['TIME_FORMAT']) }} ({{ job.duration }})</div>
+                    <div class="primary-info">Date: <span id="date">{{ job.display_date }}</span></div>
+                    <div class="primary-info">Start: <span id="time">{{ job.display_time }}</span></div>
+                    <div class="secondary-info">End: <span id="end_time">{{ job.display_end_time }}</span> ({{ job.duration }})</div>
                 </div>
             </div>
             {% if job.arrival_datetime %}
@@ -50,7 +51,7 @@
             <div class="group-item">
                 <span class="item-icon"><img src="{{ url_for('static', filename='icons/notes.svg') }}" alt="Description" class="icon"></span>
                 <div class="item-content">
-                    <div class="primary-info">{{ job.description }}</div>
+                    <div class="primary-info"><span id="description">{{ job.description }}</span></div>
                 </div>
             </div>
         </div>
@@ -62,7 +63,7 @@
             <div class="group-item">
                 <span class="item-icon"><img src="{{ url_for('static', filename='icons/team.svg') }}" alt="Teams" class="icon"></span>
                 <div class="item-content">
-                    <div class="primary-info">
+                    <div class="primary-info" id="assigned_teams">
                         {% if job_teams %}
                         {% if job_teams|length > 0 %}
                             {% for team in job_teams %}
@@ -78,7 +79,7 @@
             <div class="group-item">
                 <span class="item-icon"><img src="{{ url_for('static', filename='icons/broom.svg') }}" alt="Cleaners" class="icon"></span>
                 <div class="item-content">
-                    <div class="primary-info">
+                    <div class="primary-info" id="assigned_cleaners">
                         {% if job_cleaners %}
                         {% if job_cleaners|length > 0 %}
                             {% for cleaner in job_cleaners %}
