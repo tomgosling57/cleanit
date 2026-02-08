@@ -275,10 +275,15 @@ class JobViewsTestHelper:
         expect(popup.locator("#time")).to_have_text(get_expected("display_time"))
         expect(popup.locator("#end_time")).to_have_text(get_expected("display_end_time"))
 
-        arrival_datetime = get_expected("arrival_datetime")
+        _kwargs_arrival_datetime = kwargs.get("arrival_datetime", None)
+        arrival_datetime = None
+        if _kwargs_arrival_datetime is not None:
+            arrival_datetime = _kwargs_arrival_datetime
+        else:
+            arrival_datetime = expected_job.display_arrival_datetime
         if arrival_datetime:
-            expect(popup.locator("#arrival_date")).to_have_text(get_expected("display_arrival_date"))
-            expect(popup.locator("#arrival_time")).to_have_text(get_expected("display_arrival_time"))
+            expect(popup.locator("#arrival_date")).to_have_text(arrival_datetime.strftime(DATETIME_FORMATS["DATE_FORMAT"]))
+            expect(popup.locator("#arrival_time")).to_have_text(arrival_datetime.strftime(DATETIME_FORMATS["TIME_FORMAT"]))
         else:
             expect(popup.locator("#arrival_date")).to_have_text("Not specified")
             expect(popup.locator("#arrival_time")).to_have_text("Not specified")
@@ -330,7 +335,7 @@ class JobViewsTestHelper:
         expect(self.page.locator('#job-list')).to_be_visible() # Assert job list fragment is rendered
         job_card = self.page.locator(f'div.job-card[data-job-id="{job_id}"]')
         self.open_job_details(job_id)
-        self.validate_job_details(job_id)
+        self.validate_job_details(job_id, **kwargs)
     
     def selected_date(self, page):
         return page.locator("#timetable-datepicker").input_value()
