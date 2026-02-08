@@ -160,7 +160,7 @@ class Job(Base):
 
     @display_arrival_time.expression
     def display_arrival_time(cls):
-        return func.start_time(cls.arrival_datetime)
+        return func.time(cls.arrival_datetime)
 
     @hybrid_property
     def display_arrival_date(self):
