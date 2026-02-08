@@ -1,12 +1,23 @@
 # tests/test_timetable.py
+import os
 import re
 from playwright.sync_api import expect
 import pytest
+from config import DATETIME_FORMATS
 from tests.helpers import (
     get_csrf_token, assert_job_card_variables, mark_job_as_complete, assert_job_card_default_state,
     assert_job_not_found_htmx_error, assert_team_column_content, delete_job_and_confirm,
     get_future_date,
 )
+from utils.timezone import to_app_tz, utc_now
+
+def test_timetable_selected_date(admin_page) -> None:
+    """Test at the timetable renders today's date in the app time zone."""
+    page = admin_page
+    selected_date = page.locator("#timetable-datepicker").input_value()
+    assert selected_date == to_app_tz(utc_now()).strftime(DATETIME_FORMATS['DATE_FORMAT'])
+    assert selected_date == '07-02-2026'
+    assert os.getenv('APP_TIMEZONE') == 'Australia/Melbourne'
 
 @pytest.mark.db_reset
 def test_supervisors_timetable(supervisor_page) -> None:
