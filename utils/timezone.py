@@ -207,11 +207,7 @@ def get_timezone_offset(tz_name: Optional[str] = None) -> timedelta:
 # Convenience functions for common operations
 def today_in_app_tz() -> datetime:
     """Get today's date in application timezone."""
-    utc_today = utc_now().date()
-    # Convert to app timezone at midnight UTC, then get date
-    midnight_utc = datetime.combine(utc_today, datetime.min.time(), tzinfo=timezone.utc)
-    return to_app_tz(midnight_utc).date()
-
+    return to_app_tz(utc_now()).date()
 
 def now_in_app_tz() -> datetime:
     """Get current datetime in application timezone."""
