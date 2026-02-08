@@ -243,7 +243,7 @@ class JobViewsTestHelper:
         expect(popup.locator("#date")).to_have_value(expected_job.display_date)
         expect(popup.locator("#time")).to_have_value(expected_job.display_time)
         expect(popup.locator("#end_time")).to_have_value(expected_job.display_end_time)
-        expect(popup.locator("#arrival_datetime")).to_have_value(expected_job.display_arrival_datetime)
+        expect(popup.locator("#arrival_datetime")).to_have_value(expected_job.display_arrival_datetime_strf)
         expect(popup.locator("#description")).to_have_value(expected_job.description)
         expect(popup.locator("#property_id")).to_have_value(str(expected_job.property.id))
         expect(popup.locator("#access_notes")).to_have_value(expected_job.property.access_notes)
