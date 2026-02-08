@@ -160,7 +160,7 @@ class Job(Base):
 
     @display_arrival_time.expression
     def display_arrival_time(cls):
-        return func.time(cls.arrival_datetime)
+        return func.start_time(cls.arrival_datetime)
 
     @hybrid_property
     def display_arrival_date(self):
@@ -208,7 +208,7 @@ class Job(Base):
         return func.date(cls.arrival_datetime)
 
     def __repr__(self):
-        return f"<Job(id={self.id}, date='{self.date}', time='{self.time}', arrival_datetime='{self.arrival_datetime}', end_time='{self.end_time}', is_complete='{self.is_complete}')>"
+        return f"<Job(id={self.id}, date='{self.date}', start_time='{self.start_time}', arrival_datetime='{self.arrival_datetime}', end_time='{self.end_time}', is_complete='{self.is_complete}')>"
 
     def to_dict(self, include_report=False):
         data = {
