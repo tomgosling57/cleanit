@@ -58,6 +58,8 @@ class JobViewsTestHelper:
 
         # Helper to get attribute from kwargs or expected_job
         def get_expected(attr, default=None):
+            if attr in ['start_time', 'end_time', 'arrival_datetime', 'date', 'arrival_date', 'arrival_time']:
+                return kwargs.get(attr, getattr(expected_job, f"display_{attr}", default))
             return kwargs.get(attr, getattr(expected_job, attr, default))
 
 
@@ -76,16 +78,10 @@ class JobViewsTestHelper:
         for user in expected_user_assignments:
             expect(popup.locator("#assigned_cleaners")).to_contain_text(user.full_name)
 
-        expect(popup.locator("#date")).to_have_text(get_expected("display_date"))
-        expect(popup.locator("#start_time")).to_have_text(get_expected("display_time"))
-        expect(popup.locator("#end_time")).to_have_text(get_expected("display_end_time"))
-
-        _kwargs_arrival_datetime = kwargs.get("arrival_datetime", None)
-        arrival_datetime = None
-        if _kwargs_arrival_datetime is not None:
-            arrival_datetime = _kwargs_arrival_datetime
-        else:
-            arrival_datetime = expected_job.display_arrival_datetime
+        expect(popup.locator("#date")).to_have_text(get_expected("date"))
+        expect(popup.locator("#start_time")).to_have_text(get_expected("start_time"))
+        expect(popup.locator("#end_time")).to_have_text(get_expected("end_time"))
+        arrival_datetime = get_expected("arrival_datetime")
         if arrival_datetime:
             expect(popup.locator("#arrival_date")).to_have_text(arrival_datetime.strftime(DATETIME_FORMATS["DATE_FORMAT"]))
             expect(popup.locator("#arrival_time")).to_have_text(arrival_datetime.strftime(DATETIME_FORMATS["TIME_FORMAT"]))
@@ -140,7 +136,6 @@ class JobViewsTestHelper:
         self.fill_job_form(job_id, **kwargs)
         with self.page.expect_response(f"**/jobs/job/{job_card.get_attribute('data-job-id')}/update**"):
             self.page.locator("#job-modal").get_by_role("button", name="Save Changes").click()
-        
         # Get the updated job from the database
         expect(self.page.locator('#job-list')).to_be_visible() # Assert job list fragment is rendered
         job_card = self.page.locator(f'div.job-card[data-job-id="{job_id}"]')

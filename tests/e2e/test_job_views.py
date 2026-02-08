@@ -106,7 +106,7 @@ class TestJobModalViews:
         new_end_time = "09:00"
         new_arrival_datetime = datetime.combine(
             today_in_app_tz() + timedelta(days=1), time(10, 0)
-        ).strftime(DATETIME_FORMATS["DATETIME_FORMAT_JOBS_PY"])
+        )
         test_helper = JobViewsTestHelper(page)
         
         test_helper.update_job(
