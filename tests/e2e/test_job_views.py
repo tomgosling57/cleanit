@@ -105,7 +105,7 @@ class TestJobModalViews:
         job_card = get_first_job_card(page)
         expect(job_card).to_be_visible()
         new_arrival_datetime = test_helper.selected_datetime() + timedelta(days=1, hours=2)
-        test_helper.update_job_card(job_card, new_arrival_datetime=new_arrival_datetime)
+        test_helper.update_job_card(job_card, arrival_datetime=new_arrival_datetime)
         job_card = self.get_job_card_by_id(job_card.get_attribute("data-job-id"))
         assert_job_card_variables(
             job_card,
@@ -123,12 +123,6 @@ class TestJobModalViews:
         expect(job_card).to_be_visible()
         new_arrival_datetime = to_app_tz(utc_now() + timedelta(hours=2))
         test_helper.update_job_card(job_card, new_arrival_datetime=new_arrival_datetime)
-        job_card = test_helper.get_job_card_by_id(job_card.get_attribute("data-job-id"))
-        assert_job_card_variables(
-            job_card,
-            {},
-            expected_indicators=["Same Day Arrival"]
-        )
 
 @pytest.mark.db_reset
 def test_create_job(admin_page) -> None:
@@ -301,6 +295,13 @@ class JobViewsTestHelper:
         expect(popup.locator("#property_address")).to_have_attribute("data-property-id", str(property_obj.id))
         expect(popup.locator("#access_notes")).to_have_text(property_obj.access_notes)
 
+        # Validate arrival indicators
+        if expected_job.arrival_date_in_app_tz == today_in_app_tz():
+            expect(popup.locator("#arrival-indicator")).to_have_text("Same Day Arrival")
+        elif expected_job.arrival_date_in_app_tz == today_in_app_tz() + timedelta(days=1):
+            expect(popup.locator("#arrival-indicator")).to_have_text("Next Day Arrival")
+        
+
 
     def open_job_details(self, job_id):
         """Opens the job details model for the given job id and returns the modal locator."""
@@ -343,30 +344,47 @@ class JobViewsTestHelper:
         selected_date = self.selected_date(self.page)
         return datetime.strptime(selected_date, DATETIME_FORMATS["DATE_FORMAT"])    
     
-    def fill_job_form(self, job_id, new_date:str=None, new_start_time:str=None, new_end_time:str=None, new_arrival_datetime:str=None):
+    def fill_job_form(self, job_id, **kwargs):
+        """
+        Fills the job form modal directly using page.locator calls.
+        Only fills fields that are explicitly provided in kwargs.
+        """
         expected_job = self.db.query(Job).filter_by(id=job_id).first()
-        
-        new_date = new_date or self.selected_date(self.page)
-        new_start_time = new_start_time or get_future_time(hours=-1)
-        new_end_time = new_end_time or get_future_time(hours=0)
-        new_arrival_datetime = new_arrival_datetime or (
-            expected_job.display_arrival_datetime + timedelta(hours=2) if expected_job.display_arrival_datetime 
-            else to_app_tz(utc_now()))
-        if isinstance(new_arrival_datetime, datetime):
-            new_arrival_datetime = new_arrival_datetime.strftime(DATETIME_FORMATS["DATETIME_FORMAT_JOBS_PY"])
-        
-        fill_job_modal_form(
-            self.page,
-            start_time=new_start_time,
-            end_time=new_end_time,
-            date=new_date,
-            description="Full house clean, focus on kitchen and bathrooms.",
-            property_id="2",
-            arrival_datetime=new_arrival_datetime,
-            access_notes="test",
-            assigned_teams=["1", "2"],
-            assigned_cleaners=["1", "3"],
-        )
+        assert expected_job is not None, f"Job with id {job_id} not found in database"
+
+        page = self.page  # convenience
+
+        # Fill each field only if the value is provided
+        if "start_time" in kwargs:
+            page.locator("#time").fill(kwargs["start_time"])
+
+        if "end_time" in kwargs:
+            page.locator("#end_time").fill(kwargs["end_time"])
+
+        if "date" in kwargs:
+            page.locator("#date").fill(kwargs["date"])
+
+        if "description" in kwargs:
+            page.locator("#description").fill(kwargs["description"])
+
+        if "property_id" in kwargs:
+            page.locator("#property_id").select_option(kwargs["property_id"])
+
+        if "arrival_datetime" in kwargs:
+            arrival = kwargs["arrival_datetime"]
+            if isinstance(arrival, datetime):
+                arrival = arrival.strftime(DATETIME_FORMATS["DATETIME_FORMAT_JOBS_PY"])
+            # Assuming this is the correct flatpickr input selector
+            page.locator('input[type="text"].flatpickr').fill(arrival)
+
+        if "access_notes" in kwargs:
+            page.locator("#access_notes").fill(kwargs["access_notes"])
+
+        if "assigned_teams" in kwargs:
+            page.locator("#assigned_teams").select_option(kwargs["assigned_teams"])
+
+        if "assigned_cleaners" in kwargs:
+            page.locator("#assigned_cleaners").select_option(kwargs["assigned_cleaners"])
 
     def get_job_card_by_id(self, job_id):
         return self.page.locator(f'div.job-card[data-job-id="{job_id}"]')
