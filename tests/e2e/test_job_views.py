@@ -326,7 +326,7 @@ class JobViewsTestHelper:
         validate_csrf_token_in_modal(job_modal)
         self.validate_form_auto_fill(job_id)
         
-        self.fill_job_form(self.page, job_id, **kwargs)
+        self.fill_job_form(job_id, **kwargs)
         with self.page.expect_response(f"**/jobs/job/{job_card.get_attribute('data-job-id')}/update**"):
             self.page.locator("#job-modal").get_by_role("button", name="Save Changes").click()
         
