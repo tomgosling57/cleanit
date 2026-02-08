@@ -75,7 +75,7 @@ class JobService:
         
         # Handle optional arrival_datetime
         if 'arrival_datetime' in job_data and job_data['arrival_datetime']:
-            arrival_datetime_utc = from_app_tz(datetime.fromisoformat(job_data['arrival_datetime']))
+            arrival_datetime_utc = from_app_tz(job_data['arrival_datetime'])
             result['arrival_datetime'] = arrival_datetime_utc
         
         return result
