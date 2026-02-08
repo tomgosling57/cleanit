@@ -3,6 +3,9 @@ from datetime import datetime, time, timedelta
 
 import pytest
 from config import DATETIME_FORMATS
+from database import Assignment, Job
+from services.assignment_service import AssignmentService
+from tests.db_helpers import get_db_session
 from tests.helpers import (
     assert_job_card_variables,
     get_first_job_card, open_job_details_modal, open_job_update_modal,
@@ -10,35 +13,7 @@ from tests.helpers import (
     get_future_date, get_future_time
 )
 from utils.populate_database import USER_DATA
-from utils.timezone import today_in_app_tz
-
-def test_job_details(admin_page) -> None:
-
-    job_card = get_first_job_card(admin_page)
-    expect(job_card).to_be_visible()
-
-    job_id = job_card.get_attribute('data-job-id')
-    with admin_page.expect_response(f"**/jobs/job/{job_id}/details**"):
-        admin_page.wait_for_load_state('networkidle')
-        open_job_details_modal(admin_page, job_card, f"**/jobs/job/{job_id}/details**")
-    modal = admin_page.locator("#job-modal")
-
-    expected_date = get_future_date(days=2)
-    assert_job_details_modal_content(
-        admin_page,
-        modal_id="#job-modal",
-        title="Job Details",
-        start_time="09:00",
-        end_time="11:00 (2h)",
-        arrival_date=expected_date,
-        arrival_time="09:00",
-        description="Full house clean, focus on kitchen and bathrooms.",
-        property_address="123 Main St, Anytown",
-        assigned_team="Initial Team",
-        assigned_cleaner=USER_DATA['admin']['first_name'] + " " + USER_DATA['admin']['last_name'],
-    )
-
-    close_modal_and_assert_hidden(admin_page, "#job-modal")
+from utils.timezone import to_app_tz, today_in_app_tz, utc_now
 
 @pytest.mark.db_reset
 def test_update_job(admin_page) -> None:
@@ -107,6 +82,53 @@ def test_update_job(admin_page) -> None:
         },
         expected_indicators=["Next Day Arrival"]
     )
+
+class TestJobModalViews:
+    
+    
+    def test_job_details(self, admin_page) -> None:
+        page = admin_page
+        job_card = get_first_job_card(page)
+        job_card.wait_for(state="visible")
+        job_id = job_card.get_attribute('data-job-id')
+        # Open the job details modal first to ensure we have the latest data and then open the update modal from there
+        open_job_details_modal(page, job_card, f"**/jobs/job/{job_id}/details**")
+        self.expect_job_attributes_in_modal(page, job_id)
+    
+    @pytest.mark.db_reset
+    def test_update_job_to_next_day_arrival(self, admin_page) -> None:
+        page = admin_page
+        page.set_default_timeout(3_000)
+        test_helper = JobViewsTestHelper(page)
+        get_first_job_card(page).wait_for(state="attached")
+        page.get_by_text("Create Job").wait_for(state="attached")
+        job_card = get_first_job_card(page)
+        expect(job_card).to_be_visible()
+        new_arrival_datetime = test_helper.selected_datetime() + timedelta(days=1, hours=2)
+        test_helper.update_job_card(job_card, new_arrival_datetime=new_arrival_datetime)
+        job_card = self.get_job_card_by_id(job_card.get_attribute("data-job-id"))
+        assert_job_card_variables(
+            job_card,
+            {},
+            expected_indicators=["Next Day Arrival"]
+        )        
+    
+    def test_update_job_to_same_day_arrival(self, admin_page) -> None:
+        page = admin_page
+        page.set_default_timeout(3_000)
+        test_helper = JobViewsTestHelper(page)
+        get_first_job_card(page).wait_for(state="attached")
+        page.get_by_text("Create Job").wait_for(state="attached")
+        job_card = get_first_job_card(page)
+        expect(job_card).to_be_visible()
+        new_arrival_datetime = to_app_tz(utc_now() + timedelta(hours=2))
+        test_helper.update_job_card(job_card, new_arrival_datetime=new_arrival_datetime)
+        job_card = test_helper.get_job_card_by_id(job_card.get_attribute("data-job-id"))
+        assert_job_card_variables(
+            job_card,
+            {},
+            expected_indicators=["Same Day Arrival"]
+        )
 
 @pytest.mark.db_reset
 def test_create_job(admin_page) -> None:
@@ -194,3 +216,159 @@ def test_access_notes_visibility_user(user_page) -> None:
     page = user_page
     job_card = get_first_job_card(page)
     assert_access_notes_not_visible(page, job_card)
+
+class JobViewsTestHelper:
+        
+    db = get_db_session()
+    assignment_service = AssignmentService(db)
+
+    def __init__(self, page) -> None:
+        self.page = page
+
+    def validate_form_auto_fill(self, job_id) -> None:
+        """Validates the input values of a job update/creation form against the database values. 
+        - Expects the form to already be open within the #job-modal element.
+        - Uses playwright expect calls for assertions.
+        - Intended for forms contained within the job_update_modal and job_creation_modal templates.
+        """
+        popup = self.page.locator("#job-modal")        
+        # Get the job from the database popu use for expected values
+        expected_job = self.db.query(Job).filter_by(id=job_id).first()
+        assert expected_job is not None, f"Job with id {job_id} not found in database"
+        # Assert that the autofill values match the database object
+        expected_team_assignments = self.assignment_service.get_teams_for_job(job_id)
+        expected_user_assignments = self.assignment_service.get_users_for_job(job_id)
+        expect(popup.locator("#assigned_teams")).to_have_values([str(team.id) for team in expected_team_assignments])
+        expect(popup.locator("#assigned_cleaners")).to_have_values([str(user.id) for user in expected_user_assignments])
+        expect(popup.locator("#date")).to_have_value(expected_job.display_date)
+        expect(popup.locator("#time")).to_have_value(expected_job.display_time)
+        expect(popup.locator("#end_time")).to_have_value(expected_job.display_end_time)
+        expect(popup.locator("#arrival_datetime")).to_have_value(expected_job.display_arrival_datetime)
+        expect(popup.locator("#description")).to_have_value(expected_job.description)
+        expect(popup.locator("#property_id")).to_have_value(str(expected_job.property.id))
+        expect(popup.locator("#access_notes")).to_have_value(expected_job.property.access_notes)
+
+    def validate_job_details(self, job_id, **kwargs) -> None:
+        """
+        Validates the content of a job details modal against the database values. 
+        - Expects the modal to already be open within the #job-modal element.
+        - Uses playwright expect calls for assertions.
+        - Intended for modals contained within the job_details_modal template.
+        - Additional kwargs with keys using snake case id selectors of elements to validate passed values, eg time='12:00'.
+        """
+        popup = self.page.locator("#job-modal")
+
+        # Get the job from the database to use for expected values
+        expected_job = self.db.query(Job).filter_by(id=job_id).first()
+        assert expected_job is not None, f"Job with id {job_id} not found in database"
+
+        # Helper to get attribute from kwargs or expected_job
+        def get_expected(attr, default=None):
+            return kwargs.get(attr, getattr(expected_job, attr, default))
+
+
+        expected_team_assignments = kwargs.get(
+            "assigned_teams",
+            self.assignment_service.get_teams_for_job(job_id)
+        )
+        expected_user_assignments = kwargs.get(
+            "assigned_cleaners",
+            self.assignment_service.get_users_for_job(job_id)
+        )
+
+        for team in expected_team_assignments:
+            expect(popup.locator("#assigned_teams")).to_contain_text(team.name)
+
+        for user in expected_user_assignments:
+            expect(popup.locator("#assigned_cleaners")).to_contain_text(user.full_name)
+
+        expect(popup.locator("#date")).to_have_text(get_expected("display_date"))
+        expect(popup.locator("#time")).to_have_text(get_expected("display_time"))
+        expect(popup.locator("#end_time")).to_have_text(get_expected("display_end_time"))
+
+        arrival_datetime = get_expected("arrival_datetime")
+        if arrival_datetime:
+            expect(popup.locator("#arrival_date")).to_have_text(get_expected("display_arrival_date"))
+            expect(popup.locator("#arrival_time")).to_have_text(get_expected("display_arrival_time"))
+        else:
+            expect(popup.locator("#arrival_date")).to_have_text("Not specified")
+            expect(popup.locator("#arrival_time")).to_have_text("Not specified")
+
+        expect(popup.locator("#description")).to_have_text(get_expected("description"))
+
+        property_obj = get_expected("property")
+        expect(popup.locator("#property_address")).to_have_text(property_obj.address)
+        expect(popup.locator("#property_address")).to_have_attribute("data-property-id", str(property_obj.id))
+        expect(popup.locator("#access_notes")).to_have_text(property_obj.access_notes)
+
+
+    def open_job_details(self, job_id):
+        """Opens the job details model for the given job id and returns the modal locator."""
+        with self.page.expect_response(f"**/jobs/job/{job_id}/details**"):
+            self.page.wait_for_load_state('networkidle')
+            # Hover over the job card to ensure buttons are clickable (especially for completed jobs)
+            job_card = self.get_job_card_by_id(job_id)
+            job_card.hover()
+            job_card.get_by_role("button", name="View Details").click()
+        job_modal = self.page.locator("#job-modal")
+        expect(job_modal).to_be_visible()
+        return job_modal
+
+
+    def update_job_card(self, job_card, **kwargs):
+        job_id = job_card.get_attribute('data-job-id')
+        # Open the job details modal first to ensure we have the latest data and then open the update modal from there
+        job_modal = self.open_job_details(job_id)
+        self.validate_job_details(job_id)
+
+        # Open the update form and assert the same values are present there
+        open_job_update_modal(self.page, job_modal, f"**/jobs/job/{job_id}/update**")
+        validate_csrf_token_in_modal(job_modal)
+        self.validate_form_auto_fill(job_id)
+        
+        self.fill_job_form(self.page, job_id, **kwargs)
+        with self.page.expect_response(f"**/jobs/job/{job_card.get_attribute('data-job-id')}/update**"):
+            self.page.locator("#job-modal").get_by_role("button", name="Save Changes").click()
+        
+        # Get the updated job from the database
+        expect(self.page.locator('#job-list')).to_be_visible() # Assert job list fragment is rendered
+        job_card = self.page.locator(f'div.job-card[data-job-id="{job_id}"]')
+        self.open_job_details(job_id)
+        self.validate_job_details(job_id)
+    
+    def selected_date(self, page):
+        return page.locator("#timetable-datepicker").input_value()
+
+    def selected_datetime(self):
+        selected_date = self.selected_date(self.page)
+        return datetime.strptime(selected_date, DATETIME_FORMATS["DATE_FORMAT"])    
+    
+    def fill_job_form(self, job_id, new_date:str=None, new_start_time:str=None, new_end_time:str=None, new_arrival_datetime:str=None):
+        expected_job = self.db.query(Job).filter_by(id=job_id).first()
+        
+        new_date = new_date or self.selected_date(self.page)
+        new_start_time = new_start_time or get_future_time(hours=-1)
+        new_end_time = new_end_time or get_future_time(hours=0)
+        new_arrival_datetime = new_arrival_datetime or (
+            expected_job.display_arrival_datetime + timedelta(hours=2) if expected_job.display_arrival_datetime 
+            else to_app_tz(utc_now()))
+        if isinstance(new_arrival_datetime, datetime):
+            new_arrival_datetime = new_arrival_datetime.strftime(DATETIME_FORMATS["DATETIME_FORMAT_JOBS_PY"])
+        
+        fill_job_modal_form(
+            self.page,
+            start_time=new_start_time,
+            end_time=new_end_time,
+            date=new_date,
+            description="Full house clean, focus on kitchen and bathrooms.",
+            property_id="2",
+            arrival_datetime=new_arrival_datetime,
+            access_notes="test",
+            assigned_teams=["1", "2"],
+            assigned_cleaners=["1", "3"],
+        )
+
+    def get_job_card_by_id(self, job_id):
+        return self.page.locator(f'div.job-card[data-job-id="{job_id}"]')
+    
+    
