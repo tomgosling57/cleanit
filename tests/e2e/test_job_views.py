@@ -89,9 +89,10 @@ class TestJobModalViews:
         job_card = get_first_job_card(page)
         job_card.wait_for(state="visible")
         job_id = job_card.get_attribute('data-job-id')
+        test_helper = JobViewsTestHelper(page)
         # Open the job details modal first to ensure we have the latest data and then open the update modal from there
-        open_job_details_modal(page, job_card, f"**/jobs/job/{job_id}/details**")
-        self.expect_job_attributes_in_modal(page, job_id)
+        job_modal = test_helper.open_job_details(job_id)
+        test_helper.validate_job_details(job_id)        
     
     @pytest.mark.db_reset
     def test_update_job_time_attributes(self, admin_page) -> None:
