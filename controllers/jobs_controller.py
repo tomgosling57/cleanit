@@ -86,7 +86,7 @@ class JobController:
             {{ main_fragment_html | safe }}
             {% include '_form_response.html' %}
             """,
-            errors=errors,
+            errors=errors.values() if errors else None,
             DATETIME_FORMATS=DATETIME_FORMATS,
             is_oob_swap=True,
             main_fragment_html=main_fragment_html

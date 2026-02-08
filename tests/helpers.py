@@ -287,7 +287,7 @@ def fill_job_modal_form(
     assigned_teams: list[str],
     assigned_cleaners: list[str],
 ) -> None:
-    page.locator("#time").wait_for(state="attached")
+    page.locator("#start_time").wait_for(state="attached")
     page.locator("#end_time").wait_for(state="attached")
     page.locator("#date").wait_for(state="attached")
     page.locator("#description").wait_for(state="attached")
@@ -297,7 +297,7 @@ def fill_job_modal_form(
     page.locator("#assigned_teams").wait_for(state="attached")
     page.locator("#assigned_cleaners").wait_for(state="attached")
     
-    page.locator("#time").fill(start_time)
+    page.locator("#start_time").fill(start_time)
     page.locator("#end_time").fill(end_time)
     page.locator("#date").fill(date)
     page.locator("#description").fill(description)

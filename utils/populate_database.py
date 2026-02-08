@@ -153,14 +153,14 @@ def create_initial_teams(session, admin, supervisor_user, user, team_leader):
     
     return initial_team, alpha_team, beta_team, charlie_team, delta_team
 
-def _create_job(session, date, time, end_time, description, property_obj, team_obj=None, user_obj=None, job_id=None, arrival_date_offset=0, complete=False):
+def _create_job(session, date, start_time, end_time, description, property_obj, team_obj=None, user_obj=None, job_id=None, arrival_date_offset=0, complete=False):
     """
     Helper function to create a job with deterministic data.
 
     Args:
         session: The SQLAlchemy session.
         date (date): The date of the job.
-        time (time): The start time of the job.
+        start_time (time): The start time of the job.
         end_time (time): The end time of the job.
         description (str): The description of the job.
         property_obj (Property): The Property object associated with the job.
@@ -175,7 +175,7 @@ def _create_job(session, date, time, end_time, description, property_obj, team_o
     """
     app_tz = get_app_timezone()
 
-    start_dt = datetime.combine(date, time)
+    start_dt = datetime.combine(date, start_time)
     end_dt = datetime.combine(date, end_time)
 
     # label as Melbourne
@@ -191,7 +191,7 @@ def _create_job(session, date, time, end_time, description, property_obj, team_o
     job = Job(
         id=job_id,
         date=start_dt.date(),
-        time=start_dt.time(),
+        start_time=start_dt.time(),
         arrival_datetime=datetime.combine(arrival_date_for_job, start_dt.time()),
         end_time=end_dt.time(),
         description=description,

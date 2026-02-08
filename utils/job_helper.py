@@ -27,7 +27,7 @@ class JobHelper:
         return {
             'property_id': request.form.get('property_id'),
             'date_str': request.form.get('date'),
-            'time_str': request.form.get('time'),
+            'start_time_str': request.form.get('start_time'),
             'arrival_datetime_str': request.form.get('arrival_datetime'),
             'end_time_str': request.form.get('end_time'),
             'assigned_cleaners': request.form.getlist('assigned_cleaners'),
@@ -43,27 +43,27 @@ class JobHelper:
             errors['property_address'] = 'Property address is required.'
         if not form_data['date_str']:
             errors['date'] = 'Date is required.'
-        if not form_data['time_str']:
-            errors['time'] = 'Start time is required.'
+        if not form_data['start_time_str']:
+            errors['start_time'] = 'Start time is required.'
         if not form_data['end_time_str']:
             errors['end_time'] = 'End time is required.'
         return errors
 
-    def parse_job_datetime(self, date_str, time_str, end_time_str, arrival_datetime_str):
+    def parse_job_datetime(self, date_str, start_time_str, end_time_str, arrival_datetime_str):
         """Parses date and time strings into datetime objects."""
         errors = {}
         job_date = None
-        job_time = None
+        job_start_time = None
         job_end_time = None
         job_arrival_datetime = None
 
         try:
             job_date = datetime.strptime(date_str, DATETIME_FORMATS["DATE_FORMAT"]).date()
-            job_time = datetime.strptime(time_str, DATETIME_FORMATS["TIME_FORMAT"]).time()
+            job_start_time = datetime.strptime(start_time_str, DATETIME_FORMATS["TIME_FORMAT"]).time()
             job_end_time = datetime.strptime(end_time_str, DATETIME_FORMATS["TIME_FORMAT"]).time()
 
-            if job_time and job_end_time and job_time >= job_end_time:
-                errors['time'] = 'Start time must be before end time.'
+            if job_start_time and job_end_time and job_start_time >= job_end_time:
+                errors['start_time'] = 'Start time must be before end time.'
 
             if arrival_datetime_str:
                 # Assuming arrival_datetime_str might come in ISO format or a specific DATETIME_FORMAT
@@ -79,13 +79,13 @@ class JobHelper:
         except ValueError:
             errors['date_time_format'] = 'Invalid date or time format.'
         
-        return job_date, job_time, job_end_time, job_arrival_datetime, errors
+        return job_date, job_start_time, job_end_time, job_arrival_datetime, errors
 
     def prepare_job_data(self, parsed_data, notes, job_type, property_id):
         """Prepares a dictionary of job data for service calls."""
         return {
             'date': parsed_data['job_date'],
-            'time': parsed_data['job_time'],
+            'start_time': parsed_data['job_start_time'],
             'arrival_datetime': parsed_data['job_arrival_datetime'],
             'end_time': parsed_data['job_end_time'],
             'description': notes,
@@ -110,8 +110,8 @@ class JobHelper:
         if errors:
             return None, None, None, self.render_response(errors)
 
-        job_date, job_time, job_end_time, job_arrival_datetime, datetime_response = self.parse_job_datetime(
-            form_data['date_str'], form_data['time_str'], form_data['end_time_str'], form_data['arrival_datetime_str']
+        job_date, job_start_time, job_end_time, job_arrival_datetime, datetime_response = self.parse_job_datetime(
+            form_data['date_str'], form_data['start_time_str'], form_data['end_time_str'], form_data['arrival_datetime_str']
         )
 
         if datetime_response:
@@ -119,7 +119,7 @@ class JobHelper:
 
         parsed_data = {
             'job_date': job_date,
-            'job_time': job_time,
+            'job_start_time': job_start_time,
             'job_end_time': job_end_time,
             'job_arrival_datetime': job_arrival_datetime
         }
@@ -156,7 +156,7 @@ class JobHelper:
         job = self.job_service.get_job_details(job_id)
         return render_template_string('{% include "job_details_modal.html" %}', job=job, DATETIME_FORMATS=DATETIME_FORMATS)
 
-    def render_job_list_fragment(self, current_user, date_str):
+    def render_job_list_fragment(self, current_user, date_str, **kwargs):
         """
         Fetches the list of jobs for the current user/team on a specific date and renders the job list fragment.
         Returns the HTML for the job list.
@@ -170,9 +170,11 @@ class JobHelper:
             if current_user_team:
                 team_leader_id = current_user_team.team_leader_id
 
-        return render_template_string('{% include "job_list_fragment.html" %}', jobs=assigned_jobs, DATETIME_FORMATS=DATETIME_FORMATS, view_type='normal', current_user=current_user, team_leader_id=team_leader_id)
+        return render_template_string('{% include "job_list_fragment.html" %}', jobs=assigned_jobs,
+                                      DATETIME_FORMATS=DATETIME_FORMATS, view_type='normal', 
+                                      current_user=current_user, team_leader_id=team_leader_id, **kwargs)
 
-    def render_teams_timetable_fragment(self, current_user, date_str):
+    def render_teams_timetable_fragment(self, current_user, date_str, **kwargs):
         """
         Fetches the table of jobs categorized by their team assignments for a specific date.
         Returns the HTML of the Teams Timetable.
@@ -197,7 +199,8 @@ class JobHelper:
             current_user=current_user,
             view_type='team',
             user_id=current_user.id,
-            team_leader_id=team_leader_id
+            team_leader_id=team_leader_id,
+            **kwargs
         )
         return response_html
 

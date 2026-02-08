@@ -24,12 +24,12 @@ def test_timetable_timezone_handling(admin_client_no_csrf, job_service, admin_us
         job_id = int(job_card['data-job-id'])
         assert job_id in expected_jobs, f"Job card with id {job_id} does not match any expected job"
         job_date = job_card.select_one(f"#job-date-{job_id}").text
-        job_time = job_card.select_one(f"#job-time-{job_id}").text
+        job_start_time = job_card.select_one(f"#job-start-time-{job_id}").text
         job_end_time = job_card.select_one(f"#job-end-time-{job_id}").text
         job_duration = job_card.select_one(f"#job-duration-{job_id}").text
         job_property_address = job_card.select_one(f"#job-property-address-{job_id}").text
         assert job_date == expected_date, f"Expected job date for job {job_id} to be {expected_date} but got {job_date}"
-        assert job_time == expected_jobs[job_id].display_time, f"Expected job time for job {job_id} to be {expected_jobs[job_id].display_time} but got {job_time}"
+        assert job_start_time == expected_jobs[job_id].display_time, f"Expected job start time for job {job_id} to be {expected_jobs[job_id].display_time} but got {job_start_time}"
         assert job_end_time == expected_jobs[job_id].display_end_time, f"Expected job end time for job {job_id} to be {expected_jobs[job_id].display_end_time} but got {job_end_time}"
         assert job_duration == expected_jobs[job_id].duration, f"Expected job duration for job {job_id} to be {expected_jobs[job_id].duration} but got {job_duration}"
         assert job_property_address == expected_jobs[job_id].property.address, \
@@ -63,12 +63,12 @@ def check_jobs_by_team(expected_jobs_by_team: dict, soup: BeautifulSoup, expecte
             job_id = int(job_card['data-job-id'])
             assert job_id in expected_jobs, f"Job card with id {job_id} does not match any expected job for team {team_id}"
             job_date = job_card.select_one(f"#job-date-{job_id}").text
-            job_time = job_card.select_one(f"#job-time-{job_id}").text
+            job_start_time = job_card.select_one(f"#job-start-time-{job_id}").text
             job_end_time = job_card.select_one(f"#job-end-time-{job_id}").text
             job_duration = job_card.select_one(f"#job-duration-{job_id}").text
             job_property_address = job_card.select_one(f"#job-property-address-{job_id}").text
             assert job_date == expected_date, f"Expected job date for job {job_id} to be {expected_date} but got {job_date}"
-            assert job_time == expected_jobs[job_id].display_time, f"Expected job time for job {job_id} to be {expected_jobs[job_id].display_time} but got {job_time}"
+            assert job_start_time == expected_jobs[job_id].display_time, f"Expected job start time for job {job_id} to be {expected_jobs[job_id].display_time} but got {job_start_time}"
             assert job_end_time == expected_jobs[job_id].display_end_time, f"Expected job end time for job {job_id} to be {expected_jobs[job_id].display_end_time} but got {job_end_time}"
             assert job_duration == expected_jobs[job_id].duration, f"Expected job duration for job {job_id} to be {expected_jobs[job_id].duration} but got {job_duration}"
             assert job_property_address == expected_jobs[job_id].property.address, \

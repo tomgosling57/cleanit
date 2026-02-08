@@ -35,7 +35,7 @@ class JobViewsTestHelper:
         expect(popup.locator("#assigned_teams")).to_have_values([str(team.id) for team in expected_team_assignments])
         expect(popup.locator("#assigned_cleaners")).to_have_values([str(user.id) for user in expected_user_assignments])
         expect(popup.locator("#date")).to_have_value(expected_job.display_date)
-        expect(popup.locator("#time")).to_have_value(expected_job.display_time)
+        expect(popup.locator("#start_time")).to_have_value(expected_job.display_time)
         expect(popup.locator("#end_time")).to_have_value(expected_job.display_end_time)
         expect(popup.locator("#arrival_datetime")).to_have_value(expected_job.display_arrival_datetime_strf)
         expect(popup.locator("#description")).to_have_value(expected_job.description)
@@ -77,7 +77,7 @@ class JobViewsTestHelper:
             expect(popup.locator("#assigned_cleaners")).to_contain_text(user.full_name)
 
         expect(popup.locator("#date")).to_have_text(get_expected("display_date"))
-        expect(popup.locator("#time")).to_have_text(get_expected("display_time"))
+        expect(popup.locator("#start_time")).to_have_text(get_expected("display_time"))
         expect(popup.locator("#end_time")).to_have_text(get_expected("display_end_time"))
 
         _kwargs_arrival_datetime = kwargs.get("arrival_datetime", None)
@@ -166,7 +166,7 @@ class JobViewsTestHelper:
 
         # Fill each field only if the value is provided
         if "start_time" in kwargs:
-            page.locator("#time").fill(kwargs["start_time"])
+            page.locator("#start_time").fill(kwargs["start_time"])
 
         if "end_time" in kwargs:
             page.locator("#end_time").fill(kwargs["end_time"])

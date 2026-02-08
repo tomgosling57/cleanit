@@ -42,7 +42,7 @@
                 <span class="item-icon"><img src="{{ url_for('static', filename='icons/clock.svg') }}" alt="Time" class="icon"></span>
                 <div class="item-content">
                     <div class="primary-info">Date: <span id="date">{{ job.display_date }}</span></div>
-                    <div class="primary-info">Start: <span id="time">{{ job.display_time }}</span></div>
+                    <div class="primary-info">Start: <span id="start_time">{{ job.display_time }}</span></div>
                     <div class="secondary-info">End: <span id="end_time">{{ job.display_end_time }}</span> ({{ job.duration }})</div>
                 </div>
             </div>

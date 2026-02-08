@@ -54,13 +54,13 @@ class JobService:
         Helper to convert app timezone date/time strings to UTC datetime objects.
         
         Args:
-            job_data: Dict with 'date', 'time', 'end_time', and optionally 'arrival_datetime'
+            job_data: Dict with 'date', 'start_time', 'end_time', and optionally 'arrival_datetime'
         
         Returns:
-            Dict with UTC date, time, end_time, and arrival_datetime
+            Dict with UTC date, start_time, end_time, and arrival_datetime
         """
         # Parse date and times in app timezone
-        start_datetime_str = f"{job_data['date']} {job_data['time']}"
+        start_datetime_str = f"{job_data['date']} {job_data['start_time']}"
         end_datetime_str = f"{job_data['date']} {job_data['end_time']}"
         
         # Convert to UTC
@@ -69,7 +69,7 @@ class JobService:
         
         result = {
             'date': start_datetime_utc.date(),
-            'time': start_datetime_utc.time(),
+            'start_time': start_datetime_utc.time(),
             'end_time': end_datetime_utc.time(),
         }
         
@@ -90,7 +90,7 @@ class JobService:
         # Create job with UTC times
         new_job = Job(
             date=utc_times['date'],
-            time=utc_times['time'],
+            start_time=utc_times['start_time'],
             end_time=utc_times['end_time'],
             arrival_datetime=utc_times.get('arrival_datetime'),
             description=job_data.get('description'),
@@ -119,7 +119,7 @@ class JobService:
         
         # Update job fields
         job.date = utc_times['date']
-        job.time = utc_times['time']
+        job.start_time = utc_times['start_time']
         job.end_time = utc_times['end_time']
         
         if 'arrival_datetime' in utc_times:

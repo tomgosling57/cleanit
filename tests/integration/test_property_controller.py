@@ -39,7 +39,7 @@ class TestJobListFiltering:
             job_card = soup.select_one(f"#job-{job_id}")
             assert job_card is not None, f"Expected job card with id job-{job_id} not found in the response"
             job_card_date = job_card.select_one(f"#job-date-{job_id}").text
-            job_card_time = job_card.select_one(f"#job-time-{job_id}").text
+            job_card_time = job_card.select_one(f"#job-start-time-{job_id}").text
             job_card_end_time = job_card.select_one(f"#job-end-time-{job_id}").text
             job_card_duration = job_card.select_one(f"#job-duration-{job_id}").text
             job_card_property = job_card.select_one(f"#job-property-address-{job_id}").text

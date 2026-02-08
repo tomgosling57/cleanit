@@ -90,7 +90,7 @@ class Job(Base):
 
     id = Column(Integer, primary_key=True)
     date = Column(Date, nullable=False)
-    time = Column(Time, nullable=False)
+    start_time = Column(Time, nullable=False)
     arrival_datetime = Column(DateTime, nullable=True)
     end_time = Column(Time, nullable=False)
     description = Column(String)
@@ -126,12 +126,12 @@ class Job(Base):
     
     @hybrid_property
     def display_datetime(self):
-        return to_app_tz(datetime.combine(self.date, self.time))
+        return to_app_tz(datetime.combine(self.date, self.start_time))
     
     @hybrid_property
     def display_date(self):
         # Instance-level: self.date is an actual date object
-        return to_app_tz(datetime.combine(self.date, self.time)).strftime(DATETIME_FORMATS['DATE_FORMAT'])
+        return to_app_tz(datetime.combine(self.date, self.start_time)).strftime(DATETIME_FORMATS['DATE_FORMAT'])
 
     @display_date.expression
     def display_date(cls):
@@ -141,12 +141,11 @@ class Job(Base):
     
     @hybrid_property
     def display_time(self):
-        return to_app_tz(datetime.combine(self.date, self.time)).strftime(DATETIME_FORMATS['TIME_FORMAT'])
+        return to_app_tz(datetime.combine(self.date, self.start_time)).strftime(DATETIME_FORMATS['TIME_FORMAT'])
 
     @display_time.expression
     def display_time(cls):
-        return cls.time
-
+        return cls.start_time
     @hybrid_property
     def display_end_time(self):
         return to_app_tz(datetime.combine(self.date, self.end_time)).strftime(DATETIME_FORMATS['TIME_FORMAT'])
@@ -186,7 +185,7 @@ class Job(Base):
     @hybrid_property
     def date_in_app_tz(self):
         """Get the job date in application timezone."""
-        return to_app_tz(datetime.combine(self.date, self.time)).date()
+        return to_app_tz(datetime.combine(self.date, self.start_time)).date()
 
     @date_in_app_tz.expression
     def date_in_app_tz(cls):
@@ -215,7 +214,7 @@ class Job(Base):
         data = {
             'id': self.id,
             'date_utc': self.date.isoformat(),
-            'time_utc': self.time.isoformat(),
+            'start_time_utc': self.start_time.isoformat(),
             'arrival_datetime_utc': self.arrival_datetime.isoformat() if self.arrival_datetime else None,
             'end_time_utc': self.end_time.isoformat(),
             'description': self.description,
@@ -229,9 +228,9 @@ class Job(Base):
     
     @hybrid_property
     def duration(self):
-        if self.time and self.end_time:
+        if self.start_time and self.end_time:
             # Calculate duration in minutes
-            start_datetime = datetime.combine(self.date, self.time)
+            start_datetime = datetime.combine(self.date, self.start_time)
             end_datetime = datetime.combine(self.date, self.end_time)
             
             # Handle cases where end_time is on the next day (e.g., 22:00 - 02:00)
@@ -255,8 +254,8 @@ class Job(Base):
         # For now, it returns a string representation, which is not directly sortable/filterable in SQL
         # A more robust solution for SQL querying would involve storing duration or a calculated field
         return func.printf('%dh %dm',
-                           (func.julianday(cls.end_time) - func.julianday(cls.time)) * 24,
-                           ((func.julianday(cls.end_time) - func.julianday(cls.time)) * 24 * 60) % 60
+                           (func.julianday(cls.end_time) - func.julianday(cls.start_time)) * 24,
+                           ((func.julianday(cls.end_time) - func.julianday(cls.start_time)) * 24 * 60) % 60
                           )
 
 class Assignment(Base):

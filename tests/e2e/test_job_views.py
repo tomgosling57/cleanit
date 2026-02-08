@@ -111,7 +111,7 @@ class TestJobModalViews:
         
         test_helper.update_job(
             job_id,
-            start_time=new_start_time,
+            time=new_start_time,
             end_time=new_end_time,
             arrival_datetime=new_arrival_datetime
         )    
