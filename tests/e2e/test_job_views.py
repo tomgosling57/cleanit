@@ -94,7 +94,7 @@ class TestJobModalViews:
         self.expect_job_attributes_in_modal(page, job_id)
     
     @pytest.mark.db_reset
-    def update_job_time_attributes(self, admin_page) -> None:
+    def test_update_job_time_attributes(self, admin_page) -> None:
         page = admin_page
         # Extract the idea of the first job card
         job_card = get_first_job_card(page)
