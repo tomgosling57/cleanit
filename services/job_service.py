@@ -161,11 +161,11 @@ class JobService:
         return job
     
     def get_all_jobs(self):
-        jobs = self.db_session.query(Job).options(joinedload(Job.property)).order_by(Job.date, Job.time).all()
+        jobs = self.db_session.query(Job).options(joinedload(Job.property)).order_by(Job.date, Job.start_time).all()
         return jobs
     
     def get_jobs_by_property_id(self, property_id):
-        jobs = self.db_session.query(Job).options(joinedload(Job.property)).filter(Job.property_id == property_id).order_by(Job.date, Job.time).all()
+        jobs = self.db_session.query(Job).options(joinedload(Job.property)).filter(Job.property_id == property_id).order_by(Job.date, Job.start_time).all()
         return jobs
 
     def get_filtered_jobs_by_property_id(self, property_id, start_date=None, end_date=None, show_completed=True):
@@ -184,17 +184,16 @@ class JobService:
         # Filter by job start datetime (in UTC) falling within the date range
         if start_date:
             start_datetime_utc = from_app_tz(datetime.combine(start_date, datetime.min.time()))
-            query = query.filter(combine_date_time_sql(Job.date, Job.time) >= start_datetime_utc)
+            query = query.filter(combine_date_time_sql(Job.date, Job.start_time) >= start_datetime_utc)
         
         if end_date:
             end_datetime_utc = from_app_tz(datetime.combine(end_date, datetime.max.time()))
-            query = query.filter(combine_date_time_sql(Job.date, Job.time) <= end_datetime_utc)
+            query = query.filter(combine_date_time_sql(Job.date, Job.start_time) <= end_datetime_utc)
         
         if not show_completed:
             query = query.filter(Job.is_complete == False)
         
-        return query.order_by(Job.date, Job.time).all()
-
+        return query.order_by(Job.date, Job.start_time).all()
     def get_jobs_for_user_on_date(self, user_id, team_id, date_obj: date):
         """
         Get jobs for a user/team on a specific date.
@@ -217,7 +216,7 @@ class JobService:
         end_of_day_utc = from_app_tz(end_of_day_app)
         
         # Query jobs where the job's start datetime (in app timezone) falls within the date
-        # We need to check if datetime.combine(Job.date, Job.time) converted to app timezone
+        # We need to check if datetime.combine(Job.date, Job.start_time) converted to app timezone
         # falls within the app timezone date range.
         # Since we can't easily do timezone conversion in SQL, we filter by UTC datetime
         # range that corresponds to the app timezone date.
@@ -225,17 +224,17 @@ class JobService:
             Job, Assignment.job_id == Job.id
         ).filter(
             and_(
-                # Create datetime from Job.date and Job.time (both in UTC)
+                # Create datetime from Job.date and Job.start_time (both in UTC)
                 # and check if it falls within the UTC datetime range
-                combine_date_time_sql(Job.date, Job.time) >= start_of_day_utc,
-                combine_date_time_sql(Job.date, Job.time) <= end_of_day_utc,
+                combine_date_time_sql(Job.date, Job.start_time) >= start_of_day_utc,
+                combine_date_time_sql(Job.date, Job.start_time) <= end_of_day_utc,
                 (Assignment.user_id == user_id) | (Assignment.team_id == team_id)
             )
         ).distinct().subquery()
         
         jobs = self.db_session.query(Job).options(joinedload(Job.property)).filter(
             Job.id.in_(job_ids_subquery.select())
-        ).order_by(Job.date, Job.time).all()
+        ).order_by(Job.date, Job.start_time).all()
         
         return jobs
 
@@ -267,7 +266,7 @@ class JobService:
         # Find jobs where the job's start datetime (in UTC) is before today in app timezone
         uncompleted_jobs = self.db_session.query(Job).filter(
             and_(
-                combine_date_time_sql(Job.date, Job.time) < today_start_utc,
+                combine_date_time_sql(Job.date, Job.start_time) < today_start_utc,
                 Job.is_complete == False
             )
         ).all()
@@ -298,8 +297,8 @@ class JobService:
             Team, Assignment.team_id == Team.id
         ).filter(
             and_(
-                combine_date_time_sql(Job.date, Job.time) >= start_of_day_utc,
-                combine_date_time_sql(Job.date, Job.time) <= end_of_day_utc
+                combine_date_time_sql(Job.date, Job.start_time) >= start_of_day_utc,
+                combine_date_time_sql(Job.date, Job.start_time) <= end_of_day_utc
             )
         ).all()
         
