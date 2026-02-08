@@ -97,7 +97,6 @@ def create_initial_users(session):
     team_leader.set_password(USER_DATA['team_leader']['password'])
     session.add(team_leader)
     session.commit()
-    print("Initial users created for deterministic testing.")
     return admin, supervisor, user, team_leader
 
 def _create_team(session, team_name, team_leader_id=None, members=None, team_id=None):
@@ -152,7 +151,6 @@ def create_initial_teams(session, admin, supervisor_user, user, team_leader):
     charlie_team = _create_team(session, 'Charlie Team', team_id=4)
     delta_team = _create_team(session, 'Delta Team', team_id=5)
     
-    print("Initial teams created for deterministic testing.")
     return initial_team, alpha_team, beta_team, charlie_team, delta_team
 
 def _create_job(session, date, time, end_time, description, property_obj, team_obj=None, user_obj=None, job_id=None, arrival_date_offset=0, complete=False):
@@ -234,7 +232,6 @@ def create_initial_properties(session):
     teamville_property = Property(id=2, address='456 Oak Ave, Teamville', access_notes='Code 1234')
     session.add(teamville_property)
     session.commit()
-    print("Initial properties created for deterministic testing.")
     return anytown_property, teamville_property
 
 def create_initial_jobs(session, anytown_property, teamville_property, admin, user, initial_team, alpha_team, beta_team, charlie_team, delta_team):
@@ -313,7 +310,6 @@ def _fix_postgres_sequences(session):
     if dialect_name != 'postgresql':
         return  # Only needed for PostgreSQL
     
-    print("Fixing PostgreSQL sequences after inserting data with explicit IDs...")
     
     # List of tables and their primary key columns
     tables = [
@@ -342,9 +338,6 @@ def _fix_postgres_sequences(session):
                     text(f"SELECT setval('{sequence_name}', :max_id, true)"),
                     {'max_id': max_id}
                 )
-                print(f"  Fixed sequence for {table_name}.{id_column}: set to {max_id}")
-            else:
-                print(f"  No data in {table_name}, skipping sequence fix")
         except Exception as e:
             print(f"  Warning: Could not fix sequence for {table_name}.{id_column}: {e}")
     
@@ -371,7 +364,6 @@ def delete_jobs_assignments_properties(session):
     # 5. Delete properties
     session.query(Property).delete()
     session.commit()
-    print("Deleted all jobs, assignments, and properties from the database.")
 
 def delete_teams_users(session):
     """
@@ -394,7 +386,6 @@ def delete_teams_users(session):
     # Finally delete users
     session.query(User).delete()
     session.commit()
-    print("Deleted all teams and users from the database.")
 
 def insert_dummy_data(session_maker=None, existing_session=None):
     """
@@ -414,23 +405,18 @@ def insert_dummy_data(session_maker=None, existing_session=None):
     # Clear existing data
     delete_jobs_assignments_properties(session)
     delete_teams_users(session)
-    print("Cleared existing data for fresh population.")
     
     # Now create new data
     admin, supervisor, user, team_leader = create_initial_users(session)
-    print("Initial users created for deterministic testing.")
     
     # Create teams    
     initial_team, alpha_team, beta_team, charlie_team, delta_team = create_initial_teams(session, admin, supervisor, user, team_leader)    
-    print("Initial teams created for deterministic testing.")
     
     # Create properties
     anytown_property, teamville_property = create_initial_properties(session)
-    print("Initial properties created for deterministic testing.")
     
     # Create jobs
     create_initial_jobs(session, anytown_property, teamville_property, admin, user, initial_team, alpha_team, beta_team, charlie_team, delta_team)
-    print("Initial jobs created and assigned for deterministic testing.")
     
     # Fix PostgreSQL sequences if needed
     _fix_postgres_sequences(session)
