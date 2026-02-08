@@ -109,7 +109,7 @@ class TestJobModalViews:
         ).strftime(DATETIME_FORMATS["DATETIME_FORMAT_JOBS_PY"])
         test_helper = JobViewsTestHelper(page)
         
-        test_helper.update_job_card(
+        test_helper.update_job(
             job_id,
             start_time=new_start_time,
             end_time=new_end_time,
@@ -124,7 +124,7 @@ class TestJobModalViews:
         job_card = get_first_job_card(page)
         job_id = job_card.get_attribute('data-job-id')
         new_arrival_datetime = test_helper.selected_datetime() + timedelta(days=1, hours=2)
-        test_helper.update_job_card(job_id, arrival_datetime=new_arrival_datetime)
+        test_helper.update_job(job_id, arrival_datetime=new_arrival_datetime)
 
     @pytest.mark.db_reset    
     def test_update_job_to_same_day_arrival(self, admin_page) -> None:
