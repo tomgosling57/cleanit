@@ -146,6 +146,11 @@ class Job(Base):
     @display_time.expression
     def display_time(cls):
         return cls.start_time
+    
+    @hybrid_property
+    def display_start_time(self):
+        return to_app_tz(datetime.combine(self.date, self.start_time)).strftime(DATETIME_FORMATS['TIME_FORMAT'])
+    
     @hybrid_property
     def display_end_time(self):
         return to_app_tz(datetime.combine(self.date, self.end_time)).strftime(DATETIME_FORMATS['TIME_FORMAT'])
