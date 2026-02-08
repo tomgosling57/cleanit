@@ -391,7 +391,7 @@ def seeded_test_data(app):
             seeded_teams = {team.name: team for team in teams}
             seeded_assignments = {}
             for assignment in assignments:
-                job_key = f"{assignment.job.property.address} {assignment.job.date.strftime('%Y-%m-%d')} {assignment.job.time.strftime('%H:%M')}"
+                job_key = f"{assignment.job.property.address} {assignment.job.date.strftime('%Y-%m-%d')} {assignment.job.start_time.strftime('%H:%M')}"
                 if assignment.user:
                     assignment_key = f"Job: {job_key} | User: {assignment.user.email}"
                 elif assignment.team:
