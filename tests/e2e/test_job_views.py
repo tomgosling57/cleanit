@@ -102,8 +102,8 @@ class TestJobModalViews:
         job_id = job_card.get_attribute('data-job-id')
         
         # Open the job details modal first to ensure we have the latest data and then open the update modal from there
-        new_start_time = get_future_time(hours=-1) # 8:00 AM
-        new_end_time = get_future_time(hours=0) # 9:00 AM
+        new_start_time = "08:00"
+        new_end_time = "09:00"
         new_arrival_datetime = datetime.combine(
             today_in_app_tz() + timedelta(days=1), time(10, 0)
         ).strftime(DATETIME_FORMATS["DATETIME_FORMAT_JOBS_PY"])
