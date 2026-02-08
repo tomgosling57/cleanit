@@ -169,6 +169,10 @@ class Job(Base):
 
     @hybrid_property
     def display_arrival_datetime(self):
+        return to_app_tz(self.arrival_datetime)
+    
+    @hybrid_property
+    def display_arrival_datetime_strf(self):
         return to_app_tz(self.arrival_datetime).strftime(DATETIME_FORMATS['DATETIME_FORMAT']) if self.arrival_datetime else None
 
     @display_arrival_datetime.expression
