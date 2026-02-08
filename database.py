@@ -36,6 +36,10 @@ class User(Base, UserMixin):
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
 
+    @hybrid_property
+    def full_name(self):
+        return f"{self.first_name} {self.last_name}"
+    
     def to_dict(self):
         return {
             'id': self.id,
