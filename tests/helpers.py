@@ -273,6 +273,7 @@ def open_job_update_modal(page: Page, job_card: Locator, url_pattern: str) -> No
         page.wait_for_load_state('networkidle')
         job_card.get_by_role("button", name="Edit").click()
     expect(page.locator("#job-modal")).to_be_visible()
+    return page.locator("#job-modal")
 
 def fill_job_modal_form(
     page: Page,
