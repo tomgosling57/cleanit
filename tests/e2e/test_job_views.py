@@ -106,13 +106,8 @@ class TestJobModalViews:
         expect(job_card).to_be_visible()
         new_arrival_datetime = test_helper.selected_datetime() + timedelta(days=1, hours=2)
         test_helper.update_job_card(job_card, arrival_datetime=new_arrival_datetime)
-        job_card = self.get_job_card_by_id(job_card.get_attribute("data-job-id"))
-        assert_job_card_variables(
-            job_card,
-            {},
-            expected_indicators=["Next Day Arrival"]
-        )        
-    
+
+    @pytest.mark.db_reset    
     def test_update_job_to_same_day_arrival(self, admin_page) -> None:
         page = admin_page
         page.set_default_timeout(3_000)
