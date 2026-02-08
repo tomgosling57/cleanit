@@ -37,7 +37,7 @@ def test_update_job(admin_page) -> None:
 
     selected_date_from_timetable = page.locator("#timetable-datepicker").input_value()
 
-    expect(modal.locator("#time")).to_have_value("09:00")
+    expect(modal.locator("#start_time")).to_have_value("09:00")
     expect(modal.locator("#end_time")).to_have_value("11:00")
     expect(modal.locator("#date")).to_have_value(selected_date_from_timetable)
     expect(modal.locator("#description")).to_have_value("Full house clean, focus on kitchen and bathrooms.")
@@ -111,7 +111,7 @@ class TestJobModalViews:
         
         test_helper.update_job(
             job_id,
-            time=new_start_time,
+            start_time=new_start_time,
             end_time=new_end_time,
             arrival_datetime=new_arrival_datetime
         )    
