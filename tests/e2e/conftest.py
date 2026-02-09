@@ -13,6 +13,8 @@ import subprocess
 import datetime
 from typing import Generator
 from playwright.sync_api import Page, BrowserContext, sync_playwright
+from database import User
+from tests.db_helpers import get_db_session
 from utils.populate_database import USER_DATA, populate_database
 from utils.timezone import compare_times
 from requests import get, session
@@ -322,3 +324,12 @@ def pytest_collection_modifyitems(config, items):
         skip_marker = pytest.mark.skip(reason=reason + f" (Error: {str(e)})")
         for item in items:
             item.add_marker(skip_marker)    
+
+@pytest.fixture
+def admin_user():
+    """
+    An existing admin user object from the test database.
+    """
+    db_session = get_db_session()
+    user = db_session.query(User).filter_by(role="admin").first()
+    return user
