@@ -200,9 +200,7 @@
                         const errorInfo = this.parseErrorResponse(response);
                         
                         // Show error alert
-                        this.show('error', errorInfo.message, {
-                            details: errorInfo.details
-                        });
+                        this.show('error', errorInfo.message);
                         
                         // Prevent HTMX from swapping content for error responses
                         // unless it's a validation error that should be handled by the form
@@ -236,18 +234,18 @@
         /**
          * Setup global error handler for uncaught errors
          */
-        setupGlobalErrorHandler: function() {
-            window.addEventListener('error', (event) => {
-                // Don't show alerts for errors without messages
-                if (!event.message) return;
+        // setupGlobalErrorHandler: function() {
+        //     window.addEventListener('error', (event) => {
+        //         // Don't show alerts for errors without messages
+        //         if (!event.message) return;
                 
-                // Only show errors that aren't likely to be network errors
-                if (!event.message.includes('Failed to fetch') && 
-                    !event.message.includes('NetworkError')) {
-                    this.show('error', `JavaScript Error: ${event.message}`);
-                }
-            });
-        },
+        //         // Only show errors that aren't likely to be network errors
+        //         if (!event.message.includes('Failed to fetch') && 
+        //             !event.message.includes('NetworkError')) {
+        //             this.show('error', `JavaScript Error: ${event.message}`);
+        //         }
+        //     });
+        // },
 
         /**
          * Parse error response from backend
@@ -325,33 +323,12 @@
          * @param {XMLHttpRequest} xhr - The XHR object
          */
         handleHtmxError: function(xhr) {
-            let errorMessage = 'Request failed';
-            
+            // Only handle network errors (status 0) here
+            // HTTP status errors (400-599) are handled by htmx:beforeSwap
             if (xhr.status === 0) {
-                errorMessage = 'Network error: Unable to connect to server';
-            } else if (xhr.status === 401) {
-                errorMessage = 'Unauthorized: Please log in again';
-            } else if (xhr.status === 403) {
-                errorMessage = 'Forbidden: You do not have permission';
-            } else if (xhr.status === 404) {
-                errorMessage = 'Resource not found';
-            } else if (xhr.status === 422) {
-                errorMessage = 'Validation error';
-            } else if (xhr.status >= 500) {
-                errorMessage = 'Server error: Please try again later';
+                this.show('error', 'Network error: Unable to connect to server');
             }
-            
-            // Try to get more specific error from response
-            try {
-                const response = JSON.parse(xhr.responseText);
-                const errorInfo = this.parseErrorResponse(response);
-                this.show('error', errorInfo.message, {
-                    details: errorInfo.details
-                });
-            } catch (e) {
-                // If we can't parse JSON, use generic message
-                this.show('error', `${errorMessage} (Status: ${xhr.status})`);
-            }
+            // For other errors, do nothing - they will be handled by htmx:beforeSwap
         }
     };
 
