@@ -12,17 +12,20 @@
             <div class="group-item">
                 <span class="item-icon"><img src="{{ url_for('static', filename='icons/user.png') }}" alt="User Profile" class="icon user-icon"></span>
                 <div class="item-content">
+                    <div class="primary-info">Arrives: <span id="arrival_date">
                     {% if job.arrival_date %}
-                    <div class="primary-info">Arrives: <span id="arrival_date">{{ job.display_arrival_date }}</span></div>
+                        {{ job.display_arrival_date }}
                     {% else %}
-                    <div class="primary-info">Arrives: Not specified</div>
+                        Not specified
                     {% endif %}
+                </span></div>
+                <div class="secondary-info">Time: <span id="arrival_time">
                     {% if job.arrival_time_only %}
-                    <div class="secondary-info">Time: <span id="arrival_time">{{ job.display_arrival_time }}</span></div>
+                        {{ job.display_arrival_time }}
                     {% else %}
-                    <div class="secondary-info">Time: Not specified</div>
+                        Not specified
                     {% endif %}
-                </div>
+                </span></div>
             </div>
             {% if job.property.access_notes %}
             <div class="group-item">
@@ -67,7 +70,7 @@
                         {% if job_teams %}
                         {% if job_teams|length > 0 %}
                             {% for team in job_teams %}
-                                <span class="assignment-tag">{{ team.name }}</span>
+                                <span data-team-id="{{ team.id }}" id="assigned-team-{{ team.id }}" class="assignment-tag">{{ team.name }}</span>
                             {% endfor %}
                         {% else %}
                             <span class="no-assignment">No teams assigned</span>
@@ -83,7 +86,7 @@
                         {% if job_cleaners %}
                         {% if job_cleaners|length > 0 %}
                             {% for cleaner in job_cleaners %}
-                                <span class="assignment-tag">{{ cleaner.first_name }} {{ cleaner.last_name }}</span>
+                                <span data-user-id="{{ cleaner.id }}" id="assigned-cleaner-{{ cleaner.id }}" class="assignment-tag">{{ cleaner.first_name }} {{ cleaner.last_name }}</span>
                             {% endfor %}
                         {% else %}
                             <span class="no-assignment">No cleaners assigned</span>
@@ -100,9 +103,9 @@
         <div class="job-statuses">
             {% include 'job_status_fragment.html' %}
             {% if job.arrival_datetime and job.arrival_datetime.date() == job.date %}
-            <div class="job-status-badge red">Same Day Arrival</div>
+            <div id="arrival-indicator" class="job-status-badge red">Same Day Arrival</div>
             {% elif job.arrival_datetime and (job.arrival_datetime.date() - job.date).days == 1 %}
-            <div class="job-status-badge yellow">Next Day Arrival</div>
+            <div id="arrival-indicator" class="job-status-badge yellow">Next Day Arrival</div>
             {% endif %}
             {% if job.description %}
             <div class="job-status-badge red">See Notes</div>
