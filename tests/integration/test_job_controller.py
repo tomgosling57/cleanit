@@ -12,12 +12,12 @@ class TestJobController:
         
     def test_create_job_no_assignments(self, admin_client_no_csrf):
         """Test that creating a job without any assigned teams or cleaners returns an error."""
-        response = admin_client_no_csrf.post(
+        response = admin_client_no_csrf.post(                                     
             "/jobs/job/create",
             data={
-                "date_str": today_in_app_tz().isoformat(),
-                "start_time_str": "10:00",
-                "end_time_str": "12:00",
+                "date": today_in_app_tz().isoformat(),
+                "start_time": "10:00",
+                "end_time": "12:00",
                 "description": "Test job with no assignments",
                 "job_type": "standard",
                 "property_id": 1,
@@ -25,7 +25,8 @@ class TestJobController:
             }
         )
         assert response.status_code == 400, f"Expected status code 400 but got {response.status_code}"
-        assert b'At least one cleaner or team must be assigned to the job.' in response.data, "Expected error message about missing assignments not found in response"
+        json_data = response.get_json()
+        assert 'At least one cleaner or team must be assigned to the job.' in json_data.get('message', ''), "Expected error message about missing assignments not found in response"
 
     def test_update_job_no_assignments(self, admin_client_no_csrf, admin_user):
         """Tests that updating a job without any assigned teams or cleaners returns an error."""
@@ -35,9 +36,15 @@ class TestJobController:
         response = admin_client_no_csrf.put(
             f"/jobs/job/{job_to_update.id}/update",
             data={
+                "property_id": job_to_update.property.id,
+                "date": job_to_update.date.isoformat(),
+                "start_time": job_to_update.display_start_time,
+                "end_time": job_to_update.display_end_time,
                 "assigned_cleaners": [],
                 "assigned_teams": []
             }
         )
         assert response.status_code == 400, f"Expected status code 400 but got {response.status_code}"
-        assert b'At least one cleaner or team must be assigned to the job.' in response.data, "Expected error message about missing assignments not found in response"
+        
+        json_data = response.get_json()
+        assert 'At least one cleaner or team must be assigned to the job.' in json_data.get('message', ''), "Expected error message about missing assignments not found in response"
