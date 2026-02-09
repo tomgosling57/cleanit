@@ -13,11 +13,11 @@ from utils.timezone import today_in_app_tz
 
 class JobViewsTestHelper:
         
-    db = get_db_session()
-    assignment_service = AssignmentService(db)
-
     def __init__(self, page) -> None:
         self.page = page
+        self.db = get_db_session()
+        self.assignment_service = AssignmentService(self.db)
+
 
     def validate_form_auto_fill(self, job_id) -> None:
         """Validates the input values of a job update/creation form against the database values. 
@@ -59,7 +59,7 @@ class JobViewsTestHelper:
         # Helper to get attribute from kwargs or expected_job
         def get_expected(attr, default=None):
             if attr in ['start_time', 'end_time', 'arrival_datetime', 'date', 'arrival_date', 'arrival_time']:
-                return kwargs.get(attr, getattr(expected_job, f"display_{attr}", default))
+                return kwargs.get(attr, getattr(expected_job, f"display_{attr}"))
             return kwargs.get(attr, getattr(expected_job, attr, default))
 
 
@@ -101,8 +101,6 @@ class JobViewsTestHelper:
             expect(popup.locator("#arrival-indicator")).to_have_text("Same Day Arrival")
         elif expected_job.arrival_date_in_app_tz == today_in_app_tz() + timedelta(days=1):
             expect(popup.locator("#arrival-indicator")).to_have_text("Next Day Arrival")
-        
-
 
     def open_job_details(self, job_id):
         """Opens the job details model for the given job id and returns the modal locator."""
@@ -116,7 +114,15 @@ class JobViewsTestHelper:
         expect(job_modal).to_be_visible()
         return job_modal
 
-
+    def open_create_job_form(self):
+        """Opens the create job form modal and returns the modal locator."""
+        with self.page.expect_response("**/jobs/job/create**"):
+            self.page.wait_for_load_state('networkidle')
+            self.page.get_by_text("Create Job").click()
+        job_modal = self.page.locator("#job-modal")
+        expect(job_modal).to_be_visible()
+        return job_modal
+    
     def update_job(self, job_id, **kwargs):
         """Helper to update job from the timetable views by opening the job details and then the update modal.
         Fills the form with provided kwargs and saves.
@@ -133,7 +139,7 @@ class JobViewsTestHelper:
         validate_csrf_token_in_modal(job_modal)
         self.validate_form_auto_fill(job_id)
         
-        self.fill_job_form(job_id, **kwargs)
+        self.fill_job_form(**kwargs)
         with self.page.expect_response(f"**/jobs/job/{job_card.get_attribute('data-job-id')}/update**"):
             self.page.locator("#job-modal").get_by_role("button", name="Save Changes").click()
         # Get the updated job from the database
@@ -142,6 +148,28 @@ class JobViewsTestHelper:
         self.open_job_details(job_id)
         self.validate_job_details(job_id, **kwargs)
     
+    def create_job(self, **kwargs):
+        """Helper to create a job from the timetable views by opening the create job modal.
+        Fills the form with provided kwargs and saves.
+        Finally validates that the job details modal reflects the created job values.
+        """
+        self.open_create_job_form()
+        job_modal = self.page.locator("#job-modal")
+        expect(job_modal).to_be_visible()
+        validate_csrf_token_in_modal(job_modal)
+
+        # Since this is a new job, we won't have an id until after creation, so we can't use validate_form_auto_fill here
+        self.fill_job_form(**kwargs)
+        with self.page.expect_response("**/jobs/job/create**"):
+            self.page.locator("#job-modal").get_by_role("button", name="Create Job").click()
+        
+        expect(self.page.locator('#job-list')).to_be_visible() # Assert job list fragment is rendered
+        # Get the created job from the database using a combination of unique attributes (since we don't have the id)
+        created_job = self.db.query(Job).order_by(Job.id.desc()).first()
+        assert created_job is not None, "Created job not found in database"
+        self.open_job_details(created_job.id)
+        self.validate_job_details(created_job.id, **kwargs)
+    
     def selected_date(self, page):
         return page.locator("#timetable-datepicker").input_value()
 
@@ -149,14 +177,11 @@ class JobViewsTestHelper:
         selected_date = self.selected_date(self.page)
         return datetime.strptime(selected_date, DATETIME_FORMATS["DATE_FORMAT"])    
     
-    def fill_job_form(self, job_id, **kwargs):
+    def fill_job_form(self, **kwargs):
         """
         Fills the job form modal directly using page.locator calls.
         Only fills fields that are explicitly provided in kwargs.
         """
-        expected_job = self.db.query(Job).filter_by(id=job_id).first()
-        assert expected_job is not None, f"Job with id {job_id} not found in database"
-
         page = self.page  # convenience
 
         # Fill each field only if the value is provided
@@ -186,10 +211,10 @@ class JobViewsTestHelper:
             page.locator("#access_notes").fill(kwargs["access_notes"])
 
         if "assigned_teams" in kwargs:
-            page.locator("#assigned_teams").select_option(kwargs["assigned_teams"])
+            page.locator("#assigned_teams").select_option([str(team.id) for team in kwargs["assigned_teams"]])
 
         if "assigned_cleaners" in kwargs:
-            page.locator("#assigned_cleaners").select_option(kwargs["assigned_cleaners"])
+            page.locator("#assigned_cleaners").select_option([str(cleaner.id) for cleaner in kwargs["assigned_cleaners"]])
 
     def get_job_card_by_id(self, job_id):
         return self.page.locator(f'div.job-card[data-job-id="{job_id}"]')

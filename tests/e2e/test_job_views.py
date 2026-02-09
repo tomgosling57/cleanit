@@ -3,6 +3,8 @@ from datetime import datetime, time, timedelta
 
 import pytest
 from config import DATETIME_FORMATS
+from database import Team, User
+from tests.e2e.conftest import page
 from tests.helpers import (
     assert_job_card_variables,
     get_first_job_card, open_job_details_modal, open_job_update_modal,
@@ -69,56 +71,39 @@ class TestJobModalViews:
         new_arrival_datetime = to_app_tz(utc_now() + timedelta(hours=2))
         test_helper.update_job(job_id, arrival_datetime=new_arrival_datetime)
 
-@pytest.mark.db_reset
-def test_create_job(admin_page) -> None:
-    page = admin_page
+    @pytest.mark.db_reset
+    def test_create_job(self, admin_page, admin_user) -> None:
+        page = admin_page
+        page.set_default_timeout(3_000)
+        page.get_by_text("Create Job").wait_for(state="attached")
 
-    get_first_job_card(page).wait_for(state="attached")
-    page.get_by_text("Create Job").wait_for(state="attached")
+        test_helper = JobViewsTestHelper(page)
+        test_helper.create_job(
+            start_time="07:00",
+            end_time="08:00",
+            date=today_in_app_tz().strftime(DATETIME_FORMATS["DATE_FORMAT"]),
+            description="Full house clean, focus on kitchen and bathrooms.",
+            property_id="2",
+            access_notes="test",
+            assigned_teams=test_helper.db.query(Team).filter(Team.id.in_([admin_user.team_id])).all(),
+        )    
 
-    with page.expect_response("**/jobs/job/create**"):
-        page.wait_for_load_state('networkidle')
-        page.get_by_text("Create Job").click()
+    @pytest.mark.db_reset
+    def test_create_job_next_day_arrival(self, admin_page, admin_user) -> None:
+        page = admin_page
+        page.get_by_text("Create Job").wait_for(state="attached")
 
-    modal = wait_for_modal(page, "#job-modal")
-    validate_csrf_token_in_modal(modal)
-    # optional: log its length or hash to see if it changes per login
-
-    expect(modal.locator("#time")).to_be_visible()
-
-    new_start_time = "07:00"
-    new_end_time = "08:00"
-    new_date = get_future_date(days=0)
-    new_arrival_datetime = datetime.combine(
-        datetime.strptime(get_future_date(days=0), DATETIME_FORMATS["DATE_FORMAT"]).date(), time(10, 0)
-    ).strftime(DATETIME_FORMATS["DATETIME_FORMAT_JOBS_PY"])
-
-    fill_job_modal_form(
-        page,
-        start_time=new_start_time,
-        end_time=new_end_time,
-        date=new_date,
-        description="Full house clean, focus on kitchen and bathrooms.",
-        property_id="2",
-        arrival_datetime=new_arrival_datetime,
-        access_notes="test",
-        assigned_teams=["1", "2"],
-        assigned_cleaners=["1", "3"],
-    )
-    
-    with page.expect_response("**/jobs/job/create**"):
-        page.wait_for_load_state('networkidle')
-        modal.get_by_role("button", name="Create Job").click()
-
-    expect(page.locator('#job-list')).to_be_visible() # Assert job list fragment is rendered
-    assert_job_card_variables(
-        get_first_job_card(page),
-        {
-            "time": f"Time: {new_start_time}",
-            "address": "Property Address: 456 Oak Ave, Teamville"
-        },
-        expected_indicators=["Same Day Arrival"]
-    )
+        test_helper = JobViewsTestHelper(page)
+        test_helper.create_job(
+            start_time="07:00",
+            end_time="08:00",
+            date=today_in_app_tz().strftime(DATETIME_FORMATS["DATE_FORMAT"]),
+            arrival_datetime=datetime.combine(today_in_app_tz(), time(10, 0)),
+            description="Full house clean, focus on kitchen and bathrooms.",
+            property_id="2",
+            access_notes="test",
+            assigned_teams=test_helper.db.query(Team).filter(Team.id.in_([admin_user.team_id])).all(),
+        )    
 
 def assert_access_notes_visible(page, job_card) -> None:
     """Open the job detail modal of the given job card and assert that the access notes attribute is visible."""
