@@ -86,7 +86,7 @@ class JobController:
             {{ main_fragment_html | safe }}
             {% include '_form_response.html' %}
             """,
-            errors=errors.values() if errors else None,
+            errors=errors if errors else None,
             DATETIME_FORMATS=DATETIME_FORMATS,
             is_oob_swap=True,
             main_fragment_html=main_fragment_html
@@ -303,10 +303,11 @@ class JobController:
         if not job:
             return self._handle_errors({'Job Not Found': ERRORS['Job Not Found']})
 
-        updated_job_data, assigned_teams, assigned_cleaners, error_response = self.job_helper.process_job_form()
-        if error_response:
-            return error_response
-
+        try:
+            updated_job_data, assigned_teams, assigned_cleaners = self.job_helper.process_job_form()
+        except ValueError as ve:
+            return jsonify({'message': str(ve)}), 400
+        
         updated_job = self.job_service.update_job(job_id, updated_job_data)
         self.assignment_service.update_assignments(updated_job.id, team_ids=assigned_teams, user_ids=assigned_cleaners)
 
