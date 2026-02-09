@@ -1,5 +1,6 @@
 import os
 import random
+from time import timezone
 from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, Date, Time, Boolean, UniqueConstraint, func, DateTime
 from sqlalchemy.orm import sessionmaker, declarative_base, relationship
 from sqlalchemy.ext.hybrid import hybrid_property, hybrid_method
@@ -177,7 +178,8 @@ class Job(Base):
 
     @hybrid_property
     def display_arrival_datetime(self):
-        return to_app_tz(self.arrival_datetime)
+        if self.arrival_datetime:
+            return to_app_tz(self.arrival_datetime)
     
     @hybrid_property
     def display_arrival_datetime_strf(self):
