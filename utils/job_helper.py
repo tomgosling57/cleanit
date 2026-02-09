@@ -37,49 +37,42 @@ class JobHelper:
         }
 
     def validate_job_form_data(self, form_data):
-        """Validates job form data and returns an errors dictionary."""
-        errors = {}
+        """Validates job form data and raises ValueError if invalid."""
         if not form_data['property_id']:
-            errors['property_address'] = 'Property address is required.'
+            raise ValueError('Property address is required.')
         if not form_data['date_str']:
-            errors['date'] = 'Date is required.'
+            raise ValueError('Date is required.')
         if not form_data['start_time_str']:
-            errors['start_time'] = 'Start time is required.'
+            raise ValueError('Start time is required.')
         if not form_data['end_time_str']:
-            errors['end_time'] = 'End time is required.'
-        return errors
+            raise ValueError('End time is required.')
+        print(form_data['assigned_cleaners'], form_data['assigned_teams'])
+        if len(form_data['assigned_cleaners']) == 0 and len(form_data['assigned_teams']) == 0:
+            raise ValueError('At least one cleaner or team must be assigned to the job.')
 
     def parse_job_datetime(self, date_str, start_time_str, end_time_str, arrival_datetime_str):
         """Parses date and time strings into datetime objects."""
-        errors = {}
-        job_date = None
-        job_start_time = None
-        job_end_time = None
         job_arrival_datetime = None
+        job_date = datetime.strptime(date_str, DATETIME_FORMATS["DATE_FORMAT"]).date()
+        job_start_time = datetime.strptime(start_time_str, DATETIME_FORMATS["TIME_FORMAT"]).time()
+        job_end_time = datetime.strptime(end_time_str, DATETIME_FORMATS["TIME_FORMAT"]).time()
 
-        try:
-            job_date = datetime.strptime(date_str, DATETIME_FORMATS["DATE_FORMAT"]).date()
-            job_start_time = datetime.strptime(start_time_str, DATETIME_FORMATS["TIME_FORMAT"]).time()
-            job_end_time = datetime.strptime(end_time_str, DATETIME_FORMATS["TIME_FORMAT"]).time()
+        if job_start_time and job_end_time and job_start_time >= job_end_time:
+            raise ValueError('Start time must be before end time.')
 
-            if job_start_time and job_end_time and job_start_time >= job_end_time:
-                errors['start_time'] = 'Start time must be before end time.'
+        if arrival_datetime_str:
+            # Assuming arrival_datetime_str might come in ISO format or a specific DATETIME_FORMAT
+            # Try ISO format first, then fall back to DATETIME_FORMAT if it exists
+            try:
+                job_arrival_datetime = datetime.fromisoformat(arrival_datetime_str)
+            except ValueError:
+                if "DATETIME_FORMAT" in DATETIME_FORMATS:
+                    job_arrival_datetime = datetime.strptime(arrival_datetime_str, DATETIME_FORMATS["DATETIME_FORMAT"])
+                else:
+                    raise ValueError('Invalid arrival date/time format.')
 
-            if arrival_datetime_str:
-                # Assuming arrival_datetime_str might come in ISO format or a specific DATETIME_FORMAT
-                # Try ISO format first, then fall back to DATETIME_FORMAT if it exists
-                try:
-                    job_arrival_datetime = datetime.fromisoformat(arrival_datetime_str)
-                except ValueError:
-                    if "DATETIME_FORMAT" in DATETIME_FORMATS:
-                        job_arrival_datetime = datetime.strptime(arrival_datetime_str, DATETIME_FORMATS["DATETIME_FORMAT"])
-                    else:
-                        errors['arrival_datetime'] = 'Invalid arrival date/time format.'
-
-        except ValueError:
-            errors['date_time_format'] = 'Invalid date or time format.'
         
-        return job_date, job_start_time, job_end_time, job_arrival_datetime, errors
+        return job_date, job_start_time, job_end_time, job_arrival_datetime
 
     def prepare_job_data(self, parsed_data, notes, job_type, property_id):
         """Prepares a dictionary of job data for service calls."""
@@ -100,22 +93,16 @@ class JobHelper:
     def process_job_form(self):
         """
         Orchestrates the extraction, validation, and parsing of job form data.
-        Returns a tuple: (job_data, assigned_teams, assigned_cleaners, error_response)
-        If an error occurs, job_data, assigned_teams, assigned_cleaners will be None,
-        and error_response will contain the Flask response.
+        Returns a tuple: (job_data, assigned_teams, assigned_cleaners)
+        If an error occurs, a ValueError will be raised.
         """
         form_data = self.extract_job_form_data()
         
-        errors = self.validate_job_form_data(form_data)
-        if errors:
-            return None, None, None, self.render_response(errors)
+        self.validate_job_form_data(form_data)
 
-        job_date, job_start_time, job_end_time, job_arrival_datetime, datetime_response = self.parse_job_datetime(
+        job_date, job_start_time, job_end_time, job_arrival_datetime = self.parse_job_datetime(
             form_data['date_str'], form_data['start_time_str'], form_data['end_time_str'], form_data['arrival_datetime_str']
         )
-
-        if datetime_response:
-            return None, None, None, self.render_response(datetime_response)
 
         parsed_data = {
             'job_date': job_date,
@@ -131,7 +118,7 @@ class JobHelper:
             form_data['property_id']
         )
         
-        return job_data, form_data['assigned_teams'], form_data['assigned_cleaners'], None
+        return job_data, form_data['assigned_teams'], form_data['assigned_cleaners']
 
     def process_selected_date(self, date: str = None):
         """Chooses the right date value for the timetable views. If the given date is not none it will 
