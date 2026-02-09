@@ -1,5 +1,6 @@
 import pytest
 
+from services.assignment_service import AssignmentService
 from services.job_service import JobService
 from tests.db_helpers import get_db_session
 from utils.timezone import today_in_app_tz
@@ -9,6 +10,27 @@ class TestJobController:
     def setup_method(self):
         self.db = get_db_session()
         self.job_service = JobService(self.db)
+        self.assignment_service = AssignmentService(self.db)
+
+    def job_data_for_request(self, job_id, **kwargs):
+        job = self.job_service.get_job_by_id(job_id)
+        if not job:
+            raise ValueError(f"Job with id {job_id} not found.")
+        job_teams = self.assignment_service.get_teams_for_job(job_id)
+        job_users = self.assignment_service.get_users_for_job(job_id)
+        
+        job_data = {
+            "property_id": job.property.id,
+            "date": job.display_date,
+            "start_time": job.display_start_time,
+            "end_time": job.display_end_time,
+            "description": job.description,
+            "property_id": job.property.id,
+            "assigned_teams": [team.id for team in job_teams],
+            "assigned_cleaners": [user.id for user in job_users],
+        }
+        job_data.update(kwargs)
+        return job_data
         
     def test_create_job_no_assignments(self, admin_client_no_csrf):
         """Test that creating a job without any assigned teams or cleaners returns an error."""
