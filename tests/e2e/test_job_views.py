@@ -1,9 +1,10 @@
+import re
 from playwright.sync_api import expect
 from datetime import datetime, time, timedelta
 
 import pytest
 from config import DATETIME_FORMATS
-from database import Team, User
+from database import Job, Team, User
 from tests.e2e.conftest import page
 from tests.helpers import (
     assert_job_card_variables,
@@ -162,8 +163,27 @@ class TestJobViews:
         team_leader_helper.open_job_details(job_id)
         team_leader_helper.validate_job_details(job_id)
 
-    def test_update_job_description_adds_see_notes_indicator_and_outline(self, admin_page) -> None:
-        pass
+    def test_update_job_description_adds_see_notes_indicator_and_outline(self, admin_page, admin_user) -> None:
+        """Test that when a job description is added to a job that previously had no description, the job card updates to have a see notes indicator and an outline."""
+        page = admin_page
+        page.set_default_timeout(3_000)
+        test_helper = JobViewsTestHelper(page)
+        assigned_jobs = test_helper.job_service.get_jobs_for_user_on_date(admin_user.id, admin_user.team_id, today_in_app_tz())
+        job_without_description = None
+        for job in assigned_jobs:
+            if not job.description:
+                job_without_description = job
+                break
+        assert job_without_description is not None, "No assigned job without a description found for admin user, please insure the " \
+        "local SQLite test database is seeded with appropriate data for this test to be valid"
+        job_id = job_without_description.id
+        test_helper.update_job(
+            job_id,
+            description="This is a test description."
+        )
+        updated_job_card = test_helper.get_job_card_by_id(job_id)
+        expect(updated_job_card.locator(".job-statuses").get_by_text("See Notes")).to_be_visible()
+        expect(updated_job_card).to_have_class(re.compile(r"red-outline"))
 
     @pytest.mark.db_reset
     def test_create_job(self, admin_page, admin_user) -> None:

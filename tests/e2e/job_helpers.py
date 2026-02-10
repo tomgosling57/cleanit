@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from config import DATETIME_FORMATS
 from database import Job
 from services.assignment_service import AssignmentService
+from services.job_service import JobService
 from tests.db_helpers import get_db_session
 from tests.helpers import (
     open_job_update_modal, validate_csrf_token_in_modal,
@@ -17,6 +18,7 @@ class JobViewsTestHelper:
         self.page = page
         self.db = get_db_session()
         self.assignment_service = AssignmentService(self.db)
+        self.job_service = JobService(self.db)
 
 
     def validate_form_auto_fill(self, job_id) -> None:
