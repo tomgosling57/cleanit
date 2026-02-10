@@ -73,6 +73,8 @@ class TestJobViews:
     
     @pytest.mark.db_reset
     def test_update_job_to_user_assignment_only(self, admin_page, admin_user) -> None:
+        """Test that updating a job to be assigned to only a user and no teams is not successful and an 
+        error alert appears saying that at least one team must be assigned to the job."""
         page = admin_page
         page.set_default_timeout(3_000)
         job_card = get_first_job_card(page)
@@ -80,8 +82,15 @@ class TestJobViews:
         test_helper = JobViewsTestHelper(page)
         test_helper.update_job(
             job_id,
-            assigned_cleaners=[admin_user]
+            expect_card_after_update=False,
+            assigned_cleaners=[admin_user],
+            assigned_teams=[]
         )
+        expect(admin_page.locator(".alert").get_by_text("At least one team must be assigned to the job.")).to_be_visible()
+        expect(admin_page.locator('#job-modal')).to_be_visible()
+        page.keyboard.press("Escape")
+        test_helper.open_job_details(job_id)
+        test_helper.validate_job_details(job_id)
 
     @pytest.mark.db_reset
     def test_update_job_to_team_assignment_only(self, admin_page, admin_user) -> None:
@@ -109,7 +118,7 @@ class TestJobViews:
             assigned_cleaners=[],
             assigned_teams=[]
         )
-        expect(admin_page.locator(".alert").get_by_text("At least one cleaner or team must be assigned to the job.")).to_be_visible()
+        expect(admin_page.locator(".alert").get_by_text("At least one team must be assigned to the job.")).to_be_visible()
         expect(admin_page.locator('#job-modal')).to_be_visible()
 
     def test_update_job_assignment_to_non_admin_entities(self, admin_page, supervisor_page, team_leader_page, admin_user, supervisor_user, team_leader_user) -> None:
