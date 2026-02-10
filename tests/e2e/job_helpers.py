@@ -236,4 +236,12 @@ class JobViewsTestHelper:
     def get_job_card_by_id(self, job_id):
         return self.page.locator(f'div.job-card[data-job-id="{job_id}"]')
     
-    
+    def assert_access_notes_visible(self, job_id) -> None:
+        """Open the job detail modal of the given job card and assert that the access notes attribute is visible."""
+        job_modal = self.open_job_details(job_id)
+        expect(job_modal.locator("#access-notes")).to_be_visible()
+
+    def assert_access_notes_not_visible(self, job_id) -> None:
+        """Open the job details modal of the given job card and assert that the access notes attribute is not visible."""
+        job_modal = self.open_job_details(job_id)
+        expect(job_modal.locator("#access-notes")).not_to_be_visible()
