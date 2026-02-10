@@ -122,6 +122,7 @@ class TestJobViews:
         expect(admin_page.locator(".alert").get_by_text("At least one team must be assigned to the job.")).to_be_visible()
         expect(admin_page.locator('#job-modal')).to_be_visible()
 
+    @pytest.mark.db_reset
     def test_update_job_assignment_to_non_admin_entities(self, admin_page, supervisor_page, team_leader_page, admin_user, supervisor_user, team_leader_user) -> None:
         """Test that when an admin assigns job to another user or a team that they are not on, the update is successful and the job card is
         no longer rendered on their personal timetable page but is visible within the appropriate team's column on the team
@@ -163,6 +164,7 @@ class TestJobViews:
         team_leader_helper.open_job_details(job_id)
         team_leader_helper.validate_job_details(job_id)
 
+    @pytest.mark.db_reset
     def test_update_job_description_adds_see_notes_indicator_and_outline(self, admin_page, admin_user) -> None:
         """Test that when a job description is added to a job that previously had no description, the job card updates to have a see notes indicator and an outline."""
         page = admin_page
