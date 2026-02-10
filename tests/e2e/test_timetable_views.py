@@ -9,14 +9,14 @@ from tests.helpers import (
     assert_job_not_found_htmx_error, assert_team_column_content, delete_job_and_confirm,
     get_future_date,
 )
-from utils.timezone import to_app_tz, utc_now
+from utils.timezone import to_app_tz, today_in_app_tz, utc_now
 
 def test_timetable_selected_date(admin_page) -> None:
     """Test at the timetable renders today's date in the app time zone."""
     page = admin_page
     selected_date = page.locator("#timetable-datepicker").input_value()
     assert selected_date == to_app_tz(utc_now()).strftime(DATETIME_FORMATS['DATE_FORMAT'])
-    assert selected_date == '07-02-2026'
+    assert selected_date == today_in_app_tz().strftime(DATETIME_FORMATS['DATE_FORMAT'])
     assert os.getenv('APP_TIMEZONE') == 'Australia/Melbourne'
 
 @pytest.mark.db_reset
