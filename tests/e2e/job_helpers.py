@@ -123,7 +123,7 @@ class JobViewsTestHelper:
         expect(job_modal).to_be_visible()
         return job_modal
     
-    def update_job(self, job_id, **kwargs):
+    def update_job(self, job_id, expect_card_after_update=True, **kwargs):
         """Helper to update job from the timetable views by opening the job details and then the update modal.
         Fills the form with provided kwargs and saves.
         Finally validates that the job details modal reflects the updated values.
@@ -142,12 +142,13 @@ class JobViewsTestHelper:
         self.fill_job_form(**kwargs)
         with self.page.expect_response(f"**/jobs/job/{job_card.get_attribute('data-job-id')}/update**"):
             self.page.locator("#job-modal").get_by_role("button", name="Save Changes").click()
-        # Get the updated job from the database
-        expect(self.page.locator('#job-list')).to_be_visible() # Assert job list fragment is rendered
-        job_card = self.page.locator(f'div.job-card[data-job-id="{job_id}"]')
-        self.open_job_details(job_id)
-        self.validate_job_details(job_id, **kwargs)
-    
+        if expect_card_after_update:
+            # Get the updated job from the database
+            expect(self.page.locator('#job-list')).to_be_visible() # Assert job list fragment is rendered
+            job_card = self.page.locator(f'div.job-card[data-job-id="{job_id}"]')
+            self.open_job_details(job_id)
+            self.validate_job_details(job_id, **kwargs)
+        
     def create_job(self, **kwargs):
         """Helper to create a job from the timetable views by opening the create job modal.
         Fills the form with provided kwargs and saves.
