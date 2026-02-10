@@ -11,7 +11,7 @@ import subprocess
 import datetime
 from typing import Generator
 from playwright.sync_api import Page, BrowserContext, Browser
-from database import User
+from database import Property, User
 from tests.db_helpers import get_db_session
 from utils.populate_database import USER_DATA
 from utils.timezone import compare_times
@@ -248,3 +248,21 @@ def team_leader_user():
     db_session = get_db_session()
     user = db_session.query(User).filter(User.is_team_leader == True).filter(User.role == "user").first()
     return user
+
+@pytest.fixture
+def anytown_property():
+    """
+    An existing property object from the test database with address "123 Main St, Anytown".
+    """
+    db_session = get_db_session()
+    property = db_session.query(Property).filter_by(address="123 Main St, Anytown").first()
+    return property
+
+@pytest.fixture
+def teamville_property():
+    """
+    An existing property object from the test database with address "456 Oak Ave, Teamville".
+    """
+    db_session = get_db_session()
+    property = db_session.query(Property).filter_by(address="456 Oak Ave, Teamville").first()
+    return property
