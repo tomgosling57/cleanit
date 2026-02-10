@@ -182,7 +182,7 @@ def test_user_cannot_access_address_book(user_page, goto) -> None:
     # User should be redirected to the login page
     expect(page.get_by_text("404")).to_be_visible()
 
-class TestJobListFiltering:
+class TestJobFiltering:
     def test_default_filters(self, admin_page, anytown_property, teamville_property) -> None:
         """Test filtering jobs in the property jobs modal"""
         page = admin_page
