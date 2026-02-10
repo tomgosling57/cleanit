@@ -112,8 +112,30 @@ class TestJobViews:
         expect(admin_page.locator(".alert").get_by_text("At least one cleaner or team must be assigned to the job.")).to_be_visible()
         expect(admin_page.locator('#job-modal')).to_be_visible()
 
-    def test_update_job_team_assignment_to_non_admin_assigned_team(self, admin_page, admin_user) -> None:
-        pass 
+    def test_update_job_team_assignment_to_non_admin_assigned_team(self, admin_page, supervisor_page, admin_user, supervisor_user) -> None:
+        """Test that when an admin assigns job to a team that they are not on, the update is successful and the job card is
+        no longer rendered on their personal timetable page but is visible within the appropriate team's column on the team
+        timetable as well as the personal timetables of the team's members."""
+        assert supervisor_user.team_id != admin_user.team_id, "The supervisor user should be assigned to a different team than the" \
+        " admin user for this test to be valid."
+        page = admin_page
+        page.set_default_timeout(3_000)
+        admin_page.bring_to_front()
+        job_card = get_first_job_card(page)
+        job_id = job_card.get_attribute('data-job-id')
+        test_helper = JobViewsTestHelper(page)
+        non_admin_team = test_helper.db.query(Team).filter(Team.id != admin_user.team_id).first()
+        test_helper.update_job(
+            job_id,
+            expect_card_after_update=False,
+            assigned_teams=[non_admin_team],
+            assigned_cleaners=[]
+        )
+        test_helper.open_team_timetable()
+        team_timetable = page.locator("#team-timetable-view")
+        team_column = team_timetable.locator(f'[data-team-id="{non_admin_team.id}"]')
+        expect(team_column.locator(f'div.job-card[data-job-id="{job_id}"]')).to_be_visible()
+
     def test_update_job_description_adds_see_notes_indicator_and_outline(self, admin_page) -> None:
         pass
 
