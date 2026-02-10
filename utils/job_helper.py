@@ -46,9 +46,8 @@ class JobHelper:
             raise ValueError('Start time is required.')
         if not form_data['end_time_str']:
             raise ValueError('End time is required.')
-        print(form_data['assigned_cleaners'], form_data['assigned_teams'])
-        if len(form_data['assigned_cleaners']) == 0 and len(form_data['assigned_teams']) == 0:
-            raise ValueError('At least one cleaner or team must be assigned to the job.')
+        if len(form_data['assigned_teams']) == 0:
+            raise ValueError('At least one team must be assigned to the job.')
 
     def parse_job_datetime(self, date_str, start_time_str, end_time_str, arrival_datetime_str):
         """Parses date and time strings into datetime objects."""
