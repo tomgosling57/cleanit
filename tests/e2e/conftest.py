@@ -239,3 +239,12 @@ def user_user():
     db_session = get_db_session()
     user = db_session.query(User).filter_by(role="user").first()
     return user
+
+@pytest.fixture
+def team_leader_user():
+    """
+    An existing team leader user object from the test database.
+    """
+    db_session = get_db_session()
+    user = db_session.query(User).filter(User.is_team_leader == True).filter(User.role == "user").first()
+    return user
