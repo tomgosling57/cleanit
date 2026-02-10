@@ -7,17 +7,12 @@ from utils.timezone import today_in_app_tz
 
 class TestJobController:
 
-    def setup_method(self):
-        self.db = get_db_session()
-        self.job_service = JobService(self.db)
-        self.assignment_service = AssignmentService(self.db)
-
-    def job_data_for_request(self, job_id, **kwargs):
-        job = self.job_service.get_job_by_id(job_id)
+    def job_data_for_request(self, job_id, job_service, assignment_service, **kwargs):
+        job = job_service.get_job_details(job_id)
         if not job:
             raise ValueError(f"Job with id {job_id} not found.")
-        job_teams = self.assignment_service.get_teams_for_job(job_id)
-        job_users = self.assignment_service.get_users_for_job(job_id)
+        job_teams = assignment_service.get_teams_for_job(job_id)
+        job_users = assignment_service.get_users_for_job(job_id)
         
         job_data = {
             "property_id": job.property.id,
@@ -50,9 +45,28 @@ class TestJobController:
         json_data = response.get_json()
         assert 'At least one cleaner or team must be assigned to the job.' in json_data.get('message', ''), "Expected error message about missing assignments not found in response"
 
-    def test_update_job_no_assignments(self, admin_client_no_csrf, admin_user):
+    def tests_create_job_empty_assignments(self, admin_client_no_csrf):
+        """Test that creating a job with empty assigned teams and cleaners returns an error."""
+        response = admin_client_no_csrf.post(                                     
+            "/jobs/job/create",
+            data={
+                "date": today_in_app_tz().isoformat(),
+                "start_time": "10:00",
+                "end_time": "12:00",
+                "description": "Test job with empty assignments",
+                "job_type": "standard",
+                "property_id": 1,
+                "assigned_teams": [],
+                "assigned_cleaners": []
+            }
+        )
+        assert response.status_code == 400, f"Expected status code 400 but got {response.status_code}"
+        json_data = response.get_json()
+        assert 'At least one cleaner or team must be assigned to the job.' in json_data.get('message', ''), "Expected error message about missing assignments not found in response"
+
+    def test_update_job_no_assignments(self, admin_client_no_csrf, admin_user, job_service):
         """Tests that updating a job without any assigned teams or cleaners returns an error."""
-        jobs_assigned_to_admin = self.job_service.get_jobs_for_user_on_date(admin_user.id, admin_user.team_id, today_in_app_tz())
+        jobs_assigned_to_admin = job_service.get_jobs_for_user_on_date(admin_user.id, admin_user.team_id, today_in_app_tz())
         assert len(jobs_assigned_to_admin) > 0, "No jobs found for admin user to update, please insure the local SQLite test database is seeded with data"
         job_to_update = jobs_assigned_to_admin[0]
         response = admin_client_no_csrf.put(
@@ -62,11 +76,22 @@ class TestJobController:
                 "date": job_to_update.date.isoformat(),
                 "start_time": job_to_update.display_start_time,
                 "end_time": job_to_update.display_end_time,
-                "assigned_cleaners": [],
-                "assigned_teams": []
             }
         )
         assert response.status_code == 400, f"Expected status code 400 but got {response.status_code}"
         
+        json_data = response.get_json()
+        assert 'At least one cleaner or team must be assigned to the job.' in json_data.get('message', ''), "Expected error message about missing assignments not found in response"
+
+    def test_update_job_empty_assignments(self, admin_client_no_csrf, admin_user, job_service, assignment_service):
+        """Tests that updating a job with empty assigned teams and cleaners returns an error."""
+        jobs_assigned_to_admin = job_service.get_jobs_for_user_on_date(admin_user.id, admin_user.team_id, today_in_app_tz())
+        assert len(jobs_assigned_to_admin) > 0, "No jobs found for admin user to update, please insure the local SQLite test database is seeded with data"
+        job_to_update = jobs_assigned_to_admin[0]
+        response = admin_client_no_csrf.put(
+            f"/jobs/job/{job_to_update.id}/update",
+            data=self.job_data_for_request(job_to_update.id, job_service, assignment_service, assigned_teams=[], assigned_cleaners=[])
+        )
+        assert response.status_code == 400, f"Expected status code 400 but got {response.status_code}"
         json_data = response.get_json()
         assert 'At least one cleaner or team must be assigned to the job.' in json_data.get('message', ''), "Expected error message about missing assignments not found in response"
