@@ -15,7 +15,7 @@ from tests.e2e.job_helpers import JobViewsTestHelper
 from utils.populate_database import USER_DATA
 from utils.timezone import to_app_tz, today_in_app_tz, utc_now
 
-class TestJobModalViews:
+class TestJobViews:
     
     
     def test_job_details(self, admin_page) -> None:
