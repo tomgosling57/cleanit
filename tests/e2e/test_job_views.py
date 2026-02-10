@@ -123,18 +123,28 @@ class TestJobViews:
         admin_page.bring_to_front()
         job_card = get_first_job_card(page)
         job_id = job_card.get_attribute('data-job-id')
-        test_helper = JobViewsTestHelper(page)
-        non_admin_team = test_helper.db.query(Team).filter(Team.id != admin_user.team_id).first()
-        test_helper.update_job(
+        admin_helper = JobViewsTestHelper(page)
+        non_admin_team = admin_helper.db.query(Team).filter(Team.id != admin_user.team_id).first()
+        admin_helper.update_job(
             job_id,
             expect_card_after_update=False,
             assigned_teams=[non_admin_team],
             assigned_cleaners=[]
         )
-        test_helper.open_team_timetable()
+        expect(admin_helper.get_job_card_by_id(job_id)).to_be_hidden()
+        admin_helper.open_team_timetable()
         team_timetable = page.locator("#team-timetable-view")
         team_column = team_timetable.locator(f'[data-team-id="{non_admin_team.id}"]')
         expect(team_column.locator(f'div.job-card[data-job-id="{job_id}"]')).to_be_visible()
+        # Assert job card is visible on supervisor's personal timetable
+        supervisor_page.bring_to_front()
+        supervisor_page.reload()
+        supervisor_helper = JobViewsTestHelper(supervisor_page)
+        expect(supervisor_helper.get_job_card_by_id(job_id)).to_be_visible()
+        supervisor_helper.open_job_details(job_id)
+        supervisor_helper.validate_job_details(job_id)
+
+    
 
     def test_update_job_description_adds_see_notes_indicator_and_outline(self, admin_page) -> None:
         pass
