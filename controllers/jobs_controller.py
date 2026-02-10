@@ -439,10 +439,11 @@ class JobController:
             flash('Unauthorized access', 'error')
             return redirect(url_for('index'))
 
-        new_job_data, assigned_teams, assigned_cleaners, error_response = self.job_helper.process_job_form()
+        try:
+            new_job_data, assigned_teams, assigned_cleaners = self.job_helper.process_job_form()
+        except ValueError as ve:
+            return jsonify({'message': str(ve)}), 400
 
-        if error_response:
-            return error_response
         
         new_job_data['is_complete'] = False # New jobs are not complete by default
         new_job = self.job_service.create_job(new_job_data)
