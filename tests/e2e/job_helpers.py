@@ -212,10 +212,17 @@ class JobViewsTestHelper:
             page.locator("#access_notes").fill(kwargs["access_notes"])
 
         if "assigned_teams" in kwargs:
-            page.locator("#assigned_teams").select_option([str(team.id) for team in kwargs["assigned_teams"]])
+            if len(kwargs["assigned_teams"]) == 0:
+                # If we want to clear all assigned teams, we can use the "deselect all" option if available
+                page.locator("#assigned_teams").select_option([])
+            else:
+                page.locator("#assigned_teams").select_option([str(team.id) for team in kwargs["assigned_teams"]])
 
         if "assigned_cleaners" in kwargs:
-            page.locator("#assigned_cleaners").select_option([str(cleaner.id) for cleaner in kwargs["assigned_cleaners"]])
+            if len(kwargs["assigned_cleaners"]) == 0:
+                page.locator("#assigned_cleaners").select_option([])
+            else:
+                page.locator("#assigned_cleaners").select_option([str(user.id) for user in kwargs["assigned_cleaners"]])
 
     def get_job_card_by_id(self, job_id):
         return self.page.locator(f'div.job-card[data-job-id="{job_id}"]')
