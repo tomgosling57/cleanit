@@ -70,6 +70,52 @@ class TestJobViews:
         job_id = job_card.get_attribute('data-job-id')
         new_arrival_datetime = to_app_tz(utc_now() + timedelta(hours=2))
         test_helper.update_job(job_id, arrival_datetime=new_arrival_datetime)
+    
+    @pytest.mark.db_reset
+    def test_update_job_to_user_assignment_only(self, admin_page, admin_user) -> None:
+        page = admin_page
+        page.set_default_timeout(3_000)
+        job_card = get_first_job_card(page)
+        job_id = job_card.get_attribute('data-job-id')
+        test_helper = JobViewsTestHelper(page)
+        test_helper.update_job(
+            job_id,
+            assigned_cleaners=test_helper.db.query(User).filter(User.id.in_([admin_user.id])).all()
+        )
+
+    @pytest.mark.db_reset
+    def test_update_job_to_team_assignment_only(self, admin_page, admin_user) -> None:
+        page = admin_page
+        page.set_default_timeout(3_000)
+        job_card = get_first_job_card(page)
+        job_id = job_card.get_attribute('data-job-id')
+        test_helper = JobViewsTestHelper(page)
+        test_helper.update_job(
+            job_id,
+            assigned_teams=test_helper.db.query(Team).filter(Team.id.in_([admin_user.team_id])).all()
+        )
+
+    @pytest.mark.db_reset
+    def test_update_job_to_no_assignment(self, admin_page) -> None:
+        """Test that updating a job to have no assignments blocks the job update and chose an error."""
+        page = admin_page
+        page.set_default_timeout(3_000)
+        job_card = get_first_job_card(page)
+        job_id = job_card.get_attribute('data-job-id')
+        test_helper = JobViewsTestHelper(page)
+        test_helper.update_job(
+            job_id,
+            expect_card_after_update=False,
+            assigned_cleaners=[],
+            assigned_teams=[]
+        )
+        expect(admin_page.locator(".alert").get_by_text("At least one cleaner or team must be assigned to the job.")).to_be_visible()
+        expect(admin_page.locator('#job-modal')).to_be_visible()
+
+    def test_update_job_team_assignment_to_non_admin_assigned_team(self, admin_page, admin_user) -> None:
+        pass 
+    def test_update_job_description_adds_see_notes_indicator_and_outline(self, admin_page) -> None:
+        pass
 
     @pytest.mark.db_reset
     def test_create_job(self, admin_page, admin_user) -> None:
