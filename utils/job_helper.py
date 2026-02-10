@@ -39,7 +39,7 @@ class JobHelper:
     def validate_job_form_data(self, form_data):
         """Validates job form data and raises ValueError if invalid."""
         if not form_data['property_id']:
-            raise ValueError('Property address is required.')
+            raise ValueError('Property id is required.')
         if not form_data['date_str']:
             raise ValueError('Date is required.')
         if not form_data['start_time_str']:
