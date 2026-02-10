@@ -1,7 +1,7 @@
 import os
 import random
 from time import timezone
-from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, Date, Time, Boolean, UniqueConstraint, func, DateTime
+from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, Date, Time, Boolean, UniqueConstraint, func, DateTime, select
 from sqlalchemy.orm import sessionmaker, declarative_base, relationship
 from sqlalchemy.ext.hybrid import hybrid_property, hybrid_method
 from werkzeug.security import generate_password_hash
@@ -40,6 +40,14 @@ class User(Base, UserMixin):
     @hybrid_property
     def full_name(self):
         return f"{self.first_name} {self.last_name}"
+    
+    @hybrid_property
+    def is_team_leader(self):
+        return self.team and self.team.team_leader_id == self.id
+    
+    @is_team_leader.expression
+    def is_team_leader(cls):
+        return cls.id == select(Team.team_leader_id).where(Team.id == cls.team_id).scalar_subquery()
     
     def to_dict(self):
         return {
