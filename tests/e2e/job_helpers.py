@@ -114,6 +114,13 @@ class JobViewsTestHelper:
         expect(job_modal).to_be_visible()
         return job_modal
 
+    def open_team_timetable(self):
+        """Navigates to the team timetable view for the current selected date."""
+        with self.page.expect_response("**/jobs/teams**"):
+            self.page.wait_for_load_state('networkidle')
+            self.page.get_by_text("Team View").click()
+        expect(self.page.locator("#team-timetable-view")).to_be_visible()
+
     def open_create_job_form(self):
         """Opens the create job form modal and returns the modal locator."""
         with self.page.expect_response("**/jobs/job/create**"):
