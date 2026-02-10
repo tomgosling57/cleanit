@@ -151,6 +151,8 @@ class JobViewsTestHelper:
         self.fill_job_form(**kwargs)
         with self.page.expect_response(f"**/jobs/job/{job_card.get_attribute('data-job-id')}/update**"):
             self.page.locator("#job-modal").get_by_role("button", name="Save Changes").click()
+        self.page.wait_for_load_state("networkidle")
+        self.page.wait_for_timeout(500) # Wait for the modal to close and UI to update, adjust as needed based on observed behavior.b 
         if expect_card_after_update:
             # Get the updated job from the database
             expect(self.page.locator('#job-list')).to_be_visible() # Assert job list fragment is rendered
