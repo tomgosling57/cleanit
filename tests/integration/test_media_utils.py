@@ -20,65 +20,41 @@ def test_get_placeholder_url(app):
         assert url == '/static/images/placeholders/image-not-found.png'
 
 
-def test_resolve_image_url_with_none(app):
-    """Test resolve_image_url with None returns placeholder."""
+@pytest.mark.parametrize("input_value,expected_placeholder", [
+    (None, True),
+    ("", True),
+    (0, True),  # falsy but not None/empty string
+])
+def test_resolve_image_url_edge_cases(app, input_value, expected_placeholder):
+    """Test resolve_image_url with edge cases that should return placeholder."""
     with app.app_context():
-        url = resolve_image_url(None)
+        url = resolve_image_url(input_value)
         assert url == '/static/images/placeholders/image-not-found.png'
 
 
-def test_resolve_image_url_with_empty_string(app):
-    """Test resolve_image_url with empty string returns placeholder."""
-    with app.app_context():
-        url = resolve_image_url("")
-        assert url == '/static/images/placeholders/image-not-found.png'
-
-
-def test_resolve_image_url_with_falsy_value(app):
-    """Test resolve_image_url with falsy values returns placeholder."""
-    with app.app_context():
-        # Test with 0 (falsy but not None/empty string)
-        url = resolve_image_url(0)
-        assert url == '/static/images/placeholders/image-not-found.png'
-
-
-def test_resolve_image_url_with_image_object(app):
-    """Test resolve_image_url with Image object."""
-    with app.app_context():
-        mock_image = MockImage("test.jpg")
-        
-        # Mock get_file_url to return a predictable value
-        with patch('utils.media_utils.get_file_url') as mock_get_file_url:
-            mock_get_file_url.return_value = '/storage/files/test.jpg'
-            url = resolve_image_url(mock_image)
-            
-            mock_get_file_url.assert_called_once_with("test.jpg")
-            assert url == '/storage/files/test.jpg'
-
-
-def test_resolve_image_url_with_filename_string(app):
-    """Test resolve_image_url with filename string."""
+@pytest.mark.parametrize("input_type,input_value,filename", [
+    ("image_object", MockImage("test.jpg"), "test.jpg"),
+    ("filename_string", "photo.png", "photo.png"),
+])
+def test_resolve_image_url_valid_inputs(app, input_type, input_value, filename):
+    """Test resolve_image_url with valid inputs (Image object or filename string)."""
     with app.app_context():
         with patch('utils.media_utils.get_file_url') as mock_get_file_url:
-            mock_get_file_url.return_value = '/storage/files/photo.png'
-            url = resolve_image_url("photo.png")
+            mock_get_file_url.return_value = f'/storage/files/{filename}'
+            url = resolve_image_url(input_value)
             
-            mock_get_file_url.assert_called_once_with("photo.png")
-            assert url == '/storage/files/photo.png'
+            mock_get_file_url.assert_called_once_with(filename)
+            assert url == f'/storage/files/{filename}'
 
 
-def test_resolve_image_url_image_object_no_filename(app):
-    """Test resolve_image_url with Image object that has empty file_name."""
+@pytest.mark.parametrize("filename", [
+    "",
+    None,
+])
+def test_resolve_image_url_image_object_invalid_filename(app, filename):
+    """Test resolve_image_url with Image object that has empty or None file_name."""
     with app.app_context():
-        mock_image = MockImage("")
-        url = resolve_image_url(mock_image)
-        assert url == '/static/images/placeholders/image-not-found.png'
-
-
-def test_resolve_image_url_image_object_none_filename(app):
-    """Test resolve_image_url with Image object that has None file_name."""
-    with app.app_context():
-        mock_image = MockImage(None)
+        mock_image = MockImage(filename)
         url = resolve_image_url(mock_image)
         assert url == '/static/images/placeholders/image-not-found.png'
 
@@ -88,9 +64,6 @@ def test_resolve_image_url_integration_with_storage(app):
     with app.app_context():
         mock_image = MockImage("integration_test.jpg")
         
-        # Don't mock get_file_url to test actual integration
-        # This will use the real get_file_url which requires storage setup
-        # Since we're in a test context, we should mock it
         with patch('utils.media_utils.get_file_url') as mock_get_file_url:
             mock_get_file_url.return_value = 'https://example.com/files/integration_test.jpg'
             url = resolve_image_url(mock_image)
