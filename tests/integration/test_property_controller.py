@@ -4,13 +4,15 @@ import pytest
 from utils.timezone import today_in_app_tz
 
 
-@pytest.mark.usefixtures("admin_client_no_csrf", "job_service")
+@pytest.mark.usefixtures("admin_client_no_csrf", "job_service", "anytown_property", "teamville_property")
 class TestJobListFiltering:
 
     @pytest.fixture(autouse=True)
-    def _inject_fixtures(self, admin_client_no_csrf, job_service):
+    def _inject_fixtures(self, admin_client_no_csrf, job_service, anytown_property, teamville_property):
         self.client = admin_client_no_csrf
         self.job_service = job_service
+        self.anytown_property = anytown_property
+        self.teamville_property = teamville_property
 
     def apply_filters_and_test(self, property_id: int, start_date: date, end_date: date, show_completed: bool):
         url = (
@@ -52,6 +54,8 @@ class TestJobListFiltering:
             assert job.is_complete == job_card_completed, f"Expected job completed status {job.is_complete} but got {job_card_completed} for job {job_id}"
             if not show_completed:
                 assert job.is_complete is False, f"Job {job_id} should not be completed when show_completed=false"
+            assert start_date <= job.display_datetime.date() <= end_date, f"Job {job_id} with date {job.display_date} is outside the filter range {start_date} to {end_date}"
+        return expected_jobs, job_cards
 
     def _date_range_combinations(self) -> list[tuple[date, date]]:
         """Generate all valid ± date range combinations around today."""
@@ -68,12 +72,22 @@ class TestJobListFiltering:
 
     def test_job_filtering_for_property_hide_completed(self):
         """Test that the job filters for a property work correctly."""
-        property_id = 1
         for start_date, end_date in self._date_range_combinations():
-            self.apply_filters_and_test(property_id, start_date, end_date, False)
+            self.apply_filters_and_test(self.anytown_property.id, start_date, end_date, False)
+            self.apply_filters_and_test(self.teamville_property.id, start_date, end_date, False)
 
     def test_job_filtering_for_property_show_completed(self):
         """Test that the job filters for a property work correctly when show_completed=true."""
-        property_id = 1
         for start_date, end_date in self._date_range_combinations():
-            self.apply_filters_and_test(property_id, start_date, end_date, True)
+            self.apply_filters_and_test(self.anytown_property.id, start_date, end_date, True)
+            self.apply_filters_and_test(self.teamville_property.id, start_date, end_date, False)
+    
+    def test_specific_filters(self):
+        """Test specific filter combinations that are likely to cause edge cases."""
+        property_id = 1
+        base_date = today_in_app_tz()
+        # Test with start date in the future and end date far in the future
+        expected_jobs, job_cards = self.apply_filters_and_test(property_id, base_date, base_date + timedelta(days=30), True)
+        assert len(expected_jobs) == 10
+        assert len(job_cards) == 10
+        
