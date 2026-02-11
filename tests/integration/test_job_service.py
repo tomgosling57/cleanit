@@ -2,7 +2,7 @@
 from datetime import datetime
 
 from config import DATETIME_FORMATS
-from utils.timezone import from_app_tz, today_in_app_tz
+from utils.timezone import from_app_tz, get_app_timezone, today_in_app_tz
 
 
 class TestJobServiceTimezoneHandling:
@@ -13,7 +13,7 @@ class TestJobServiceTimezoneHandling:
             'date': '2024-07-01',
             'start_time': '14:00',
             'end_time': '16:00',
-            'arrival_datetime': '2024-07-09 13:30',
+            'arrival_datetime': datetime(2024, 7, 10, 14, 30, tzinfo=get_app_timezone()),
             'property_id': 1, 
             'description': 'Test job with timezone'
         }
@@ -23,7 +23,7 @@ class TestJobServiceTimezoneHandling:
         assert new_job is not None
         expected_start_datetime = from_app_tz(datetime.fromisoformat(f"{job_data['date']}T{job_data['start_time']}"))
         expected_end_datetime = from_app_tz(datetime.fromisoformat(f"{job_data['date']}T{job_data['end_time']}"))
-        expected_arrival_datetime = from_app_tz(datetime.fromisoformat(job_data['arrival_datetime']))
+        expected_arrival_datetime = job_data['arrival_datetime']
         new_job_start_datetime = datetime.combine(new_job.date, new_job.start_time, tzinfo=expected_start_datetime.tzinfo)
         new_job_end_datetime = datetime.combine(new_job.date, new_job.end_time, tzinfo=expected_start_datetime.tzinfo)
         new_job_arrival_datetime = new_job.arrival_datetime.replace(tzinfo=expected_start_datetime.tzinfo)
@@ -38,7 +38,7 @@ class TestJobServiceTimezoneHandling:
             'date': '2024-07-02',
             'start_time': '15:00',
             'end_time': '17:00',
-            'arrival_datetime': '2024-07-02 14:30',
+            'arrival_datetime': datetime(2024, 7, 10, 14, 30, tzinfo=get_app_timezone()),
             'description': 'Updated job with timezone'
         }
         updated_job = job_service.update_job(job_id, job_data)
@@ -46,7 +46,7 @@ class TestJobServiceTimezoneHandling:
         assert updated_job is not None
         expected_start_datetime = from_app_tz(datetime.fromisoformat(f"{job_data['date']}T{job_data['start_time']}"))
         expected_end_datetime = from_app_tz(datetime.fromisoformat(f"{job_data['date']}T{job_data['end_time']}"))
-        expected_arrival_datetime = from_app_tz(datetime.fromisoformat(job_data['arrival_datetime']))
+        expected_arrival_datetime = job_data['arrival_datetime']
         updated_job_start_datetime = datetime.combine(updated_job.date, updated_job.start_time, tzinfo=expected_start_datetime.tzinfo)
         updated_job_end_datetime = datetime.combine(updated_job.date, updated_job.end_time, tzinfo=expected_start_datetime.tzinfo)
         updated_job_arrival_datetime = updated_job.arrival_datetime.replace(tzinfo=expected_start_datetime.tzinfo)
