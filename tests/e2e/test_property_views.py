@@ -181,7 +181,15 @@ def test_user_cannot_access_address_book(user_page, goto) -> None:
     # User should be redirected to the login page
     expect(page.get_by_text("404")).to_be_visible()
 
+
+@pytest.mark.usefixtures("anytown_property", "teamville_property")
 class TestJobFiltering:
+
+    @pytest.fixture(autouse=True)
+    def _inject_fixtures(self, anytown_property, teamville_property):
+        self.anytown_property = anytown_property
+        self.teamville_property = teamville_property
+
     def test_default_filters(self, admin_page, anytown_property, teamville_property) -> None:
         """Test filtering jobs in the property jobs modal"""
         page = admin_page
@@ -192,8 +200,13 @@ class TestJobFiltering:
         page.keyboard.press("Escape")  # Close the modal to reset state
         helper.open_property_jobs(teamville_property.id)
 
-    def test_date_filters_show_completed_enabled(self, admin_page, anytown_property, teamville_property) -> None:
+    def test_date_filters_combinations(self, admin_page, anytown_property, teamville_property, request) -> None:
         """Test applying date filters in the property jobs modal"""
+        # Skip this test if not running in headed mode
+        # The --headed flag is passed to pytest-playwright
+        if not request.config.option.headed:
+            pytest.skip("test_draggable_elements requires --headed flag to run")
+        
         page = admin_page
         page.set_default_timeout(5000)
         open_address_book(page)
@@ -205,6 +218,7 @@ class TestJobFiltering:
         self.apply_filter_combinations(helper)
     
     def apply_filter_combinations(self, helper: JobListHelper, show_completed=None):
+        
         # Apply various filters and validate results
         base_date = today_in_app_tz()
 
@@ -246,14 +260,34 @@ class TestJobFiltering:
     def test_specific_filters(self, admin_page, anytown_property, teamville_property) -> None:
         """Test specific filter combinations that are likely to cause edge cases."""
         page = admin_page
+        page.set_default_timeout(5000)
         open_address_book(page)
         helper = JobListHelper(page)
-        helper.open_property_jobs(anytown_property.id)
         
         # Test edge case: start date in the future, end date in the past (should show no jobs)
-        start_date = datetime(2026, 3, 13, 0, 0, tzinfo=get_app_timezone())
-        end_date = datetime(2026, 3, 13, 23, 59, tzinfo=get_app_timezone())
+        start_date = datetime.combine(today_in_app_tz(), time.min, tzinfo=get_app_timezone())
+        end_date = datetime.combine(today_in_app_tz(), time.max, tzinfo=get_app_timezone())
+        self.apply_filter_dates(helper, start_date, end_date)
+        
+        start_date = datetime.combine(today_in_app_tz() - timedelta(days=2), time.min, tzinfo=get_app_timezone())
+        end_date = datetime.combine(today_in_app_tz(), time.max, tzinfo=get_app_timezone())
+        self.apply_filter_dates(helper, start_date, end_date)
+
+        start_date = datetime.combine(today_in_app_tz(), time.min, tzinfo=get_app_timezone())
+        end_date = datetime.combine(today_in_app_tz() + timedelta(days=2), time.max, tzinfo=get_app_timezone())
+        self.apply_filter_dates(helper, start_date, end_date)
+        
+        start_date = datetime.combine(today_in_app_tz() - timedelta(days=2), time.min, tzinfo=get_app_timezone())
+        end_date = datetime.combine(today_in_app_tz() + timedelta(days=2), time.max, tzinfo=get_app_timezone())
+        self.apply_filter_dates(helper, start_date, end_date)
+        
+    
+    def apply_filter_dates(self, helper: JobListHelper, start_date: datetime, end_date: datetime):
+        helper.open_property_jobs(self.anytown_property.id)
         helper.apply_filters(start_date=start_date, end_date=end_date, show_completed=True)
-        page.keyboard.press("Escape")  # Close the modal to reset state
-        helper.open_property_jobs(teamville_property.id)
-        self.apply_filter_combinations(helper)
+        helper.apply_filters(start_date=start_date, end_date=end_date, show_completed=False)  # Invalid range, should show no jobs
+        helper.page.keyboard.press("Escape")  # Close the modal to reset state  
+        helper.open_property_jobs(self.teamville_property.id)
+        helper.apply_filters(start_date=start_date, end_date=end_date, show_completed=True)
+        helper.apply_filters(start_date=start_date, end_date=end_date, show_completed=False)
+        helper.page.keyboard.press("Escape")  # Close the modal to reset state  

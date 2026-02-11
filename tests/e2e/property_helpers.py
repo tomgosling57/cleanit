@@ -113,6 +113,7 @@ class JobListHelper:
     def validate_filtered_jobs(self) -> None:
         """Helper to validate that jobs in the job list fall within the specified date range"""
         job_list = self.page.locator("#job-list")
+        job_list.wait_for(state="visible")
         filters_container = self.page.locator("#date-filter-container")
         # Convert dates to datetime objects
         start_date = self.start_datetime
@@ -129,7 +130,10 @@ class JobListHelper:
             end_date=end_date,
             show_completed=show_completed
         )
-        filtered_jobs_locators = job_list.locator(".job-card").all()
+        filtered_jobs_locators = job_list.locator(".job-card")
+        for i in range(filtered_jobs_locators.count()):
+            filtered_jobs_locators.nth(i).wait_for(state="visible")
+        filtered_jobs_locators = filtered_jobs_locators.all()
         rendered_job_ids = [int(job.get_attribute("data-job-id")) for job in filtered_jobs_locators]
         expected_job_ids = [job.id for job in expected_jobs]
         # Compare the number of jobs displayed to the number returned from the service
@@ -232,7 +236,11 @@ class JobListHelper:
         
         self.tick_show_completed_checkbox(disable=not show_completed)
 
-        self.page.locator("#date-filter-container").locator(".filter-actions button.btn-primary").click()
+        # Wait for the filtered jobs response before proceeding
+        with self.page.expect_response(f"**/property/{self.property_id}/jobs/filtered**"):
+            self.page.locator("#date-filter-container").locator(".filter-actions button.btn-primary").click()
+        # Wait for network idle to ensure HTMX request completes
+        self.page.wait_for_load_state('networkidle')
         expected_jobs, _ = self.validate_filtered_jobs()
         if len(expected_jobs) > 0:
             self.validate_job_list_date_dividers()

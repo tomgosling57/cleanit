@@ -100,9 +100,9 @@ class JobViewsTestHelper:
 
         # Validate arrival indicators
         if expected_job.arrival_date_in_app_tz == today_in_app_tz():
-            expect(popup.locator("#arrival-indicator")).to_have_text("Same Day Arrival")
+            expect(self.page.locator(".job-modal #arrival-indicator")).to_have_text("Same Day Arrival")
         elif expected_job.arrival_date_in_app_tz == today_in_app_tz() + timedelta(days=1):
-            expect(popup.locator("#arrival-indicator")).to_have_text("Next Day Arrival")
+            expect(self.page.locator(".job-modal #arrival-indicator")).to_have_text("Next Day Arrival")
 
     def open_job_details(self, job_id):
         """Opens the job details model for the given job id and returns the modal locator."""
