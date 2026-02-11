@@ -97,12 +97,15 @@ class JobViewsTestHelper:
         expect(popup.locator("#property_address")).to_have_text(property_obj.address)
         expect(popup.locator("#property_address")).to_have_attribute("data-property-id", str(property_obj.id))
         expect(popup.locator("#access_notes")).to_have_text(property_obj.access_notes)
-
         # Validate arrival indicators
         if expected_job.arrival_date_in_app_tz == today_in_app_tz():
-            expect(self.page.locator(".job-modal #arrival-indicator")).to_have_text("Same Day Arrival")
+            assert expected_job.same_day_arrival, f"Job {expected_job.id}: Arrival date {expected_job.arrival_date_in_app_tz} is not the same as job date {expected_job.date_in_app_tz}"
+            badge = popup.locator("#same-day-arrival-badge")
+            expect(badge).to_have_text("Same Day Arrival")
         elif expected_job.arrival_date_in_app_tz == today_in_app_tz() + timedelta(days=1):
-            expect(self.page.locator(".job-modal #arrival-indicator")).to_have_text("Next Day Arrival")
+            assert expected_job.next_day_arrival, f"Job {expected_job.id}: Arrival date {expected_job.arrival_date_in_app_tz} is not exactly 1 day after job date {expected_job.date_in_app_tz}"
+            badge = popup.locator("#next-day-arrival-badge")
+            expect(badge).to_have_text("Next Day Arrival")
 
     def open_job_details(self, job_id):
         """Opens the job details model for the given job id and returns the modal locator."""
@@ -124,7 +127,7 @@ class JobViewsTestHelper:
         expect(self.page.locator("#team-timetable-view")).to_be_visible()
 
     def open_create_job_form(self):
-        """Opens the create job form modal and returns the modal locator."""
+        
         with self.page.expect_response("**/jobs/job/create**"):
             self.page.wait_for_load_state('networkidle')
             self.page.get_by_text("Create Job").click()
