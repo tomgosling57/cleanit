@@ -5,9 +5,14 @@ from services.job_service import JobService
 from services.assignment_service import AssignmentService
 from flask_login import current_user
 from services.team_service import TeamService
-from .timezone import today_in_app_tz
+from .timezone import app_now, today_in_app_tz
 
-
+INVALID_DATE_OR_TIME_FORMAT = 'Invalid date or time format: {}. Please use the datepicker for date and ' + DATETIME_FORMATS["TIME_FORMAT"] + ' for time.'
+INVALID_ARRIVAL_DATE_TIME_FORMAT = 'Invalid datetime format: {}. Please use the datetime picker.'
+ARRIVAL_DATETIME_IN_PAST = 'Arrival date and time cannot be in the past.'
+START_DATETIME_IN_PAST = 'Start date and time cannot be in the past.'
+END_DATETIME_IN_PAST = 'End date and time cannot be in the past.'
+NON_SEQUENTIAL_START_AND_END = 'Start date and time must be before end date and time.'
 class JobHelper:
     def __init__(self, job_service: JobService, team_service: TeamService, assignment_service: AssignmentService):
         """
@@ -52,12 +57,18 @@ class JobHelper:
     def parse_job_datetime(self, date_str, start_time_str, end_time_str, arrival_datetime_str):
         """Parses date and time strings into datetime objects."""
         job_arrival_datetime = None
-        job_date = datetime.strptime(date_str, DATETIME_FORMATS["DATE_FORMAT"]).date()
-        job_start_time = datetime.strptime(start_time_str, DATETIME_FORMATS["TIME_FORMAT"]).time()
-        job_end_time = datetime.strptime(end_time_str, DATETIME_FORMATS["TIME_FORMAT"]).time()
-
-        if job_start_time and job_end_time and job_start_time >= job_end_time:
-            raise ValueError('Start time must be before end time.')
+        i = ''
+        try:
+            i = date_str
+            job_date = datetime.strptime(date_str, DATETIME_FORMATS["DATE_FORMAT"]).date()
+            i = start_time_str
+            job_start_time = datetime.strptime(start_time_str, DATETIME_FORMATS["TIME_FORMAT"]).time()
+            i = end_time_str
+            job_end_time = datetime.strptime(end_time_str, DATETIME_FORMATS["TIME_FORMAT"]).time()
+            job_start_datetime = datetime.combine(job_date, job_start_time, tzinfo=app_now().tzinfo)
+            job_end_datetime = datetime.combine(job_date, job_end_time, tzinfo=app_now().tzinfo)
+        except ValueError as e:
+            raise ValueError(INVALID_DATE_OR_TIME_FORMAT.format(i)) from e
 
         if arrival_datetime_str:
             # Assuming arrival_datetime_str might come in ISO format or a specific DATETIME_FORMAT
@@ -65,12 +76,21 @@ class JobHelper:
             try:
                 job_arrival_datetime = datetime.fromisoformat(arrival_datetime_str)
             except ValueError:
-                if "DATETIME_FORMAT" in DATETIME_FORMATS:
+                try:
                     job_arrival_datetime = datetime.strptime(arrival_datetime_str, DATETIME_FORMATS["DATETIME_FORMAT"])
-                else:
-                    raise ValueError('Invalid arrival date/time format.')
-
-        
+                except ValueError as e:
+                    raise ValueError(INVALID_ARRIVAL_DATE_TIME_FORMAT.format(arrival_datetime_str)) from e
+                
+        if job_start_datetime and job_end_datetime and job_start_datetime >= job_end_datetime:
+            raise ValueError(NON_SEQUENTIAL_START_AND_END)
+        if job_start_datetime <= app_now():
+            raise ValueError(START_DATETIME_IN_PAST)
+        if job_end_datetime <= app_now():
+            raise ValueError(END_DATETIME_IN_PAST)
+    
+        if job_arrival_datetime and job_arrival_datetime <= app_now():
+            raise ValueError(ARRIVAL_DATETIME_IN_PAST)
+    
         return job_date, job_start_time, job_end_time, job_arrival_datetime
 
     def prepare_job_data(self, parsed_data, notes, job_type, property_id):
