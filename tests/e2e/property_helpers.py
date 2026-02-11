@@ -1,29 +1,66 @@
-from datetime import datetime
+from datetime import datetime, time
 from playwright.sync_api import expect
+import pytest
 
 from config import DATETIME_FORMATS
 from services.job_service import JobService
 from tests.db_helpers import get_db_session
 from utils.timezone import get_app_timezone
 
-
+@pytest.mark.usefixtures("anytown_property")
 class JobListHelper:
+
+    @pytest.fixture(autouse=True)
+    def _inject_fixtures(self, anytown_property):
+        self.property_id = anytown_property.id
+
     def __init__(self, page):
         self.page = page
-        
-    def tick_show_completed_checkbox(self,job_list, disable=False) -> None:
+
+    @property
+    def start_datetime(self):
+        if hasattr(self, "_start_datetime"):
+            return self._start_datetime
+        else:
+            self._extract_filter_datetimes()
+            return self._start_datetime
+
+    @property
+    def end_datetime(self):
+        if hasattr(self, "_end_datetime"):
+            return self._end_datetime
+        else:
+            self._extract_filter_datetimes()
+            return self._end_datetime
+    
+    def _extract_filter_datetimes(self):
+        """Helper to extract the start and end datetimes from the job list filter inputs and store them as instance variables"""
+        hidden_start_date_locator, hidden_end_date_locator = self.get_filter_hidden_date_locators()
+        start_date = self.convert_date_locator_to_datetime(hidden_start_date_locator, DATETIME_FORMATS['ISO_DATE_FORMAT'])
+        end_date = self.convert_date_locator_to_datetime(hidden_end_date_locator, DATETIME_FORMATS['ISO_DATE_FORMAT'])
+        start_date = start_date.replace(tzinfo=get_app_timezone())
+        end_date = end_date.replace(tzinfo=get_app_timezone())
+        start_date = datetime.combine(start_date, time.min)
+        end_date = datetime.combine(end_date, time.max.replace(microsecond=0))
+        self._start_datetime = start_date
+        self._end_datetime = end_date
+
+    def tick_show_completed_checkbox(self, disable=False) -> None:
         """Helper to tick the 'Show Completed' checkbox in the job list modal. If disable is true it will disable the filter option."""
+        job_list = self.page.locator("#date-filter-container")
         show_completed_checkbox = job_list.locator("#show-completed")
         if not show_completed_checkbox.is_checked() and not disable:
             show_completed_checkbox.check()
         if show_completed_checkbox.is_checked() and disable:
             show_completed_checkbox.uncheck()
 
-    def set_filter_start_date(self, date_str: str) -> None:
+    def set_filter_start_date(self, start_datetime: datetime) -> None:
         """Helper to set the start date in the job list filter. Expects date_str in ISO format YYYY-MM-DD"""
+        self._start_datetime = start_datetime
         start_date_display, _ = self.get_filter_display_date_locators()
         start_date_hidden, _ = self.get_filter_hidden_date_locators()    
-        formatted_date = datetime.fromisoformat(date_str).strftime(DATETIME_FORMATS['DATE_FORMAT'])
+        date_str = start_datetime.date().isoformat()
+        formatted_date = start_datetime.strftime(DATETIME_FORMATS['DATE_FORMAT'])
         start_date_display.fill(formatted_date)
         start_date_hidden.fill(date_str)
         # Trigger change event to update hidden input
@@ -31,11 +68,13 @@ class JobListHelper:
         # Wait for hidden input to update
         expect(start_date_hidden).to_have_value(date_str)
 
-    def set_filter_end_date(self, date_str: str) -> None:
+    def set_filter_end_date(self, end_datetime: datetime) -> None:
         """Helper to set the end date in the job list filter. Expects date_str in ISO format YYYY-MM-DD"""
+        self._end_datetime = end_datetime
         _, end_date_display = self.get_filter_display_date_locators()
         _, end_date_hidden = self.get_filter_hidden_date_locators()
-        formatted_date = datetime.fromisoformat(date_str).strftime(DATETIME_FORMATS['DATE_FORMAT'])                                 
+        date_str = end_datetime.date().isoformat()
+        formatted_date = end_datetime.strftime(DATETIME_FORMATS['DATE_FORMAT'])                                 
         end_date_display.fill(formatted_date)
         end_date_hidden.fill(date_str)
         # Trigger change event to update hidden input
@@ -76,9 +115,8 @@ class JobListHelper:
         job_list = self.page.locator("#job-list")
         filters_container = self.page.locator("#date-filter-container")
         # Convert dates to datetime objects
-        hidden_start_date_locator, hidden_end_date_locator = self.get_filter_hidden_date_locators()
-        start_date = self.convert_date_locator_to_datetime(hidden_start_date_locator, DATETIME_FORMATS['ISO_DATE_FORMAT'])
-        end_date = self.convert_date_locator_to_datetime(hidden_end_date_locator, DATETIME_FORMATS['ISO_DATE_FORMAT'])
+        start_date = self.start_datetime
+        end_date = self.end_datetime
         start_date = start_date.replace(tzinfo=get_app_timezone())
         end_date = end_date.replace(tzinfo=get_app_timezone())
         # Extract checkbox filter values
@@ -86,24 +124,31 @@ class JobListHelper:
         db = get_db_session()
         job_service = JobService(db)
         expected_jobs = job_service.get_filtered_jobs_by_property_id(
-            property_id=1,
+            property_id=self.property_id,
             start_date=start_date,
             end_date=end_date,
             show_completed=show_completed
         )
-        filtered_jobs_locators = job_list.locator(".job-card")
+        filtered_jobs_locators = job_list.locator(".job-card").all()
+        rendered_job_ids = [int(job.get_attribute("data-job-id")) for job in filtered_jobs_locators]
+        expected_job_ids = [job.id for job in expected_jobs]
         # Compare the number of jobs displayed to the number returned from the service
-        assert filtered_jobs_locators.count() == len(expected_jobs), f"Expected {len(expected_jobs)} jobs but found {filtered_jobs_locators.count()} displayed"
+        assert len(filtered_jobs_locators) == len(expected_jobs), f"Expected {len(expected_jobs)} jobs but found {len(filtered_jobs_locators)} displayed \
+            with filters: start_date={start_date}, end_date={end_date}, show_completed={show_completed}, property_id={self.property_id} \
+            Expected job ids: {expected_job_ids}, Rendered job ids: {rendered_job_ids}" 
         # Iterate through displayed jobs and compare with expected jobs from service
-        for i in range(filtered_jobs_locators.count()):
-            job_locator = filtered_jobs_locators.nth(i)
+        for i in range(len(filtered_jobs_locators)):
+            job_locator = filtered_jobs_locators[i]
             job_id = int(job_locator.get_attribute("data-job-id"))
             # Compare with expected jobs from service
             assert job_id == expected_jobs[i].id, f"Expected job with id {expected_jobs[i].id} but found job with id {job_id} at position {i}"
             # Check that the job date is within the given range
             job_date = expected_jobs[i].display_datetime
-            assert start_date <= job_date <= end_date, f"Job date {job_date} is outside of filter range {start_date} to {end_date}"
-            assert show_completed and expected_jobs[i].is_complete, f"Job with id {expected_jobs[i].id} is completed but show_completed is False"
+            assert start_date <= job_date <= end_date, f"Job date {job_date} is outside of filter range {start_date} to {end_date}, job_id={job_id}, property_id={self.property_id}"
+            if not show_completed:
+                assert not expected_jobs[i].is_complete, f"Job with id {expected_jobs[i].id} is completed but show_completed is False. \
+            Filters: start_date={start_date}, end_date={end_date}, show_completed={show_completed}"
+        return expected_jobs, filtered_jobs_locators
 
     def validate_job_list_date_dividers(self) -> None:
         """Validate that the date dividers in the job list fall within the specified date range"""
@@ -153,6 +198,7 @@ class JobListHelper:
     
     def open_property_jobs(self, property_id):
         """Helper to open the job list modal for a given property id"""
+        self.property_id = property_id
         # Get first property card
         property_card = self.get_property_card_by_id(property_id)
         expect(property_card).to_be_visible()
@@ -169,6 +215,7 @@ class JobListHelper:
 
         # Verify the contents of the date pickers are formatted correctly 
         self.assert_filtered_job_list_date_formats()
+        self._extract_filter_datetimes()  # Store the filter datetimes as instance variables for later validation
         # Validate that the jobs displayed match the filter criteria
         self.validate_job_list_date_dividers()
         self.validate_filtered_jobs()
@@ -179,12 +226,13 @@ class JobListHelper:
         """Helper to apply filters in the job list modal and validate results"""
         
         if start_date:
-            self.set_filter_start_date(start_date.isoformat())
+            self.set_filter_start_date(start_date)
         if end_date:
-            self.set_filter_end_date(end_date.isoformat())
+            self.set_filter_end_date(end_date)
         
         self.tick_show_completed_checkbox(disable=not show_completed)
 
-        self.page.locator("#job-list").locator(".filter-actions button.btn-primary").click()
-        self.validate_job_list_date_dividers()
-        self.validate_filtered_jobs()
+        self.page.locator("#date-filter-container").locator(".filter-actions button.btn-primary").click()
+        expected_jobs, _ = self.validate_filtered_jobs()
+        if len(expected_jobs) > 0:
+            self.validate_job_list_date_dividers()

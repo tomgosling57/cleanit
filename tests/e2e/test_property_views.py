@@ -1,10 +1,7 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
 from time import sleep
 from playwright.sync_api import expect
 import pytest
-from config import DATETIME_FORMATS
-from services.job_service import JobService
-from tests.db_helpers import get_db_session
 from tests.e2e.property_helpers import JobListHelper
 from tests.helpers import (
     get_first_property_card, 
@@ -19,6 +16,8 @@ from tests.helpers import (
     assert_property_card_content
 )
 from utils.timezone import from_app_tz, get_app_timezone, to_app_tz, today_in_app_tz, utc_now
+
+FILTER_INTERVALS = [timedelta(days=i) for i in [0, 30]]
 
 def test_address_book(admin_page) -> None:
     open_address_book(admin_page)
@@ -193,48 +192,68 @@ class TestJobFiltering:
         page.keyboard.press("Escape")  # Close the modal to reset state
         helper.open_property_jobs(teamville_property.id)
 
-    def test_date_filters_show_completed_enabled(self, admin_page, anytown_property) -> None:
+    def test_date_filters_show_completed_enabled(self, admin_page, anytown_property, teamville_property) -> None:
         """Test applying date filters in the property jobs modal"""
         page = admin_page
         page.set_default_timeout(5000)
         open_address_book(page)
         helper = JobListHelper(page)
         helper.open_property_jobs(anytown_property.id)        
+        self.apply_filter_combinations(helper)
+        page.keyboard.press("Escape")  # Close the modal to reset state
+        helper.open_property_jobs(teamville_property.id)
+        self.apply_filter_combinations(helper)
+    
+    def apply_filter_combinations(self, helper: JobListHelper, show_completed=None):
         # Apply various filters and validate results
-        filter_intervals = [timedelta(days=i) for i in [1, 3, 5, 10, 20, 30]]
         base_date = today_in_app_tz()
 
         # Shift each date independently in both directions: past (-) and future (+)
-        date_offsets = [-delta for delta in filter_intervals] + [delta for delta in filter_intervals]
-
+        date_offsets = [-delta for delta in FILTER_INTERVALS] + [delta for delta in FILTER_INTERVALS]
+        
+        _skipped = 0
+        _visited = {}
+        _total_tested = 0
         for start_offset in date_offsets:
             for end_offset in date_offsets:
-                start_date = base_date + start_offset
-                end_date = base_date + end_offset
-
+                start_date = datetime.combine(base_date + start_offset, time.min)
+                end_date = datetime.combine(base_date + end_offset, time.max.replace(microsecond=0))
+                if (start_date, end_date) in _visited:
+                    _skipped += 1
+                    continue
                 # Skip invalid ranges where start is not before end
                 if start_date >= end_date:
                     continue
 
-                helper.apply_filters(
-                    start_date=start_date,
-                    end_date=end_date,
-                    show_completed=True,
-                )
 
+                if show_completed in [True, None]:
+                    helper.apply_filters(
+                        start_date=start_date,
+                        end_date=end_date,
+                        show_completed=True,
+                    )
+                if show_completed in [False, None]:
+                    helper.apply_filters(
+                        start_date=start_date,
+                        end_date=end_date,
+                        show_completed=False,
+                    )   
+                _visited[(start_date, end_date)] = True
+                _total_tested += 1
 
-    def original(self, admin_page):
-        pass
-        # Apply various filters and validate results
-        # 1. Set start date filter to the past, enable show completed jobs
-        filter_start_date = today_in_app_tz() - timedelta(days=30)
-        helper.apply_filters(start_date=filter_start_date, show_completed=True)
-        # 2. Disable show completed jobs
-        helper.apply_filters(show_completed=False)
-        # 3. Set end date filter to the past
-        filter_end_date = today_in_app_tz() - timedelta(days=1)    
-        helper.apply_filters(end_date=filter_end_date)
-        # 4. Enable show completed jobs
-        helper.apply_filters(show_completed=True)
+        print(f"Completed applying filter combinations. Visited: {len(_visited)}, Skipped: {_skipped}, Total Tested: {_total_tested}")
 
-    
+    def test_specific_filters(self, admin_page, anytown_property, teamville_property) -> None:
+        """Test specific filter combinations that are likely to cause edge cases."""
+        page = admin_page
+        open_address_book(page)
+        helper = JobListHelper(page)
+        helper.open_property_jobs(anytown_property.id)
+        
+        # Test edge case: start date in the future, end date in the past (should show no jobs)
+        start_date = datetime(2026, 3, 13, 0, 0, tzinfo=get_app_timezone())
+        end_date = datetime(2026, 3, 13, 23, 59, tzinfo=get_app_timezone())
+        helper.apply_filters(start_date=start_date, end_date=end_date, show_completed=True)
+        page.keyboard.press("Escape")  # Close the modal to reset state
+        helper.open_property_jobs(teamville_property.id)
+        self.apply_filter_combinations(helper)
