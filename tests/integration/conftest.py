@@ -436,5 +436,16 @@ def media_service(app):
     with app.app_context():
         yield MediaService(app.config['SQLALCHEMY_SESSION']())
 
+@pytest.fixture
+def anytown_property(app):
+    with app.app_context():
+        db_session = get_db()
+        property = db_session.query(Property).filter_by(address="123 Main St, Anytown").first()
+        return property
 
-
+@pytest.fixture
+def teamville_property(app):
+    with app.app_context():
+        db_session = get_db()
+        property = db_session.query(Property).filter_by(address="456 Oak Ave, Teamville").first()
+        return property
