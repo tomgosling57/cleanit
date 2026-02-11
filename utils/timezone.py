@@ -50,6 +50,19 @@ def utc_now() -> datetime:
     """
     return datetime.now(timezone.utc)
 
+def app_now() -> datetime:
+    """
+    Get current datetime in application timezone.
+    
+    Returns:
+        datetime: Current datetime in application timezone
+        
+    Example:
+        >>> now = app_now()
+        >>> now.tzinfo
+        zoneinfo.ZoneInfo('Australia/Melbourne')  # If APP_TIMEZONE is set to 'Australia/Melbourne'
+    """
+    return to_app_tz(utc_now())
 
 def to_app_tz(dt: datetime) -> datetime:
     """
