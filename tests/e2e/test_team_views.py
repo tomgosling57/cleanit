@@ -157,10 +157,10 @@ def test_delete_team_error_handling(admin_page, server_url) -> None:
 @pytest.mark.db_reset
 def test_draggable_elements(admin_page, request) -> None:
     """Tests that team members are draggable and 'No members in this team' message is not draggable."""
-    # # Skip this test if not running in headed mode
-    # # The --headed flag is passed to pytest-playwright
-    # if not request.config.option.headed:
-    #     pytest.skip("test_draggable_elements requires --headed flag to run")
+    # Skip this test if not running in headed mode
+    # The --headed flag is passed to pytest-playwright
+    if not request.config.option.headed:
+        pytest.skip("--headed flag required to run")
     
     page = admin_page
     setup_team_page(page)

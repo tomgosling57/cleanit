@@ -202,11 +202,11 @@ class TestJobFiltering:
 
     def test_date_filters_combinations(self, admin_page, anytown_property, teamville_property, request) -> None:
         """Test applying date filters in the property jobs modal"""
-        # Skip this test if not running in headed mode
-        # The --headed flag is passed to pytest-playwright
-        if not request.config.option.headed:
-            pytest.skip("test_draggable_elements requires --headed flag to run")
-        
+        # # Skip this test if not running in headed mode
+        # # The --headed flag is passed to pytest-playwright
+        # if not request.config.option.headed:
+        #     pytest.skip("--headed flag required to run")
+    
         page = admin_page
         page.set_default_timeout(5000)
         open_address_book(page)
