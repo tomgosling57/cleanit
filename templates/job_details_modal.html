@@ -102,10 +102,10 @@
     <div class="status-actions">
         <div class="job-statuses">
             {% include 'job_status_fragment.html' %}
-            {% if job.arrival_datetime and job.arrival_datetime.date() == job.date %}
-            <div id="arrival-indicator" class="job-status-badge red">Same Day Arrival</div>
-            {% elif job.arrival_datetime and (job.arrival_datetime.date() - job.date).days == 1 %}
-            <div id="arrival-indicator" class="job-status-badge yellow">Next Day Arrival</div>
+            {% if job.arrival_datetime and job.same_day_arrival %}
+            <div id="same-day-arrival-badge" class="job-status-badge red">Same Day Arrival</div>
+            {% elif job.arrival_datetime and job.next_day_arrival %}
+            <div id="next-day-arrival-badge" class="job-status-badge yellow">Next Day Arrival</div>
             {% endif %}
             {% if job.description %}
             <div class="job-status-badge red">See Notes</div>
