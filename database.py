@@ -252,6 +252,14 @@ class Job(Base):
         if include_report:
             data['report'] = self.report
         return data
+
+    @hybrid_property
+    def start_datetime(self):
+        return datetime.combine(self.date, self.start_time)
+
+    @hybrid_property
+    def end_datetime(self):
+        return datetime.combine(self.date, self.end_time)
     
     @hybrid_property
     def duration(self):
