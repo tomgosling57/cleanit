@@ -20,6 +20,8 @@ class JobViewsTestHelper:
         self.assignment_service = AssignmentService(self.db)
         self.job_service = JobService(self.db)
 
+    def __del__(self):
+        self.db.close()
 
     def validate_form_auto_fill(self, job_id) -> None:
         """Validates the input values of a job update/creation form against the database values. 

@@ -141,6 +141,7 @@ def admin_user(app):
     with app.app_context():
         db_session = get_db()
         user = db_session.query(User).filter_by(role="admin").first()
+        db_session.close()
         return user
 
 @pytest.fixture
@@ -414,38 +415,64 @@ def seeded_test_data(app):
 @pytest.fixture
 def job_service(app):
     with app.app_context():
-        yield JobService(app.config['SQLALCHEMY_SESSION']())
+        session = app.config['SQLALCHEMY_SESSION']()
+        try:
+            yield JobService(session)
+        finally:
+            session.close()
 
 @pytest.fixture
 def assignment_service(app):
     with app.app_context():
-        yield AssignmentService(app.config['SQLALCHEMY_SESSION']())
+        session = app.config['SQLALCHEMY_SESSION']()
+        try:
+            yield AssignmentService(session)
+        finally:
+            session.close()
 
 @pytest.fixture
 def user_service(app):
     with app.app_context():
-        yield UserService(app.config['SQLALCHEMY_SESSION']())
+        session = app.config['SQLALCHEMY_SESSION']()
+        try:
+            yield UserService(session)
+        finally:
+            session.close()
 
 @pytest.fixture
 def property_service(app):
     with app.app_context():
-        yield PropertyService(app.config['SQLALCHEMY_SESSION']())
+        session = app.config['SQLALCHEMY_SESSION']()
+        try:
+            yield PropertyService(session)
+        finally:
+            session.close()
 
 @pytest.fixture
 def media_service(app):
     with app.app_context():
-        yield MediaService(app.config['SQLALCHEMY_SESSION']())
+        session = app.config['SQLALCHEMY_SESSION']()
+        try:
+            yield MediaService(session)
+        finally:
+            session.close()
 
 @pytest.fixture
 def anytown_property(app):
     with app.app_context():
         db_session = get_db()
-        property = db_session.query(Property).filter_by(address="123 Main St, Anytown").first()
-        return property
+        try:
+            property = db_session.query(Property).filter_by(address="123 Main St, Anytown").first()
+            return property
+        finally:
+            db_session.close()
 
 @pytest.fixture
 def teamville_property(app):
     with app.app_context():
         db_session = get_db()
-        property = db_session.query(Property).filter_by(address="456 Oak Ave, Teamville").first()
-        return property
+        try:
+            property = db_session.query(Property).filter_by(address="456 Oak Ave, Teamville").first()
+            return property
+        finally:
+            db_session.close()

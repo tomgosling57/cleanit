@@ -19,7 +19,7 @@ from requests import get
 
 
 def docker_containers_running():
-    """Check if required Docker containers are running."""
+    b"""Check if required Docker containers are running."""
     try:
         result = subprocess.run(
             ['docker', 'compose', 'ps', '--services', '--filter', 'status=running'],
@@ -225,6 +225,7 @@ def admin_user():
     """
     db_session = get_db_session()
     user = db_session.query(User).filter_by(role="admin").first()
+    db_session.close()
     return user
 
 
@@ -235,6 +236,7 @@ def supervisor_user():
     """
     db_session = get_db_session()
     user = db_session.query(User).filter_by(role="supervisor").first()
+    db_session.close()
     return user
 
 
@@ -245,6 +247,7 @@ def user_user():
     """
     db_session = get_db_session()
     user = db_session.query(User).filter_by(role="user").first()
+    db_session.close()
     return user
 
 @pytest.fixture
@@ -254,6 +257,7 @@ def team_leader_user():
     """
     db_session = get_db_session()
     user = db_session.query(User).filter(User.is_team_leader == True).filter(User.role == "user").first()
+    db_session.close()
     return user
 
 @pytest.fixture
@@ -263,6 +267,7 @@ def anytown_property():
     """
     db_session = get_db_session()
     property = db_session.query(Property).filter_by(address="123 Main St, Anytown").first()
+    db_session.close()
     return property
 
 @pytest.fixture
@@ -272,4 +277,5 @@ def teamville_property():
     """
     db_session = get_db_session()
     property = db_session.query(Property).filter_by(address="456 Oak Ave, Teamville").first()
+    db_session.close()
     return property

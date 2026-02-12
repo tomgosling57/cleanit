@@ -16,6 +16,10 @@ class JobListHelper:
 
     def __init__(self, page):
         self.page = page
+        self.db = get_db_session()
+    
+    def __del__(self):
+        self.db.close()
 
     @property
     def start_datetime(self):
@@ -122,12 +126,11 @@ class JobListHelper:
         end_date = end_date.replace(tzinfo=get_app_timezone())
         # Extract checkbox filter values
         show_completed = filters_container.locator("#show-completed").is_checked()
-        db = get_db_session()
-        job_service = JobService(db)
+        job_service = JobService(self.db)
         expected_jobs = job_service.get_filtered_jobs_by_property_id(
             property_id=self.property_id,
             start_date=start_date,
-            end_date=end_date,
+            
             show_completed=show_completed
         )
         filtered_jobs_locators = job_list.locator(".job-card")
