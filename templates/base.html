@@ -9,8 +9,14 @@
     {% include 'styles.html' %}
     
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <script>
+        // Global variables for timezone handling
+        window.APP_TIMEZONE = "{{ APP_TIMEZONE }}";
+        window.APP_NOW_ISO = "{{ APP_NOW_ISO }}";
+        window.DATETIME_FORMATS = {{ DATETIME_FORMATS|tojson|safe }};
+    </script>
 </head>
-<body data-csrf-token="{{ csrf_token() }}" hx-headers='{"X-CSRFToken": "{{ csrf_token() }}"}'>
+<body data-csrf-token="{{ csrf_token() }}" data-app-timezone="{{ APP_TIMEZONE }}" hx-headers='{"X-CSRFToken": "{{ csrf_token() }}"}'>
     <!-- Script must remain in body -->
     <script src="https://cdn.jsdelivr.net/npm/dragula@3.7.3/dist/dragula.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
@@ -61,9 +67,7 @@
     <script src="/static/js/gallery.js"></script>
     <script src="/static/js/gallery-enhanced.js"></script>
     
-    <!-- Job Time Auto-Update -->
-    <script src="/static/js/job_time_auto_update.js"></script>
-    
+
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <script>
     document.addEventListener('keydown', function(event) {
