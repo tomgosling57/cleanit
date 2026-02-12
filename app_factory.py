@@ -5,8 +5,9 @@ from flask import Flask, redirect, url_for, request, Response, abort, jsonify
 from dotenv import load_dotenv
 from flask_wtf.csrf import CSRFProtect
 from flask_login import LoginManager
-from config import Config, TestConfig, DebugConfig
+from config import Config, TestConfig, DebugConfig, DATETIME_FORMATS
 from database import init_db, get_db, teardown_db
+from utils.timezone import app_now
 from routes.users import user_bp
 from routes.jobs import job_bp
 from routes.teams import teams_bp
@@ -246,6 +247,17 @@ def create_app(login_manager=LoginManager(), config_override=dict()):
     # Register global error handlers
     register_media_error_handlers(app)
     register_general_error_handlers(app, login_manager)
+
+    # Context processor to make APP_TIMEZONE and DATETIME_FORMATS available in all templates
+    @app.context_processor
+    def inject_template_vars():
+        now = app_now()
+        return {
+            'APP_TIMEZONE': app.config['APP_TIMEZONE'],
+            'DATETIME_FORMATS': DATETIME_FORMATS,
+            'APP_NOW': now,
+            'APP_NOW_ISO': now.isoformat()
+        }
 
     with app.app_context():
         load_svg_icons(app)
