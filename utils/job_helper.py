@@ -83,12 +83,12 @@ class JobHelper:
                 
         if job_start_datetime and job_end_datetime and job_start_datetime >= job_end_datetime:
             raise ValueError(NON_SEQUENTIAL_START_AND_END)
-        if job_start_datetime <= app_now():
+        if job_start_datetime <= app_now().replace(hour=0, minute=0, second=0):
             raise ValueError(START_DATETIME_IN_PAST)
-        if job_end_datetime <= app_now():
+        if job_end_datetime <= app_now().replace(hour=0, minute=0, second=0):
             raise ValueError(END_DATETIME_IN_PAST)
     
-        if job_arrival_datetime and job_arrival_datetime <= app_now():
+        if job_arrival_datetime and job_arrival_datetime <= app_now().replace(hour=0, minute=0, second=0):
             raise ValueError(ARRIVAL_DATETIME_IN_PAST)
     
         return job_date, job_start_time, job_end_time, job_arrival_datetime
