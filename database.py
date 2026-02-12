@@ -122,7 +122,7 @@ class Job(Base):
     @hybrid_property
     def next_day_arrival(self):
         if self.arrival_datetime:
-            return self.arrival_datetime and (self.arrival_date_in_app_tz - self.date_in_app_tzb).days == 1
+            return self.arrival_datetime and (self.arrival_date_in_app_tz - self.date_in_app_tz).days == 1
         return False
     
     @hybrid_property
