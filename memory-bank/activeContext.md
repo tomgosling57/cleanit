@@ -103,22 +103,6 @@
   6. Updated E2E test expectation to match the JSON error message (removed "some" from flash text).
 - **Result**: Supervisors now see appropriate toast error messages when attempting to delete media older than 48 hours, and the datetime comparison works correctly across all environments.
 
-### Job Time Auto-Update Feature
-- **Feature**: Added JavaScript to automatically update start_time, end_time, and arrival_datetime fields when clicked if their current value is in the past (relative to application timezone). Updates to the nearest future time (rounded up to the next hour).
-- **Implementation**:
-  1. Created `static/js/job_time_auto_update.js` with parsing, formatting, and adjustment logic.
-  2. Added event listeners for click events on time fields and arrival datetime field.
-  3. Integrated with HTMX swaps by exposing `JobTimeAutoUpdate.init()` function.
-  4. Added script tag to `templates/base.html` after gallery scripts.
-- **Technical Details**:
-  - Uses UTC-based date parsing to avoid timezone confusion.
-  - Rounds up to next hour if datetime is in the past.
-  - Updates both time and date fields if date change is needed (e.g., crossing midnight).
-  - Works with flatpickr datetime picker (triggers change event).
-- **Files Modified**:
-  - `static/js/job_time_auto_update.js` (new)
-  - `templates/base.html` (added script tag)
-
 ## Next Steps
 1. **Complete frontend integration** of reusable gallery component across all views
 2. **Expand E2E test coverage** for all critical user workflows
