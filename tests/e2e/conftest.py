@@ -75,38 +75,45 @@ def page(context) -> Generator[Page, None, None]:
     yield page
 
 
-# --- Helper to create auth state ---
-def _create_auth_state(browser: Browser, server_url: str, email: str, password: str):
+# --- Session-scoped auth state cache ---
+@pytest.fixture(scope="session")
+def auth_state_cache(browser: Browser, server_url: str):
     """
-    Creates authentication state for a user.
+    Session-scoped fixture that caches authentication states for all user roles.
+    Creates authentication state once per user role and reuses it across all tests.
     """
+    cache = {}
+    
+    return cache
+
+def create_auth_state(user_key: str, browser, server_url: str) -> dict:
     context = browser.new_context()
     page = context.new_page()
     page.goto(f"{server_url}/")
     page.wait_for_load_state("networkidle")
-    page.locator('input[name="email"]').fill(email)
-    page.locator('input[name="password"]').fill(password)
+    page.locator('input[name="email"]').fill(USER_DATA[user_key]['email'])
+    page.locator('input[name="password"]').fill(USER_DATA[user_key]['password'])
     with page.expect_response("**/user/login**"):
         page.locator('button[type="submit"]').click()
     page.wait_for_load_state("networkidle")
-    assert any(k in page.url.lower() for k in ("jobs", "timetable")), "Login failed"
-    state = context.storage_state()
+    assert any(k in page.url.lower() for k in ("jobs", "timetable")), f"Login failed for {user_key}"
+    
+    # Cache the authentication state
+    _return = context.storage_state()
     context.close()
-    return state
-
+    return _return
 
 # --- Generic auth page fixture creator ---
 def create_auth_page_fixture(user_key: str):
     """Factory function to create authenticated page fixtures for different user roles."""
-    def _auth_page(browser: Browser, server_url: str) -> Generator[Page, None, None]:
-        # Create a new context for this user
+    def _auth_page(browser: Browser, server_url: str, auth_state_cache: dict) -> Generator[Page, None, None]:
+        
+        if user_key not in auth_state_cache:
+            auth_state_cache[user_key] = create_auth_state(user_key, browser, server_url)
+
+        # Use cached authentication state instead of logging in again
         context: BrowserContext = browser.new_context(
-            storage_state=_create_auth_state(
-                browser, 
-                server_url,
-                USER_DATA[user_key]['email'],
-                USER_DATA[user_key]['password']
-            )
+            storage_state=auth_state_cache[user_key]
         )
         page: Page = context.new_page()
         page.set_default_navigation_timeout(5000)
