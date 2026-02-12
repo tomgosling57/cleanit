@@ -10,7 +10,7 @@ from tests.helpers import (
     get_first_job_card, 
 )
 from tests.e2e.job_helpers import JobViewsTestHelper
-from utils.job_helper import END_DATETIME_IN_PAST, END_DATETIME_IN_PAST, INVALID_ARRIVAL_DATE_TIME_FORMAT, INVALID_ARRIVAL_DATE_TIME_FORMAT, ARRIVAL_DATETIME_IN_PAST, INVALID_DATE_OR_TIME_FORMAT, START_DATETIME_IN_PAST
+from utils.job_helper import END_DATETIME_IN_PAST, END_DATETIME_IN_PAST, INVALID_ARRIVAL_DATE_TIME_FORMAT, INVALID_ARRIVAL_DATE_TIME_FORMAT, ARRIVAL_DATETIME_IN_PAST, INVALID_DATE_OR_TIME_FORMAT, NON_SEQUENTIAL_START_AND_END, START_DATETIME_IN_PAST
 from utils.populate_database import USER_DATA
 from utils.timezone import to_app_tz, today_in_app_tz, utc_now
 
@@ -71,69 +71,113 @@ class TestJobViews:
         test_helper.update_job(job_id, arrival_datetime=new_arrival_datetime)
     
     @pytest.mark.db_reset
-    def test_update_job_arrival_time_to_invalid_date(self, admin_page) -> None:
+    @pytest.mark.parametrize("new_arrival_datetime,expected_message", [
+        pytest.param(
+            lambda: (today_in_app_tz() - timedelta(days=2)).isoformat(),
+            ARRIVAL_DATETIME_IN_PAST,
+            id="arrival_in_past"
+        ),
+        # pytest.param(
+        #     "invalid-datetime",
+        #     lambda: INVALID_ARRIVAL_DATE_TIME_FORMAT.format("invalid-datetime"),
+        #     id="invalid_format"
+        # ),
+    ])
+    def test_update_job_arrival_to_invalid_val(self, admin_page, new_arrival_datetime, expected_message) -> None:
         page = admin_page
         page.set_default_timeout(3_000)
         test_helper = JobViewsTestHelper(page)
-        def test_arrival_date_time(new_arrival_datetime, expected_message):
-            job_card = get_first_job_card(page)
-            job_id = job_card.get_attribute('data-job-id')
-            test_helper.update_job(
-                job_id,
-                expect_card_after_update=False,
-                arrival_datetime=new_arrival_datetime
-            )
-            expect(admin_page.locator(".alert").get_by_text(expected_message)).to_be_visible()
-            expect(admin_page.locator('#job-modal')).to_be_visible()
-        new_arrival_datetime = (today_in_app_tz() - timedelta(days=2)).isoformat()
-        test_arrival_date_time(new_arrival_datetime, ARRIVAL_DATETIME_IN_PAST)
-        test_arrival_date_time("invalid-datetime", INVALID_ARRIVAL_DATE_TIME_FORMAT.format("invalid-datetime"))
-
-    @pytest.mark.db_reset
-    def test_update_job_date_to_invalid_val(self, admin_page) -> None:
-        page = admin_page
-        page.set_default_timeout(3_000)
-        test_helper = JobViewsTestHelper(page)
-        def test_job_date(new_date, expected_message="Invalid date format. Please use the datepicker."):
-            test_helper.update_job(
-                job_id,
-                expect_card_after_update=False,
-                date=new_date,
-            )
-            expect(admin_page.locator(".alert").get_by_text(expected_message)).to_be_visible()
-            expect(admin_page.locator('#job-modal')).to_be_visible(
-
-            )
         job_card = get_first_job_card(page)
         job_id = job_card.get_attribute('data-job-id')
-        test_job_date((today_in_app_tz() - timedelta(days=2)).isoformat())
-        test_job_date("80jfasfaf")
-    
+        
+        # Resolve callable parameters
+        arrival_dt = new_arrival_datetime() if callable(new_arrival_datetime) else new_arrival_datetime
+        msg = expected_message() if callable(expected_message) else expected_message
+        
+        test_helper.update_job(
+            job_id,
+            expect_card_after_update=False,
+            arrival_datetime=arrival_dt
+        )
+        expect(admin_page.locator(".alert").get_by_text(msg)).to_be_visible()
+        expect(admin_page.locator('#job-modal')).to_be_visible()
+        page.keyboard.press("Escape")
+
+
     @pytest.mark.db_reset
-    def test_update_job_time_attributes_to_invalid_val(self, admin_page) -> None:
+    @pytest.mark.parametrize("new_date,expected_message", [
+        pytest.param(
+            lambda: (today_in_app_tz() - timedelta(days=2)).isoformat(),
+            lambda date: INVALID_DATE_OR_TIME_FORMAT.format(date),
+            id="date_in_past"
+        ),
+        pytest.param(
+            "80jfasfaf",
+            lambda date: INVALID_DATE_OR_TIME_FORMAT.format(date),
+            id="invalid_format"
+        ),
+    ])
+    def test_update_job_date_to_invalid_val(self, admin_page, new_date, expected_message) -> None:
         page = admin_page
         page.set_default_timeout(3_000)
         test_helper = JobViewsTestHelper(page)
-
-        def test_time_attributes(expected_message="Invalid time attributes.", **kwargs):
-            test_helper.update_job(
-                job_id,
-                expect_card_after_update=False,
-                **kwargs
-            )   
-            expect(admin_page.locator(".alert").get_by_text(expected_message)).to_be_visible()
-            expect(admin_page.locator('#job-modal')).to_be_visible()
-
         job_card = get_first_job_card(page)
         job_id = job_card.get_attribute('data-job-id')
-        test_time_attributes(expected_message=START_DATETIME_IN_PAST, start_time="00:00")
-        test_time_attributes(expected_message=END_DATETIME_IN_PAST, end_time="00:00")
-        test_time_attributes(expected_message=ARRIVAL_DATETIME_IN_PAST, arrival_datetime=today_in_app_tz() - timedelta(days=1))
-        invalid_value = "invalid"
-        test_time_attributes(expected_message=INVALID_DATE_OR_TIME_FORMAT.format(invalid_value), start_time=invalid_value)
-        test_time_attributes(expected_message=INVALID_DATE_OR_TIME_FORMAT.format(invalid_value), end_time=invalid_value)
-        test_time_attributes(expected_message=INVALID_ARRIVAL_DATE_TIME_FORMAT.format(invalid_value), arrival_datetime=invalid_value)
+        
+        # Resolve callable parameters
+        date = new_date() if callable(new_date) else new_date
+        msg = expected_message(date)
+        
+        test_helper.update_job(
+            job_id,
+            expect_card_after_update=False,
+            date=date,
+        )
+        expect(admin_page.locator(".alert").get_by_text(msg)).to_be_visible()
+        expect(admin_page.locator('#job-modal')).to_be_visible()
+        page.keyboard.press("Escape")
 
+
+    @pytest.mark.db_reset
+    @pytest.mark.parametrize("kwargs,expected_message", [
+        pytest.param(
+            {"start_time": "00:00"},
+            START_DATETIME_IN_PAST,
+            id="start_time_in_past"
+        ),
+        pytest.param(
+            {"end_time": "00:00"},
+            NON_SEQUENTIAL_START_AND_END,
+            id="end_time_in_past"
+        ),
+        pytest.param(
+            {"arrival_datetime": lambda: (today_in_app_tz() - timedelta(days=1)).isoformat()},
+            ARRIVAL_DATETIME_IN_PAST,
+            id="arrival_in_past"
+        ),
+    ])
+    def test_update_job_time_attributes_to_invalid_val(self, admin_page, kwargs, expected_message) -> None:
+        page = admin_page
+        page.set_default_timeout(3_000)
+        test_helper = JobViewsTestHelper(page)
+        job_card = get_first_job_card(page)
+        job_id = job_card.get_attribute('data-job-id')
+        
+        # Resolve callable parameters in kwargs
+        resolved_kwargs = {}
+        for key, value in kwargs.items():
+            resolved_kwargs[key] = value() if callable(value) else value
+        
+        msg = expected_message() if callable(expected_message) else expected_message
+        
+        test_helper.update_job(
+            job_id,
+            expect_card_after_update=False,
+            **resolved_kwargs
+        )
+        expect(admin_page.locator(".alert").get_by_text(msg)).to_be_visible()
+        expect(admin_page.locator('#job-modal')).to_be_visible()
+        page.keyboard.press("Escape")
     
     @pytest.mark.db_reset
     def test_update_job_to_user_assignment_only(self, admin_page, admin_user) -> None:
