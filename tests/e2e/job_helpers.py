@@ -135,6 +135,14 @@ class JobViewsTestHelper:
         expect(job_modal).to_be_visible()
         return job_modal
     
+    def open_job_update_modal(self, job_id):
+        """Opens the job update modal for the given job id and returns the modal locator."""
+        job_modal = self.page.locator("#job-modal")
+        with self.page.expect_response(f"**/jobs/job/{job_id}/update**"):
+            job_modal.get_by_role("button", name="Edit").click()
+        expect(job_modal).to_be_visible()
+        return job_modal
+    
     def update_job(self, job_id, expect_card_after_update=True, **kwargs):
         """Helper to update job from the timetable views by opening the job details and then the update modal.
         Fills the form with provided kwargs and saves.
