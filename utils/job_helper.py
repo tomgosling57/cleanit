@@ -75,9 +75,11 @@ class JobHelper:
             # Try ISO format first, then fall back to DATETIME_FORMAT if it exists
             try:
                 job_arrival_datetime = datetime.fromisoformat(arrival_datetime_str)
+                job_arrival_datetime = job_arrival_datetime.replace(tzinfo=app_now().tzinfo)
             except ValueError:
                 try:
                     job_arrival_datetime = datetime.strptime(arrival_datetime_str, DATETIME_FORMATS["DATETIME_FORMAT"])
+                    job_arrival_datetime = job_arrival_datetime.replace(tzinfo=app_now().tzinfo)
                 except ValueError as e:
                     raise ValueError(INVALID_ARRIVAL_DATE_TIME_FORMAT.format(arrival_datetime_str)) from e
                 
