@@ -7,7 +7,7 @@ from flask_login import current_user
 from services.team_service import TeamService
 from .timezone import app_now, today_in_app_tz
 
-INVALID_DATE_OR_TIME_FORMAT = 'Invalid date or time format: {}. Please use the datepicker for date and ' + DATETIME_FORMATS["TIME_FORMAT"] + ' for time.'
+INVALID_DATE_OR_TIME_FORMAT = 'Invalid date or time format: {}. Please use the datepicker for date and ' + DATETIME_FORMATS["TIME_FORMAT"].replace('%H', 'HH').replace('%M', 'MM') + ' format for time.'
 INVALID_ARRIVAL_DATE_TIME_FORMAT = 'Invalid datetime format: {}. Please use the datetime picker.'
 ARRIVAL_DATETIME_IN_PAST = 'Arrival date and time cannot be in the past.'
 START_DATETIME_IN_PAST = 'Start date and time cannot be in the past.'
