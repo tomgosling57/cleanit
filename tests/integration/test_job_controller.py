@@ -128,6 +128,7 @@ class TestJobController:
             ({"arrival_datetime": "2024-02-30T10:00:00"}, INVALID_ARRIVAL_DATE_TIME_FORMAT),
             ({"start_time": "00:00"}, START_DATETIME_IN_PAST),
             ({"end_time": "00:00"}, NON_SEQUENTIAL_START_AND_END),
+            ({"arrival_datetime": (app_now() - timedelta(days=1)).isoformat()}, ARRIVAL_DATETIME_IN_PAST),
             ({"start_time": "10:00", "end_time": "09:00"}, NON_SEQUENTIAL_START_AND_END),
         ],
         ids=[
@@ -141,6 +142,7 @@ class TestJobController:
             "invalid_arrival_datetime_value",
             "start_time_in_past",
             "end_time_in_past",
+            "arrival_datetime_in_past",
             "non_sequential_start_end",
         ]
     )
