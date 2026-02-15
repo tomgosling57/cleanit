@@ -1,0 +1,171 @@
+<!-- Date Picker Component - Single Date Selection -->
+{% if timetable %}
+<div class="date-picker-container" id="date-picker-container">
+    <div class="input-wrapper button" id="date-picker-wrapper">
+        <!-- Visible text input - always functional -->
+        <input type="text" 
+            id="timetable-datepicker" 
+            value="{{ display_date }}"
+            placeholder="Select Date"
+            class="date-input date-display-input"
+            oninput="syncDisplayToHiddenSingle()"
+            onblur="validateAndSyncDateSingle()"
+            style="width: 100%;">
+        
+        <input type="date" 
+            id="date-input" 
+            name="date" 
+            value="{{ default_date }}"
+            class="date-picker-input"
+            style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; opacity: 0; z-index: -1; pointer-events: none;"
+            onchange="updateDisplayDateSingle()">
+    </div>
+</div>
+{% else %}
+<div class="date-picker-container" id="date-picker-container">
+    <div class="date-picker-wrapper" data-date-type="single" style="position: relative; display: block; width: 100%;">
+        <!-- Visible text input - always functional -->
+        <input type="text" 
+            id="date-display" 
+            value="{{ display_date }}"
+            placeholder="dd-mm-yyyy"
+            class="date-input date-display-input"
+            oninput="syncDisplayToHiddenSingle()"
+            onblur="validateAndSyncDateSingle()"
+            style="width: 100%;">
+        
+        <input type="date" 
+            id="date-input" 
+            name="date" 
+            value="{{ default_date }}"
+            class="date-picker-input"
+            style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; opacity: 0; z-index: -1; pointer-events: none;"
+            onchange="updateDisplayDateSingle()">
+    </div>
+</div>
+{% endif %}
+
+<script>
+(function() {
+    'use strict';
+    
+    function enhanceDatePicker() {
+        const container = document.getElementById('date-picker-container');
+        if (!container) return;
+        
+        const datePicker = document.getElementById('date-input');
+        const display = document.getElementById('date-display') || document.getElementById('timetable-datepicker');
+        
+        if (datePicker && display) {
+            datePicker.style.zIndex = '2';
+            datePicker.style.pointerEvents = 'auto';
+            display.style.pointerEvents = 'none';
+            display.setAttribute('tabindex', '-1');
+        }
+        
+        // Initialize display date
+        updateDisplayDateSingle();
+        
+        // Add click handler to wrapper
+        const wrapper = document.querySelector('.date-picker-wrapper') || document.querySelector('#date-picker-wrapper');
+        if (wrapper) {
+            wrapper.style.cursor = 'pointer';
+            
+            wrapper.addEventListener('click', function(e) {
+                const datePicker = document.getElementById('date-input');
+                if (datePicker) {
+                    try {
+                        datePicker.showPicker();
+                    } catch (err) {
+                        console.debug('showPicker not available:', err);
+                    }
+                }
+            });
+        }
+    }
+    
+    function updateDisplayDateSingle() {
+        const hiddenInput = document.getElementById('date-input');
+        const displayInput = document.getElementById('date-display') || document.getElementById('timetable-datepicker');
+        
+        if (hiddenInput && hiddenInput.value && displayInput) {
+            const [year, month, day] = hiddenInput.value.split('-');
+            displayInput.value = `${day}-${month}-${year}`;
+        }
+    }
+    
+    function syncDisplayToHiddenSingle() {
+        const displayInput = document.getElementById('date-display') || document.getElementById('timetable-datepicker');
+        if (!displayInput) return;
+        
+        // Mark that user is actively typing
+        displayInput.dataset.typing = 'true';
+        
+        // Remove non-numeric and non-dash characters
+        let value = displayInput.value.replace(/[^\d-]/g, '');
+        
+        // Auto-format as user types: dd-mm-yyyy
+        if (value.length >= 2 && value.charAt(2) !== '-') {
+            value = value.slice(0, 2) + '-' + value.slice(2);
+        }
+        if (value.length >= 5 && value.charAt(5) !== '-') {
+            value = value.slice(0, 5) + '-' + value.slice(5);
+        }
+        
+        displayInput.value = value.slice(0, 10); // Limit to dd-mm-yyyy length
+    }
+    
+    function validateAndSyncDateSingle() {
+        const displayInput = document.getElementById('date-display') || document.getElementById('timetable-datepicker');
+        const hiddenInput = document.getElementById('date-input');
+        
+        if (!displayInput || !hiddenInput) return;
+        
+        // Clear typing flag
+        displayInput.dataset.typing = '';
+        
+        const value = displayInput.value;
+        const regex = /^(\d{2})-(\d{2})-(\d{4})$/;
+        const match = value.match(regex);
+        
+        if (match) {
+            const [, day, month, year] = match;
+            
+            // Validate the date
+            const date = new Date(year, month - 1, day);
+            if (date.getFullYear() == year && 
+                date.getMonth() == month - 1 && 
+                date.getDate() == day) {
+                
+                // Convert to ISO format for hidden input
+                hiddenInput.value = `${year}-${month}-${day}`;
+                displayInput.classList.remove('is-invalid');
+            } else {
+                // Invalid date
+                displayInput.classList.add('is-invalid');
+                hiddenInput.value = '';
+            }
+        } else if (value === '') {
+            // Empty is valid
+            hiddenInput.value = '';
+            displayInput.classList.remove('is-invalid');
+        } else {
+            // Invalid format
+            displayInput.classList.add('is-invalid');
+            hiddenInput.value = '';
+        }
+    }
+    
+    // Make functions globally accessible
+    window.updateDisplayDateSingle = updateDisplayDateSingle;
+    window.syncDisplayToHiddenSingle = syncDisplayToHiddenSingle;
+    window.validateAndSyncDateSingle = validateAndSyncDateSingle;
+    
+    // Initialize when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', enhanceDatePicker);
+    } else {
+        enhanceDatePicker();
+    }
+})();
+</script>
