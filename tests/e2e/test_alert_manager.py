@@ -36,7 +36,6 @@ class TestAlertManager:
             csrf_token=get_csrf_token(page)
         )
         if page.locator(".alert").get_by_text(expected_message).is_visible():
-            alert = page.locator(".alert").get_by_text(expected_message)
-            expect(alert).to_be_visible()
+            expect(page.locator(".alert").get_by_text(expected_message)).to_be_visible()
         else:
-            expect(page.locator(".alert")).to_have_text(ERRORS['Unauthorized'])                
+            expect(page.locator(".alert").get_by_text(ERRORS['Unauthorized'])).to_be_visible()
