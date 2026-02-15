@@ -1,4 +1,5 @@
 from datetime import timedelta
+from controllers.jobs_controller import ERRORS
 import pytest
 
 from services.assignment_service import AssignmentService
@@ -180,3 +181,14 @@ class TestJobController:
         assert expected_error in json_data.get('message', ''), (
             f"Expected error message '{expected_error}' not found in response"
         )
+    @pytest.mark.parametrize("endpoint,method", [
+        ("/jobs/job/{}/update", "put"),
+        ("/jobs/job/{}/mark_complete", "post"),
+        ("/jobs/job/{}/submit_report", "post"),
+    ])
+    def test_job_not_found(self, admin_client_no_csrf, endpoint, method):
+        """Tests that accessing a job that does not exist returns an error."""
+        response = admin_client_no_csrf.open(endpoint.format(9999), method=method)
+        assert response.status_code == 400, f"Expected status code 400 but got {response.status_code}"
+        json_data = response.get_json()
+        assert ERRORS['Job Not Found'] in json_data.get('message', ''), "Expected 'Job Not Found' error message not found in response"
