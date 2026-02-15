@@ -241,7 +241,7 @@ class JobController:
     def timetable(self, date: str = None):
         date = self.job_helper.process_selected_date(date)
         # Convert the session date string to a date object for service calls
-        date_obj = datetime.strptime(date, DATETIME_FORMATS["DATE_FORMAT"]).date()
+        date_obj = datetime.fromisoformat(date).date()
 
         self.job_service.push_uncompleted_jobs_to_next_day()
         jobs = self.job_service.get_jobs_for_user_on_date(current_user.id, current_user.team_id, date_obj)
@@ -260,7 +260,7 @@ class JobController:
     def team_timetable(self, date: str = None):
         date = self.job_helper.process_selected_date(date)
         # Convert the session date string to a date object for service calls
-        date_obj = datetime.strptime(date, DATETIME_FORMATS["DATE_FORMAT"]).date()
+        date_obj = datetime.fromisoformat(date).date()
 
         self.job_service.push_uncompleted_jobs_to_next_day()
         all_teams = self.team_service.get_all_teams()
