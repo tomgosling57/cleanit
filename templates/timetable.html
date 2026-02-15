@@ -6,12 +6,13 @@
     <div class="container">
         <div class="header-with-button" id="timetable-header">
             <h1>Timetable</h1>
-            <div class="input-wrapper button" id="date-picker-wrapper">
-                <input type="text" id="timetable-datepicker" placeholder="Select Date"/>
-            </div>
+            <!-- Date picker component with timetable flag -->
+            {% with display_date=selected_date, default_date=selected_date, timetable=true %}
+            {% include 'components/date_picker.html' %}
+            {% endwith %}
             {% if current_user.role == 'admin' %}
                 <!-- This button uses the session date stored by the job helper -->
-                <button class="button" onclick="window.location.assign('{{ url_for('job.team_timetable')}}')">
+                <button class="button" hx-get="{{ url_for('job.team_timetable') }}" hx-push-url="true" hx-target="body" hx-swap="outerHTML">
                     Team View
                 </button>
                 <button class="button"
@@ -33,34 +34,44 @@
     </div>
   
     {% with modal_name='job' %}
-    {% include 'modal.html' %} 
+    {% include 'modal.html' %}
     {% endwith %}
 
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/job_styles.css') }}">
 
     <script>
-        flatpickr("#timetable-datepicker", {
-            dateFormat: "{{ DATETIME_FORMATS['DATE_FORMAT_FLATPICKR'] }}",
-            defaultDate: "{{ selected_date }}",
-            onChange: function(selectedDates, dateStr, instance) {
-                // Redirect to timetable page for new date
-                window.location.assign('{{ url_for("job.timetable") }}?date=' + dateStr);
+        // Initialize date picker with redirect functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const dateInput = document.getElementById('date-input');
+            if (dateInput) {
+                dateInput.addEventListener('change', function() {
+                    const dateStr = this.value;
+                    if (dateStr) {
+                        window.location.assign('{{ url_for("job.timetable") }}?date=' + dateStr);
+                    }
+                });
             }
         });
     </script>
     <script>
-        // Use htmx.on to ensure Flatpickr is initialized after HTMX swaps content
+        // Use htmx.on to ensure date picker is initialized after HTMX swaps content
         htmx.on("htmx:afterSwap", function(event) {
             try {
-                flatpickr("#date", {
-                    dateFormat: "{{ DATETIME_FORMATS['DATE_FORMAT_FLATPICKR'] }}",
-                    defaultDate: "{{ selected_date }}"
-                });
+                const dateInput = document.getElementById('date-input');
+                if (dateInput) {
+                    dateInput.addEventListener('change', function() {
+                        const dateStr = this.value;
+                        if (dateStr) {
+                            window.location.assign('{{ url_for("job.timetable") }}?date=' + dateStr);
+                        }
+                    });
+                }
             } catch (error) {
-                console.error("Error initializing Flatpickr:", error);
+                console.error("Error initializing date picker:", error);
             }
         });
     </script>
 {% endblock %}
+
 
