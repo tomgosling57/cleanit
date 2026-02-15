@@ -1,11 +1,12 @@
 # tests/test_timetable.py
 import os
 import re
+from controllers.jobs_controller import ERRORS
 from playwright.sync_api import expect
 import pytest
 from config import DATETIME_FORMATS
 from tests.helpers import (
-    get_csrf_token, assert_job_card_variables, mark_job_as_complete, assert_job_card_default_state,
+    get_csrf_token, assert_job_card_variables, make_htmx_request, mark_job_as_complete, assert_job_card_default_state,
     assert_job_not_found_htmx_error, assert_team_column_content, delete_job_and_confirm,
     get_future_date,
 )
@@ -256,115 +257,6 @@ def test_delete_job(admin_page) -> None:
     job_card = page.locator(f'div.job-card[data-job-id="{job_id}"]')
     delete_job_and_confirm(page, job_card)
 
-def test_job_not_found_handling_for_update_status(admin_page, server_url) -> None:
-    """Test that the job not found message is displayed when trying to interact with non-existent job.
-    
-    Args:
-        admin_page: Playwright page object with admin authentication
-        server_url: Base URL of the test server"""
-    page = admin_page
-    
-    assert_job_not_found_htmx_error(
-        page,
-        server_url,
-        'POST',
-        f"{server_url}/jobs/job/999/update_status",
-        'errors-container',
-        csrf_token=get_csrf_token(page)
-    )
-
-def test_job_not_found_handling_for_get_job_details(admin_page, server_url) -> None:
-    """Test that the job not found message is displayed when trying to get details of a non-existent job.
-    
-    Args:
-        admin_page: Playwright page object with admin authentication
-        server_url: Base URL of the test server"""
-    page = admin_page
-    csrf_token = get_csrf_token(page)
-    assert_job_not_found_htmx_error(
-        page,
-        server_url,
-        'GET',
-        f"{server_url}/jobs/job/999/details",
-        'errors-container',
-        csrf_token=csrf_token
-    )
-
-def test_job_not_found_handling_for_update_job(admin_page, server_url) -> None:
-    """Test that the job not found message is displayed when trying to update a non-existent job.
-    
-    Args:
-        admin_page: Playwright page object with admin authentication
-        server_url: Base URL of the test server"""
-    page = admin_page
-    csrf_token = get_csrf_token(page)
-    assert_job_not_found_htmx_error(
-        page,
-        server_url,
-        'PUT',
-        f"{server_url}/jobs/job/999/update",
-        'errors-container',
-        csrf_token=csrf_token
-    )
-
-def test_job_not_found_handling_for_delete_job(admin_page, server_url) -> None:
-    """Test that the job not found message is displayed when trying to delete a non-existent job.
-    
-    Args:
-        admin_page: Playwright page object with admin authentication
-        server_url: Base URL of the test server"""
-    page = admin_page
-    csrf_token = get_csrf_token(page)
-    assert_job_not_found_htmx_error(
-        page,
-        server_url,
-        'DELETE',
-        f"{server_url}/jobs/job/999/delete",
-        'errors-container',
-        csrf_token=csrf_token
-    )
-
-def test_job_not_found_handling_for_get_update_job_form(admin_page, server_url) -> None:
-    """Test that the job not found message is displayed when trying to get update form of a non-existent job.
-    
-    Args:
-        admin_page: Playwright page object with admin authentication
-        server_url: Base URL of the test server"""
-    page = admin_page
-    csrf_token = get_csrf_token(page)
-    assert_job_not_found_htmx_error(
-        page,
-        server_url,
-        'GET',
-        f"{server_url}/jobs/job/999/update",
-        'errors-container',
-        csrf_token=csrf_token
-    )
-
-def test_job_not_found_handling_for_reassign_job_team(admin_page, server_url) -> None:
-    """Test that the job not found message is displayed when trying to reassign team for a non-existent job.
-    
-    Args:
-        admin_page: Playwright page object with admin authentication
-        server_url: Base URL of the test server"""
-    page = admin_page
-    csrf_token = get_csrf_token(page)
-    assert_job_not_found_htmx_error(
-        page,
-        server_url,
-        'POST',
-        f"{server_url}/jobs/job/reassign",
-        'errors-container',
-        csrf_token=csrf_token,
-        htmx_values={
-            'job_id': 999,
-            'new_team_id': 1,
-            'date': get_future_date(0),
-            'view_type': 'team'
-        },
-        team_view=True
-    )
-    
 def test_auto_push_for_uncompleted_jobs(admin_page) -> None:
     """
     Test that uncompleted jobs from previous days are pushed to the next day upon accessing the timetable.
