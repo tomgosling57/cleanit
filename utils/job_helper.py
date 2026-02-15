@@ -151,7 +151,7 @@ class JobHelper:
         elif session.get('selected_date'): # Use session date if not none
             date = session['selected_date']
         else: # Else use today's date
-            session['selected_date'] = today_in_app_tz().strftime(DATETIME_FORMATS["DATE_FORMAT"])
+            session['selected_date'] = today_in_app_tz().isoformat()
             date = session['selected_date']
         
         return date
