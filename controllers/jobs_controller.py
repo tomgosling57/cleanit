@@ -13,7 +13,8 @@ from utils.job_helper import JobHelper
 from utils.timezone import today_in_app_tz, utc_now
 
 ERRORS = {'Job Not Found': 'Something went wrong! That job no longer exists.',
-          'Missing Reassignment Details': "Missing job_id or new_team_id"}
+          'Missing Reassignment Details': "Missing job_id or new_team_id",
+          'Unauthorized': 'You do not have permission to perform this action. Please try logging in again.'}
 
 # Time limit for media deletion by supervisors (in hours)
 # Media older than this cannot be deleted by supervisors (admins can always delete)
@@ -98,7 +99,7 @@ class JobController:
     def update_job_status(self, job_id):
         """DEPRECATED: Use mark_job_complete or mark_job_pending instead."""
         if not current_user.is_authenticated or current_user.role not in ['admin', 'supervisor']:
-            return jsonify({'error': 'Unauthorized'}), 401
+            return jsonify({'error': ERRORS['Unauthorized']}), 401
 
         is_complete = request.form.get('is_complete') == 'True'
         view_type = request.form.get('view_type') or request.args.get('view_type', 'normal')
@@ -121,7 +122,7 @@ class JobController:
         Opens modal for report text entry (first step)
         """
         if not current_user.is_authenticated or current_user.role not in ['admin', 'supervisor']:
-            return jsonify({'error': 'Unauthorized'}), 401
+            return jsonify({'error': ERRORS['Unauthorized']}), 401
 
         job = self._get_job_details(job_id)
         if not job:
@@ -139,7 +140,7 @@ class JobController:
         Supports skip_gallery parameter to bypass report entry when job already has report
         """
         if not current_user.is_authenticated or current_user.role not in ['admin', 'supervisor']:
-            return jsonify({'error': 'Unauthorized'}), 401
+            return jsonify({'error': ERRORS['Unauthorized']}), 401
 
         # Check if skip_gallery parameter is present (from hx-vals or form)
         skip_gallery = request.form.get('skip_gallery', '').lower() == 'true'
@@ -183,7 +184,7 @@ class JobController:
         Sets job.is_complete = False (report and media remain associated)
         """
         if not current_user.is_authenticated or current_user.role not in ['admin', 'supervisor']:
-            return jsonify({'error': 'Unauthorized'}), 401
+            return jsonify({'error': ERRORS['Unauthorized']}), 401
 
         job = self.job_service.update_job_completion_status(job_id, is_complete=False)
         
@@ -203,7 +204,7 @@ class JobController:
         Job is already marked complete with report, this just closes modal and updates UI
         """
         if not current_user.is_authenticated or current_user.role not in ['admin', 'supervisor']:
-            return jsonify({'error': 'Unauthorized'}), 401
+            return jsonify({'error': ERRORS['Unauthorized']}), 401
 
         # Get the job to ensure it exists and is complete
         job = self._get_job_details(job_id)
@@ -239,7 +240,7 @@ class JobController:
         job_is_assigned_to_current_user = self.assignment_service.user_assigned_to_job(current_user.id, job_id)
         job_is_assigned_to_current_user_team = self.assignment_service.team_assigned_to_job(current_user.team_id, job_id)
         if current_user.role not in ['admin', 'supervisor'] and (current_user.role == 'user' and not (job_is_assigned_to_current_user or job_is_assigned_to_current_user_team)):
-            return jsonify({'error': 'Unauthorized'}), 403
+            return jsonify({'error': ERRORS['Unauthorized']}), 403
 
         job = self._get_job_details(job_id)
         if job:
@@ -254,7 +255,7 @@ class JobController:
 
     def get_job_creation_form(self):
         if current_user.role != 'admin':
-            return jsonify({'error': 'Unauthorized'}), 403
+            return jsonify({'error': ERRORS['Unauthorized']}), 403
 
         users = self.user_service.get_all_users()
         teams = self.team_service.get_all_teams()
@@ -300,7 +301,7 @@ class JobController:
 
     def update_job(self, job_id):
         if current_user.role != 'admin':
-            return jsonify({'error': 'Unauthorized'}), 403
+            return jsonify({'error': ERRORS['Unauthorized']}), 403
 
         job = self._get_job_details(job_id)
         if not job:
@@ -343,7 +344,7 @@ class JobController:
     def get_job_assignments_categorized(self, job_date_str=None):
         """Get categorized teams and users for job assignment based on current workload"""
         if current_user.role != 'admin':
-            return jsonify({'error': 'Unauthorized'}), 403
+            return jsonify({'error': ERRORS['Unauthorized']}), 403
 
         if not job_date_str:
             job_date_str = request.form.get('date') or date.today().isoformat()
@@ -424,7 +425,7 @@ class JobController:
 
     def get_job_update_form(self, job_id):
         if current_user.role != 'admin':
-            return jsonify({'error': 'Unauthorized'}), 403
+            return jsonify({'error': ERRORS['Unauthorized']}), 403
 
         job = self._get_job_details(job_id)
         teams = self.team_service.get_all_teams()
@@ -469,7 +470,7 @@ class JobController:
 
     def delete_job(self, job_id, view_type):
         if current_user.role != 'admin':
-            return jsonify({'error': 'Unauthorized'}), 403
+            return jsonify({'error': ERRORS['Unauthorized']}), 403
 
         success = self.job_service.delete_job(job_id)
         if success:
@@ -489,7 +490,7 @@ class JobController:
 
     def reassign_job_team(self):
         if not current_user.is_authenticated or current_user.role != 'admin':
-            return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+            return jsonify({'success': False, 'error': ERRORS['Unauthorized']}), 403
 
         job = self._get_job_details(request.form.get('job_id'))
         view_type = request.form.get('view_type') or request.args.get('view_type', 'normal')
@@ -521,13 +522,13 @@ class JobController:
             JSON response with media list or error
         """
         if not current_user.is_authenticated:
-            return jsonify({'error': 'Unauthorized'}), 401
+            return jsonify({'error': ERRORS['Unauthorized']}), 401
         
         # Check if user has access to this job
         job_is_assigned_to_current_user = self.assignment_service.user_assigned_to_job(current_user.id, job_id)
         job_is_assigned_to_current_user_team = self.assignment_service.team_assigned_to_job(current_user.team_id, job_id)
         if current_user.role not in ['admin', 'supervisor'] and (current_user.role == 'user' and not (job_is_assigned_to_current_user or job_is_assigned_to_current_user_team)):
-            return jsonify({'error': 'Unauthorized'}), 403
+            return jsonify({'error': ERRORS['Unauthorized']}), 403
         
         if not self.media_service:
             return jsonify({'error': 'Media service not available'}), 500
