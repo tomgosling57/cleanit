@@ -6,6 +6,7 @@ from database import Team, Property, Job, Assignment, Media, PropertyMedia, JobM
 from datetime import date, datetime, time, timedelta
 
 from utils.timezone import from_app_tz, get_app_timezone, today_in_app_tz, utc_now
+from utils.test_data import JOB_TEMPLATES, PROPERTY_DATA, TEAM_DATA, USER_DATA, get_job_data_by_id
 
 
 def populate_database(database_uri=None, force=True, Session=None):
@@ -30,38 +31,6 @@ def populate_database(database_uri=None, force=True, Session=None):
     insert_dummy_data(Session)
     print("Database populated with dummy data.")
 
-USER_DATA = {
-    'admin': {
-        'first_name': 'Ruby',
-        'last_name': 'Redmond',
-        'email': 'admin@example.com',
-        'phone': '12345678',
-        'role': 'admin',
-        'password': 'admin_password'
-    },
-    'supervisor': {
-        'first_name': 'Damo',
-        'last_name': 'Brown',
-        'email': 'supervisor@example.com',
-        'role': 'supervisor',
-        'password': 'supervisor_password'
-    },
-    'user': {
-        'first_name': 'Manchan',
-        'last_name': 'Fionn',
-        'email': 'user@example.com',
-        'role': 'user',
-        'password': 'user_password'
-    },
-    'team_leader': {
-        'first_name': 'Alice',
-        'last_name': 'Smith',
-        'email': 'teamleader@example.com',
-        'role': 'user',
-        'password': 'team_leader_password'
-    }
-}
-
 def create_initial_users(session):
     """
     Creates a set of deterministic initial users (admin, supervisor, user)
@@ -75,29 +44,15 @@ def create_initial_users(session):
     """
     session.query(User).delete()
     session.commit()
-
-    admin = User(id=1, first_name=USER_DATA['admin']['first_name'], last_name=USER_DATA['admin']['last_name'],
-                  email=USER_DATA['admin']['email'], phone=USER_DATA['admin']['phone'], role=USER_DATA['admin']['role'])
-    admin.set_password(USER_DATA['admin']['password'])
-    session.add(admin)
-
-    supervisor = User(id=2, first_name=USER_DATA['supervisor']['first_name'], last_name=USER_DATA['supervisor']['last_name'], 
-                      email=USER_DATA['supervisor']['email'], role=USER_DATA['supervisor']['role'])
-    supervisor.set_password(USER_DATA['supervisor']['password'])
-    session.add(supervisor)
-
-    user = User(id=3, first_name=USER_DATA['user']['first_name'], last_name=USER_DATA['user']['last_name'],
-                 email=USER_DATA['user']['email'], role=USER_DATA['user']['role'])
-    user.set_password(USER_DATA['user']['password'])
-    session.add(user)
-
-    team_leader = User(id=4, first_name=USER_DATA['team_leader']['first_name'], 
-                       last_name=USER_DATA['team_leader']['last_name'], email=USER_DATA['team_leader']['email'], 
-                       role=USER_DATA['team_leader']['role'])
-    team_leader.set_password(USER_DATA['team_leader']['password'])
-    session.add(team_leader)
+    users = {}
+    for user_key, user_data in USER_DATA.items():
+        user = User(id=user_data['id'], first_name=user_data['first_name'], last_name=user_data['last_name'],
+                    email=user_data['email'], phone=user_data.get('phone'), role=user_data['role'])
+        user.set_password(user_data['password'])
+        session.add(user)
+        users[user_key] = user
     session.commit()
-    return admin, supervisor, user, team_leader
+    return users['admin'], users['supervisor'], users['user'], users['team_leader']
 
 def _create_team(session, team_name, team_leader_id=None, members=None, team_id=None):
     """
@@ -127,7 +82,7 @@ def _create_team(session, team_name, team_leader_id=None, members=None, team_id=
         session.commit()
     return team
 
-def create_initial_teams(session, admin, supervisor_user, user, team_leader):
+def create_initial_teams(session, admin, supervisor_user, user_user, team_leader):
     """
     Creates a set of deterministic initial teams and clears any existing teams
     to ensure a clean state.
@@ -144,14 +99,18 @@ def create_initial_teams(session, admin, supervisor_user, user, team_leader):
     """
     session.query(Team).delete()
     session.commit()
-
-    initial_team = _create_team(session, 'Initial Team', admin.id, members=[admin, user], team_id=1)
-    alpha_team = _create_team(session, 'Alpha Team', supervisor_user.id, members=[supervisor_user], team_id=2)
-    beta_team = _create_team(session, 'Beta Team', team_leader.id, members=[team_leader], team_id=3)
-    charlie_team = _create_team(session, 'Charlie Team', team_id=4)
-    delta_team = _create_team(session, 'Delta Team', team_id=5)
-    
-    return initial_team, alpha_team, beta_team, charlie_team, delta_team
+    teams = {}
+    for team_key, team_data in TEAM_DATA.items():
+        members = []
+        for username in team_data.get('members', []):
+            user = session.query(User).filter_by(email=USER_DATA[username]['email']).first()
+            if user is None:
+                raise ValueError(f"User with email {USER_DATA[username]['email']} not found in database. Please make sure the user table is initialized first.")
+            members.append(user)
+            if team_data['team_leader_key'] == username:
+                team_leader_id = user.id
+        teams[team_key] = _create_team(session, team_id=team_data['id'], team_name=team_data['name'], team_leader_id=team_leader_id, members=members)
+    return teams['initial_team'], teams['alpha_team'], teams['beta_team'], teams['charlie_team'], teams['delta_team']
 
 def _create_job(session, date, start_time, end_time, description, property_obj, team_obj=None, user_obj=None, job_id=None, arrival_date_offset=0, complete=False):
     """
@@ -225,14 +184,13 @@ def create_initial_properties(session):
     """
     session.query(Property).delete()
     session.commit()
-
-    anytown_property = Property(id=1, address='123 Main St, Anytown', access_notes='Key under mat')
-    session.add(anytown_property)
-    
-    teamville_property = Property(id=2, address='456 Oak Ave, Teamville', access_notes='Code 1234')
-    session.add(teamville_property)
+    properties = {}
+    for property_key, property_data in PROPERTY_DATA.items():
+        property_obj = Property(id=property_data['id'], address=property_data['address'], access_notes=property_data['access_notes'])
+        session.add(property_obj)
+        properties[property_key] = property_obj
     session.commit()
-    return anytown_property, teamville_property
+    return properties['anytown_property'], properties['teamville_property']
 
 def create_initial_jobs(session, anytown_property, teamville_property, admin, user, initial_team, alpha_team, beta_team, charlie_team, delta_team):
     """
@@ -256,40 +214,27 @@ def create_initial_jobs(session, anytown_property, teamville_property, admin, us
     session.commit()
 
     today = today_in_app_tz()
-
-
-    # Initial jobs
-    _create_job(session, today, time(9, 0), time(11, 0), 'Full house clean, focus on kitchen and bathrooms.', anytown_property, team_obj=initial_team, user_obj=admin, job_id=1, arrival_date_offset=2)
-    _create_job(session, today, time(12, 0), time(14, 0), '', anytown_property, team_obj=initial_team, job_id=2, arrival_date_offset=1)
-    _create_job(session, today, time(14, 0), time(16, 0), '', anytown_property, team_obj=initial_team, job_id=3, arrival_date_offset=0)
-    # Future Jobs
-    _create_job(session, today + timedelta(days=3), time(10, 0), time(12, 0), 'Future job: Deep clean carpets.', anytown_property, team_obj=initial_team, job_id=12)
-    _create_job(session, today + timedelta(days=5), time(13, 0), time(15, 0), 'Future job: Window cleaning.', teamville_property, team_obj=initial_team, job_id=13)
-    _create_job(session, today + timedelta(days=7), time(9, 0), time(11, 0), 'Future job: Full house clean.', anytown_property, team_obj=initial_team, job_id=18)
-    _create_job(session, today + timedelta(days=10), time(15, 0), time(17, 0), 'Future job: Patio cleaning.', teamville_property, team_obj=initial_team, job_id=19)
-    # Past Jobs
-    _create_job(session, today - timedelta(days=3), time(9, 0), time(11, 0), 'Past job: Garden tidy-up.', teamville_property, team_obj=initial_team, job_id=14, complete=True)
-    _create_job(session, today - timedelta(days=5), time(14, 0), time(16, 0), 'Past job: Pool maintenance.', anytown_property, team_obj=initial_team, job_id=15, complete=True)
-    _create_job(session, today - timedelta(days=7), time(10, 0), time(12, 0), 'Past job: Roof inspection.', teamville_property, team_obj=initial_team, job_id=16, complete=True)
-    _create_job(session, today - timedelta(days=10), time(8, 0), time(10, 0), 'Past job: Driveway cleaning.', anytown_property, team_obj=initial_team, job_id=17, complete=True)
-    
-    # Alpha Team job
-    _create_job(session, today, time(10, 0), time(12, 0), '', teamville_property, team_obj=alpha_team, job_id=4)
-    _create_job(session, today, time(12, 30), time(14, 30), '', teamville_property, team_obj=alpha_team, job_id=8, arrival_date_offset=1)
-    _create_job(session, today, time(9, 0), time(10, 30), "Don't let the cat outside", anytown_property, team_obj=alpha_team, job_id=9, arrival_date_offset=2)
-    _create_job(session, today, time(18, 30), time(20, 30), '', anytown_property, team_obj=alpha_team, user_obj=user, job_id=10, arrival_date_offset=1)
-
-
-    # Beta Team job
-    _create_job(session, today, time(13, 0), time(15, 0), 'Beta Team Job: Garden maintenance.', anytown_property, team_obj=beta_team, job_id=5)
-    _create_job(session, today - timedelta(days=1), time(8, 0), time(10, 0), 'Beta Team Job: Pool cleaning.', anytown_property, team_obj=beta_team, job_id=11)
-
-    # Charlie Team job
-    _create_job(session, today, time(9, 30), time(11, 30), 'Charlie Team Job: Roof and gutter clean.', teamville_property, team_obj=charlie_team, job_id=6)
-
-    # Delta Team job
-    _create_job(session, today, time(15, 0), time(17, 0), 'Delta Team Job: Driveway pressure wash.', anytown_property, team_obj=delta_team, job_id=7)
-                                                   
+    jobs = {}
+    for template in JOB_TEMPLATES:
+        job_data = get_job_data_by_id(template['id'])
+        team = session.query(Team).filter_by(name=TEAM_DATA[template['team_key']]['name']).first() if template['team_key'] else None
+        user = session.query(User).filter_by(email=USER_DATA[template['user_key']]['email']).first() if template['user_key'] else None
+        property_obj = anytown_property if template['property_key'] == 'anytown_property' else teamville_property
+        job = _create_job(
+            session=session,
+            date=job_data['date'],
+            start_time=job_data['start_time'],
+            end_time=job_data['end_time'],
+            description=template['description'],
+            property_obj=property_obj,
+            team_obj=team,
+            user_obj=user,
+            job_id=template['id'],
+            arrival_date_offset=template.get('arrival_date_offset', 0),
+            complete=template.get('complete', False)
+        )
+        jobs[template['id']] = job
+    return jobs
 
 def _fix_postgres_sequences(session):
     """
