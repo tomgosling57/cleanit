@@ -343,6 +343,16 @@ def admin_client_no_csrf(app_no_csrf):
     yield client
 
 @pytest.fixture
+def supervisor_client_no_csrf(app_no_csrf):
+    """
+    Provides a Flask test client with a real supervisor user logged in and CSRF disabled.
+    """
+    # Create client without context manager to avoid context nesting issues
+    client = app_no_csrf.test_client()
+    login_user_for_test(client, "supervisor@example.com", "supervisor_password")
+    yield client
+
+@pytest.fixture
 def regular_client_no_csrf(app_no_csrf):
     """
     Provides a Flask test client with a real regular user logged in and CSRF disabled.
