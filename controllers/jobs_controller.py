@@ -432,7 +432,10 @@ class JobController:
             view_type_to_render = request.form.get('view_type')
 
             if view_type_to_render == 'team':
-                response_html = self.job_helper.render_teams_timetable_fragment(current_user, date_to_render)
+                timetable_fragment = self.job_helper.render_teams_timetable_fragment(current_user, date_to_render)
+                # Wrap with out-of-band swap for team timetable view
+                job_reassign_url = url_for('job.reassign_job_team')
+                response_html = f'<div class="team-timetable-view" id="team-timetable-view" hx-swap-oob="outerHTML:#team-timetable-view" data-job-reassign-url="{job_reassign_url}">\n{timetable_fragment}\n</div>'
             else:
                 response_html = self.job_helper.render_job_list_fragment(current_user, date_to_render)
             
@@ -451,7 +454,10 @@ class JobController:
             date_to_render = self.job_helper.process_selected_date()
 
             if view_type == 'team':
-                response_html = self.job_helper.render_teams_timetable_fragment(current_user, date_to_render)
+                timetable_fragment = self.job_helper.render_teams_timetable_fragment(current_user, date_to_render)
+                # Wrap with out-of-band swap for team timetable view
+                job_reassign_url = url_for('job.reassign_job_team')
+                response_html = f'<div class="team-timetable-view" id="team-timetable-view" hx-swap-oob="outerHTML:#team-timetable-view" data-job-reassign-url="{job_reassign_url}">\n{timetable_fragment}\n</div>'
             else:
                 # Default to normal job list if view_type is not 'team' or not provided
                 response_html = self.job_helper.render_job_list_fragment(
@@ -479,7 +485,13 @@ class JobController:
         
         # Re-render the entire team timetable view
         selected_date_for_fetch = self.job_helper.process_selected_date()
-        response_html = self.job_helper.render_teams_timetable_fragment(current_user, selected_date_for_fetch)
+        timetable_fragment = self.job_helper.render_teams_timetable_fragment(current_user, selected_date_for_fetch)
+        
+        # Wrap the fragment in the team-timetable-view div with hx-swap-oob attribute
+        # This allows HTMX to perform out-of-band swap for drag and drop functionality
+        # We need to render a template that includes the wrapper with the data attribute
+        job_reassign_url = url_for('job.reassign_job_team')
+        response_html = f'<div class="team-timetable-view" id="team-timetable-view" hx-swap-oob="outerHTML:#team-timetable-view" data-job-reassign-url="{job_reassign_url}">\n{timetable_fragment}\n</div>'
         return response_html
 
     # ========== MEDIA GALLERY METHODS ==========

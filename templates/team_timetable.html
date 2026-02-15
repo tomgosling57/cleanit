@@ -6,10 +6,9 @@
     <div class="container">
         <div class="header-with-button" id="timetable-header">
             <h1>Team Timetable</h1>
-            <!-- Date picker component with timetable flag -->
-            {% with display_date=selected_date, default_date=selected_date, timetable=true %}
-            {% include 'components/date_picker.html' %}
-            {% endwith %}
+            <div class="input-wrapper button" id="date-picker-wrapper">
+                <input type="text" id="timetable-datepicker" placeholder="Select Date"/>
+            </div>
             {% if current_user.role == 'admin' %}
                 <button class="button" hx-get="{{ url_for('job.timetable', date=selected_date) }}" hx-push-url="true" hx-target="body" hx-swap="outerHTML">
                     Default View
@@ -34,7 +33,7 @@
             </button>
         </div>
 
-        <div class="team-timetable-view" id="team-timetable-view" hx-swap-oob="outerHTML:#team-timetable-view" data-job-reassign-url="{{ url_for('job.reassign_job_team') }}">
+        <div class="team-timetable-view" id="team-timetable-view" data-job-reassign-url="{{ url_for('job.reassign_job_team') }}">
             {% include '_form_response.html' %}
             {% with view_type='team' %}
             {% include 'team_timetable_fragment.html' %}
@@ -49,34 +48,25 @@
 
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <script>
-        // Initialize date picker with redirect functionality
-        document.addEventListener('DOMContentLoaded', function() {
-            const dateInput = document.getElementById('date-input');
-            if (dateInput) {
-                dateInput.addEventListener('change', function() {
-                    const dateStr = this.value;
-                    if (dateStr) {
-                        window.location.assign('{{ url_for("job.team_timetable") }}?date=' + dateStr);
-                    }
-                });
+        flatpickr("#timetable-datepicker", {
+            dateFormat: "{{ DATETIME_FORMATS['DATE_FORMAT_FLATPICKR'] }}",
+            defaultDate: "{{ selected_date }}",
+            onChange: function(selectedDates, dateStr, instance) {
+                // Fetch jobs for the selected date via HTMX
+                window.location.assign('{{ url_for("job.team_timetable") }}?date=' + dateStr);
             }
         });
     </script>
     <script>
-        // Use htmx.on to ensure date picker is initialized after HTMX swaps content
+        // Use htmx.on to ensure Flatpickr is initialized after HTMX swaps content
         htmx.on("htmx:afterSwap", function(event) {
             try {
-                const dateInput = document.getElementById('date-input');
-                if (dateInput) {
-                    dateInput.addEventListener('change', function() {
-                        const dateStr = this.value;
-                        if (dateStr) {
-                            window.location.assign('{{ url_for("job.team_timetable") }}?date=' + dateStr);
-                        }
-                    });
-                }
+                flatpickr("#date", {
+                    dateFormat: "{{ DATETIME_FORMATS['DATE_FORMAT_FLATPICKR'] }}",
+                    defaultDate: "{{ selected_date }}"
+                });
             } catch (error) {
-                console.error("Error initializing date picker:", error);
+                console.error("Error initializing Flatpickr:", error);
             }
         });
     </script>
@@ -84,22 +74,46 @@
         import { initJobCardDragula } from "{{ url_for('static', filename='js/drag_and_drop.js') }}";
         import { initTimetableScrolling } from "{{ url_for('static', filename='js/timetable_scrolling.js') }}";
 
-        document.body.addEventListener('jobAssignmentsUpdated', () => {
-            console.log('Job assignments updated, re-initializing Dragula for job cards.');
-            initJobCardDragula();
-        });
-
-        document.addEventListener('DOMContentLoaded', () => {
+        // Function to initialize timetable features
+        function initTimetableFeatures() {
+            console.log('Initializing timetable features...');
             initTimetableScrolling();
             initJobCardDragula();
+        }
+
+        // Initialize on DOMContentLoaded
+        document.addEventListener('DOMContentLoaded', initTimetableFeatures);
+
+        // Listen for HTMX swaps at the body level
+        // This handles the case when the entire page is swapped (body outerHTML swap)
+        htmx.on("htmx:afterSwap", function(event) {
+            console.log('htmx:afterSwap fired, target:', event.detail.target);
+            
+            // Check if this is a body-level swap (target is body or contains team-timetable-view)
+            const isBodySwap = event.detail.target === document.body ||
+                              event.detail.target.tagName === 'BODY' ||
+                              (event.detail.target.id && event.detail.target.id === 'team-timetable-view') ||
+                              document.getElementById('team-timetable-view')?.contains(event.detail.target);
+            
+            if (isBodySwap) {
+                console.log('Body-level swap detected, checking for team timetable view...');
+                // Wait a bit for DOM to settle, then check if team timetable is present
+                setTimeout(() => {
+                    if (document.getElementById('team-timetable-view')) {
+                        console.log('Team timetable view found, re-initializing features.');
+                        initTimetableFeatures();
+                    }
+                }, 100);
+            }
         });
 
-        htmx.on("htmx:afterSwap", (event) => {
-            if (event.detail.target.id === 'team-timetable-view') {
-                console.log('team-timetable-view swapped, re-initializing timetable scrolling.');
-                initTimetableScrolling();
+        // Also listen for jobAssignmentsUpdated event
+        // Use document instead of document.body since body gets replaced
+        document.addEventListener('jobAssignmentsUpdated', () => {
+            console.log('jobAssignmentsUpdated event fired, re-initializing Dragula.');
+            setTimeout(() => {
                 initJobCardDragula();
-            }
+            }, 50);
         });
     </script>
 {% endblock %}

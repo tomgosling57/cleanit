@@ -119,10 +119,9 @@ JOB_TEMPLATES = [
         'arrival_date_offset': 1,
         'complete': False
     },
-    # Future Jobs
     {
         'id': 3,
-        'date_offset': 1,
+        'date_offset': 0,
         'start_time': (14, 0),
         'end_time': (16, 0),
         'description': '',
@@ -132,9 +131,10 @@ JOB_TEMPLATES = [
         'arrival_date_offset': 0,
         'complete': False
     },
+    # Future Jobs
     {
         'id': 12,
-        'date_offset': 1,
+        'date_offset': 3,
         'start_time': (10, 0),
         'end_time': (12, 0),
         'description': 'Future job: Deep clean carpets.',

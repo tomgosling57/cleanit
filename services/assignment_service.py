@@ -67,8 +67,8 @@ class AssignmentService:
         # Check if an assignment to the new team already exists to prevent duplicates
         existing_assignment = self.db_session.query(Assignment).filter(
             and_(
-                Assignment.job_id == job_id,
-                Assignment.team_id == new_team_id
+                Assignment.job_id == job.id,
+                Assignment.team_id == new_team.id
             )
         ).first()
         if not existing_assignment:

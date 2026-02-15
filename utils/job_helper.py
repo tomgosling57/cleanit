@@ -169,7 +169,7 @@ class JobHelper:
         Fetches the list of jobs for the current user/team on a specific date and renders the job list fragment.
         Returns the HTML for the job list.
         """
-        date_obj = datetime.strptime(date_str, DATETIME_FORMATS["DATE_FORMAT"]).date()
+        date_obj = datetime.fromisoformat(date_str).date()
         assigned_jobs = self.job_service.get_jobs_for_user_on_date(current_user.id, current_user.team_id, date_obj)
 
         team_leader_id = None
@@ -187,7 +187,7 @@ class JobHelper:
         Fetches the table of jobs categorized by their team assignments for a specific date.
         Returns the HTML of the Teams Timetable.
         """
-        date_obj = datetime.strptime(date_str, DATETIME_FORMATS["DATE_FORMAT"]).date()
+        date_obj = datetime.fromisoformat(date_str).date()
         all_teams = self.team_service.get_all_teams()
         jobs_by_team = self.job_service.get_jobs_grouped_by_team_for_date(date_obj)
         
