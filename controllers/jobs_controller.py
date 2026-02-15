@@ -69,33 +69,6 @@ class JobController:
         self.job_helper = job_helper
         self.media_service = media_service
 
-    def _handle_errors(self, errors=None, view_type=None):
-        """DEPRECATED, return jsonify with message attribute and 400 code instead."""
-        raise NotImplementedError("This method is deprecated. Return a JSON response with an error message and 400 status code instead.")
-        date = request.args.get('date')
-        date_to_render = self.job_helper.process_selected_date(date)
-
-        if not view_type:
-            # Retrieve view_type from request.form or request.args, defaulting to 'normal'
-            view_type = request.form.get('view_type') or request.args.get('view_type', 'normal')
-
-        if view_type == 'team':
-            main_fragment_html = self.job_helper.render_teams_timetable_fragment(current_user, date_to_render)
-        else:
-            main_fragment_html = self.job_helper.render_job_list_fragment(current_user, date_to_render)
-        
-        response_html = render_template_string(
-            """
-            {{ main_fragment_html | safe }}
-            {% include '_form_response.html' %}
-            """,
-            errors=errors if errors else None,
-            DATETIME_FORMATS=DATETIME_FORMATS,
-            is_oob_swap=True,
-            main_fragment_html=main_fragment_html
-        )
-        return response_html, 200
-
     def update_job_status(self, job_id):
         """DEPRECATED: Use mark_job_complete or mark_job_pending instead."""
         if not current_user.is_authenticated or current_user.role not in ['admin', 'supervisor']:
