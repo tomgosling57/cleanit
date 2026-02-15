@@ -1,7 +1,9 @@
 # tests/helpers.py
 from math import floor
 import re
+import json
 from time import sleep
+from controllers.jobs_controller import ERRORS
 from playwright.sync_api import expect, Page, Locator
 from typing import Optional
 from datetime import timedelta
@@ -212,6 +214,7 @@ def assert_job_not_found_htmx_error(
     htmx_values: Optional[dict] = None,
     team_view: bool = False
 ) -> None:
+    """DEPRECATED - Use make_htmx_request helper instead. Asserts that making an HTMX request to a non-existent job endpoint results in the correct error message being displayed in an alert."""
     if htmx_values is None:
         htmx_values = {}
 
@@ -247,12 +250,83 @@ def assert_job_not_found_htmx_error(
             """,
             [method, endpoint, htmx_values, expected_fragment_locator]
         )
-        expect(page.get_by_text("Something went wrong! That job no longer exists.")).to_be_visible()
+        expect(page.locator(".alert").get_by_text(ERRORS['Job Not Found'])).to_be_visible()
 
 def get_csrf_token(page: Page) -> str:
     """Gets the CSRF token from the page's body data attribute."""
     return page.locator('body').get_attribute('data-csrf-token')
 
+def make_htmx_request(
+    page: Page,
+    method: str,
+    endpoint: str,
+    csrf_token: str,
+    htmx_headers: Optional[dict] = None,
+    body: Optional[dict] = None,
+    wait_for_response: bool = True
+) -> None:
+    """
+    Generic helper for making HTMX requests via page.evaluate().
+    
+    Args:
+        page: Playwright Page object
+        method: HTTP method (GET, POST, PUT, DELETE, etc.)
+        endpoint: URL endpoint to request
+        csrf_token: CSRF token for the request
+        htmx_headers: Optional dict of additional HTMX headers (e.g. {'HX-Current-URL': '...'})
+        body: Optional dict of body data for POST/PUT requests
+        wait_for_response: Whether to wait for the response before returning
+    """
+    if htmx_headers is None:
+        htmx_headers = {}
+    if body is None:
+        body = {}
+    
+    page.wait_for_load_state('networkidle')
+    
+    # Convert body dict to JSON string for htmx.ajax
+    # Handle date objects by converting them to ISO format strings
+    def default_serializer(obj):
+        if hasattr(obj, 'isoformat'):
+            return obj.isoformat()
+        raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")
+    
+    body_json = json.dumps(body, default=default_serializer) if body else '{}'
+    
+    if wait_for_response:
+        with page.expect_response(endpoint):
+            page.evaluate(
+                f"""
+                ([method, endpoint, htmx_headers, body_json]) => {{
+                    // Use htmx.ajax to trigger proper HTMX events
+                    htmx.ajax(method, endpoint, {{
+                        headers: {{
+                            'X-CSRFToken': '{csrf_token}',
+                            ...htmx_headers
+                        }},
+                        values: JSON.parse(body_json)
+                    }});
+                }}
+                """,
+                [method, endpoint, htmx_headers, body_json]
+            )
+    else:
+        page.evaluate(
+            f"""
+            ([method, endpoint, htmx_headers, body_json]) => {{
+                // Use htmx.ajax to trigger proper HTMX events
+                htmx.ajax(method, endpoint, {{
+                    headers: {{
+                        'X-CSRFToken': '{csrf_token}',
+                        ...htmx_headers
+                    }},
+                    values: JSON.parse(body_json)
+                }});
+            }}
+            """,
+            [method, endpoint, htmx_headers, body_json]
+        )
+                
 def get_first_job_card(page: Page) -> Locator:
     page.locator(".job-list").wait_for(state="visible")
     job_card = page.locator(".job-card").first
