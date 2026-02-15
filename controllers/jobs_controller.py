@@ -69,6 +69,8 @@ class JobController:
         self.media_service = media_service
 
     def _handle_errors(self, errors=None, view_type=None):
+        """DEPRECATED, return jsonify with message attribute and 400 code instead."""
+        raise NotImplementedError("This method is deprecated. Return a JSON response with an error message and 400 status code instead.")
         date = request.args.get('date')
         date_to_render = self.job_helper.process_selected_date(date)
 
@@ -103,14 +105,15 @@ class JobController:
 
         job = self.job_service.update_job_completion_status(job_id, is_complete)
         
-        if job:
-            # Accessing job.property to eagerly load it before the session is torn down
-            # This prevents DetachedInstanceError when rendering the template
-            _ = job.property.address
-            response = render_template_string('{% include "job_status_fragment.html" %} {% include "job_card.html" %}', job=job, is_oob_swap=True, view_type=view_type, DATETIME_FORMATS=DATETIME_FORMATS)
-            return response
+        if not job:
+            return jsonify({'message': ERRORS['Job Not Found']}), 400
+        
+        # This prevents DetachedInstanceError when rendering the template
+        _ = job.property.address
+        response = render_template_string('{% include "job_status_fragment.html" %} {% include "job_card.html" %}', job=job, is_oob_swap=True, view_type=view_type, DATETIME_FORMATS=DATETIME_FORMATS)
+        return response
 
-        return self._handle_errors({'Job Not Found': ERRORS['Job Not Found']}, view_type=view_type)
+        
 
     def mark_job_complete_with_report(self, job_id):
         """
@@ -122,7 +125,7 @@ class JobController:
 
         job = self._get_job_details(job_id)
         if not job:
-            return self._handle_errors({'Job Not Found': ERRORS['Job Not Found']})
+            return jsonify({'message': ERRORS['Job Not Found']}), 400
 
         view_type = request.form.get('view_type') or request.args.get('view_type', 'normal')
         
@@ -158,7 +161,7 @@ class JobController:
             # Return error response
             job = self._get_job_details(job_id)
             if not job:
-                return self._handle_errors({'Job Not Found': ERRORS['Job Not Found']})
+                return jsonify({'message': ERRORS['Job Not Found']}), 400
             
             view_type = request.form.get('view_type') or request.args.get('view_type', 'normal')
             return render_template('job_report_modal.html', job=job, view_type=view_type,
@@ -167,7 +170,7 @@ class JobController:
         # Update job with report and mark as complete
         job = self.job_service.update_job_report_and_completion(job_id, report_text, is_complete=True)
         if not job:
-            return self._handle_errors({'Job Not Found': ERRORS['Job Not Found']})
+            return jsonify({'message': ERRORS['Job Not Found']}), 400
 
         view_type = request.form.get('view_type') or request.args.get('view_type', 'normal')
         
@@ -192,7 +195,7 @@ class JobController:
             response = render_template_string('{% include "job_status_fragment.html" %} {% include "job_card.html" %}', job=job, is_oob_swap=True, view_type=view_type, DATETIME_FORMATS=DATETIME_FORMATS)
             return response
 
-        return self._handle_errors({'Job Not Found': ERRORS['Job Not Found']})
+        return jsonify({'message': ERRORS['Job Not Found']}), 400
 
     def finalize_job_completion(self, job_id):
         """
@@ -205,13 +208,13 @@ class JobController:
         # Get the job to ensure it exists and is complete
         job = self._get_job_details(job_id)
         if not job:
-            return self._handle_errors({'Job Not Found': ERRORS['Job Not Found']})
+            return jsonify({'message': ERRORS['Job Not Found']}), 400
         
         # Job should already be complete from the report step, but ensure it is
         if not job.is_complete:
             job = self.job_service.update_job_completion_status(job_id, is_complete=True)
             if not job:
-                return self._handle_errors({'Job Not Found': ERRORS['Job Not Found']})
+                return jsonify({'message': ERRORS['Job Not Found']}), 400
 
         # Accessing job.property to eagerly load it before the session is torn down
         # This prevents DetachedInstanceError when rendering the template
@@ -247,7 +250,7 @@ class JobController:
             view_type = request.args.get('view_type', 'normal')
             return render_template('job_details_modal.html', job=job, job_cleaners=cleaners, job_teams=teams, DATETIME_FORMATS=DATETIME_FORMATS, selected_date=selected_date, view_type=view_type)
 
-        return self._handle_errors({'Job Not Found': ERRORS['Job Not Found']})
+        return jsonify({'message': ERRORS['Job Not Found']}), 400
 
     def get_job_creation_form(self):
         if current_user.role != 'admin':
@@ -301,7 +304,7 @@ class JobController:
 
         job = self._get_job_details(job_id)
         if not job:
-            return self._handle_errors({'Job Not Found': ERRORS['Job Not Found']})
+            return jsonify({'message': ERRORS['Job Not Found']}), 400
 
         try:
             updated_job_data, assigned_teams, assigned_cleaners = self.job_helper.process_job_form()
@@ -335,7 +338,7 @@ class JobController:
             
             return response_html
         
-        return self._handle_errors({'Job Not Found': ERRORS['Job Not Found']}, view_type=view_type_to_render)
+        return jsonify({'message': ERRORS['Job Not Found']}), 400
 
     def get_job_assignments_categorized(self, job_date_str=None):
         """Get categorized teams and users for job assignment based on current workload"""
@@ -432,7 +435,7 @@ class JobController:
         if job:
             selected_date = session.get('selected_date', today_in_app_tz())
             return render_template('job_update_modal.html', job=job, users=users, job_cleaners=job_users, properties=properties, teams=teams, job_teams=job_teams, DATETIME_FORMATS=DATETIME_FORMATS, selected_date=selected_date)
-        return self._handle_errors({'Job Not Found': ERRORS['Job Not Found']})
+        return jsonify({'message': ERRORS['Job Not Found']}), 400
 
     def create_job(self):
         if current_user.role != 'admin':
@@ -461,7 +464,7 @@ class JobController:
             
             return response_html
         view_type_to_render = request.form.get('view_type') or request.args.get('view_type', 'normal')
-        return self._handle_errors({'Failed to create job': 'Failed to create job'}, view_type=view_type_to_render)
+        return jsonify({'message': 'Failed to create job'}), 400
 
 
     def delete_job(self, job_id, view_type):
@@ -482,7 +485,7 @@ class JobController:
                 )
             return response_html
             
-        return self._handle_errors({'Job Not Found': ERRORS['Job Not Found']}, view_type=view_type)
+        return jsonify({'message': ERRORS['Job Not Found']}), 400
 
     def reassign_job_team(self):
         if not current_user.is_authenticated or current_user.role != 'admin':
@@ -491,12 +494,12 @@ class JobController:
         job = self._get_job_details(request.form.get('job_id'))
         view_type = request.form.get('view_type') or request.args.get('view_type', 'normal')
         if not job:
-            return self._handle_errors({'Job Not Found': ERRORS['Job Not Found']}, view_type=view_type)
+            return jsonify({'message': ERRORS['Job Not Found']}), 400
         
         new_team = self.team_service.get_team(request.form.get('new_team_id'))
         old_team = self.team_service.get_team(request.form.get('old_team_id'))
         if not all([job, new_team]):
-            return self._handle_errors({'Missing Reassignment Details': ERRORS['Missing Reassignment Details']}, view_type=view_type)
+            return jsonify({'message': ERRORS['Missing Reassignment Details']}), 400
 
         self.assignment_service.update_job_team_assignment(job, new_team, old_team)
         
