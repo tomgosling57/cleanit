@@ -13,7 +13,7 @@ from typing import Generator
 from playwright.sync_api import Page, BrowserContext, Browser
 from database import Property, User
 from tests.db_helpers import get_db_session
-from utils.populate_database import USER_DATA
+from utils.test_data import USER_DATA
 from utils.timezone import compare_times
 from requests import get
 

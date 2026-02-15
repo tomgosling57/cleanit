@@ -11,7 +11,7 @@ from tests.helpers import (
 )
 from tests.e2e.job_helpers import JobViewsTestHelper
 from utils.job_helper import END_DATETIME_IN_PAST, END_DATETIME_IN_PAST, INVALID_ARRIVAL_DATE_TIME_FORMAT, INVALID_ARRIVAL_DATE_TIME_FORMAT, ARRIVAL_DATETIME_IN_PAST, INVALID_DATE_OR_TIME_FORMAT, NON_SEQUENTIAL_START_AND_END, START_DATETIME_IN_PAST
-from utils.populate_database import USER_DATA
+from utils.test_data import USER_DATA
 from utils.timezone import app_now, to_app_tz, today_in_app_tz, utc_now
 
 class TestJobViews:

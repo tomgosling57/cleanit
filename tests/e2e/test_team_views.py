@@ -4,7 +4,7 @@ import pytest
 from tests.helpers import login_admin, wait_for_modal, setup_team_page, get_all_team_cards, assert_modal_title, close_modal, click_and_wait_for_response, drag_to_and_wait_for_response, simulate_htmx_delete_and_expect_response, assert_element_is_draggable, assert_element_is_not_draggable
 from playwright.sync_api import expect
 
-from utils.populate_database import USER_DATA
+from utils.test_data import USER_DATA
 
 def test_team_cards(admin_page) -> None:
     page = admin_page
