@@ -27,7 +27,7 @@ function smoothScrollTo(element, targetScrollLeft, duration) {
     currentScrollAnimation = requestAnimationFrame(animateScroll);
 }
 
-export function initTimetableScrolling() {
+function initTimetableScrolling() {
     const teamColumnsContainer = document.getElementById('team-columns-container');
     const scrollLeftButton = document.getElementById('scroll-left-button');
     const scrollRightButton = document.getElementById('scroll-right-button');
@@ -58,3 +58,6 @@ export function initTimetableScrolling() {
         console.warn('Timetable scrolling elements not found. Skipping initialization.');
     }
 }
+
+// Make function globally available
+window.initTimetableScrolling = initTimetableScrolling;
