@@ -218,21 +218,22 @@ class TestJobServiceDSTEdgeCases:
             midnight_utc = from_app_tz(midnight_app)
             
             # Verify that job dates are stored correctly
-            # Note: For DST transition day (Oct 6), the job date might be stored
-            # as Oct 5 in UTC because 10:00 AM Melbourne time (UTC+10/11) converts
-            # to late night UTC previous day
-            expected_date = job_date
-            if job_date == date(2024, 10, 6):
-                # 10:00 AM on Oct 6 in Melbourne could be Oct 5 in UTC
-                # depending on DST offset. We need to check both possibilities.
-                if created_jobs[i].date != job_date:
-                    print(f"WARNING: Job created on {job_date} has date {created_jobs[i].date} in database. "
-                          "This may be a DST-related date conversion issue.")
-                    # Accept either date for now to avoid test failure
-                    expected_date = created_jobs[i].date
+            # Note: Due to timezone offsets (especially around DST transitions),
+            # the UTC date stored in the database may differ from the local date.
+            # For example:
+            # - Oct 5 (before DST, UTC+10): 10:00 AM Melbourne = 00:00 UTC same day
+            # - Oct 6 (DST transition, UTC+10/11): 10:00 AM Melbourne = 23:00 UTC Oct 5 or 00:00 UTC Oct 6
+            # - Oct 7 (after DST, UTC+11): 10:00 AM Melbourne = 23:00 UTC Oct 6
+            # The test should accept that UTC dates may differ from local dates.
             
-            assert created_jobs[i].date == expected_date, \
-                f"Job date mismatch: expected {expected_date}, got {created_jobs[i].date}"
+            # Calculate the expected UTC date by converting the local datetime to UTC
+            local_datetime = datetime.combine(job_date, time(10, 0)).replace(tzinfo=app_tz)
+            expected_utc_date = from_app_tz(local_datetime).date()
+            
+            # The stored date should match the calculated UTC date
+            assert created_jobs[i].date == expected_utc_date, \
+                f"Job date mismatch: expected UTC date {expected_utc_date} for local date {job_date}, " \
+                f"but got {created_jobs[i].date}. This reveals DST handling issue."
             
             # Verify display times are correct (should be 10:00 in local time)
             assert created_jobs[i].display_start_time == '10:00', \

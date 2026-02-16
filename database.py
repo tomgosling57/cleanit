@@ -179,6 +179,10 @@ class Job(Base):
     @display_end_time.expression
     def display_end_time(cls):
         return cls.end_time
+    
+    @hybrid_property
+    def display_end_datetime(self):
+        return to_app_tz(datetime.combine(self.date, self.end_time))
 
     @hybrid_property
     def display_arrival_time(self):
@@ -264,21 +268,24 @@ class Job(Base):
     @hybrid_property
     def duration(self):
         if self.start_time and self.end_time:
-            # Calculate duration in local time (application timezone) to account for DST
-            # Convert UTC date/time to timezone-aware datetimes in app timezone
-            start_datetime_utc = datetime.combine(self.date, self.start_time)
-            end_datetime_utc = datetime.combine(self.date, self.end_time)
+            # Calculate duration in local time using timezone-aware datetimes
+            # This correctly handles DST transitions
+            start_datetime_local = self.display_datetime  # Already timezone-aware in app timezone
+            end_datetime_local = self.display_end_datetime  # Already timezone-aware in app timezone
             
-            # Convert to application timezone for DST-aware calculation
-            start_datetime_local = to_app_tz(start_datetime_utc)
-            end_datetime_local = to_app_tz(end_datetime_utc)
-            
-            # Handle cases where end_time is on the next day (e.g., 22:00 - 02:00)
-            # Note: We need to check if end time is actually before start time in local time
-            # after DST conversion (unlikely but possible with extreme edge cases)
+            # Handle cases where end time appears to be before start time
+            # (e.g., when UTC date is wrong for end time due to DST)
+            # We need to check if the local end time is actually before local start time
+            # which would indicate the end time is on the next UTC day
             if end_datetime_local < start_datetime_local:
-                # Add a day to end datetime for calculation
+                # The end time might be on the next UTC day
+                # Try adding a day to the end datetime
                 end_datetime_local += timedelta(days=1)
+            
+            # Also handle the reverse: if end is more than 24 hours after start,
+            # it might be on the previous day (unlikely but possible)
+            if (end_datetime_local - start_datetime_local) > timedelta(hours=24):
+                end_datetime_local -= timedelta(days=1)
 
             duration_timedelta = end_datetime_local - start_datetime_local
             total_minutes = int(duration_timedelta.total_seconds() / 60)
