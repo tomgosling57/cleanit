@@ -264,15 +264,23 @@ class Job(Base):
     @hybrid_property
     def duration(self):
         if self.start_time and self.end_time:
-            # Calculate duration in minutes
-            start_datetime = datetime.combine(self.date, self.start_time)
-            end_datetime = datetime.combine(self.date, self.end_time)
+            # Calculate duration in local time (application timezone) to account for DST
+            # Convert UTC date/time to timezone-aware datetimes in app timezone
+            start_datetime_utc = datetime.combine(self.date, self.start_time)
+            end_datetime_utc = datetime.combine(self.date, self.end_time)
+            
+            # Convert to application timezone for DST-aware calculation
+            start_datetime_local = to_app_tz(start_datetime_utc)
+            end_datetime_local = to_app_tz(end_datetime_utc)
             
             # Handle cases where end_time is on the next day (e.g., 22:00 - 02:00)
-            if end_datetime < start_datetime:
-                end_datetime += timedelta(days=1)
+            # Note: We need to check if end time is actually before start time in local time
+            # after DST conversion (unlikely but possible with extreme edge cases)
+            if end_datetime_local < start_datetime_local:
+                # Add a day to end datetime for calculation
+                end_datetime_local += timedelta(days=1)
 
-            duration_timedelta = end_datetime - start_datetime
+            duration_timedelta = end_datetime_local - start_datetime_local
             total_minutes = int(duration_timedelta.total_seconds() / 60)
             
             hours = total_minutes // 60
