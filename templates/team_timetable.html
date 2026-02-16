@@ -70,20 +70,23 @@
             }
         });
     </script>
-    <script type="module">
-        import { initJobCardDragula } from "{{ url_for('static', filename='js/drag_and_drop.js') }}";
-        import { initTimetableScrolling } from "{{ url_for('static', filename='js/timetable_scrolling.js') }}";
-
+    <script>
         // Function to initialize timetable features
         function initTimetableFeatures() {
             console.log('Initializing timetable features...');
-            initTimetableScrolling();
+            
+            // Initialize timetable scrolling if available
+            if (window.initTimetableScrolling) {
+                initTimetableScrolling();
+            }
             
             // Check if drag and drop containers exist before initializing
             const hasTeamColumns = document.querySelectorAll('.team-column').length > 0;
-            if (hasTeamColumns) {
+            if (hasTeamColumns && window.initJobCardDragula) {
                 console.log('Found team columns, initializing drag and drop.');
-                initJobCardDragula();
+                window.initJobCardDragula();
+            } else if (hasTeamColumns) {
+                console.log('Found team columns but initJobCardDragula not available.');
             } else {
                 console.log('No team columns found for drag and drop.');
             }
@@ -143,14 +146,18 @@
         document.addEventListener('jobAssignmentsUpdated', () => {
             console.log('jobAssignmentsUpdated event fired, re-initializing Dragula.');
             setTimeout(() => {
-                initJobCardDragula();
+                if (window.initJobCardDragula) {
+                    window.initJobCardDragula();
+                }
             }, 50);
         });
 
         // Add a global function that can be called from elsewhere
         window.reinitTeamTimetableDragula = function() {
             console.log('Manual reinitialization of team timetable dragula requested.');
-            initJobCardDragula();
+            if (window.initJobCardDragula) {
+                window.initJobCardDragula();
+            }
         };
     </script>
 {% endblock %}
