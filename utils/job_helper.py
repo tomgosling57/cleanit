@@ -55,7 +55,7 @@ class JobHelper:
             raise ValueError('At least one team must be assigned to the job.')
 
     def parse_job_datetime(self, date_str, start_time_str, end_time_str, arrival_datetime_str):
-        """Parses date and time strings into datetime objects."""
+        """Parses date and time strings into datetime objects with DST-aware validation."""
         job_arrival_datetime = None
         i = ''
         try:
@@ -65,8 +65,30 @@ class JobHelper:
             job_start_time = datetime.strptime(start_time_str, DATETIME_FORMATS["TIME_FORMAT"]).time()
             i = end_time_str
             job_end_time = datetime.strptime(end_time_str, DATETIME_FORMATS["TIME_FORMAT"]).time()
+            
+            # Create start datetime in application timezone
             job_start_datetime = datetime.combine(job_date, job_start_time, tzinfo=app_now().tzinfo)
-            job_end_datetime = datetime.combine(job_date, job_end_time, tzinfo=app_now().tzinfo)
+            
+            # Determine end datetime - handle DST transitions where end time might appear before start
+            # Try same date as start first
+            candidate_date = job_date
+            candidate_datetime = datetime.combine(candidate_date, job_end_time, tzinfo=app_now().tzinfo)
+            
+            # If candidate is before start (or within 1 hour before), try next day
+            # Jobs are not overnight, but DST transitions can cause end time to appear before start
+            # Use a threshold of 1 hour to account for DST transitions
+            if candidate_datetime < job_start_datetime:
+                # Check if the difference is small (likely DST transition) or large (overnight)
+                from datetime import timedelta
+                time_diff = job_start_datetime - candidate_datetime
+                if time_diff > timedelta(hours=1):
+                    # More than 1 hour difference, likely overnight (shouldn't happen for cleaning jobs)
+                    # But we'll still use next day to ensure end is after start
+                    candidate_date += timedelta(days=1)
+                    candidate_datetime = datetime.combine(candidate_date, job_end_time, tzinfo=app_now().tzinfo)
+            
+            job_end_datetime = candidate_datetime
+            
         except ValueError as e:
             raise ValueError(INVALID_DATE_OR_TIME_FORMAT.format(i)) from e
 
@@ -83,14 +105,18 @@ class JobHelper:
                 except ValueError as e:
                     raise ValueError(INVALID_ARRIVAL_DATE_TIME_FORMAT.format(arrival_datetime_str)) from e
                 
+        # Validate that end is after start (should be true after DST adjustment)
         if job_start_datetime and job_end_datetime and job_start_datetime >= job_end_datetime:
             raise ValueError(NON_SEQUENTIAL_START_AND_END)
-        if job_start_datetime <= app_now().replace(hour=0, minute=0, second=0):
+        
+        # Validate dates/times are not in the past
+        current_time = app_now()
+        if job_start_datetime <= current_time.replace(hour=0, minute=0, second=0):
             raise ValueError(START_DATETIME_IN_PAST)
-        if job_end_datetime <= app_now().replace(hour=0, minute=0, second=0):
+        if job_end_datetime <= current_time.replace(hour=0, minute=0, second=0):
             raise ValueError(END_DATETIME_IN_PAST)
     
-        if job_arrival_datetime and job_arrival_datetime <= app_now().replace(hour=0, minute=0, second=0):
+        if job_arrival_datetime and job_arrival_datetime <= current_time.replace(hour=0, minute=0, second=0):
             raise ValueError(ARRIVAL_DATETIME_IN_PAST)
     
         return job_date, job_start_time, job_end_time, job_arrival_datetime

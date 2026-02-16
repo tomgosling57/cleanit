@@ -57,18 +57,45 @@ class JobService:
             job_data: Dict with 'date', 'start_time', 'end_time', and optionally 'arrival_datetime'
         
         Returns:
-            Dict with UTC date, start_time, end_time, and arrival_datetime
+            Dict with UTC date, end_date, start_time, end_time, and arrival_datetime
         """
-        # Parse date and times in app timezone
+        from utils.timezone import get_app_timezone
+        
+        # Parse start datetime in app timezone
         start_datetime_str = f"{job_data['date']} {job_data['start_time']}"
-        end_datetime_str = f"{job_data['date']} {job_data['end_time']}"
+        start_datetime_app = datetime.fromisoformat(start_datetime_str)
+        
+        # Get application timezone
+        app_tz = get_app_timezone()
+        start_datetime_app = start_datetime_app.replace(tzinfo=app_tz)
+        
+        # Parse end time as time object
+        end_time = datetime.strptime(job_data['end_time'], '%H:%M').time()
+        
+        # Determine which date the end time belongs to
+        # Try same date as start first
+        candidate_date = start_datetime_app.date()
+        candidate_datetime = datetime.combine(candidate_date, end_time).replace(tzinfo=app_tz)
+        
+        # If candidate is before start (or within 1 hour before), try next day
+        # Jobs are not overnight, but DST transitions can cause end time to appear before start
+        # Use a threshold of 1 hour to account for DST transitions
+        if candidate_datetime < start_datetime_app:
+            # Check if the difference is small (likely DST transition) or large (overnight)
+            time_diff = start_datetime_app - candidate_datetime
+            if time_diff > timedelta(hours=1):
+                # More than 1 hour difference, likely overnight (shouldn't happen for cleaning jobs)
+                # But we'll still use next day to ensure end is after start
+                candidate_date += timedelta(days=1)
+                candidate_datetime = datetime.combine(candidate_date, end_time).replace(tzinfo=app_tz)
         
         # Convert to UTC
-        start_datetime_utc = from_app_tz(datetime.fromisoformat(start_datetime_str))
-        end_datetime_utc = from_app_tz(datetime.fromisoformat(end_datetime_str))
+        start_datetime_utc = from_app_tz(start_datetime_app)
+        end_datetime_utc = from_app_tz(candidate_datetime)
         
         result = {
             'date': start_datetime_utc.date(),
+            'end_date': end_datetime_utc.date(),
             'start_time': start_datetime_utc.time(),
             'end_time': end_datetime_utc.time(),
         }
@@ -90,6 +117,7 @@ class JobService:
         # Create job with UTC times
         new_job = Job(
             date=utc_times['date'],
+            end_date=utc_times['end_date'],
             start_time=utc_times['start_time'],
             end_time=utc_times['end_time'],
             arrival_datetime=utc_times.get('arrival_datetime'),
@@ -119,6 +147,7 @@ class JobService:
         
         # Update job fields
         job.date = utc_times['date']
+        job.end_date = utc_times['end_date']
         job.start_time = utc_times['start_time']
         job.end_time = utc_times['end_time']
         
@@ -273,6 +302,7 @@ class JobService:
         
         for job in uncompleted_jobs:
             job.date += timedelta(days=1)
+            job.end_date += timedelta(days=1)
         
         self.db_session.commit()
         current_app.logger.debug(f"Pushed {len(uncompleted_jobs)} uncompleted jobs to the next day.")

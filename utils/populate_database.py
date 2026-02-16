@@ -150,6 +150,7 @@ def _create_job(session, date, start_time, end_time, description, property_obj, 
     job = Job(
         id=job_id,
         date=start_dt.date(),
+        end_date=end_dt.date(),  # Use end date from end_dt
         start_time=start_dt.time(),
         arrival_datetime=datetime.combine(arrival_date_for_job, start_dt.time()),
         end_time=end_dt.time(),
