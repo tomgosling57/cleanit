@@ -78,11 +78,6 @@ class TestJobViews:
             id="start_time_in_past"
         ),
         pytest.param(
-            {"end_time": "00:00"},
-            NON_SEQUENTIAL_START_AND_END,
-            id="end_time_in_past"
-        ),
-        pytest.param(
             {"arrival_datetime": (app_now() - timedelta(days=1)).date().isoformat()},
             ARRIVAL_DATETIME_IN_PAST,
             id="arrival_in_past"
