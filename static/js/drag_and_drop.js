@@ -118,13 +118,13 @@ htmx.ajax('POST', apiUrl, {
 }
 
 // Initialization for team members
-export function initTeamMemberDragula() {
+function initTeamMemberDragula() {
     const teamContainers = Array.from(document.querySelectorAll('.members-list'));
     initDragula(teamContainers, handleTeamMemberDrop);
 }
 
 // Initialization for job cards
-export function initJobCardDragula() {
+function initJobCardDragula() {
     const jobContainers = Array.from(document.querySelectorAll('.team-column'));
     initDragula(jobContainers, handleJobCardDrop);
 }
