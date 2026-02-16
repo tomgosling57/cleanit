@@ -13,7 +13,7 @@
         // Global variables for timezone handling
         window.APP_TIMEZONE = "{{ APP_TIMEZONE }}";
         window.APP_NOW_ISO = "{{ APP_NOW_ISO }}";
-        window.DATETIME_FORMATS = {{ DATETIME_FORMATS|tojson|safe }};
+        window.DATETIME_FORMATS = "{{ DATETIME_FORMATS|tojson|safe }}";
     </script>
 </head>
 <body data-csrf-token="{{ csrf_token() }}" data-app-timezone="{{ APP_TIMEZONE }}" hx-headers='{"X-CSRFToken": "{{ csrf_token() }}"}'>
@@ -36,6 +36,27 @@
                     }
                 }
             });
+            
+            // Check for drag and drop containers and reinitialize if needed
+            const target = event.detail.target;
+            
+            // Check for team member drag and drop containers
+            if (target.querySelector('.members-list') || target.closest('.teams-grid') || target.classList.contains('team-card')) {
+                console.log('Base template: Detected team member drag and drop containers after HTMX swap.');
+                // Try to call global init function if it exists
+                if (window.initTeamMemberDragula) {
+                    window.initTeamMemberDragula();
+                }
+            }
+            
+            // Check for job card drag and drop containers
+            if (target.querySelector('.team-column') || target.closest('#team-columns-container') || target.id === 'team-timetable-view') {
+                console.log('Base template: Detected job card drag and drop containers after HTMX swap.');
+                // Try to call global init function if it exists
+                if (window.initJobCardDragula) {
+                    window.initJobCardDragula();
+                }
+            }
         });
 
     </script>
