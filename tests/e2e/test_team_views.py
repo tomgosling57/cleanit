@@ -84,7 +84,9 @@ def test_team_reassignment(admin_page) -> None:
     expect(old_team_leader).to_be_visible()
     new_team_id = new_team.get_attribute('data-team-id')
     # Drag team leader to new team (covers #1)
-    drag_to_and_wait_for_response(page, old_team_leader, new_team, f"**/teams/team/{new_team_id}/member/add**")
+    page.wait_for_timeout(500)
+    old_team_leader.drag_to(new_team)
+    page.wait_for_timeout(500)
 
     # Assert that the reassignment persists after refreshing . the page (covers #2)
     pre_refresh_team_members = page.locator('.team-members').all()

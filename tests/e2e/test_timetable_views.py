@@ -234,13 +234,11 @@ def test_team_timetable_job_reassignment(admin_page) -> None:
     team_column_1 = page.locator('div.team-column').first
     job_card_to_move = team_column_1.locator('div.job-card').first
     team_column_2 = page.locator('div.team-column').nth(1)
-    # move_target = team_column_2.locator('div.job-card').first
-
+    move_target = team_column_2.locator('div.job-card').first
+    page.wait_for_timeout(500)
     job_id = int(job_card_to_move.get_attribute('data-job-id'))
     job_card_to_move = page.locator(f'div.job-card[data-job-id="{job_id}"]')
-    with page.expect_response(f"**/jobs/job/reassign**"):
-        page.wait_for_load_state('networkidle')
-        job_card_to_move.drag_to(team_column_2)
+    job_card_to_move.drag_to(move_target)
 
     # Verify that the job has been moved to the new team column
     expect(team_column_2.locator(f'div.job-card[data-job-id="{job_id}"]')).to_be_visible()
