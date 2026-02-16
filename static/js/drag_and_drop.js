@@ -143,6 +143,26 @@ document.addEventListener('DOMContentLoaded', () => {
     document.body.addEventListener('htmx:afterSwap', (event) => {
         const target = event.detail.target;
         
+        // First check for data attribute for precise control
+        const reinitType = target.getAttribute('data-reinit-dragula') ||
+                          target.closest('[data-reinit-dragula]')?.getAttribute('data-reinit-dragula');
+        
+        if (reinitType === 'team-members') {
+            console.log('Data attribute indicates team members need reinitialization.');
+            initTeamMemberDragula();
+            return;
+        } else if (reinitType === 'job-cards') {
+            console.log('Data attribute indicates job cards need reinitialization.');
+            initJobCardDragula();
+            return;
+        } else if (reinitType === 'both') {
+            console.log('Data attribute indicates both need reinitialization.');
+            initTeamMemberDragula();
+            initJobCardDragula();
+            return;
+        }
+        
+        // Fall back to DOM-based detection if no data attribute
         // Check if swap affects team member drag and drop
         if (target.closest('.teams-grid') ||
             target.classList.contains('team-card') ||
