@@ -39,4 +39,55 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/team_styles.css') }}">
     <script type="module" src="{{ url_for('static', filename='js/drag_and_drop.js') }}"></script>
+    
+    <script>
+        // Ensure team member drag and drop is initialized on the teams page
+        function initTeamsPageDragula() {
+            console.log('Teams page: Checking for team member drag and drop containers...');
+            
+            // Check if global init function exists
+            if (window.initTeamMemberDragula) {
+                console.log('Teams page: Found initTeamMemberDragula, calling it.');
+                window.initTeamMemberDragula();
+                return true;
+            }
+            
+            // Fallback: check for containers and log if found
+            const hasMemberLists = document.querySelectorAll('.members-list').length > 0;
+            if (hasMemberLists) {
+                console.log('Teams page: Found .members-list containers but initTeamMemberDragula not available.');
+            }
+            
+            return false;
+        }
+        
+        // Initialize when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                console.log('Teams page: DOMContentLoaded fired.');
+                initTeamsPageDragula();
+            });
+        } else {
+            // DOM already loaded (e.g., after HTMX swap)
+            console.log('Teams page: DOM already loaded, initializing dragula.');
+            setTimeout(initTeamsPageDragula, 50);
+        }
+        
+        // Listen for HTMX swaps
+        if (typeof htmx !== 'undefined') {
+            htmx.on('htmx:afterSwap', function(event) {
+                const target = event.detail.target;
+                
+                // Check if this swap affects teams
+                if (target.closest('.teams-grid') ||
+                    target.classList.contains('team-card') ||
+                    target.querySelector('.members-list')) {
+                    console.log('Teams page: HTMX swap detected in teams area.');
+                    setTimeout(() => {
+                        initTeamsPageDragula();
+                    }, 100);
+                }
+            });
+        }
+    </script>
 {% endblock %}
