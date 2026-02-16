@@ -51,26 +51,55 @@ class JobService:
     
     def _parse_job_times(self, job_data):
         """
-        Helper to convert app timezone date/time strings to UTC datetime objects.
+        Helper to convert app timezone date/time objects to UTC datetime objects.
         
         Args:
-            job_data: Dict with 'date', 'start_time', 'end_time', and optionally 'arrival_datetime'
+            job_data: Dict with 'date' (date object), 'start_time' (time object),
+                     'end_time' (time object), and optionally 'arrival_datetime' (datetime object)
         
         Returns:
             Dict with UTC date, end_date, start_time, end_time, and arrival_datetime
         """
         from utils.timezone import get_app_timezone
         
-        # Parse start datetime in app timezone
-        start_datetime_str = f"{job_data['date']} {job_data['start_time']}"
-        start_datetime_app = datetime.fromisoformat(start_datetime_str)
-        
         # Get application timezone
         app_tz = get_app_timezone()
-        start_datetime_app = start_datetime_app.replace(tzinfo=app_tz)
         
-        # Parse end time as time object
-        end_time = datetime.strptime(job_data['end_time'], '%H:%M').time()
+        # Handle date - could be date object or string
+        date_value = job_data['date']
+        if isinstance(date_value, str):
+            # Parse string to date object
+            from config import DATETIME_FORMATS
+            try:
+                # Try ISO format first
+                date_obj = datetime.fromisoformat(date_value).date()
+            except ValueError:
+                # Fall back to application date format
+                date_obj = datetime.strptime(date_value, DATETIME_FORMATS["DATE_FORMAT"]).date()
+        else:
+            # Assume it's a date object
+            date_obj = date_value
+        
+        # Handle start_time - could be time object or string
+        start_time_value = job_data['start_time']
+        if isinstance(start_time_value, str):
+            from config import DATETIME_FORMATS
+            start_time = datetime.strptime(start_time_value, DATETIME_FORMATS["TIME_FORMAT"]).time()
+        else:
+            # Assume it's a time object
+            start_time = start_time_value
+        
+        # Create start datetime in application timezone
+        start_datetime_app = datetime.combine(date_obj, start_time).replace(tzinfo=app_tz)
+        
+        # Handle end_time - could be time object or string
+        end_time_value = job_data['end_time']
+        if isinstance(end_time_value, str):
+            from config import DATETIME_FORMATS
+            end_time = datetime.strptime(end_time_value, DATETIME_FORMATS["TIME_FORMAT"]).time()
+        else:
+            # Assume it's already a time object
+            end_time = end_time_value
         
         # Determine which date the end time belongs to
         # Try same date as start first
