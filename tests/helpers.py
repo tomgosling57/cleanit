@@ -702,3 +702,14 @@ def assert_element_is_not_draggable(page: Page, element: Locator, drop_target: L
     y_diff = abs(init_y - final_y)
     assert x_diff < 5 and y_diff < 5, \
         f"Non-draggable element should not move during drag attempt (moved x:{x_diff}, y:{y_diff}, initial: {init_x},{init_y}, final: {final_x},{final_y})"
+    
+def enable_mouse_tracing(page: Page) -> None:
+    """Enable mouse tracing for debugging drag-and-drop tests"""
+    page.evaluate("""
+    document.addEventListener('mousemove', (e) => {
+            let dot = document.createElement('div');
+            dot.style.cssText = 'position:fixed;top:'+e.clientY+'px;left:'+e.clientX+'px;width:10px;height:10px;background:red;border-radius:50%;z-index:9999;pointer-events:none;';
+            document.body.appendChild(dot);
+            setTimeout(() => dot.remove(), 1000);
+        });
+    """)
