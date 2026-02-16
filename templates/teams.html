@@ -19,7 +19,7 @@
         <div class="teams-container">
             {% include '_form_response.html' %}
             {% if teams %}
-                <div class="teams-grid" id="teams-list-container">
+                <div class="teams-grid" id="teams-list-container" data-reinit-dragula="team-members">
                     {% include 'team_list.html' %}
                 </div>
                 </div>

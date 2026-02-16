@@ -78,42 +78,79 @@
         function initTimetableFeatures() {
             console.log('Initializing timetable features...');
             initTimetableScrolling();
-            initJobCardDragula();
+            
+            // Check if drag and drop containers exist before initializing
+            const hasTeamColumns = document.querySelectorAll('.team-column').length > 0;
+            if (hasTeamColumns) {
+                console.log('Found team columns, initializing drag and drop.');
+                initJobCardDragula();
+            } else {
+                console.log('No team columns found for drag and drop.');
+            }
         }
 
-        // Initialize on DOMContentLoaded
-        document.addEventListener('DOMContentLoaded', initTimetableFeatures);
+        // Function to check and initialize if team timetable is present
+        function checkAndInitTimetable() {
+            if (document.getElementById('team-timetable-view')) {
+                console.log('Team timetable view detected, initializing features.');
+                initTimetableFeatures();
+                return true;
+            }
+            return false;
+        }
+
+        // Initialize immediately if DOM is ready and team timetable is present
+        if (document.readyState === 'loading') {
+            // DOM is still loading, wait for DOMContentLoaded
+            document.addEventListener('DOMContentLoaded', () => {
+                console.log('DOMContentLoaded fired for team timetable.');
+                checkAndInitTimetable();
+            });
+        } else {
+            // DOM is already loaded (e.g., after HTMX swap)
+            console.log('DOM already loaded, checking for team timetable.');
+            // Give a small delay to ensure DOM is fully parsed
+            setTimeout(() => {
+                if (!checkAndInitTimetable()) {
+                    // If not found immediately, try again after a short delay
+                    setTimeout(checkAndInitTimetable, 200);
+                }
+            }, 50);
+        }
 
         // Listen for HTMX swaps at the body level
         // This handles the case when the entire page is swapped (body outerHTML swap)
         htmx.on("htmx:afterSwap", function(event) {
             console.log('htmx:afterSwap fired, target:', event.detail.target);
             
-            // Check if this is a body-level swap (target is body or contains team-timetable-view)
-            const isBodySwap = event.detail.target === document.body ||
-                              event.detail.target.tagName === 'BODY' ||
-                              (event.detail.target.id && event.detail.target.id === 'team-timetable-view') ||
-                              document.getElementById('team-timetable-view')?.contains(event.detail.target);
+            // Check if this swap affects the timetable
+            const affectsTimetable = event.detail.target === document.body ||
+                                    event.detail.target.tagName === 'BODY' ||
+                                    (event.detail.target.id && event.detail.target.id === 'team-timetable-view') ||
+                                    event.detail.target.closest('#team-timetable-view') ||
+                                    document.getElementById('team-timetable-view')?.contains(event.detail.target);
             
-            if (isBodySwap) {
-                console.log('Body-level swap detected, checking for team timetable view...');
-                // Wait a bit for DOM to settle, then check if team timetable is present
+            if (affectsTimetable) {
+                console.log('Timetable-related swap detected, re-initializing features.');
+                // Wait for DOM to settle
                 setTimeout(() => {
-                    if (document.getElementById('team-timetable-view')) {
-                        console.log('Team timetable view found, re-initializing features.');
-                        initTimetableFeatures();
-                    }
-                }, 100);
+                    initTimetableFeatures();
+                }, 150);
             }
         });
 
         // Also listen for jobAssignmentsUpdated event
-        // Use document instead of document.body since body gets replaced
         document.addEventListener('jobAssignmentsUpdated', () => {
             console.log('jobAssignmentsUpdated event fired, re-initializing Dragula.');
             setTimeout(() => {
                 initJobCardDragula();
             }, 50);
         });
+
+        // Add a global function that can be called from elsewhere
+        window.reinitTeamTimetableDragula = function() {
+            console.log('Manual reinitialization of team timetable dragula requested.');
+            initJobCardDragula();
+        };
     </script>
 {% endblock %}
