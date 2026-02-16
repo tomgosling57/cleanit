@@ -56,21 +56,46 @@
             const hasMemberLists = document.querySelectorAll('.members-list').length > 0;
             if (hasMemberLists) {
                 console.log('Teams page: Found .members-list containers but initTeamMemberDragula not available.');
+                console.log('Teams page: Waiting for drag_and_drop.js module to load...');
+                // Try again after a delay
+                setTimeout(initTeamsPageDragula, 100);
             }
             
             return false;
+        }
+        
+        // Function to initialize teams page
+        function initTeamsPage() {
+            console.log('Teams page: Initializing...');
+            
+            // Try to initialize dragula immediately
+            initTeamsPageDragula();
+            
+            // Also set up a fallback initialization after a longer delay
+            setTimeout(() => {
+                if (!window.initTeamMemberDragula) {
+                    console.log('Teams page: initTeamMemberDragula still not available after delay.');
+                    // Check if drag_and_drop.js loaded but functions aren't on window
+                    // Try to detect if module loaded by checking for other globals
+                    if (window.drake || window.dragula) {
+                        console.log('Teams page: Dragula library loaded but init function not available.');
+                        // Force reinitialization by triggering custom event
+                        document.dispatchEvent(new CustomEvent('teamListUpdated'));
+                    }
+                }
+            }, 500);
         }
         
         // Initialize when DOM is ready
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => {
                 console.log('Teams page: DOMContentLoaded fired.');
-                initTeamsPageDragula();
+                initTeamsPage();
             });
         } else {
             // DOM already loaded (e.g., after HTMX swap)
-            console.log('Teams page: DOM already loaded, initializing dragula.');
-            setTimeout(initTeamsPageDragula, 50);
+            console.log('Teams page: DOM already loaded, initializing.');
+            setTimeout(initTeamsPage, 50);
         }
         
         // Listen for HTMX swaps
@@ -89,5 +114,11 @@
                 }
             });
         }
+        
+        // Global function that can be called from elsewhere
+        window.reinitTeamsDragula = function() {
+            console.log('Teams page: Manual reinitialization requested.');
+            initTeamsPageDragula();
+        };
     </script>
 {% endblock %}
