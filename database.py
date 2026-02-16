@@ -99,6 +99,7 @@ class Job(Base):
 
     id = Column(Integer, primary_key=True)
     date = Column(Date, nullable=False)
+    end_date = Column(Date, nullable=False, default=lambda: date.today())
     start_time = Column(Time, nullable=False)
     arrival_datetime = Column(DateTime, nullable=True)
     end_time = Column(Time, nullable=False)
@@ -182,7 +183,7 @@ class Job(Base):
     
     @hybrid_property
     def display_end_datetime(self):
-        return to_app_tz(datetime.combine(self.date, self.end_time))
+        return to_app_tz(datetime.combine(self.end_date, self.end_time))
 
     @hybrid_property
     def display_arrival_time(self):
@@ -239,12 +240,13 @@ class Job(Base):
         return func.date(cls.arrival_datetime)
 
     def __repr__(self):
-        return f"<Job(id={self.id}, date='{self.date}', start_time='{self.start_time}', arrival_datetime='{self.arrival_datetime}', end_time='{self.end_time}', is_complete='{self.is_complete}')>"
+        return f"<Job(id={self.id}, date='{self.date}', end_date='{self.end_date}', start_time='{self.start_time}', arrival_datetime='{self.arrival_datetime}', end_time='{self.end_time}', is_complete='{self.is_complete}')>"
 
     def to_dict(self, include_report=False):
         data = {
             'id': self.id,
             'date_utc': self.date.isoformat(),
+            'end_date_utc': self.end_date.isoformat(),
             'start_time_utc': self.start_time.isoformat(),
             'arrival_datetime_utc': self.arrival_datetime.isoformat() if self.arrival_datetime else None,
             'end_time_utc': self.end_time.isoformat(),
@@ -263,29 +265,21 @@ class Job(Base):
 
     @hybrid_property
     def end_datetime(self):
-        return datetime.combine(self.date, self.end_time)
+        return datetime.combine(self.end_date, self.end_time)
     
     @hybrid_property
     def duration(self):
         if self.start_time and self.end_time:
-            # Calculate duration in local time using timezone-aware datetimes
-            # This correctly handles DST transitions
+            # Calculate duration using timezone-aware datetimes with correct dates
             start_datetime_local = self.display_datetime  # Already timezone-aware in app timezone
-            end_datetime_local = self.display_end_datetime  # Already timezone-aware in app timezone
+            end_datetime_local = self.display_end_datetime  # Already timezone-aware in app timezone with correct end_date
             
-            # Handle cases where end time appears to be before start time
-            # (e.g., when UTC date is wrong for end time due to DST)
-            # We need to check if the local end time is actually before local start time
-            # which would indicate the end time is on the next UTC day
+            # With proper end_date handling, end_datetime_local should always be >= start_datetime_local
+            # But keep safety check for backward compatibility with existing data
             if end_datetime_local < start_datetime_local:
-                # The end time might be on the next UTC day
-                # Try adding a day to the end datetime
+                # This shouldn't happen with correct end_date, but handle for existing data
+                # where end_date might equal date incorrectly
                 end_datetime_local += timedelta(days=1)
-            
-            # Also handle the reverse: if end is more than 24 hours after start,
-            # it might be on the previous day (unlikely but possible)
-            if (end_datetime_local - start_datetime_local) > timedelta(hours=24):
-                end_datetime_local -= timedelta(days=1)
 
             duration_timedelta = end_datetime_local - start_datetime_local
             total_minutes = int(duration_timedelta.total_seconds() / 60)
@@ -307,6 +301,15 @@ class Job(Base):
                            (func.julianday(cls.end_time) - func.julianday(cls.start_time)) * 24,
                            ((func.julianday(cls.end_time) - func.julianday(cls.start_time)) * 24 * 60) % 60
                           )
+
+    @hybrid_property
+    def is_valid_date_range(self):
+        """Validate that end_date is not before date."""
+        return self.end_date >= self.date
+
+    @is_valid_date_range.expression
+    def is_valid_date_range(cls):
+        return cls.end_date >= cls.date
 
 class Assignment(Base):
     __tablename__ = 'assignments'
