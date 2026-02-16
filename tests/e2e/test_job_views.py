@@ -151,7 +151,21 @@ class TestJobViews:
         test_helper = JobViewsTestHelper(page)
         test_helper.update_job(
             job_id,
-            assigned_teams=test_helper.db.query(Team).filter(Team.id.in_([admin_user.team_id])).all()
+            assigned_teams=test_helper.db.query(Team).filter(Team.id.in_([admin_user.team_id])).all(),
+            assigned_users=[]
+        )
+    
+    @pytest.mark.db_reset
+    def test_update_job_to_multiple_team_assignments(self, admin_page) -> None:
+        page = admin_page
+        page.set_default_timeout(3_000)
+        job_card = get_first_job_card(page)
+        job_id = job_card.get_attribute('data-job-id')
+        test_helper = JobViewsTestHelper(page)
+        all_teams = test_helper.db.query(Team).all()
+        test_helper.update_job(
+            job_id,
+            assigned_teams=all_teams,
         )
 
     @pytest.mark.db_reset
@@ -175,7 +189,7 @@ class TestJobViews:
     def test_update_job_assignment_to_non_admin_entities(self, admin_page, supervisor_page, team_leader_page, admin_user, supervisor_user, team_leader_user) -> None:
         """Test that when an admin assigns job to another user or a team that they are not on, the update is successful and the job card is
         no longer rendered on their personal timetable page but is visible within the appropriate team's column on the team
-        timetable as well as the personal timetables of the team's members and any other assigned users."""
+            timetable as well as the personal timetables of the team's members and any other assigned users."""
         assert supervisor_user.team_id != admin_user.team_id, "The supervisor user should be assigned to a different team than the" \
         " admin user for this test to be valid."
         assert team_leader_user.team_id != supervisor_user.team_id and team_leader_user.team_id != admin_user.team_id, "The team " \
