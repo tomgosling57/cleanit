@@ -129,78 +129,113 @@ export function initJobCardDragula() {
     initDragula(jobContainers, handleJobCardDrop);
 }
 
+// Make initialization functions globally available
+window.initTeamMemberDragula = initTeamMemberDragula;
+window.initJobCardDragula = initJobCardDragula;
+
+function setupDragAndDropListeners() {
+    // Remove any existing listeners first to avoid duplicates
+    document.removeEventListener('teamListUpdated', handleTeamListUpdated);
+    document.removeEventListener('htmx:afterSwap', handleHtmxAfterSwap);
+    document.removeEventListener('htmx:afterSettle', handleHtmxAfterSettle);
+    
+    // Custom event for team list updates
+    document.addEventListener('teamListUpdated', handleTeamListUpdated);
+    
+    // Comprehensive HTMX swap listener
+    document.addEventListener('htmx:afterSwap', handleHtmxAfterSwap);
+    
+    // Also listen for HTMX content settled event for more reliable reinitialization
+    document.addEventListener('htmx:afterSettle', handleHtmxAfterSettle);
+    
+    console.log('Drag and drop listeners setup complete');
+}
+
+function handleTeamListUpdated() {
+    console.log('Team list updated, re-initializing Dragula for team members.');
+    initTeamMemberDragula();
+}
+
+function handleHtmxAfterSwap(event) {
+    const target = event.detail.target;
+    
+    // First check for data attribute for precise control
+    let reinitType = target.getAttribute('data-reinit-dragula');
+    if (!reinitType) {
+        const closestWithAttr = target.closest('[data-reinit-dragula]');
+        if (closestWithAttr) {
+            reinitType = closestWithAttr.getAttribute('data-reinit-dragula');
+        }
+    }
+    
+    if (reinitType === 'team-members') {
+        console.log('Data attribute indicates team members need reinitialization.');
+        initTeamMemberDragula();
+        return;
+    } else if (reinitType === 'job-cards') {
+        console.log('Data attribute indicates job cards need reinitialization.');
+        initJobCardDragula();
+        return;
+    } else if (reinitType === 'both') {
+        console.log('Data attribute indicates both need reinitialization.');
+        initTeamMemberDragula();
+        initJobCardDragula();
+        return;
+    }
+    
+    // Fall back to DOM-based detection if no data attribute
+    // Check if swap affects team member drag and drop
+    if (target.closest('.teams-grid') ||
+        target.classList.contains('team-card') ||
+        target.closest('.team-card')) {
+        console.log('HTMX swap detected in teams area, re-initializing Dragula for team members.');
+        initTeamMemberDragula();
+    }
+    
+    // Check if swap affects job card drag and drop
+    if (target.closest('#team-columns-container') ||
+        target.closest('.team-column') ||
+        target.id === 'team-timetable-view' ||
+        target.closest('.timetable-container')) {
+        console.log('HTMX swap detected in timetable area, re-initializing Dragula for job cards.');
+        initJobCardDragula();
+    }
+    
+    // Check if swap contains drag-and-drop containers directly
+    if (target.querySelector('.members-list') || target.querySelector('.team-column')) {
+        console.log('HTMX swap contains drag-and-drop containers, re-initializing both.');
+        initTeamMemberDragula();
+        initJobCardDragula();
+    }
+}
+
+function handleHtmxAfterSettle(event) {
+    const target = event.detail.target;
+    
+    // Re-check for drag-and-drop containers after content has settled
+    if (target.querySelector('.members-list')) {
+        console.log('Content settled with team members, re-initializing team member Dragula.');
+        initTeamMemberDragula();
+    }
+    
+    if (target.querySelector('.team-column')) {
+        console.log('Content settled with job columns, re-initializing job card Dragula.');
+        initJobCardDragula();
+    }
+}
+
+// Initialize on DOMContentLoaded
 document.addEventListener('DOMContentLoaded', () => {
     initTeamMemberDragula();
-    initJobCardDragula(); // Initialize job cards on page load
-
-    // Custom event for team list updates
-    document.body.addEventListener('teamListUpdated', () => {
-        console.log('Team list updated, re-initializing Dragula for team members.');
-        initTeamMemberDragula();
-    });
-
-    // Comprehensive HTMX swap listener
-    document.body.addEventListener('htmx:afterSwap', (event) => {
-        const target = event.detail.target;
-        
-        // First check for data attribute for precise control
-        const reinitType = target.getAttribute('data-reinit-dragula') ||
-                          target.closest('[data-reinit-dragula]')?.getAttribute('data-reinit-dragula');
-        
-        if (reinitType === 'team-members') {
-            console.log('Data attribute indicates team members need reinitialization.');
-            initTeamMemberDragula();
-            return;
-        } else if (reinitType === 'job-cards') {
-            console.log('Data attribute indicates job cards need reinitialization.');
-            initJobCardDragula();
-            return;
-        } else if (reinitType === 'both') {
-            console.log('Data attribute indicates both need reinitialization.');
-            initTeamMemberDragula();
-            initJobCardDragula();
-            return;
-        }
-        
-        // Fall back to DOM-based detection if no data attribute
-        // Check if swap affects team member drag and drop
-        if (target.closest('.teams-grid') ||
-            target.classList.contains('team-card') ||
-            target.closest('.team-card')) {
-            console.log('HTMX swap detected in teams area, re-initializing Dragula for team members.');
-            initTeamMemberDragula();
-        }
-        
-        // Check if swap affects job card drag and drop
-        if (target.closest('#team-columns-container') ||
-            target.closest('.team-column') ||
-            target.id === 'team-timetable-view' ||
-            target.closest('.timetable-container')) {
-            console.log('HTMX swap detected in timetable area, re-initializing Dragula for job cards.');
-            initJobCardDragula();
-        }
-        
-        // Check if swap contains drag-and-drop containers directly
-        if (target.querySelector('.members-list') || target.querySelector('.team-column')) {
-            console.log('HTMX swap contains drag-and-drop containers, re-initializing both.');
-            initTeamMemberDragula();
-            initJobCardDragula();
-        }
-    });
-
-    // Also listen for HTMX content settled event for more reliable reinitialization
-    document.body.addEventListener('htmx:afterSettle', (event) => {
-        const target = event.detail.target;
-        
-        // Re-check for drag-and-drop containers after content has settled
-        if (target.querySelector('.members-list')) {
-            console.log('Content settled with team members, re-initializing team member Dragula.');
-            initTeamMemberDragula();
-        }
-        
-        if (target.querySelector('.team-column')) {
-            console.log('Content settled with job columns, re-initializing job card Dragula.');
-            initJobCardDragula();
-        }
-    });
+    initJobCardDragula();
+    setupDragAndDropListeners();
 });
+
+// Also set up listeners immediately if DOM is already loaded
+if (document.readyState === 'loading') {
+    // DOM is still loading, wait for DOMContentLoaded
+    document.addEventListener('DOMContentLoaded', setupDragAndDropListeners);
+} else {
+    // DOM is already loaded, set up listeners now
+    setupDragAndDropListeners();
+}
