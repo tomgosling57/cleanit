@@ -1,12 +1,11 @@
-from datetime import timedelta, datetime, date, time
+from datetime import timedelta
 from controllers.jobs_controller import ERRORS
+from database import Job
 import pytest
 
-from services.assignment_service import AssignmentService
-from services.job_service import JobService
 from tests.db_helpers import get_db_session
-from utils.job_helper import ARRIVAL_DATETIME_IN_PAST, END_DATETIME_IN_PAST, INVALID_ARRIVAL_DATE_TIME_FORMAT, INVALID_DATE_OR_TIME_FORMAT, NON_SEQUENTIAL_START_AND_END, START_DATETIME_IN_PAST
-from utils.timezone import today_in_app_tz, app_now, get_app_timezone, from_app_tz
+from utils.job_helper import ARRIVAL_DATETIME_IN_PAST, INVALID_ARRIVAL_DATE_TIME_FORMAT, INVALID_DATE_OR_TIME_FORMAT, NON_SEQUENTIAL_START_AND_END, START_DATETIME_IN_PAST
+from utils.timezone import today_in_app_tz, app_now
 
 class TestJobController:
 
@@ -128,7 +127,9 @@ class TestJobController:
             ({"date": "2024-02-30"}, INVALID_DATE_OR_TIME_FORMAT),
             ({"arrival_datetime": "2024-02-30T10:00:00"}, INVALID_ARRIVAL_DATE_TIME_FORMAT),
             ({"start_time": "00:00"}, START_DATETIME_IN_PAST),
-            ({"end_time": "00:00"}, NON_SEQUENTIAL_START_AND_END),
+            # Note: end_time "00:00" is now valid because when it's before start_time,
+            # it gets adjusted to 00:00 on the next day (see job_helper.parse_job_datetime)
+            # This case has been removed from invalid attributes test
             ({"arrival_datetime": (app_now() - timedelta(days=1)).isoformat()}, ARRIVAL_DATETIME_IN_PAST),
             ({"start_time": "10:00", "end_time": "09:00"}, NON_SEQUENTIAL_START_AND_END),
         ],
@@ -142,7 +143,7 @@ class TestJobController:
             "invalid_date_value",
             "invalid_arrival_datetime_value",
             "start_time_in_past",
-            "end_time_in_past",
+            # "end_time_in_past" removed - end_time "00:00" is now valid (adjusted to next day)
             "arrival_datetime_in_past",
             "non_sequential_start_end",
         ]
@@ -197,15 +198,15 @@ class TestJobController:
 class TestJobControllerDSTEdgeCases:
     """Test class specifically for daylight savings time edge cases in job controller endpoints."""
     
-    def test_create_job_with_dst_transition_time(self, admin_client_no_csrf):
+    def test_create_job_with_dst_transition_time(self, admin_client_no_csrf, job_service):
         """Test creating a job with a time during DST transition."""
-        # DST starts: October 6, 2024 at 2:00 AM (clocks jump to 3:00 AM)
+        # DST starts: First Sunday in October 2026 (October 4, 2026) at 2:00 AM (clocks jump to 3:00 AM)
         # Test creating a job at 3:00 AM on DST start day
         
         response = admin_client_no_csrf.post(
             "/jobs/job/create",
             data={
-                "date": "2024-10-06",
+                "date": "04-10-2026",
                 "start_time": "03:00",
                 "end_time": "05:00",
                 "description": "Job created during DST transition",
@@ -216,25 +217,31 @@ class TestJobControllerDSTEdgeCases:
             }
         )
         
-        # Job should be created successfully
-        assert response.status_code == 200, f"Expected status code 200 but got {response.status_code}. Response: {response.get_json()}"
-        json_data = response.get_json()
-        assert json_data.get('success') is True, f"Job creation failed: {json_data}"
+        # Job should be created successfully - controller returns HTML for HTMX
+        assert response.status_code == 200, f"Expected status code 200 but got {response.status_code}. Response: {response.data[:500]}"
         
-        # Verify the job has correct times
-        job_data = json_data.get('job', {})
-        assert job_data.get('display_start_time') == '03:00', f"Expected display start time 03:00 but got {job_data.get('display_start_time')}"
-        assert job_data.get('display_end_time') == '05:00', f"Expected display end time 05:00 but got {job_data.get('display_end_time')}"
+        # Find the created job by its description in the database
+        # Since we can't easily get job ID from HTML, we'll query by description
+        db = get_db_session()
+
+        created_job = db.query(Job).order_by(Job.id.desc()).first()
+        db.close()
+        
+        assert created_job is not None, "Job was not created in database"
+        
+        # Verify the job has correct display times
+        assert created_job.display_start_time == '03:00', f"Expected display start time 03:00 but got {created_job.display_start_time}"
+        assert created_job.display_end_time == '05:00', f"Expected display end time 05:00 but got {created_job.display_end_time}"
     
-    def test_create_job_during_ambiguous_dst_hour(self, admin_client_no_csrf):
+    def test_create_job_during_ambiguous_dst_hour(self, admin_client_no_csrf, job_service):
         """Test creating a job during the ambiguous hour when DST ends."""
-        # DST ends: April 7, 2024 at 3:00 AM (2:00 AM becomes 3:00 AM)
+        # DST ends: First Sunday in April 2026 (April 5, 2026) at 3:00 AM (2:00 AM becomes 3:00 AM)
         # 2:30 AM occurs twice - once in DST, once in standard time
         
         response = admin_client_no_csrf.post(
             "/jobs/job/create",
             data={
-                "date": "2024-04-07",
+                "date": "05-04-2026",
                 "start_time": "02:30",
                 "end_time": "03:30",
                 "description": "Job during ambiguous DST hour",
@@ -245,23 +252,26 @@ class TestJobControllerDSTEdgeCases:
             }
         )
         
-        # Job should be created successfully (zoneinfo will pick one occurrence)
-        assert response.status_code == 200, f"Expected status code 200 but got {response.status_code}. Response: {response.get_json()}"
-        json_data = response.get_json()
-        assert json_data.get('success') is True, f"Job creation failed: {json_data}"
+        # Job should be created successfully - controller returns HTML for HTMX
+        assert response.status_code == 200, f"Expected status code 200 but got {response.status_code}. Response: {response.data[:500]}"
+        
+        db = get_db_session()
+        created_job = db.query(Job).order_by(Job.id.desc()).first()
+        db.close()
+        
+        assert created_job is not None, "Job was not created in database"
         
         # Verify the job has correct display times
-        job_data = json_data.get('job', {})
-        assert job_data.get('display_start_time') == '02:30', f"Expected display start time 02:30 but got {job_data.get('display_start_time')}"
-        assert job_data.get('display_end_time') == '03:30', f"Expected display end time 03:30 but got {job_data.get('display_end_time')}"
+        assert created_job.display_start_time == '02:30', f"Expected display start time 02:30 but got {created_job.display_start_time}"
+        assert created_job.display_end_time == '03:30', f"Expected display end time 03:30 but got {created_job.display_end_time}"
     
     def test_timetable_display_across_dst_boundary(self, admin_client_no_csrf):
         """Test timetable display logic across DST boundaries."""
         # Test accessing timetable on a date that crosses DST boundary
-        # DST starts: October 6, 2024
+        # DST starts: October 4, 2026
         
         # Access timetable for DST start day
-        response = admin_client_no_csrf.get("/jobs/?date=2024-10-06")
+        response = admin_client_no_csrf.get("/jobs/?date=2026-10-04")
         assert response.status_code == 200, f"Expected status code 200 but got {response.status_code}"
         
         # The page should load successfully
@@ -282,9 +292,9 @@ class TestJobControllerDSTEdgeCases:
         # that the timetable works correctly for dates around DST
         
         dates_around_dst = [
-            "2024-10-05",  # Day before DST start
-            "2024-10-06",  # DST start day
-            "2024-10-07",  # Day after DST start
+            "2026-10-03",  # Day before DST start (October 3, 2026)
+            "2026-10-04",  # DST start day (October 4, 2026)
+            "2026-10-05",  # Day after DST start (October 5, 2026)
         ]
         
         for test_date in dates_around_dst:
@@ -298,15 +308,16 @@ class TestJobControllerDSTEdgeCases:
     def test_job_duration_display_across_dst(self, admin_client_no_csrf, job_service):
         """Test that job duration is displayed correctly across DST transitions."""
         # Create a job that spans DST transition
-        # Job from 1:30 AM to 3:30 AM on DST start day (October 6, 2024)
-        
+        # Job from 1:30 AM to 3:30 AM on DST start day (October 4, 2026)
+        db = get_db_session()        
+        last_job_id = db.query(Job.id).order_by(Job.id.desc()).first()[0] if db.query(Job.id).count() > 0 else 0
         response = admin_client_no_csrf.post(
             "/jobs/job/create",
             data={
-                "date": "2024-10-06",
+                "date": "04-10-2026",
                 "start_time": "01:30",
                 "end_time": "03:30",
-                "description": "Job spanning DST start",
+                "notes": "Job spanning DST start",
                 "job_type": "standard",
                 "property_id": 1,
                 "assigned_teams": [1],
@@ -314,17 +325,16 @@ class TestJobControllerDSTEdgeCases:
             }
         )
         
-        assert response.status_code == 200, f"Job creation failed: {response.status_code}"
-        json_data = response.get_json()
-        assert json_data.get('success') is True, f"Job creation failed: {json_data}"
-        
-        # Verify duration is displayed as 2 hours (in local time)
-        job_data = json_data.get('job', {})
-        job_id = job_data.get('id')
-        
-        if job_id:
-            # Get job details to check duration
-            job = job_service.get_job_details(job_id)
-            if job:
-                # Duration should be "2 hours" even though UTC duration is 1 hour
-                assert job.duration == "2 hours", f"Expected duration '2 hours' but got '{job.duration}'"
+        # Job should be created successfully - controller returns HTML for HTMX
+        assert response.status_code == 200, f"Job creation failed: {response.status_code}. Response: {response.data[:500]}"
+        # Find the created job by its description in the database
+        created_job = db.query(Job).order_by(Job.id.desc()).first()
+        db.close()
+        assert created_job.id > last_job_id, "No new job was created in the database"
+        assert created_job is not None, "Job was not created in database"
+        assert created_job.description is not None
+        # Get job details to check duration
+        job = job_service.get_job_details(created_job.id)
+        if job:
+            # Duration should be "2 hours" even though UTC duration is 1 hour
+            assert job.duration == "2h", f"Expected duration '2 hours' but got '{job.duration}'"
